@@ -26,6 +26,7 @@ import { useGlobalShortcuts } from '@/features/shell/useGlobalShortcuts'
 import { CleanupDialog } from '@/features/timeline/CleanupDialog'
 import { ClipColorsDialog } from '@/features/timeline/ClipColorsDialog'
 import { PasteAttributesDialog } from '@/features/timeline/PasteAttributesDialog'
+import { SourceMonitor } from '@/features/timeline/SourceMonitor'
 import { RenameTimelineDialog } from '@/features/timeline/TimelineSwitcher'
 import { Timeline } from '@/features/timeline/Timeline'
 import { startAi } from '@/integrations/ai'
@@ -72,6 +73,7 @@ export function App() {
         <PasteAttributesDialog />
         <ClipColorsDialog />
         <CleanupDialog />
+        <SourceMonitor />
         <VersionHistoryDialog />
         <RenameTimelineDialog />
         <RenderQueueDialog />

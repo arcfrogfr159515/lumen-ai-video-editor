@@ -649,6 +649,31 @@ export function insertGap(p: Project, trackId: string, at: Frame, len: Frame, ex
   for (const c of clipsOnTrack(p, trackId, exclude)) if (c.start >= at) c.start += len
 }
 
+/**
+ * Opens `len` frames at `at` across the whole timeline, like an insert edit: on
+ * every track that follows ripples — and on `also`, the track the edit lands on —
+ * a clip across the point is cut there and everything from the point on moves
+ * later. Markers and the marked stretch move with it. The main track is only
+ * cut: it packs itself around whatever is put at the point.
+ */
+export function rippleInsert(p: Project, at: Frame, len: Frame, also?: string) {
+  if (len <= 0) return
+  const tracks = p.tracks.filter((t) => followsRipple(t) || t.id === also)
+  const ids = new Set(tracks.map((t) => t.id))
+  // Cut together, so the pieces after the point stay linked to each other.
+  splitClips(
+    p,
+    Object.values(p.clips).filter((c) => ids.has(c.trackId) && c.start < at && clipEnd(c) > at),
+    at,
+  )
+  for (const track of tracks) {
+    if (isMagnetic(track)) continue
+    for (const c of clipsOnTrack(p, track.id)) if (c.start >= at) c.start += len
+  }
+  for (const m of p.markers) if (m.frame >= at) m.frame += len
+  if (p.range) p.range = shiftRange(p.range, (f) => (f >= at ? f + len : f))
+}
+
 // ─── Trim tools ──────────────────────────────────────────────────────────
 
 /**

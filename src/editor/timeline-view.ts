@@ -35,9 +35,15 @@ interface TimelineViewState {
   batchOpen: boolean
   /** The source monitor, with the media it shows. */
   sourceMonitor: { assetId: string } | null
+  /** In and out marks made in the source monitor, per media item, in seconds of the media (kept while Lumen is open). */
+  sourceMarks: Record<string, { in?: number; out?: number }>
+  /** What a four-point edit does when the source and timeline stretches differ in length. */
+  fourPoint: 'fit' | 'source' | 'timeline'
 
-  set: (patch: Partial<Omit<TimelineViewState, 'set' | 'toggleMarkerKind'>>) => void
+  set: (patch: Partial<Omit<TimelineViewState, 'set' | 'toggleMarkerKind' | 'markSource'>>) => void
   toggleMarkerKind: (kind: MarkerFilter) => void
+  /** Sets (or with null clears) a source mark; marks the wrong way round push the other one out of the way. */
+  markSource: (assetId: string, patch: { in?: number | null; out?: number | null }) => void
 }
 
 export const useTimelineView = create<TimelineViewState>()(
@@ -59,8 +65,25 @@ export const useTimelineView = create<TimelineViewState>()(
       directorOpen: false,
       batchOpen: false,
       sourceMonitor: null,
+      sourceMarks: {},
+      fourPoint: 'source',
 
       set: (patch) => set(patch),
+      markSource: (assetId, patch) =>
+        set((s) => {
+          const next = { ...s.sourceMarks[assetId] }
+          if (patch.in === null) delete next.in
+          else if (patch.in !== undefined) {
+            next.in = Math.max(0, patch.in)
+            if (next.out !== undefined && next.out <= next.in) delete next.out
+          }
+          if (patch.out === null) delete next.out
+          else if (patch.out !== undefined) {
+            next.out = Math.max(0, patch.out)
+            if (next.in !== undefined && next.in >= next.out) delete next.in
+          }
+          return { sourceMarks: { ...s.sourceMarks, [assetId]: next } }
+        }),
       toggleMarkerKind: (kind) => set((s) => ({ markerKinds: s.markerKinds.includes(kind) ? s.markerKinds.filter((k) => k !== kind) : [...s.markerKinds, kind] })),
     }),
     {
@@ -74,6 +97,7 @@ export const useTimelineView = create<TimelineViewState>()(
         showNotes: s.showNotes,
         markerKinds: s.markerKinds,
         hideDone: s.hideDone,
+        fourPoint: s.fourPoint,
       }),
     },
   ),

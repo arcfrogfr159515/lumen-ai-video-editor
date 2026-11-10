@@ -2,10 +2,11 @@
  * The timeline's view options and tools, in one menu on the toolbar: what the
  * lanes show, and the dialogs that work on the whole timeline.
  */
-import { AudioLines, Copy, Eraser, GalleryHorizontalEnd, Gauge, ListChecks, Palette, ScanLine, SlidersHorizontal, StickyNote } from 'lucide-react'
+import { AudioLines, Copy, Eraser, GalleryHorizontalEnd, Gauge, ListChecks, MonitorPlay, Palette, ScanLine, SlidersHorizontal, StickyNote } from 'lucide-react'
 import { IconButton } from '@/components/ui/button'
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu'
 import { useUI } from '@/editor/ui-store'
+import { timelineActions } from './timeline-actions'
 import { useTimelineView } from '@/editor/timeline-view'
 
 export function TimelineTools() {
@@ -40,6 +41,9 @@ export function TimelineTools() {
         </MenuItem>
         <MenuSeparator />
         <MenuLabel>Tools</MenuLabel>
+        <MenuItem icon={<MonitorPlay />} onSelect={() => timelineActions.openSourceMonitor()}>
+          Source monitor for the selected media
+        </MenuItem>
         <MenuItem icon={<Eraser />} onSelect={() => set({ cleanup: 'gaps' })}>
           Clean up gaps and flash frames…
         </MenuItem>

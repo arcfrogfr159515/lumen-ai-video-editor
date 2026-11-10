@@ -3,10 +3,13 @@
  * palette and buttons: one implementation, many entry points.
  */
 import { toast } from 'sonner'
-import { clipsAt } from '@/editor/ops'
-import { usePlayback } from '@/editor/playback'
+import { clipsAt, framesIn } from '@/editor/ops'
+import { audioRole, pickTrack } from '@/editor/placement'
+import { playback, usePlayback } from '@/editor/playback'
 import { dispatch, getProject, useEditor } from '@/editor/store'
 import { canHaveTakes, type SwitchResult } from '@/editor/takes'
+import { resolveEdit } from '@/editor/three-point'
+import { timelineView } from '@/editor/timeline-view'
 import type { Clip } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { useMediaSelection } from '@/features/assets/media-selection'
@@ -37,7 +40,66 @@ function takeNote(r: SwitchResult, fps: number) {
   return undefined
 }
 
+/** The edit the source monitor's marks, the timeline's marks and the playhead add up to right now. */
+export function sourceEditFor(assetId: string) {
+  const p = getProject()
+  const asset = p.assets[assetId]
+  if (!asset) return null
+  const fps = p.settings.fps
+  const { sourceMarks, fourPoint } = timelineView()
+  const marks = sourceMarks[assetId] ?? {}
+  const sourceIn = marks.in !== undefined ? Math.round(marks.in * fps) : undefined
+  const sourceOut = marks.out !== undefined ? Math.round(marks.out * fps) : undefined
+  const edit = resolveEdit(
+    { sourceIn, sourceOut, timelineIn: p.range?.in, timelineOut: p.range?.out, playhead: frame(), sourceLength: asset.duration !== undefined ? framesIn(asset.duration, fps) : Infinity },
+    fps,
+    fourPoint,
+  )
+  return { asset, sourceIn, sourceOut, edit, fourPoint }
+}
+
 export const timelineActions = {
+  /** Opens the source monitor on a media item: the one given, else the one selected in the Media panel. */
+  openSourceMonitor(assetId?: string) {
+    const id = assetId ?? useMediaSelection.getState().ids[0]
+    if (!id || !getProject().assets[id]) return void toast('Select a media item first', { description: 'The source monitor shows one item from the Media panel, to mark the part of it you want.' })
+    timelineView().set({ sourceMonitor: { assetId: id } })
+  },
+
+  /**
+   * Puts the source monitor's media on the timeline by its marks — insert pushes
+   * everything later out of the way, overwrite covers what is there. `trackId`
+   * picks the track; otherwise footage goes on the main track and sound on the
+   * track made for it.
+   */
+  sourceEdit(mode: 'insert' | 'overwrite', assetId = timelineView().sourceMonitor?.assetId, trackId?: string) {
+    const found = assetId ? sourceEditFor(assetId) : null
+    if (!found) return void toast('Open a media item in the source monitor first')
+    const { asset, sourceIn, sourceOut, edit, fourPoint } = found
+    const p = getProject()
+    let track = pickTrack(p, asset.kind, edit.start, edit.duration, trackId, false, asset.kind === 'audio' ? audioRole(asset) : null)
+    if (!track && asset.kind === 'audio') track = pickTrack(p, 'audio', edit.start, edit.duration) ?? p.tracks.find((t) => t.kind === 'audio' && !t.locked) ?? null
+    let target = track?.id
+    let result: { clipId: string; start: number; duration: number; short: number } | undefined
+    let error: string | undefined
+    useEditor.getState().transaction(mode === 'insert' ? 'Insert edit' : 'Overwrite edit', 'user', () => {
+      if (!target) {
+        const made = dispatch('track.add', { kind: asset.kind === 'audio' ? 'audio' : 'video' })
+        if (made.ok) target = made.result as string
+      }
+      if (!target) return void (error = 'There is no unlocked track for it')
+      const res = dispatch('timeline.threePointEdit', { assetId: asset.id, trackId: target, at: frame(), sourceIn, sourceOut, mode, fit: fourPoint })
+      if (res.ok) result = res.result as typeof result
+      else error = res.error
+    })
+    if (!result) return void toast.error(error ?? 'The edit couldn’t be made')
+    ui().select([result.clipId])
+    // The playhead goes to the end of what was just laid down, ready for the next edit.
+    playback.pause()
+    playback.seek(result.start + result.duration)
+    if (result.short) toast(`${asset.name} ran out ${formatDuration(result.short, p.settings.fps)} before the out point`, { description: 'The edit is shorter than the marked stretch.' })
+  },
+
   /** Shows the next (or previous) take of the selected clips. */
   switchTake(step: 1 | -1) {
     const clips = targetClips((c) => Boolean(c.takes && c.takes.length > 1))

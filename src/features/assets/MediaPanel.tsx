@@ -1,4 +1,4 @@
-import { AudioLines, Captions, Check, FolderSearch, Gauge, Heart, Image as ImageIcon, Link2, Pause, Play, Plus, Trash, TriangleAlert, Upload, Video, X } from 'lucide-react'
+import { AudioLines, Captions, Check, FolderSearch, Gauge, Heart, Image as ImageIcon, Link2, MonitorPlay, Pause, Play, Plus, Trash, TriangleAlert, Upload, Video, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { useShallow } from 'zustand/react/shallow'
@@ -13,6 +13,7 @@ import type { Asset, AssetKind } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { dnd } from '@/features/dnd'
 import { useTimelineView } from '@/editor/timeline-view'
+import { timelineActions } from '@/features/timeline/timeline-actions'
 import { actions } from '@/features/shell/actions'
 import { cn } from '@/lib/cn'
 import { desktop, platform } from '@/lib/platform'
@@ -313,6 +314,11 @@ function AssetMenu({ asset, children }: { asset: Asset; children: ReactNode }) {
         {!missing(asset) && (
           <ContextItem icon={<Plus />} onSelect={add}>
             Add at playhead
+          </ContextItem>
+        )}
+        {!missing(asset) && (
+          <ContextItem icon={<MonitorPlay />} onSelect={() => timelineActions.openSourceMonitor(asset.id)}>
+            Open in the source monitor
           </ContextItem>
         )}
         {asset.source.type === 'file' && (

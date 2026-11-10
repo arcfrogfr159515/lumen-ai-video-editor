@@ -30,10 +30,12 @@ import {
   isMagneticTrack,
   liftRange,
   moveTrack,
+  normalizeProject,
   overwriteRange,
   removeRange,
   reattachAudio,
   resolveMoveDelta,
+  rippleInsert,
   rippleTrimClip,
   rollEdit,
   slideClip,
@@ -62,6 +64,7 @@ import {
   wouldLoop,
 } from './sequences'
 import { addTake, clearTakes, neighbourTake, removeTake, switchTake, TakeError } from './takes'
+import { resolveEdit } from './three-point'
 import { averageSpeed, consumed, localForConsumed, MAX_SPEED, MIN_SPEED } from './timing'
 import type { AnimatableProp, BusMix, Clip, Marker, Project, Sequence, Track } from './types'
 
@@ -1828,6 +1831,66 @@ export const commands = {
   }),
 
   // Timeline tools
+  'timeline.threePointEdit': command({
+    description:
+      'Put a stretch of a media item on the timeline by its edit points — three- and four-point editing. Any of four points can be given: sourceIn / sourceOut (frames into the media, out exclusive) and the timeline’s marked stretch (timeline_setRange, or timelineIn / timelineOut here). Three settle the fourth: an out point without its in point backtimes the edit (it is placed from its end). With fewer, `at` (the playhead) and the ends of the media fill in. When all four are marked and the lengths differ, fit decides: "source" (default) takes the source as marked, "timeline" fills the timeline stretch from the source in, "fit" changes the clip’s speed so the source fills the stretch exactly. mode "overwrite" (default) covers what is on the track there and moves nothing; "insert" cuts every track that follows ripples at the point and moves everything after it later (tracks with sync lock off stay). Returns { clipId, start, duration, inPoint, speed, backtimed, short } — short is how many frames the media ran out before the stretch was filled.',
+    input: z.object({
+      assetId: id,
+      trackId: id,
+      at: frame.default(0),
+      sourceIn: frame.optional(),
+      sourceOut: frame.optional(),
+      timelineIn: frame.optional(),
+      timelineOut: frame.optional(),
+      /** Use the timeline's marked in and out when timelineIn / timelineOut aren't given. */
+      useRange: z.boolean().default(true),
+      mode: z.enum(['insert', 'overwrite']).default('overwrite'),
+      fit: z.enum(['fit', 'source', 'timeline']).default('source'),
+    }),
+    title: (i) => (i.mode === 'insert' ? 'Insert edit' : 'Overwrite edit'),
+    run(p, i) {
+      const asset = p.assets[i.assetId]
+      if (!asset) throw new CommandError(`Asset ${i.assetId} not found`)
+      const track = getTrack(p, i.trackId)
+      if (track.locked) throw new CommandError(`${track.name} is locked`)
+      if (!trackAccepts(track, asset.kind)) throw new CommandError(`“${asset.name}” can’t go on ${track.name}: ${asset.kind === 'audio' ? 'sound goes on an audio track' : 'pictures go on a video track'}`)
+      const marked = i.useRange ? p.range : null
+      const edit = resolveEdit(
+        {
+          sourceIn: i.sourceIn,
+          sourceOut: i.sourceOut,
+          timelineIn: i.timelineIn ?? marked?.in,
+          timelineOut: i.timelineOut ?? marked?.out,
+          playhead: i.at,
+          sourceLength: asset.duration !== undefined ? framesIn(asset.duration, p.settings.fps) : Infinity,
+        },
+        p.settings.fps,
+        i.fit,
+      )
+      const magnetic = isMagneticTrack(p, track.id)
+      if (i.mode === 'insert') {
+        if (!magnetic) assertCanInsert(p, track.id)
+        rippleInsert(p, edit.start, edit.duration, track.id)
+      } else overwriteRange(p, track.id, edit.start, edit.start + edit.duration)
+      const clip = createClip({
+        id: uid('clip'),
+        kind: asset.kind,
+        trackId: track.id,
+        // On the main track a start means “before whatever starts here”.
+        start: edit.start - (magnetic ? 0.5 : 0),
+        duration: edit.duration,
+        assetId: asset.id,
+        inPoint: edit.inPoint,
+        speed: edit.speed,
+        name: asset.name,
+      })
+      p.clips[clip.id] = clip
+      // Packed now, so the answer says where the clip really is.
+      normalizeProject(p)
+      return { clipId: clip.id, start: p.clips[clip.id].start, duration: edit.duration, inPoint: edit.inPoint, speed: edit.speed, backtimed: edit.backtimed, short: edit.short }
+    },
+  }),
+
   'timeline.closeGaps': command({
     description:
       'Clean the timeline up. holes (default true): take out every stretch where no track has anything, closing the timeline up on every track that follows ripples. flashGaps (default true): fill slivers of empty space between clips (flashFrames or shorter, default 3) by letting the clip before run a few frames longer, or the clip after start earlier — nothing else moves. flashClips (default true): remove clips that short (leftovers of a split), a neighbour taking up the space. trackIds: on these tracks, also close every gap between clips by moving the later clips up (linked clips move with them; this changes what the track lines up with). Returns what was done. find_gaps lists what there is first.',
