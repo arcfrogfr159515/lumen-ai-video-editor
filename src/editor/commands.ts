@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { uid } from '@/lib/id'
 import { createClip, createTrack, DEFAULT_BUS, DEFAULT_COMPRESSOR, DEFAULT_EQ, DEFAULT_LIMITER, IDENTITY_CURVES, NEUTRAL_WHEELS, TRACK_HEIGHTS } from './defaults'
 import { EASING_NAMES, type Easing } from './easing'
+import { batchNames, batchSkip, type BatchField } from './batch'
 import { closeGaps, FLASH_FRAMES } from './gaps'
 import { ANIMATABLE, evalKeyframes } from './keyframes'
 import { defaultMarkerLabel, markerKindInfo, markerKindOf } from './markers'
@@ -65,7 +66,7 @@ import {
 } from './sequences'
 import { addTake, clearTakes, neighbourTake, removeTake, switchTake, TakeError } from './takes'
 import { resolveEdit } from './three-point'
-import { averageSpeed, consumed, localForConsumed, MAX_SPEED, MIN_SPEED } from './timing'
+import { averageSpeed, consumed, isRamped, localForConsumed, MAX_SPEED, MIN_SPEED } from './timing'
 import type { AnimatableProp, BusMix, Clip, Marker, Project, Sequence, Track } from './types'
 
 export class CommandError extends Error {}
@@ -1787,6 +1788,179 @@ export const commands = {
   }),
 
   // Project
+  'clip.batch': command({
+    description:
+      'One change to many clips at once, each from where it stands — what clip_update (which makes them all the same) can’t do. speed: { mode: "scale", value: 2 } makes each twice as fast as it is, { mode: "set", value } gives them all one speed. volume: { mode: "offset", value: -3 } turns each down 3 dB (volume keyframes move with it), { mode: "set", value } sets a level (clips with volume keyframes are left). fadeIn / fadeOut in frames. opacity 0–1. scale: { mode: "scale" | "set", value }. reverse, blend, label (null removes it). effects: { add: [kinds], remove: [kinds] or "all", enabled: true/false to switch every effect on or off }. rename: a pattern with {n} (number in timeline order), {nn} (with a leading zero), {name}, {source}, {track}, {tc}. Each operation applies to the clips it makes sense for; the rest are reported in skipped with the reason. One undo step. Returns { changed, skipped: [{ id, name, why }] }.',
+    input: z.object({
+      ids: z.array(id).min(1),
+      speed: z.object({ mode: z.enum(['set', 'scale']), value: z.number().positive() }).optional(),
+      volume: z.object({ mode: z.enum(['set', 'offset']), value: z.number().min(-72).max(72) }).optional(),
+      fadeIn: frame.optional(),
+      fadeOut: frame.optional(),
+      opacity: unit.optional(),
+      scale: z.object({ mode: z.enum(['set', 'scale']), value: z.number().positive().max(20) }).optional(),
+      reverse: z.boolean().optional(),
+      blend: blend.optional(),
+      label: labelColor.nullable().optional(),
+      effects: z
+        .object({ add: z.array(effectKind).max(12), remove: z.union([z.array(effectKind), z.literal('all')]), enabled: z.boolean() })
+        .partial()
+        .optional(),
+      rename: z.string().min(1).max(120).optional(),
+    }),
+    title: (i) => `Batch-edit ${plural(i.ids.length, 'clip')}`,
+    run(p, i) {
+      const clips = i.ids.map((clipId) => getClip(p, clipId))
+      clips.forEach((c) => assertEditable(p, c))
+      const changed = new Set<string>()
+      const skipped = new Map<string, { id: string; name: string; why: string }>()
+      /** Runs one operation over the clips it applies to; a clip an operation can't touch is noted once. */
+      const each = (field: BatchField, fn: (clip: Clip) => boolean | void) => {
+        for (const clip of clips) {
+          const why = batchSkip(p, clip, field)
+          if (why) skipped.set(`${clip.id}:${field}`, { id: clip.id, name: clip.name, why })
+          else if (fn(clip) !== false) changed.add(clip.id)
+        }
+      }
+      const clampDb = (db: number) => Math.min(12, Math.max(-60, Math.round(db * 10) / 10))
+
+      // Names first: the pattern numbers the clips as they stand, before speed changes move anything.
+      if (i.rename) {
+        const names = batchNames(p, i.ids, i.rename)
+        if (!names) throw new CommandError('That pattern leaves the clips without a name')
+        each('rename', (clip) => {
+          const name = names.get(clip.id)
+          if (!name || name === clip.name) return false
+          clip.name = name
+        })
+      }
+      if (i.speed) {
+        const { mode, value } = i.speed
+        // In timeline order, so a clip that gets longer finds the room its neighbour just made.
+        const order = [...clips].sort((a, b) => a.start - b.start)
+        for (const clip of order) {
+          const why = batchSkip(p, clip, 'speed')
+          if (why) {
+            skipped.set(`${clip.id}:speed`, { id: clip.id, name: clip.name, why })
+            continue
+          }
+          const from = isRamped(clip) ? averageSpeed(clip) : clip.speed
+          const next = Math.round(Math.min(MAX_SPEED, Math.max(MIN_SPEED, mode === 'scale' ? from * value : value)) * 100) / 100
+          if (next === clip.speed && !isRamped(clip)) continue
+          applyPatch(p, clip, { speed: next })
+          changed.add(clip.id)
+        }
+      }
+      if (i.volume) {
+        const { mode, value } = i.volume
+        each('volume', (clip) => {
+          const keys = clip.keyframes.volume
+          if (mode === 'set') {
+            if (keys?.length) {
+              skipped.set(`${clip.id}:volume`, { id: clip.id, name: clip.name, why: 'its volume is keyframed — offset moves it' })
+              return false
+            }
+            if (clip.audio.volume === clampDb(value)) return false
+            clip.audio.volume = clampDb(value)
+            return
+          }
+          if (!value) return false
+          clip.audio.volume = clampDb(clip.audio.volume + value)
+          if (keys?.length) clip.keyframes.volume = keys.map((k) => ({ ...k, value: clampDb(k.value + value) }))
+        })
+      }
+      if (i.fadeIn !== undefined || i.fadeOut !== undefined) {
+        each('fades', (clip) => {
+          const half = Math.floor(clip.duration / 2)
+          const fin = i.fadeIn !== undefined ? Math.min(i.fadeIn, half) : clip.audio.fadeIn
+          const fout = i.fadeOut !== undefined ? Math.min(i.fadeOut, half) : clip.audio.fadeOut
+          if (fin === clip.audio.fadeIn && fout === clip.audio.fadeOut) return false
+          clip.audio.fadeIn = fin
+          clip.audio.fadeOut = fout
+        })
+      }
+      if (i.opacity !== undefined) {
+        const value = i.opacity
+        each('opacity', (clip) => {
+          if (clip.keyframes.opacity?.length) {
+            skipped.set(`${clip.id}:opacity`, { id: clip.id, name: clip.name, why: 'its opacity is keyframed' })
+            return false
+          }
+          if (clip.transform.opacity === value) return false
+          clip.transform.opacity = value
+        })
+      }
+      if (i.scale) {
+        const { mode, value } = i.scale
+        each('scale', (clip) => {
+          const keys = clip.keyframes.scale
+          const fit = (s: number) => Math.round(Math.min(20, Math.max(0.01, s)) * 1000) / 1000
+          if (mode === 'set') {
+            if (keys?.length) {
+              skipped.set(`${clip.id}:scale`, { id: clip.id, name: clip.name, why: 'its scale is keyframed — scaling moves it' })
+              return false
+            }
+            if (clip.transform.scale === fit(value)) return false
+            clip.transform.scale = fit(value)
+            return
+          }
+          if (value === 1) return false
+          clip.transform.scale = fit(clip.transform.scale * value)
+          if (keys?.length) clip.keyframes.scale = keys.map((k) => ({ ...k, value: fit(k.value * value) }))
+        })
+      }
+      if (i.reverse !== undefined) {
+        const value = i.reverse
+        each('reverse', (clip) => {
+          if (clip.reverse === value) return false
+          clip.reverse = value
+        })
+      }
+      if (i.blend) {
+        const value = i.blend
+        each('blend', (clip) => {
+          if (clip.blend === value) return false
+          clip.blend = value
+        })
+      }
+      if (i.label !== undefined) {
+        const value = i.label
+        each('label', (clip) => {
+          if ((clip.label ?? null) === value) return false
+          if (value) clip.label = value
+          else delete clip.label
+        })
+      }
+      if (i.effects) {
+        const { add = [], remove, enabled } = i.effects
+        each('effects', (clip) => {
+          let touched = false
+          if (remove) {
+            const keep = clip.effects.filter((e) => remove !== 'all' && !remove.includes(e.kind))
+            touched = keep.length !== clip.effects.length
+            clip.effects = keep
+          }
+          for (const kind of add) {
+            if (clip.effects.some((e) => e.kind === kind)) continue
+            const preset = EFFECTS.find((e) => e.kind === kind)
+            if (!preset) continue
+            clip.effects.push({ id: uid('fx'), kind, enabled: true, amount: preset.amount, ...(preset.params ? { params: { ...preset.params } } : {}) })
+            touched = true
+          }
+          if (enabled !== undefined) {
+            for (const e of clip.effects) {
+              if (e.enabled === enabled) continue
+              e.enabled = enabled
+              touched = true
+            }
+          }
+          return touched
+        })
+      }
+      return { changed: changed.size, skipped: [...skipped.values()] }
+    },
+  }),
+
   // Alternate takes
   'take.add': command({
     description:

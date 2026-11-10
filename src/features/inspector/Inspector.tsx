@@ -19,6 +19,7 @@ import { sendPrompt } from '@/features/copilot/store'
 import { actions } from '@/features/shell/actions'
 import { cn } from '@/lib/cn'
 import { formatDuration, formatTimecode } from '@/lib/time'
+import { BatchSection } from './BatchSection'
 import { ClicksSection } from './ClicksSection'
 import { CropSection } from './CropSection'
 import { MaskSection } from './MaskSection'
@@ -169,6 +170,7 @@ function MultiInspector({ clips }: { clips: Clip[] }) {
           <Trash />
         </IconButton>
       </div>
+      <BatchSection clips={clips} />
       {visual.length > 0 && <ColorSections clips={visual} />}
       {timed.length > 0 && <SpeedSection clips={timed} fps={fps} />}
       {!visual.length && !timed.length && <p className="px-4 py-6 text-sm text-fg-3">These clips don’t share editable properties.</p>}

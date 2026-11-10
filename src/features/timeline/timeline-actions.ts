@@ -101,6 +101,12 @@ export const timelineActions = {
     if (result.short) toast(`${asset.name} ran out ${formatDuration(result.short, p.settings.fps)} before the out point`, { description: 'The edit is shorter than the marked stretch.' })
   },
 
+  /** Brings up the batch panel: the inspector, with two or more clips selected. */
+  openBatch() {
+    if (ui().selection.length < 2) return void toast('Select two or more clips', { description: 'Batch changes are made in the inspector to everything selected. Ctrl+A selects every clip.' })
+    ui().setRightTab('inspector')
+  },
+
   /** Trim mode on the cut nearest the playhead (a cut on a selected clip first) — or off, if it is on. */
   toggleTrimMode() {
     if (trimming()) return exitTrim()
