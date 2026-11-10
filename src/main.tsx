@@ -44,7 +44,8 @@ if (import.meta.env.DEV || window.lumen?.testMode) {
     import('@/capture/recorder'),
     import('@/editor/timeline-view'),
     import('@/editor/macro-store'),
-  ]).then(([store, ui, pb, copilot, ai, integrations, session, media, exporter, smart, transcribe, audio, tools, engineMedia, proxies, sequences, nav, analysis, queue, subtitles, compositor, mediabunny, previewStage, renders, previewRes, stills, recorder, timelineView, macros]) => {
+    import('@/editor/trim-session'),
+  ]).then(([store, ui, pb, copilot, ai, integrations, session, media, exporter, smart, transcribe, audio, tools, engineMedia, proxies, sequences, nav, analysis, queue, subtitles, compositor, mediabunny, previewStage, renders, previewRes, stills, recorder, timelineView, macros, trim]) => {
     Object.assign(window, {
       __lumen: {
         editor: store.useEditor,
@@ -78,6 +79,7 @@ if (import.meta.env.DEV || window.lumen?.testMode) {
         recorder,
         timelineView: timelineView.useTimelineView,
         macros,
+        trim,
       },
     })
   })

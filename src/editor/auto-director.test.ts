@@ -3,6 +3,7 @@ import { angleLevels, directCuts, normalizeSignal, planSummary, switchesFor, typ
 import { angleTracks } from './sequences'
 import { getProject } from './store'
 import { addAsset, clip, freshProject, onTrack, run } from './test-helpers'
+import { rng } from './test-invariants'
 
 const STEP = 0.1
 
@@ -20,6 +21,57 @@ function mic(seconds: number, speaking: [number, number][], bleed: [number, numb
 
 const shots = (cuts: DirectorCut[]) => cuts.map((c) => [c.at, c.angle, c.why])
 const angleAt = (cuts: DirectorCut[], t: number) => [...cuts].reverse().find((c) => c.at <= t)!.angle
+
+describe('whatever the cameras hear', () => {
+  for (let seed = 1; seed <= (Number(process.env.FUZZ_RUNS) || 25); seed++) {
+    it(`the cut is one a person could watch (run ${seed})`, () => {
+      const r = rng(seed * 2741)
+      const cameras = r.int(2, 4)
+      const seconds = r.int(8, 180)
+      // A conversation: stretches where one person talks, where two talk over each other, and where nobody does.
+      const talk: [number, number][][] = Array.from({ length: cameras }, () => [])
+      const solos: { who: number; from: number; to: number }[] = []
+      for (let t = 0; t < seconds; ) {
+        const length = r.pick([0.4, 1, 2, 4, 7, 12, 25])
+        const to = Math.min(seconds, t + length)
+        const kind = r.pick(['one', 'one', 'one', 'two', 'none'])
+        const who = r.int(0, cameras - 1)
+        if (kind !== 'none') talk[who].push([t, to])
+        if (kind === 'two') talk[(who + 1) % cameras].push([t, to])
+        if (kind === 'one') solos.push({ who, from: t, to })
+        t = to
+      }
+      const angles: AngleSignal[] = talk.map((mine, i) => ({ level: mic(seconds, mine, talk.filter((_, k) => k !== i).flat()) }))
+      const minShot = r.pick([1, 2.5, 4])
+      const maxShot = r.pick([8, 14, 30])
+      const wide = r.chance(0.3) ? r.int(0, cameras - 1) : null
+      const reactions = r.chance(0.6)
+      const cuts = directCuts(angles, { step: STEP, minShot, maxShot, wide, reactions })
+      const told = `seed ${seed}: ${cameras} cameras, ${seconds} s, min ${minShot}, max ${maxShot}, wide ${wide}, reactions ${reactions}: ${JSON.stringify(shots(cuts))}`
+
+      expect(cuts[0], told).toMatchObject({ at: 0, why: 'opening' })
+      for (const [i, c] of cuts.entries()) {
+        expect(c.angle, told).toBeGreaterThanOrEqual(0)
+        expect(c.angle, told).toBeLessThan(cameras)
+        if (!i) continue
+        // Every cut goes somewhere else, and no shot flashes by — a cutaway to a listener may be a little shorter.
+        expect(c.angle, told).not.toBe(cuts[i - 1].angle)
+        expect(c.at - cuts[i - 1].at, told).toBeGreaterThanOrEqual(minShot * (c.why === 'reaction' ? 0.6 : 1) - 1e-6)
+      }
+      // Nor does the last one.
+      if (cuts.length > 1) expect(seconds - cuts[cuts.length - 1].at, told).toBeGreaterThanOrEqual(minShot * 0.6 - 1e-6)
+      // Someone who has the floor to themselves for a good while is on screen in the thick of it (cutaways aside).
+      if (!reactions && wide === null) {
+        for (const s of solos) {
+          if (s.to - s.from < 2 * minShot + 3) continue
+          const others = talk.some((spans, k) => k !== s.who && spans.some(([a, b]) => a < s.to && b > s.from))
+          if (others) continue
+          expect(angleAt(cuts, s.to - 0.5), `${told}\n  camera ${s.who} talks alone ${s.from}–${s.to}`).toBe(s.who)
+        }
+      }
+    })
+  }
+})
 
 describe('reading a signal', () => {
   it('judges each camera against itself', () => {
@@ -148,6 +200,32 @@ describe('the auto-director', () => {
       { step: STEP, reactions: false, lead: 0 },
     )
     expect(angleAt(silent, 9)).toBe(1)
+  })
+
+  it('stays on someone who talks all the way through, whatever the other microphones overhear', () => {
+    // Camera 2's speaker never pauses; the others never speak — their microphones only hear camera 2, fainter.
+    const all: [number, number][] = [[0, 30]]
+    const cuts = directCuts([{ level: mic(30, [], all) }, { level: mic(30, all) }, { level: mic(30, [], all) }], { step: STEP, reactions: false })
+    expect(shots(cuts)).toEqual([[0, 1, 'opening']])
+    // The same when they do stop for breath now and then.
+    const breaths: [number, number][] = [[0, 9], [9.6, 21], [21.5, 30]]
+    expect(shots(directCuts([{ level: mic(30, [], breaths) }, { level: mic(30, breaths) }], { step: STEP, reactions: false }))).toEqual([[0, 1, 'opening']])
+  })
+
+  it('makes no cut so near the end that the last shot would flash by', () => {
+    // B starts talking a second before the recording ends.
+    const cuts = directCuts([{ level: mic(20, [[0, 19]]) }, { level: mic(20, [[19, 20]]) }], { step: STEP, reactions: false })
+    expect(shots(cuts)).toEqual([[0, 0, 'opening']])
+    // With room for a whole shot, the cut is made.
+    const roomy = directCuts([{ level: mic(20, [[0, 16]]) }, { level: mic(20, [[16, 20]]) }], { step: STEP, reactions: false })
+    expect(roomy.map((c) => c.angle)).toEqual([0, 1])
+    expect(20 - roomy[1].at).toBeGreaterThanOrEqual(2.5)
+    // A last shot a little short of a full one is better than never showing who is talking.
+    const tight = directCuts([{ level: mic(10, [[0, 4]]) }, { level: mic(10, [[4, 10]]) }], { step: STEP, reactions: false, minShot: 5.5 })
+    expect(shots(tight)).toEqual([
+      [0, 0, 'opening'],
+      [5.5, 1, 'speaker'],
+    ])
   })
 
   it('has nothing to say without cameras or signals', () => {

@@ -110,6 +110,8 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
         showWarnings: false,
       })
       if (!conversion.isValid) throw new Error('This video can’t be re-encoded on this computer.')
+      // The sound goes along as it is where an MP4 can hold it, re-encoded where it can't — but never left behind.
+      if ((await input.getPrimaryAudioTrack()) && !conversion.utilizedTracks.some((t) => t.isAudioTrack())) throw new Error('Its sound can’t be carried over into the copy on this computer.')
       conversion.onProgress = (p) => setProgress(assetId, p)
       cancels.set(assetId, () => void conversion.cancel())
       await conversion.execute()

@@ -63,11 +63,14 @@ const FAINT = 0.08
 export function normalizeSignal(values: readonly number[], window = 3, reference = 0): number[] {
   if (!values.length) return []
   const sorted = [...values].sort((a, b) => a - b)
-  const floor = percentile(sorted, 0.1)
+  const quiet = percentile(sorted, 0.1)
   const loud = percentile(sorted, 0.95)
-  const span = loud - floor
   // A signal that never changes says nothing; nor does one that is only noise beside the others.
-  if (!(span > 1e-6) || loud < reference * FAINT) return values.map(() => 0)
+  if (!(loud - quiet > 1e-6) || loud < reference * FAINT) return values.map(() => 0)
+  // Its quietest tenth is its floor — unless it is never quiet (someone who talks all the way through): room
+  // tone is well under half of speech, so a floor higher than that is speech too.
+  const floor = Math.min(quiet, loud * 0.5)
+  const span = loud - floor
   const scaled = values.map((v) => Math.min(1.5, Math.max(0, (v - floor) / span)))
   const half = Math.max(0, Math.floor(window / 2))
   return scaled.map((_, i) => {
@@ -85,10 +88,27 @@ export function normalizeSignal(values: readonly number[], window = 3, reference
 const SPEAKING = 0.3
 /** A second voice within this share of the loudest counts as talking too. */
 const TOGETHER = 0.78
+/** A microphone this much quieter than the loudest one at that moment is hearing someone else's voice, not its own. */
+const BLEED = 0.5
+
+/** A signal averaged over `window` steps around each. */
+function smoothed(values: readonly number[], window: number): number[] {
+  const half = Math.max(0, Math.floor(window / 2))
+  return values.map((_, i) => {
+    let sum = 0
+    let n = 0
+    for (let k = Math.max(0, i - half); k <= Math.min(values.length - 1, i + half); k++) {
+      sum += values[k]
+      n++
+    }
+    return sum / n
+  })
+}
 
 /**
  * Plans the cuts. Returns them in order, starting with the opening shot at 0;
- * consecutive cuts are always to different cameras and at least `minShot` apart.
+ * consecutive cuts are always to different cameras and at least `minShot` apart
+ * (a cutaway to a listener, and the last shot, may be as short as 0.6 of that).
  */
 export function directCuts(angles: readonly AngleSignal[], opts: DirectorOptions): DirectorCut[] {
   const n = angles.length
@@ -103,11 +123,17 @@ export function directCuts(angles: readonly AngleSignal[], opts: DirectorOptions
   const smooth = Math.max(1, Math.round(0.45 / step))
   const loudest = Math.max(0, ...angles.map((a) => loudLevel(a.level)))
   const liveliest = Math.max(0, ...angles.map((a) => (a.motion?.length ? loudLevel(a.motion) : 0)))
-  const act = angles.map((a) => {
+  // What each microphone picks up, as it is: the one a person speaks into is the loudest at that moment, and the
+  // others hear the same voice fainter. Judged against itself alone, a microphone nobody ever speaks into would
+  // make that faint copy its speech.
+  const heard = angles.map((a) => smoothed(a.level, smooth))
+  const loudestNow = Array.from({ length: steps }, (_, i) => Math.max(0, ...heard.map((h) => h[i] ?? 0)))
+  const act = angles.map((a, index) => {
     const level = normalizeSignal(a.level, smooth, loudest)
     const motion = a.motion?.length ? normalizeSignal(a.motion, smooth, liveliest) : null
     return Array.from({ length: steps }, (_, i) => {
-      const l = level[i] ?? 0
+      const own = (heard[index][i] ?? 0) >= loudestNow[i] * BLEED
+      const l = own ? (level[i] ?? 0) : 0
       // Sound decides; movement tips the balance — and decides alone for a camera with no sound of its own.
       return motion ? (level.some((v) => v > 0) ? l + weight * (motion[i] ?? 0) : (motion[i] ?? 0)) : l
     })
@@ -157,7 +183,8 @@ export function directCuts(angles: readonly AngleSignal[], opts: DirectorOptions
   const cut = (at: number, angle: number, why: DirectorCut['why']) => {
     const last = cuts[cuts.length - 1]
     const t = Math.max(last.at + minShot * (why === 'reaction' || reaction ? 0.6 : 1), at)
-    if (angle === current || t >= steps * step) return false
+    // No cut so near the end that the last shot would flash by (like a cutaway, it may be a little short of a full shot).
+    if (angle === current || t > steps * step - minShot * 0.6) return false
     cuts.push({ at: Math.round(t * 1000) / 1000, angle, why })
     current = angle
     since = t

@@ -181,7 +181,7 @@ export const CRAFT_TOOLS: AgentTool[] = [
   {
     name: 'auto_direct_multicam',
     description:
-      'Cut a multicam clip between its cameras the way a director would: to whoever is speaking (each camera is judged by its own microphone), to the wide shot when several speak or nobody does, with cutaways to a listener when one shot runs long — never shorter than min_shot_seconds. watch_picture also looks at how much each picture moves, for cameras with no sound of their own (slower). dry_run plans without cutting. Needs a multicam clip on the open timeline (create_multicam, or multicam_create). One undo step; change single cuts afterwards with multicam_switch.',
+      'Cut a multicam clip between its cameras the way a director would: to whoever is speaking (each camera is judged by its own microphone), to the wide shot when several speak or nobody does, with cutaways to a listener when one shot runs long. No shot is shorter than min_shot_seconds (a cutaway, and the last shot, may be a little shorter). watch_picture also looks at how much each picture moves, for cameras with no sound of their own (slower). dry_run plans without cutting. Needs a multicam clip on the open timeline (create_multicam, or multicam_create). One undo step; change single cuts afterwards with multicam_switch.',
     inputSchema: obj({
       clip_ids: list('The multicam clips to cut (default: every multicam clip on the open timeline that plays the same multicam timeline as the first)', { type: 'string' }),
       min_shot_seconds: num('Shortest shot (default 2.5)', { minimum: 0.5, maximum: 30 }),

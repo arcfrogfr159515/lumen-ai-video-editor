@@ -736,7 +736,7 @@ Cut words out of the film by what is said: the frames they are spoken in come ou
 
 ### `auto_direct_multicam`
 
-Cut a multicam clip between its cameras the way a director would: to whoever is speaking (each camera is judged by its own microphone), to the wide shot when several speak or nobody does, with cutaways to a listener when one shot runs long — never shorter than min_shot_seconds. watch_picture also looks at how much each picture moves, for cameras with no sound of their own (slower). dry_run plans without cutting. Needs a multicam clip on the open timeline (create_multicam, or multicam_create). One undo step; change single cuts afterwards with multicam_switch.
+Cut a multicam clip between its cameras the way a director would: to whoever is speaking (each camera is judged by its own microphone), to the wide shot when several speak or nobody does, with cutaways to a listener when one shot runs long. No shot is shorter than min_shot_seconds (a cutaway, and the last shot, may be a little shorter). watch_picture also looks at how much each picture moves, for cameras with no sound of their own (slower). dry_run plans without cutting. Needs a multicam clip on the open timeline (create_multicam, or multicam_create). One undo step; change single cuts afterwards with multicam_switch.
 
 | Parameter | Type | Description |
 | --- | --- | --- |
