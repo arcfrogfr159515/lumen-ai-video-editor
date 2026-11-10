@@ -5,7 +5,7 @@
  * the footage changes. Trying an alternative is one keystroke, not a drag.
  */
 import { uid } from '@/lib/id'
-import { clipEnd, clipsOnTrack, framesIn, isMagneticTrack, sourceFrames, trackAccepts } from './ops'
+import { clipEnd, clipsOnTrack, fitToMedia, framesIn, isMagneticTrack, sourceFrames, trackAccepts } from './ops'
 import { MAX_SPEED, MIN_SPEED } from './timing'
 import type { Asset, Clip, ClipTake, Frame, Project } from './types'
 
@@ -157,7 +157,7 @@ export function switchTake(p: Project, clip: Clip, takeId: string): SwitchResult
   clip.inPoint = inPoint
   clip.speed = target.speed
   clip.reverse = target.reverse
-  if (target.ramp?.length) clip.keyframes.speed = target.ramp.filter((k) => k.frame <= duration).map((k) => ({ ...k }))
+  if (target.ramp?.length) clip.keyframes.speed = target.ramp.map((k) => ({ ...k }))
   else delete clip.keyframes.speed
   // A clip named after its footage takes the new footage's name; one given a name of its own keeps it.
   if (!renamed) clip.name = target.name
@@ -168,19 +168,21 @@ export function switchTake(p: Project, clip: Clip, takeId: string): SwitchResult
   else delete clip.stabilize
 
   clip.duration = duration
-  if (duration < slot) clip.takeSlot = slot
+  // A ramp can use footage faster than its base speed says: the clip ends where the footage does.
+  fitToMedia(p, clip)
+  if (clip.duration < slot) clip.takeSlot = slot
   else delete clip.takeSlot
   // Keyframes past the new end have nothing to animate.
   for (const [prop, kfs] of Object.entries(clip.keyframes)) {
     if (prop === 'speed' || !kfs) continue
-    const kept = kfs.filter((k) => k.frame <= duration)
+    const kept = kfs.filter((k) => k.frame <= clip.duration)
     if (kept.length) clip.keyframes[prop as keyof Clip['keyframes']] = kept
     else delete clip.keyframes[prop as keyof Clip['keyframes']]
   }
-  clip.audio.fadeIn = Math.min(clip.audio.fadeIn, Math.floor(duration / 2))
-  clip.audio.fadeOut = Math.min(clip.audio.fadeOut, Math.floor(duration / 2))
+  clip.audio.fadeIn = Math.min(clip.audio.fadeIn, Math.floor(clip.duration / 2))
+  clip.audio.fadeOut = Math.min(clip.audio.fadeOut, Math.floor(clip.duration / 2))
   clip.takeId = target.id
-  return { takeId: target.id, shortenedBy: Math.max(0, want - duration), slidBack }
+  return { takeId: target.id, shortenedBy: Math.max(0, want - clip.duration), slidBack }
 }
 
 /**

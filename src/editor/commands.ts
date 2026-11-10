@@ -26,6 +26,7 @@ import {
   detachAudio,
   dropLoneGroups,
   findFreeStart,
+  fitToMedia,
   freezeFrame,
   groupClips,
   insertGap,
@@ -69,7 +70,7 @@ import {
 } from './sequences'
 import { addTake, clearTakes, neighbourTake, removeTake, switchTake, TakeError } from './takes'
 import { resolveEdit } from './three-point'
-import { averageSpeed, consumed, isRamped, localForConsumed, MAX_SPEED, MIN_SPEED } from './timing'
+import { averageSpeed, consumed, isRamped, MAX_SPEED, MIN_SPEED } from './timing'
 import type { AnimatableProp, BusMix, Clip, Marker, Project, Sequence, Track } from './types'
 
 export class CommandError extends Error {}
@@ -585,6 +586,8 @@ function applyPatch(p: Project, clip: Clip, patch: ClipPatch) {
     if (next && !isMagneticTrack(p, clip.trackId)) duration = Math.min(duration, next.start - clip.start)
     clip.speed = speed
     clip.duration = duration
+    // A length rounded up to a whole frame can ask for more footage than there is.
+    fitToMedia(p, clip)
   }
 }
 
@@ -594,18 +597,6 @@ function setBase(clip: Clip, prop: AnimatableProp, value: number) {
   else clip.transform[prop] = value
 }
 
-/** A speed ramp can eat footage faster: shorten the clip so it never runs past the end of its media. */
-function fitToMedia(p: Project, clip: Clip) {
-  const src = sourceFrames(p, clip)
-  if (src === Infinity || clip.freeze) return
-  const available = Math.max(1, src - clip.inPoint)
-  if (consumed(clip) <= available + 0.5) return
-  clip.duration = Math.max(1, Math.floor(localForConsumed(clip, available)))
-  for (const prop of ANIMATABLE) {
-    const kfs = clip.keyframes[prop]
-    if (kfs) clip.keyframes[prop] = kfs.filter((k) => k.frame <= clip.duration)
-  }
-}
 
 /** Copies attribute groups from one clip onto another, where they make sense for its kind. */
 function copyAttributes(p: Project, from: Pick<Clip, 'kind'> & Partial<Clip>, to: Clip, include: readonly Attribute[]) {
@@ -1087,7 +1078,8 @@ export const commands = {
       for (let k = 0; k <= 1000; k++) sum += Math.min(MAX_SPEED, Math.max(MIN_SPEED, evalKeyframes(shape, k)))
       let duration = Math.max(2, Math.round(used / (sum / 1001)))
       const next = clipsOnTrack(p, clip.trackId).find((c) => c.id !== clip.id && c.start >= clipEnd(clip))
-      if (next && !isMagneticTrack(p, clip.trackId)) duration = Math.max(2, Math.min(duration, next.start - clip.start))
+      // (The room up to the next clip is at least the clip's own length — a single frame, for the shortest.)
+      if (next && !isMagneticTrack(p, clip.trackId)) duration = Math.min(duration, next.start - clip.start)
       clip.duration = duration
       clip.keyframes.speed = points
         .map((pt) => ({ frame: Math.round(pt.at * duration), value: pt.speed, easing: pt.easing ?? ('ease' as const) }))

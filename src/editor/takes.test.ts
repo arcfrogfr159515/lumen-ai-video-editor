@@ -3,6 +3,7 @@ import { getProject } from './store'
 import { currentTakes, describeTake, neighbourTake, takeFills, takeIndex } from './takes'
 import { add, addAsset, clip, freshProject, refusal, run, spans } from './test-helpers'
 import type { SwitchResult } from './takes'
+import { consumed } from './timing'
 
 beforeEach(() => {
   freshProject('Takes')
@@ -73,6 +74,41 @@ describe('alternate takes', () => {
     expect(clip(id)).toMatchObject({ assetId: 'take1', duration: 150 })
     expect('takeSlot' in clip(id)).toBe(false)
     expect(clip(after).start).toBe(250)
+  })
+
+  it('forget the length of the place once the clip is given a length by hand', () => {
+    const id = add('Overlay', 0, 150, { assetId: 'take1' })
+    run('take.add', { clipId: id, assetId: 'short' })
+    expect(clip(id)).toMatchObject({ duration: 60, takeSlot: 150 })
+    // Trimmed to 40 frames: that is its length now, whatever take is shown next.
+    run('clip.trim', { id, edge: 'end', frame: 40, ripple: false })
+    expect('takeSlot' in clip(id)).toBe(false)
+    run('take.switch', { clipId: id, step: 1 })
+    expect(clip(id)).toMatchObject({ assetId: 'take1', duration: 40 })
+
+    // The same when a new speed changes its length.
+    const other = add('Overlay', 300, 150, { assetId: 'take1' })
+    run('take.add', { clipId: other, assetId: 'short' })
+    run('clip.update', { ids: [other], patch: { speed: 0.5 } })
+    expect(clip(other)).toMatchObject({ duration: 120, speed: 0.5 })
+    expect('takeSlot' in clip(other)).toBe(false)
+  })
+
+  it('end where the footage does when a take is ramped faster than its base speed', () => {
+    // Four seconds of take1, ramped from 1× up to 4× (and playing on at 4× if the clip is made longer).
+    const id = add('Overlay', 0, 120, { assetId: 'take1', inPoint: 0 })
+    run('clip.setSpeedRamp', { id, points: [{ at: 0, speed: 1 }, { at: 1, speed: 4, easing: 'linear' }] })
+    const ramped = clip(id).duration
+    run('take.add', { clipId: id, assetId: 'take2' })
+    // Back on the ramped take, in a place made longer meanwhile than its footage can fill.
+    run('clip.trim', { id, edge: 'end', frame: 590, ripple: false })
+    run('take.switch', { clipId: id, step: -1 })
+    const c = clip(id)
+    expect(c.keyframes.speed?.length).toBe(2)
+    expect(c.inPoint + consumed(c)).toBeLessThanOrEqual(600.5)
+    expect(c.duration).toBeGreaterThan(ramped)
+    expect(c.duration).toBeLessThan(590)
+    expect(c.takeSlot).toBe(590)
   })
 
   it('never run into the next clip on a track that does not close up', () => {

@@ -264,6 +264,37 @@ describe('speed ramps', () => {
     expect(consumed(c)).toBeLessThanOrEqual(4 * FPS + 0.5)
     expect(c.duration).toBe(30)
   })
+
+  it('keeps the shape of a ramp that the end of the media cuts short', () => {
+    const a = add('Overlay', 0, 100, { assetId: 'short' })
+    dispatch('keyframe.set', { clipId: a, prop: 'speed', frame: 0, value: 1, easing: 'linear' })
+    dispatch('keyframe.set', { clipId: a, prop: 'speed', frame: 100, value: 8 })
+    const c = clip(a)
+    // It still speeds up towards 8×: it just ends before it gets there.
+    expect(c.keyframes.speed).toHaveLength(2)
+    expect(c.duration).toBeLessThan(100)
+    expect(speedAt(c, c.duration)).toBeGreaterThan(3)
+    expect(consumed(c)).toBeLessThanOrEqual(4 * FPS + 0.5)
+  })
+
+  it('a new speed never asks for more footage than the media has', () => {
+    // 118 frames, up to the very end of the media. At 4× that is 29.5 frames: 30 would need 120.
+    const a = add('Overlay', 0, 118, { assetId: 'short', inPoint: 2 })
+    dispatch('clip.update', { ids: [a], patch: { speed: 4 } })
+    expect(clip(a).duration).toBe(29)
+    expect(clip(a).inPoint + consumed(clip(a))).toBeLessThanOrEqual(4 * FPS)
+    // With footage to spare, the length is rounded as before.
+    const b = add('Overlay', 200, 118, { assetId: 'long', inPoint: 2 })
+    dispatch('clip.update', { ids: [b], patch: { speed: 4 } })
+    expect(clip(b).duration).toBe(30)
+  })
+
+  it('a ramp on a single-frame clip stays clear of the clip after it', () => {
+    const a = add('Overlay', 10, 1, { assetId: 'long' })
+    add('Overlay', 11, 50, { assetId: 'long', inPoint: 100 })
+    dispatch('clip.setSpeedRamp', { id: a, points: [{ at: 0, speed: 0.5 }, { at: 1, speed: 0.5 }] })
+    expect(spans('Overlay')).toEqual([[10, 11], [11, 61]])
+  })
 })
 
 // ─── In & out, tracks ────────────────────────────────────────────────────

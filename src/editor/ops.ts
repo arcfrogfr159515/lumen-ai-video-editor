@@ -7,7 +7,7 @@ import { clamp } from '@/lib/math'
 import { uid } from '@/lib/id'
 import { createClip, createTrack, TRACK_HEIGHTS } from './defaults'
 import { ANIMATABLE, propAt } from './keyframes'
-import { consumed, consumedAt, sourceFrameAt, speedAt, splitInPoints } from './timing'
+import { consumed, consumedAt, localForConsumed, sourceFrameAt, speedAt, splitInPoints } from './timing'
 import type { AnimatableProp, Clip, ClipKind, Frame, Project, Track, Transition } from './types'
 
 export const clipEnd = (c: Pick<Clip, 'start' | 'duration'>) => c.start + c.duration
@@ -95,7 +95,43 @@ export function packTrack(p: Project, trackId: string) {
 /** Packs magnetic tracks; with the state before the edit, grouped clips elsewhere follow their magnetic partners. */
 export function normalizeProject(p: Project, before?: Project) {
   for (const t of p.tracks) if (isMagnetic(t)) packTrack(p, t.id)
-  if (before) syncGroups(p, before)
+  if (before) {
+    syncGroups(p, before)
+    forgetTakeSlots(p, before)
+  }
+}
+
+/**
+ * A clip made shorter by a short take remembers the length of its place, to
+ * get it back with a longer take. Once its length is changed any other way —
+ * a trim, a cut, a new speed — that is the length it was given, and the old
+ * place is forgotten.
+ */
+function forgetTakeSlots(p: Project, before: Project) {
+  for (const c of Object.values(p.clips)) {
+    if (c.takeSlot === undefined) continue
+    const was = before.clips[c.id]
+    if (c.takeSlot <= c.duration || (was && was.takeId === c.takeId && was.duration !== c.duration)) delete c.takeSlot
+  }
+}
+
+/**
+ * Shortens a clip (a draft) that asks for more footage than its media has from
+ * its in-point on — after a new speed, a ramp, or other footage put in its
+ * place. A ramp keeps its shape: its keyframes stay where they are, as they do
+ * when a clip is trimmed, and the clip simply ends earlier.
+ */
+export function fitToMedia(p: Project, clip: Clip) {
+  const src = sourceFrames(p, clip)
+  if (src === Infinity || clip.freeze) return
+  const available = Math.max(1, src - clip.inPoint)
+  if (consumed(clip) <= available + 0.5) return
+  clip.duration = Math.max(1, Math.floor(localForConsumed(clip, available) + 1e-6))
+  for (const prop of ANIMATABLE) {
+    if (prop === 'speed') continue
+    const kfs = clip.keyframes[prop]
+    if (kfs) clip.keyframes[prop] = kfs.filter((k) => k.frame <= clip.duration)
+  }
 }
 
 /**
