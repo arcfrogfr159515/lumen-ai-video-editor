@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { cancelRecording, runMacro, startRecording, stopRecording, useMacros } from './macro-store'
 import { exportMacros, generalize, importMacros, instantiate, recordable, type Macro } from './macros'
-import { getProject, useEditor } from './store'
+import { dispatch, getProject, useEditor } from './store'
 import { add, addAsset, clip, freshProject, onTrack, run, spans, trackId } from './test-helpers'
 
 let a: string
@@ -113,6 +113,46 @@ describe('recording', () => {
     expect(steps()).toEqual(['clip.update'])
   })
 
+  it('folds a dragged slider into one step, and keeps edits to different things apart', async () => {
+    run('effect.add', { ids: [a], kind: 'grain' })
+    run('effect.add', { ids: [a], kind: 'blur' })
+    const [grain, blur] = clip(a).effects.map((e) => e.id)
+    const c = add('Overlay', 1200, 90, { assetId: 'long', name: 'C' })
+    startRecording(a)
+    // One slider, dragged: three values, one step.
+    for (const amount of [20, 45, 70]) dispatch('effect.update', { clipId: a, effectId: grain, patch: { amount } }, { coalesce: 'fx:grain' })
+    // Another effect straight after: its own step, though it sets the same thing.
+    run('effect.update', { clipId: a, effectId: blur, patch: { amount: 10 } })
+    // The same setting typed twice: the second is what counts.
+    run('clip.update', { ids: [a], patch: { color: { contrast: 10 } } })
+    run('clip.update', { ids: [a], patch: { color: { contrast: 30 } } })
+    await settle()
+    expect(useMacros.getState().recording!.steps.map((s) => [s.command, JSON.stringify((s.input as { patch: unknown }).patch)])).toEqual([
+      ['effect.update', '{"amount":70}'],
+      ['effect.update', '{"amount":10}'],
+      ['clip.update', '{"color":{"contrast":30}}'],
+    ])
+    // An edit to another clip isn't the recorded clip's business — and doesn't swallow the step before it.
+    run('clip.update', { ids: [c], patch: { color: { contrast: -5 } } })
+    expect(steps()).toHaveLength(3)
+    cancelRecording()
+  })
+
+  it('keeps two speed changes as two steps: each changes the length the clip had', async () => {
+    startRecording(a)
+    run('clip.update', { ids: [a], patch: { speed: 2 } })
+    run('clip.update', { ids: [a], patch: { speed: 0.5 } })
+    await settle()
+    expect(steps()).toEqual(['clip.update', 'clip.update'])
+    cancelRecording()
+    // Dragged in one gesture, they are one.
+    startRecording(b)
+    for (const speed of [1.2, 1.6, 2]) dispatch('clip.update', { ids: [b], patch: { speed } }, { coalesce: 'speed' })
+    await settle()
+    expect(steps()).toEqual(['clip.update'])
+    cancelRecording()
+  })
+
   it('keeps nothing when nothing was recorded, and gives macros names of their own', async () => {
     startRecording(a)
     expect(stopRecording('Empty')).toBeNull()
@@ -187,6 +227,56 @@ describe('replaying', () => {
     expect(r.done).toBe(0)
     expect(r.failed[0].why).toMatch(/step 1 \(Move clip\): Titles is locked/)
     expect(clip(b).trackId).toBe(trackId('Overlay'))
+  })
+
+  it('measures an edit to a piece from that piece, not from the clip it was cut from', async () => {
+    const macro = await record(() => {
+      // A is 100–300: cut at 180, then the second piece loses its last 20 frames and its first 10.
+      const [right] = run('clip.split', { frame: 180, ids: [a] }) as string[]
+      run('clip.trim', { id: right, edge: 'end', frame: 280 })
+      run('clip.trim', { id: right, edge: 'start', frame: 190 })
+      // The first piece goes: what is done after that is still measured from the second.
+      run('clip.delete', { ids: [a], ripple: false })
+      run('marker.add', { frame: 200 })
+    })
+    expect(runMacro(macro, [b])).toEqual({ done: 1, failed: [] })
+    // B is 700–1020: cut 80 frames in (780); its second piece ends 20 early (1000) and starts 10 late (790).
+    expect(onTrack('Overlay').filter((c) => c.name === 'B').map((c) => [c.start, c.start + c.duration])).toEqual([[790, 1000]])
+    expect(getProject().markers.map((m) => m.frame)).toEqual([200, 800])
+  })
+
+  it('knows the pieces an edit leaves behind without saying so', async () => {
+    const macro = await record(() => {
+      // Lifting the middle out of A leaves a piece either side; the one after it is then graded and given an effect.
+      run('timeline.liftRange', { start: 150, end: 200 })
+      const after = onTrack('Overlay').find((c) => c.start === 200)!
+      run('clip.update', { ids: [after.id], patch: { color: { saturation: -100 } } })
+      run('effect.add', { ids: [after.id], kind: 'grain', amount: 40 })
+      run('effect.update', { clipId: after.id, effectId: clip(after.id).effects[0].id, patch: { amount: 75 } })
+    })
+    expect(useMacros.getState().macros).toHaveLength(1)
+    expect(macro.steps.map((s) => s.command)).toEqual(['timeline.liftRange', 'clip.update', 'effect.add', 'effect.update'])
+    expect(runMacro(macro, [b])).toEqual({ done: 1, failed: [] })
+    const pieces = onTrack('Overlay').filter((c) => c.name === 'B')
+    expect(pieces.map((c) => [c.start, c.start + c.duration, c.color.saturation, c.effects.map((e) => e.amount).join()])).toEqual([
+      [700, 750, 0, ''],
+      [800, 1020, -100, '75'],
+    ])
+  })
+
+  it('switches and removes takes by their place in the list', async () => {
+    addAsset('other', 60)
+    for (const id of [a, b]) {
+      run('take.add', { clipId: id, assetId: 'other', inPoint: 0, show: false })
+      run('take.add', { clipId: id, assetId: 'other', inPoint: 300, show: false })
+    }
+    const macro = await record(() => {
+      run('take.switch', { clipId: a, takeId: clip(a).takes![2].id })
+      run('take.remove', { clipId: a, takeId: clip(a).takes![1].id })
+    })
+    expect(runMacro(macro, [b])).toEqual({ done: 1, failed: [] })
+    expect(clip(b)).toMatchObject({ assetId: 'other', inPoint: 300 })
+    expect(clip(b).takes!.map((t) => t.inPoint)).toEqual([1500, 300])
   })
 
   it('is not recorded while it runs', async () => {

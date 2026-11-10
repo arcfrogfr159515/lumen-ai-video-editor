@@ -63,8 +63,8 @@ export function problems(p: Project): string[] {
     if (src !== Infinity && exact && c.inPoint + consumed(c) > src + 1) out.push(`${where}: runs ${c.inPoint + consumed(c) - src} frames past the end of its footage (speed ${c.speed})`)
     if (!(c.speed > 0) || !Number.isFinite(c.speed)) out.push(`${where}: speed ${c.speed}`)
     if (c.audio.fadeIn < 0 || c.audio.fadeOut < 0) out.push(`${where}: a negative fade`)
-    // (A speed ramp keeps its shape when the clip is trimmed, so its keyframes may lie past the end.)
-    for (const [prop, kfs] of Object.entries(c.keyframes)) if (prop !== 'speed') for (const k of kfs ?? []) if (k.frame < 0 || k.frame > c.duration) out.push(`${where}: a ${prop} keyframe outside the clip (${k.frame})`)
+    // (Keyframes may lie past the clip's end: a trim keeps them, so trimming back out brings the animation back.)
+    for (const [prop, kfs] of Object.entries(c.keyframes)) for (const k of kfs ?? []) if (k.frame < 0) out.push(`${where}: a ${prop} keyframe before the clip starts (${k.frame})`)
     if (c.takes) {
       if (c.takes.length < 2) out.push(`${where}: a list of takes with ${c.takes.length} in it`)
       if (!c.takes.some((t) => t.id === c.takeId)) out.push(`${where}: shows a take that isn't in its list`)

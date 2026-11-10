@@ -8,12 +8,17 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { uid } from '@/lib/id'
 import type { CommandName } from './commands'
-import { generalize, instantiate, MacroError, recordable, touches, type Macro, type MacroStep } from './macros'
-import { beginTransaction, dispatch, endTransaction, getProject, onDispatch, rollbackTo, savepoint, useEditor } from './store'
+import { generalize, instantiate, MacroError, madeBy, recordable, touches, type Macro, type MacroStep } from './macros'
+import { beginTransaction, dispatch, endTransaction, getProject, onDispatch, rollbackTo, savepoint, useEditor, type DispatchEvent } from './store'
+import type { Project } from './types'
 
 interface RecordedStep extends MacroStep {
   /** What the command answered with, for later steps that work on what it made. */
   result: unknown
+  /** The clips it made, whether or not it said so. */
+  made: string[]
+  /** The project before the step — before the first of them, when several were folded into one. */
+  origin: Project
   /** How deep history was once the step was in it: an undo back past that takes the step with it. */
   depth: number | null
 }
@@ -45,11 +50,36 @@ let undone: RecordedStep[] = []
 /** True while a macro is being replayed: its own commands are not to be recorded. */
 let replaying = false
 
-/** Commands that set something rather than change it: doing one twice in a row (a slider being dragged) is one step. */
-const SETS = new Set<CommandName>(['clip.update', 'effect.update', 'mask.update', 'clip.setSpeedRamp', 'clip.setTransition'])
+/** Commands that set something rather than change it: one done twice in a row leaves what the second alone would. */
+const SETS = new Set<CommandName>(['clip.update', 'effect.update', 'mask.update', 'clip.setTransition'])
 
-/** The shape of an input: its keys, without its numbers and words — two inputs of one shape set the same things. */
-const shape = (v: unknown): string => (Array.isArray(v) ? `[${v.map(shape).join(',')}]` : v && typeof v === 'object' ? `{${Object.entries(v).map(([k, x]) => `${k}:${shape(x)}`).join(',')}}` : '_')
+/**
+ * Whether a step says all there is to say after the one before it, so the two
+ * are one step: both came of one gesture (a slider being dragged), or both set
+ * the same things outright. A new speed is not such a setting — it changes
+ * the clip's length from whatever length it had — unless it was one gesture.
+ */
+function restates(e: DispatchEvent) {
+  if (e.merged) return true
+  if (!SETS.has(e.name)) return false
+  const patch = e.name === 'clip.update' ? (e.input as { patch?: Record<string, unknown> }).patch : undefined
+  return !(patch && 'speed' in patch)
+}
+
+/**
+ * The shape of a step's input: its keys and what it is addressed to (the clip,
+ * a piece, an effect — the placeholders), without its numbers and words. Two
+ * inputs of one shape set the same things on the same thing.
+ */
+const shape = (v: unknown): string => {
+  if (Array.isArray(v)) return `[${v.map(shape).join(',')}]`
+  if (!v || typeof v !== 'object') return '_'
+  if (Object.keys(v).some((k) => k.startsWith('$'))) return JSON.stringify(v)
+  return `{${Object.entries(v)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([k, x]) => `${k}:${shape(x)}`)
+    .join(',')}}`
+}
 
 export function startRecording(clipId: string) {
   undone = []
@@ -93,11 +123,14 @@ onDispatch((e) => {
   if (!recording || replaying || e.source !== 'user') return
   const note = (why: string) => useMacros.setState({ recording: { ...recording, skipped: recording.skipped.includes(why) ? recording.skipped : [...recording.skipped, why] } })
   if (!recordable(e.name)) return void note(`${e.label} — macros hold edits to clips, not to media, tracks or timelines`)
-  const ctx = { clipId: recording.clipId, results: recording.steps.map((s) => s.result) }
-  if (!touches(e.name, e.input, e.before, ctx)) return void note(`${e.label} — it wasn’t made to the clip being recorded on`)
-  const step: RecordedStep = { command: e.name, input: generalize(e.name, e.input, e.before, ctx), title: e.label, result: e.result, depth: null }
+  const context = (steps: RecordedStep[]) => ({ clipId: recording.clipId, results: steps.map((s) => s.result), made: steps.map((s) => s.made) })
+  if (!touches(e.name, e.input, e.before, context(recording.steps))) return void note(`${e.label} — it wasn’t made to the clip being recorded on`)
+  const write = (earlier: RecordedStep[], origin: Project): RecordedStep => ({ command: e.name, input: generalize(e.name, e.input, origin, context(earlier)), title: e.label, result: e.result, made: madeBy(origin, e.after), origin, depth: null })
   const last = recording.steps[recording.steps.length - 1]
-  const steps = last && SETS.has(e.name) && last.command === e.name && shape(last.input) === shape(step.input) ? [...recording.steps.slice(0, -1), step] : [...recording.steps, step]
+  const earlier = recording.steps.slice(0, -1)
+  // Folded into the step before it, a step is written as that one was: against the project as the first of them found it.
+  const folded = last && last.command === e.name && restates(e) ? write(earlier, last.origin) : null
+  const steps = folded && shape(folded.input) === shape(last.input) ? [...earlier, folded] : [...recording.steps, write(recording.steps, e.before)]
   undone = []
   useMacros.setState({ recording: { ...recording, steps } })
   // History takes the step in when the edit (or the transaction around it) is done: note how deep it is then.
@@ -159,16 +192,18 @@ export function runMacro(macro: Macro, clipIds: readonly string[], source: 'user
         continue
       }
       const mark = savepoint()
-      const ctx = { clipId: target.id, results: [] as unknown[] }
+      const ctx = { clipId: target.id, results: [] as unknown[], made: [] as string[][] }
       let why: string | undefined
       for (const [n, step] of macro.steps.entries()) {
         try {
-          const res = dispatch(step.command, instantiate(step, getProject(), ctx) as never, { label: step.title, source })
+          const was = getProject()
+          const res = dispatch(step.command, instantiate(step, was, ctx) as never, { label: step.title, source })
           if (!res.ok) {
             why = `step ${n + 1} (${step.title}): ${res.error}`
             break
           }
           ctx.results.push(res.result)
+          ctx.made.push(madeBy(was, getProject()))
         } catch (err) {
           if (!(err instanceof MacroError)) throw err
           why = `step ${n + 1} (${step.title}): ${err.message}`

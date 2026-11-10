@@ -67,6 +67,8 @@ export interface DispatchEvent {
   source: ActionSource
   /** The history label the edit goes under. */
   label: string
+  /** It went into the history entry before it: one gesture — a slider being dragged — not a new edit. */
+  merged: boolean
 }
 
 const dispatchListeners = new Set<(e: DispatchEvent) => void>()
@@ -143,9 +145,9 @@ export const useEditor = create<EditorState>()((set, get) => ({
 
     const version = get().version + 1
     const label = opts.label ?? def.title(parsed.data, before)
-    const announce = () => {
+    const announce = (merged = false) => {
       if (!dispatchListeners.size) return
-      const event: DispatchEvent = { name, input: parsed.data, result, before, after: next, source: opts.source ?? openTransaction?.source ?? 'user', label }
+      const event: DispatchEvent = { name, input: parsed.data, result, before, after: next, source: opts.source ?? openTransaction?.source ?? 'user', label, merged }
       for (const fn of dispatchListeners) fn(event)
     }
     if (openTransaction) {
@@ -159,7 +161,8 @@ export const useEditor = create<EditorState>()((set, get) => ({
     const now = performance.now()
     const past = get().past
     const last = past[past.length - 1]
-    if (opts.coalesce && last?.key === opts.coalesce && now - last.at < COALESCE_MS) {
+    const merges = Boolean(opts.coalesce && last?.key === opts.coalesce && now - last.at < COALESCE_MS)
+    if (merges) {
       const merged: HistoryEntry = { ...last, patches: [...last.patches, ...patches], inverse: [...inverse, ...last.inverse], at: now }
       set({ project: next, past: [...past.slice(0, -1), merged], future: [], version })
     } else {
@@ -174,7 +177,7 @@ export const useEditor = create<EditorState>()((set, get) => ({
       }
       set({ project: next, past: [...past, entry].slice(-HISTORY_LIMIT), future: [], version })
     }
-    announce()
+    announce(merges)
     return { ok: true, result }
   },
 

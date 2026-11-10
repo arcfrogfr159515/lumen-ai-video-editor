@@ -13,21 +13,32 @@ import { asset } from './test-helpers'
 import { MEDIA, problems, rng, setUp, type Rng } from './test-invariants'
 import type { Clip, Project } from './types'
 
-/** The clips of each track that doesn't follow ripples, to see that a ripple left them alone. */
-const still = (p: Project) =>
-  JSON.stringify(
-    p.tracks
-      .filter((t) => !followsRipple(t))
-      .map((t) => [t.id, clipsOnTrack(p, t.id).map((c) => [c.id, c.start, c.duration, c.inPoint])]),
-  )
-
 /** A project as text that doesn't depend on the order things were added in (undo puts a deleted clip back last). */
 const canonical = (value: unknown): string =>
   JSON.stringify(value, (_key, v) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : v))
 
+/** The clips of each track that doesn't follow ripples (but for one the edit is made on), to see that a ripple left them alone. */
+const still = (p: Project, except?: string) =>
+  JSON.stringify(
+    p.tracks
+      .filter((t) => !followsRipple(t) && t.id !== except)
+      .map((t) => [t.id, clipsOnTrack(p, t.id).map((c) => [c.id, c.start, c.duration, c.inPoint])]),
+  )
+
+/** Everything on the locked tracks: no edit may touch it. */
+const locked = (p: Project) => canonical(p.tracks.filter((t) => t.locked).map((t) => [t.id, clipsOnTrack(p, t.id)]))
+
+/**
+ * Commands that may change a locked track: its own switches, media leaving the
+ * project (its clips go with it) — and adding a clip or a copy of one, which
+ * the command layer has always allowed (the interface doesn't offer it).
+ */
+const REACHES_LOCKED = new Set(['track.update', 'track.remove', 'asset.remove', 'project.update', 'clip.add', 'clip.duplicate'])
+
 // ─── Random edits ────────────────────────────────────────────────────────
 
-type Try = { name: CommandName; input: unknown; ripples?: boolean }
+/** An edit to try. `ripples`: it moves the whole timeline, so tracks that don't follow ripples must come out as they were — but for the track it is made on. */
+type Try = { name: CommandName; input: unknown; ripples?: boolean | { on: string } }
 
 const clipsOf = (p: Project) => Object.values(p.clips)
 const end = (p: Project) => Math.max(0, ...clipsOf(p).map(clipEnd))
@@ -103,7 +114,7 @@ function someEdit(r: Rng): Try | null {
       if (r.chance(0.6)) input.sourceOut = r.int(((input.sourceIn as number) ?? 0) + 1, length)
       if (r.chance(0.5)) input.timelineIn = frame()
       if (r.chance(0.5)) input.timelineOut = ((input.timelineIn as number) ?? frame()) + r.int(1, 200)
-      return { name: 'timeline.threePointEdit', input }
+      return { name: 'timeline.threePointEdit', input, ...(input.mode === 'insert' ? { ripples: { on: track.id } } : {}) }
     }
     case 'takeAdd': {
       const c = anyClip(media)
@@ -212,7 +223,9 @@ function run(seed: number, steps: number) {
     const edit = someEdit(r)
     if (!edit || !(edit.name in commands)) continue
     const before = getProject()
-    const left = still(before)
+    const on = typeof edit.ripples === 'object' ? edit.ripples.on : undefined
+    const left = still(before, on)
+    const kept = locked(before)
     const res = dispatch(edit.name, edit.input as CommandInput<CommandName>)
     const said = `${edit.name} ${JSON.stringify(edit.input)}${res.ok ? '' : ` → refused: ${res.error}`}`
     log.push(said)
@@ -224,7 +237,8 @@ function run(seed: number, steps: number) {
     }
     const bad = problems(after)
     if (bad.length) throw fail(bad.join('\n  '))
-    if (edit.ripples && still(after) !== left) throw fail('a ripple moved clips on a track that doesn’t follow ripples')
+    if (edit.ripples && still(after, on) !== left) throw fail('a ripple moved clips on a track that doesn’t follow ripples')
+    if (!REACHES_LOCKED.has(edit.name) && locked({ ...after, tracks: after.tracks.filter((t) => before.tracks.some((b) => b.id === t.id && b.locked)) }) !== kept) throw fail('an edit changed a locked track')
     if (after !== before) {
       useEditor.getState().undo()
       if (canonical(getProject()) !== canonical(before)) throw fail('undo didn’t put back what was there')

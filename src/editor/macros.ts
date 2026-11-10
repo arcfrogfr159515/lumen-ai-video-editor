@@ -8,21 +8,32 @@ import type { CommandName } from './commands'
 import { clipEnd } from './ops'
 import type { Clip, Frame, Project } from './types'
 
+/**
+ * A clip a step is about: the one the macro runs on, one an earlier step
+ * answered with (the second half of a split, a copy), or one an earlier step
+ * left behind without saying so (what remains after a stretch is lifted out
+ * of a clip, or after a freeze frame is put in the middle of one).
+ */
+export type ClipRef = { $clip: true } | { $result: { step: number; path: string } } | { $made: { step: number; index: number } }
+
 /** A value in a step's input that stands for something of the clip the macro runs on. */
 export type Placeholder =
   /** The clip itself. */
   | { $clip: true }
-  /** A frame on the timeline, counted from the clip's start or its end. */
-  | { $frame: { from: 'start' | 'end'; offset: number } }
-  /** A track, counted from the clip's own (0), in tracks up (negative) or down. */
-  | { $track: number }
+  /** A frame on the timeline, counted from the start or the end of a clip: the clip itself, unless `of` names another. */
+  | { $frame: { from: 'start' | 'end'; offset: number; of?: ClipRef } }
+  /** A track, counted from a clip's own (0), in tracks up (negative) or down: the clip itself, unless `of` names another. */
+  | { $track: number; of?: ClipRef }
   /** Something an earlier step answered with (a new clip's id, say): the step, and where in its answer. */
   | { $result: { step: number; path: string } }
-  /** One of the clip's effects, by kind (and which of several). */
+  /** A clip an earlier step made: the step, and which of the clips it made (see `madeBy`). */
+  | { $made: { step: number; index: number } }
+  /** An effect of the clip the step is about, by kind (and which of several). */
   | { $effect: { kind: string; index: number } }
-  /** One of the clip's masks, by position. */
+  /** A mask of the clip the step is about, by position. */
   | { $mask: number }
-
+  /** An alternate take of the clip the step is about, by position in its list. */
+  | { $take: number }
 export interface MacroStep {
   command: CommandName
   /** The command's input, with placeholders where it named the clip, a frame, or something made on the way. */
@@ -82,47 +93,102 @@ export interface RecordContext {
   clipId: string
   /** What the steps recorded so far answered with. */
   results: unknown[]
+  /** The clips each of those steps made (see `madeBy`). */
+  made?: string[][]
+}
+
+/**
+ * The clips an edit made, in an order that is the same whenever the same edit
+ * is made: by track, top first, then by where they start.
+ */
+export function madeBy(before: Project, after: Project): string[] {
+  if (before.clips === after.clips) return []
+  const order = new Map(after.tracks.map((t, i) => [t.id, i]))
+  return Object.values(after.clips)
+    .filter((c) => !before.clips[c.id])
+    .sort((a, b) => (order.get(a.trackId) ?? 0) - (order.get(b.trackId) ?? 0) || a.start - b.start)
+    .map((c) => c.id)
+}
+
+/** The clips a recording knows: the one being edited and those its steps made, each as a step would name it. */
+function knownClips(before: Project, ctx: RecordContext): Map<string, ClipRef> {
+  const known = new Map<string, ClipRef>([[ctx.clipId, { $clip: true }]])
+  ctx.results.forEach((result, step) => {
+    for (const [path, value] of leaves(result)) if (!known.has(value) && before.clips[value]) known.set(value, { $result: { step, path } })
+  })
+  ctx.made?.forEach((ids, step) => ids.forEach((id, index) => void (!known.has(id) && before.clips[id] && known.set(id, { $made: { step, index } }))))
+  return known
+}
+
+/** The clip an input (or part of one) is addressed to: its clipId, its id, or the first of its ids. */
+function addressed(value: Record<string, unknown>, isClip: (id: unknown) => boolean): unknown {
+  if (isClip(value.clipId)) return value.clipId
+  if (isClip(value.id)) return value.id
+  if (Array.isArray(value.ids) && isClip(value.ids[0])) return value.ids[0]
+  return undefined
 }
 
 /**
  * Writes a command down as a step: wherever its input names the clip being
- * edited, a frame of the timeline, a track, one of the clip's effects or
- * masks, or something an earlier step made, it says so in terms that hold for
- * any clip. `before` is the project just before the command ran.
+ * edited, a frame of the timeline, a track, an effect, a mask or a take of a
+ * clip, or something an earlier step made, it says so in terms that hold for
+ * any clip. Frames and tracks are counted from the clip the command is
+ * addressed to — the clip being edited, or a piece an earlier step made of
+ * it. `before` is the project just before the command ran.
  */
 export function generalize(command: CommandName, input: unknown, before: Project, ctx: RecordContext): unknown {
-  const subject = before.clips[ctx.clipId] as Clip | undefined
+  const known = knownClips(before, ctx)
   const made = new Map<string, Placeholder>()
   ctx.results.forEach((result, step) => {
     for (const [path, value] of leaves(result)) if (!made.has(value)) made.set(value, { $result: { step, path } })
   })
   const frames = FRAME_FIELDS[command] ?? []
   const trackIndex = (id: string) => before.tracks.findIndex((t) => t.id === id)
+  const isClip = (id: unknown) => typeof id === 'string' && Boolean(before.clips[id])
+  /** The clip a frame or a track is counted from: the one addressed if the recording knows it, else the clip being edited, else whatever is left of it. */
+  const reference = (owner: string | undefined): { clip: Clip; of?: ClipRef } | null => {
+    const pick = (id: string | undefined) => {
+      const ref = id ? known.get(id) : undefined
+      const clip = id ? (before.clips[id] as Clip | undefined) : undefined
+      return ref && clip ? { clip, ...('$clip' in ref ? {} : { of: ref }) } : null
+    }
+    return pick(owner) ?? pick(ctx.clipId) ?? pick([...known.keys()].find((id) => before.clips[id]))
+  }
 
-  const walk = (value: unknown, path: string, parent?: Record<string, unknown>): unknown => {
+  const walk = (value: unknown, path: string, parent: Record<string, unknown> | undefined, owner: string | undefined): unknown => {
     if (typeof value === 'string') {
       if (value === ctx.clipId) return { $clip: true } satisfies Placeholder
-      const from = made.get(value)
+      const from = made.get(value) ?? known.get(value)
       if (from) return from
       const key = path.split('.').pop()
-      if (subject && key === 'trackId' && trackIndex(value) >= 0 && trackIndex(subject.trackId) >= 0) return { $track: trackIndex(value) - trackIndex(subject.trackId) } satisfies Placeholder
-      if (subject && key === 'effectId') {
-        const effect = subject.effects.find((e) => e.id === value)
-        if (effect) return { $effect: { kind: effect.kind, index: subject.effects.filter((e) => e.kind === effect.kind).indexOf(effect) } } satisfies Placeholder
+      const own = (owner ? before.clips[owner] : undefined) ?? before.clips[ctx.clipId]
+      if (key === 'trackId' && trackIndex(value) >= 0) {
+        const ref = reference(owner)
+        if (ref && trackIndex(ref.clip.trackId) >= 0) return { $track: trackIndex(value) - trackIndex(ref.clip.trackId), ...(ref.of ? { of: ref.of } : {}) } satisfies Placeholder
       }
-      if (subject && key === 'maskId') {
-        const i = subject.masks?.findIndex((m) => m.id === value) ?? -1
+      if (own && key === 'effectId') {
+        const effect = own.effects.find((e) => e.id === value)
+        if (effect) return { $effect: { kind: effect.kind, index: own.effects.filter((e) => e.kind === effect.kind).indexOf(effect) } } satisfies Placeholder
+      }
+      if (own && key === 'maskId') {
+        const i = own.masks?.findIndex((m) => m.id === value) ?? -1
         if (i >= 0) return { $mask: i } satisfies Placeholder
+      }
+      if (own && key === 'takeId') {
+        const i = own.takes?.findIndex((t) => t.id === value) ?? -1
+        if (i >= 0) return { $take: i } satisfies Placeholder
       }
       return value
     }
-    if (typeof value === 'number' && subject && frames.some((f) => matches(path, f))) {
+    if (typeof value === 'number' && frames.some((f) => matches(path, f))) {
+      const ref = reference(owner)
+      if (!ref) return value
       // Trims are about the edge being moved; everything else is nearer one end of the clip or the other.
-      const edge = command === 'clip.trim' ? (parent?.edge === 'end' ? 'end' : 'start') : Math.abs(value - clipEnd(subject)) < Math.abs(value - subject.start) ? 'end' : 'start'
-      return { $frame: { from: edge, offset: value - (edge === 'end' ? clipEnd(subject) : subject.start) } } satisfies Placeholder
+      const edge = command === 'clip.trim' ? (parent?.edge === 'end' ? 'end' : 'start') : Math.abs(value - clipEnd(ref.clip)) < Math.abs(value - ref.clip.start) ? 'end' : 'start'
+      return { $frame: { from: edge, offset: value - (edge === 'end' ? clipEnd(ref.clip) : ref.clip.start), ...(ref.of ? { of: ref.of } : {}) } } satisfies Placeholder
     }
     if (Array.isArray(value)) {
-      const out = value.map((v, i) => walk(v, path ? `${path}.${i}` : String(i)))
+      const out = value.map((v, i) => walk(v, path ? `${path}.${i}` : String(i), parent, owner))
       // Several clips were edited at once: on replay the step is done to one clip at a time.
       const seen = new Set<string>()
       return out.filter((v) => {
@@ -132,10 +198,14 @@ export function generalize(command: CommandName, input: unknown, before: Project
         return true
       })
     }
-    if (isPlain(value)) return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, walk(v, path ? `${path}.${k}` : k, value)]))
+    if (isPlain(value)) {
+      const to = addressed(value, isClip)
+      const own = typeof to === 'string' ? to : owner
+      return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, walk(v, path ? `${path}.${k}` : k, value, own)]))
+    }
     return value
   }
-  return walk(input, '')
+  return walk(input, '', undefined, undefined)
 }
 
 /** Every number in an input, with where it is. */
@@ -149,15 +219,16 @@ function numbers(value: unknown, path = ''): [string, number][] {
 /**
  * Whether a command had to do with the clip being edited: it names the clip
  * (or something a step made from it), or — a marker, a marked stretch — it is
- * about a frame the clip covers.
+ * about a frame the clip, or a piece made of it, covers.
  */
 export function touches(command: CommandName, input: unknown, before: Project, ctx: RecordContext): boolean {
-  const known = new Set([ctx.clipId, ...ctx.results.flatMap((r) => leaves(r).map(([, v]) => v))])
-  if (leaves(input).some(([, v]) => known.has(v))) return true
-  const subject = before.clips[ctx.clipId]
+  const known = knownClips(before, ctx)
+  const named = new Set([...known.keys(), ...ctx.results.flatMap((r) => leaves(r).map(([, v]) => v))])
+  if (leaves(input).some(([, v]) => named.has(v))) return true
   const fields = FRAME_FIELDS[command]
-  if (!subject || !fields) return false
-  return numbers(input).some(([path, frame]) => fields.some((f) => matches(path, f)) && frame >= subject.start && frame <= clipEnd(subject))
+  if (!fields) return false
+  const spans = [...known.keys()].map((id) => before.clips[id]).filter(Boolean)
+  return numbers(input).some(([path, frame]) => fields.some((f) => matches(path, f)) && spans.some((c) => frame >= c.start && frame <= clipEnd(c)))
 }
 
 export class MacroError extends Error {}
@@ -165,6 +236,8 @@ export class MacroError extends Error {}
 export interface ReplayContext {
   clipId: string
   results: unknown[]
+  /** The clips each step run so far made (see `madeBy`). */
+  made?: string[][]
 }
 
 /**
@@ -173,49 +246,66 @@ export interface ReplayContext {
  * effect it adjusts, a track that far away).
  */
 export function instantiate(step: MacroStep, project: Project, ctx: ReplayContext): unknown {
-  const clip = project.clips[ctx.clipId] as Clip | undefined
-  const need = () => {
-    if (!clip) throw new MacroError('the clip is gone by this step')
+  const result = (value: Extract<Placeholder, { $result: unknown }>) => {
+    const { step: n, path } = value.$result
+    const found = at(ctx.results[n], path)
+    if (typeof found !== 'string') throw new MacroError(`step ${n + 1} made nothing for this step to work on`)
+    return found
+  }
+  const piece = (value: Extract<Placeholder, { $made: unknown }>) => {
+    const { step: n, index } = value.$made
+    const found = ctx.made?.[n]?.[index]
+    if (!found) throw new MacroError(`step ${n + 1} didn’t leave the piece this step works on`)
+    return found
+  }
+  /** The clip a reference names (the clip the macro runs on when there is none), as it is now. */
+  const clipOf = (ref: ClipRef | undefined): Clip => {
+    const id = !ref || '$clip' in ref ? ctx.clipId : '$made' in ref ? piece(ref) : result(ref)
+    const clip = project.clips[id] as Clip | undefined
+    if (!clip) throw new MacroError(ref && !('$clip' in ref) ? 'the piece an earlier step made is gone by this step' : 'the clip is gone by this step')
     return clip
   }
-  const walk = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(walk)
+  const isRef = (v: unknown): v is ClipRef => isPlain(v) && ('$clip' in v || '$result' in v || '$made' in v)
+  /** `owner`: the clip the surrounding input is addressed to — whose effects, masks and takes it means. */
+  const walk = (value: unknown, owner: ClipRef | undefined): unknown => {
+    if (Array.isArray(value)) return value.map((v) => walk(v, owner))
     if (!isPlain(value)) return value
     if ('$clip' in value) return ctx.clipId
     if ('$frame' in value) {
-      const { from, offset } = (value as Extract<Placeholder, { $frame: unknown }>).$frame
-      const c = need()
+      const { from, offset, of } = (value as Extract<Placeholder, { $frame: unknown }>).$frame
+      const c = clipOf(of)
       return Math.max(0, Math.round((from === 'end' ? clipEnd(c) : c.start) + offset)) as Frame
     }
     if ('$track' in value) {
-      const c = need()
-      const index = project.tracks.findIndex((t) => t.id === c.trackId) + (value as { $track: number }).$track
-      const track = project.tracks[index]
+      const { $track: by, of } = value as Extract<Placeholder, { $track: unknown }>
+      const c = clipOf(of)
+      const track = project.tracks[project.tracks.findIndex((t) => t.id === c.trackId) + by]
       if (!track) throw new MacroError('there is no track that far from the clip’s')
       return track.id
     }
-    if ('$result' in value) {
-      const { step: n, path } = (value as Extract<Placeholder, { $result: unknown }>).$result
-      const found = at(ctx.results[n], path)
-      if (typeof found !== 'string') throw new MacroError(`step ${n + 1} made nothing for this step to work on`)
-      return found
-    }
+    if ('$result' in value) return result(value as Extract<Placeholder, { $result: unknown }>)
+    if ('$made' in value) return piece(value as Extract<Placeholder, { $made: unknown }>)
     if ('$effect' in value) {
       const { kind, index } = (value as Extract<Placeholder, { $effect: unknown }>).$effect
-      const effect = need().effects.filter((e) => e.kind === kind)[index]
+      const effect = clipOf(owner).effects.filter((e) => e.kind === kind)[index]
       if (!effect) throw new MacroError(`the clip has no ${kind} effect to change`)
       return effect.id
     }
     if ('$mask' in value) {
-      const mask = need().masks?.[(value as { $mask: number }).$mask]
+      const mask = clipOf(owner).masks?.[(value as { $mask: number }).$mask]
       if (!mask) throw new MacroError('the clip has no such mask')
       return mask.id
     }
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, walk(v)]))
+    if ('$take' in value) {
+      const take = clipOf(owner).takes?.[(value as { $take: number }).$take]
+      if (!take) throw new MacroError('the clip has no such take')
+      return take.id
+    }
+    const to = [value.clipId, value.id, Array.isArray(value.ids) ? value.ids[0] : undefined].find(isRef)
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, walk(v, to ?? owner)]))
   }
-  return walk(step.input)
+  return walk(step.input, undefined)
 }
-
 // ─── Files ───────────────────────────────────────────────────────────────
 
 const FORMAT = 'lumen-macros'
