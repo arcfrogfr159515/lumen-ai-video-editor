@@ -399,6 +399,12 @@ function assertEditable(p: Project, clip: Clip) {
   if (getTrack(p, clip.trackId).locked) throw new CommandError(`"${clip.name}" is on a locked track`)
 }
 
+/** An insert pushes the clips after it later, which a ripple-locked track refuses. */
+function assertCanInsert(p: Project, trackId: string) {
+  const track = getTrack(p, trackId)
+  if (track.rippleLock) throw new CommandError(`${track.name} is ripple-locked: its clips hold their place, so nothing can be inserted there. Overwrite instead, or turn its ripple lock off.`)
+}
+
 const NO_CROP = { left: 0, right: 0, top: 0, bottom: 0, radius: 0 }
 
 /** Timeline operations report problems as TimelineErrors; commands turn them into CommandErrors. */
@@ -606,7 +612,10 @@ export const commands = {
       if (i.mode === 'free' || isMagneticTrack(p, track.id)) start = findFreeStart(p, track.id, i.start, duration)
       else {
         if (i.mode === 'overwrite') overwriteRange(p, track.id, i.start, i.start + duration)
-        else insertGap(p, track.id, i.start, duration)
+        else {
+          assertCanInsert(p, track.id)
+          insertGap(p, track.id, i.start, duration)
+        }
         start = i.start
       }
       const clip = createClip({
@@ -662,6 +671,7 @@ export const commands = {
           if (isMagneticTrack(p, trackId)) continue
           if (i.mode === 'overwrite') for (const m of ms) overwriteRange(p, trackId, m.start, m.start + m.duration, exclude)
           else {
+            assertCanInsert(p, trackId)
             const a = Math.min(...ms.map((m) => m.start))
             insertGap(p, trackId, a, Math.max(...ms.map((m) => m.start + m.duration)) - a, exclude)
           }
@@ -750,7 +760,7 @@ export const commands = {
 
   'timeline.removeRange': command({
     description:
-      'Take a stretch of time out of the whole timeline (like Extract): clips inside it are removed, clips across it lose that stretch, and everything later — on every unlocked track, plus markers — moves left to close up. Clips listed in keepWhole (music beds, ambience) are not cut: they keep playing through the join and end earlier.',
+      'Take a stretch of time out of the whole timeline (like Extract): clips inside it are removed, clips across it lose that stretch, and everything later — on every unlocked track, plus markers — moves left to close up. Clips listed in keepWhole (music beds, ambience) are not cut: they keep playing through the join and end earlier. Tracks with sync lock off or ripple lock on (track_update) are left exactly as they are.',
     input: z.object({ start: frame, end: frame, keepWhole: z.array(id).default([]) }).refine((i) => i.end > i.start, 'end must be after start'),
     title: () => 'Remove range',
     run(p, i) {
@@ -837,7 +847,10 @@ export const commands = {
         for (const m of placed) {
           if (isMagneticTrack(p, m.trackId)) continue
           if (i.mode === 'overwrite') overwriteRange(p, m.trackId, m.start, m.start + m.duration)
-          else insertGap(p, m.trackId, m.start, m.duration)
+          else {
+            assertCanInsert(p, m.trackId)
+            insertGap(p, m.trackId, m.start, m.duration)
+          }
         }
       // Pasted groups stay grouped with each other — not with the originals.
       const groups = new Map<string, string>()
@@ -943,6 +956,7 @@ export const commands = {
       assertEditable(p, clip)
       if (clip.kind !== 'video') throw new CommandError('Freeze frames are made from video clips')
       if (i.frame < clip.start || i.frame >= clipEnd(clip)) throw new CommandError(`Frame ${i.frame} isn't inside “${clip.name}”`)
+      assertCanInsert(p, clip.trackId)
       return freezeFrame(p, clip, i.frame, i.duration).id
     },
   }),
@@ -1211,11 +1225,21 @@ export const commands = {
   }),
 
   'track.update': command({
-    description: 'Rename a track, toggle hidden / muted / locked / solo (while any track is soloed only soloed tracks are heard), or change its height.',
+    description:
+      'Rename a track, toggle hidden / muted / locked / solo (while any track is soloed only soloed tracks are heard), or change its height. syncLock (default on): whether the track follows edits that ripple the whole timeline — timeline_removeRange, timeline_closeGaps, three-point inserts, moving a stretch; turn it off for a music bed that should stay put. rippleLock (default off): clips on the track hold their place in time — nothing ripples them, a ripple delete or ripple trim there leaves the gap, and inserts are refused (not for the main track, which always closes its gaps).',
     input: z.object({
       id,
       patch: z
-        .object({ name: z.string().min(1), hidden: z.boolean(), muted: z.boolean(), locked: z.boolean(), solo: z.boolean(), height: z.number().min(28).max(160) })
+        .object({
+          name: z.string().min(1),
+          hidden: z.boolean(),
+          muted: z.boolean(),
+          locked: z.boolean(),
+          solo: z.boolean(),
+          height: z.number().min(28).max(160),
+          syncLock: z.boolean(),
+          rippleLock: z.boolean(),
+        })
         .partial(),
     }),
     title: (i) => {
@@ -1225,14 +1249,20 @@ export const commands = {
         locked: ['Lock track', 'Unlock track'],
         muted: ['Mute track', 'Unmute track'],
         solo: ['Solo track', 'Unsolo track'],
+        syncLock: ['Sync lock on', 'Sync lock off'],
+        rippleLock: ['Ripple lock on', 'Ripple lock off'],
       }
       const pair = toggles[key]
       return pair ? pair[i.patch[key as keyof typeof i.patch] ? 0 : 1] : 'Edit track'
     },
     run(p, i) {
       const track = getTrack(p, i.id)
+      if (i.patch.rippleLock && isMagneticTrack(p, track.id)) throw new CommandError(`${track.name} is the main track: it always closes its gaps, so it can’t be ripple-locked`)
       Object.assign(track, i.patch)
       if (i.patch.solo === false) delete track.solo
+      // The defaults are stored as absent, so projects stay as they were.
+      if (i.patch.syncLock === true) delete track.syncLock
+      if (i.patch.rippleLock === false) delete track.rippleLock
     },
   }),
 

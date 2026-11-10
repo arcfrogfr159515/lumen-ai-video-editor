@@ -71,6 +71,19 @@ export const isMagnetic = (track?: Pick<Track, 'role'>) => track?.role === 'main
 
 export const isMagneticTrack = (p: Project, trackId: string) => isMagnetic(p.tracks.find((t) => t.id === trackId))
 
+// ─── Sync lock & ripple lock ─────────────────────────────────────────────
+
+type RippleFlags = Pick<Track, 'locked' | 'syncLock' | 'rippleLock'>
+
+/** A track whose clips hold their place in time whatever ripples around them. */
+export const isRippleLocked = (track?: Pick<Track, 'rippleLock'>) => Boolean(track?.rippleLock)
+
+/** Whether a track moves with edits that ripple the whole timeline: unlocked, in sync and not ripple-locked. */
+export const followsRipple = (track: RippleFlags) => !track.locked && track.syncLock !== false && !track.rippleLock
+
+/** The tracks an edit that ripples the whole timeline moves. */
+export const rippleTracks = (p: Project) => p.tracks.filter(followsRipple)
+
 export function packTrack(p: Project, trackId: string) {
   let cursor = 0
   for (const c of clipsOnTrack(p, trackId)) {
@@ -270,6 +283,8 @@ export function trimClip(p: Project, clip: Clip, edge: 'start' | 'end', frame: F
  * clip where it is and takes the frames off its head.
  */
 export function rippleTrimClip(p: Project, clip: Clip, edge: 'start' | 'end', frame: Frame) {
+  // A ripple-locked track never shifts its clips: the trim stays between the neighbours.
+  if (isRippleLocked(p.tracks.find((t) => t.id === clip.trackId))) return trimClip(p, clip, edge, frame)
   const [mediaMin, mediaMax] = mediaEdgeLimits(p, clip)
   const later = clipsOnTrack(p, clip.trackId).filter((c) => c.id !== clip.id && c.start >= clipEnd(clip))
   let change: number
@@ -386,6 +401,8 @@ export function deleteClips(p: Project, ids: string[], ripple: boolean) {
     byTrack.set(c.trackId, list)
   }
   for (const [trackId, gaps] of byTrack) {
+    // On a ripple-locked track the gap stays open.
+    if (isRippleLocked(p.tracks.find((t) => t.id === trackId))) continue
     for (const c of clipsOnTrack(p, trackId)) {
       const shift = gaps.filter((g) => g.start + g.duration <= c.start).reduce((sum, g) => sum + g.duration, 0)
       if (shift) c.start -= shift
@@ -397,7 +414,8 @@ export function deleteClips(p: Project, ids: string[], ripple: boolean) {
  * Takes the frames [a, b) out of the timeline, as if they were never there:
  * clips inside go, clips across it lose that stretch (with a frame of audio fade
  * either side of the join) and everything later moves left — on every unlocked
- * track, so captions, B-roll, effects and markers stay in sync with the edit.
+ * track that follows ripples (sync lock on, ripple lock off), so captions,
+ * B-roll, effects and markers stay in sync with the edit.
  *
  * Clips in `keepWhole` (music beds, ambience) are never cut: one across the whole
  * stretch plays on unbroken and ends earlier, its keyframes following the edit;
@@ -411,7 +429,7 @@ export function removeRange(p: Project, a: Frame, b: Frame, keepWhole: ReadonlyS
   const tailGroups = new Map<string, string>()
   const groupsBefore = new Set(Object.values(p.clips).map((c) => c.groupId).filter((g): g is string => Boolean(g)))
   for (const track of p.tracks) {
-    if (track.locked) continue
+    if (!followsRipple(track)) continue
     const placed: Clip[] = []
     for (const c of clipsOnTrack(p, track.id)) {
       const end = clipEnd(c)

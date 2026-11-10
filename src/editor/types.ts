@@ -172,6 +172,16 @@ export interface Track {
   /** Lane height in px — a view preference that travels with the project. */
   height: number
   role?: 'main' | 'titles' | 'captions'
+  /**
+   * Sync lock: the track follows edits that ripple the whole timeline (extract,
+   * insert, closing a hole). Missing means on; false leaves the track where it is.
+   */
+  syncLock?: boolean
+  /**
+   * Ripple lock: clips here hold their place in time. Nothing ripples them — not
+   * an edit elsewhere, not a ripple delete or ripple trim on the track itself.
+   */
+  rippleLock?: boolean
 }
 
 // ─── Clips ───────────────────────────────────────────────────────────────

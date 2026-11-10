@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 import { ContextMenu, DropdownMenu } from 'radix-ui'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
@@ -15,9 +15,13 @@ interface ItemProps {
   shortcut?: string
   danger?: boolean
   disabled?: boolean
+  /** A setting that is on: shows a tick. */
+  checked?: boolean
   onSelect?: () => void
   children: ReactNode
 }
+
+const Tick = () => <Check className="!size-3.5 !text-accent-2" aria-label="On" />
 
 // ─── Dropdown ────────────────────────────────────────────────────────────
 
@@ -40,11 +44,12 @@ export function MenuContent({ children, align = 'start', side = 'bottom', classN
   )
 }
 
-export function MenuItem({ icon, shortcut, danger, disabled, onSelect, children }: ItemProps) {
+export function MenuItem({ icon, shortcut, danger, disabled, checked, onSelect, children }: ItemProps) {
   return (
     <DropdownMenu.Item disabled={disabled} onSelect={onSelect} className={cn(itemClass, danger && 'text-danger data-[highlighted]:text-danger [&_svg]:text-danger/80')}>
       {icon}
       <span className="flex-1 truncate">{children}</span>
+      {checked && <Tick />}
       {shortcut && <Kbd combo={shortcut} />}
     </DropdownMenu.Item>
   )
@@ -90,11 +95,12 @@ export function ContextContent({ children }: { children: ReactNode }) {
   )
 }
 
-export function ContextItem({ icon, shortcut, danger, disabled, onSelect, children }: ItemProps) {
+export function ContextItem({ icon, shortcut, danger, disabled, checked, onSelect, children }: ItemProps) {
   return (
     <ContextMenu.Item disabled={disabled} onSelect={onSelect} className={cn(itemClass, danger && 'text-danger data-[highlighted]:text-danger [&_svg]:text-danger/80')}>
       {icon}
       <span className="flex-1 truncate">{children}</span>
+      {checked && <Tick />}
       {shortcut && <Kbd combo={shortcut} />}
     </ContextMenu.Item>
   )

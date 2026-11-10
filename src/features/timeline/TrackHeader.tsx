@@ -1,7 +1,8 @@
-import { ArrowDown, ArrowUp, AudioLines, Ellipsis, Eye, EyeOff, Film, GripVertical, Headphones, Layers, Lock, LockOpen, Music, PencilLine, Trash, Type, Volume2, VolumeX } from 'lucide-react'
+import { Anchor, ArrowDown, ArrowUp, AudioLines, Ellipsis, Eye, EyeOff, Film, GripVertical, Headphones, Layers, Link2, Link2Off, Lock, LockOpen, Music, PencilLine, Trash, Type, Volume2, VolumeX } from 'lucide-react'
 import { useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { IconButton } from '@/components/ui/button'
-import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@/components/ui/menu'
+import { toast } from 'sonner'
+import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu'
 import { dispatch } from '@/editor/store'
 import type { Track } from '@/editor/types'
 import { cn } from '@/lib/cn'
@@ -22,7 +23,11 @@ export function TrackHeader({ track }: { track: Track }) {
   const [draft, setDraft] = useState(track.name)
   const compact = track.height < 50
   const layout = useLayout()
-  const update = (patch: Partial<Pick<Track, 'name' | 'hidden' | 'muted' | 'locked' | 'solo'>>) => dispatch('track.update', { id: track.id, patch })
+  const update = (patch: Partial<Pick<Track, 'name' | 'hidden' | 'muted' | 'locked' | 'solo' | 'syncLock' | 'rippleLock'>>) => {
+    const res = dispatch('track.update', { id: track.id, patch })
+    if (!res.ok) toast(res.error)
+  }
+  const inSync = track.syncLock !== false
   const siblings = layout.tracks.map((t, i) => ({ t, i })).filter(({ t }) => t.kind === track.kind)
   const index = layout.tracks.findIndex((t) => t.id === track.id)
   const first = siblings[0]?.i ?? 0
@@ -110,6 +115,16 @@ export function TrackHeader({ track }: { track: Track }) {
                 {track.muted && <VolumeX className="text-warn" aria-label="Muted" />}
                 {track.hidden && <EyeOff className="text-warn" aria-label="Hidden" />}
                 {track.locked && <Lock className="text-warn" aria-label="Locked" />}
+                {!inSync && (
+                  <span title="Sync lock off: edits that ripple the timeline leave this track where it is">
+                    <Link2Off className="text-fg-3" aria-label="Sync lock off" />
+                  </span>
+                )}
+                {track.rippleLock && (
+                  <span title="Ripple lock: clips on this track hold their place in time">
+                    <Anchor className="text-snap" aria-label="Ripple-locked" />
+                  </span>
+                )}
               </span>
             </div>
             {!compact && track.role === 'main' && <div className="text-2xs text-fg-4">Main track</div>}
@@ -163,7 +178,7 @@ export function TrackHeader({ track }: { track: Track }) {
               <Ellipsis />
             </IconButton>
           </MenuTrigger>
-          <MenuContent align="start" className="min-w-[180px]">
+          <MenuContent align="start" className="min-w-[250px]">
             <MenuItem icon={<PencilLine />} onSelect={() => (setDraft(track.name), setRenaming(true))}>
               Rename
             </MenuItem>
@@ -172,6 +187,14 @@ export function TrackHeader({ track }: { track: Track }) {
             </MenuItem>
             <MenuItem icon={<ArrowDown />} disabled={index >= last} onSelect={() => dispatch('track.move', { id: track.id, index: index + 1 })}>
               Move down
+            </MenuItem>
+            <MenuSeparator />
+            <MenuLabel>When the timeline ripples</MenuLabel>
+            <MenuItem icon={inSync ? <Link2 /> : <Link2Off />} checked={inSync} onSelect={() => update({ syncLock: !inSync })}>
+              Sync lock: follow the edit
+            </MenuItem>
+            <MenuItem icon={<Anchor />} checked={Boolean(track.rippleLock)} disabled={track.role === 'main'} onSelect={() => update({ rippleLock: !track.rippleLock })}>
+              Ripple lock: hold clips in place
             </MenuItem>
             <MenuSeparator />
             <MenuItem icon={<Trash />} danger onSelect={() => dispatch('track.remove', { id: track.id })}>
