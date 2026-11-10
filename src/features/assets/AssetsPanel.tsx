@@ -1,4 +1,4 @@
-import { Aperture, Blend, Clapperboard, ListChecks, Music, Sparkles, Type, WandSparkles } from 'lucide-react'
+import { Aperture, Blend, Clapperboard, ListChecks, Music, ScrollText, Sparkles, Type, WandSparkles } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
 import { AiSparkle } from '@/components/brand'
@@ -11,6 +11,7 @@ import { GeneratePanel } from './GeneratePanel'
 import { LooksPanel } from './LooksPanel'
 import { MediaPanel } from './MediaPanel'
 import { NotesPanel } from '@/features/notes/NotesPanel'
+import { ScriptPanel } from '@/features/script/ScriptPanel'
 import { TextPanel } from './TextPanel'
 import { TransitionsPanel } from './TransitionsPanel'
 
@@ -21,6 +22,7 @@ const TABS: { id: LeftTab; label: string; icon: ReactNode; hint: string }[] = [
   { id: 'effects', label: 'Effects', icon: <Sparkles />, hint: 'Blur, glow, grain & more' },
   { id: 'transitions', label: 'Transitions', icon: <Blend />, hint: 'Between shots' },
   { id: 'looks', label: 'Looks', icon: <Aperture />, hint: 'One-click color grades' },
+  { id: 'script', label: 'Script', icon: <ScrollText />, hint: 'What is said — delete words to cut the film' },
   { id: 'notes', label: 'Notes', icon: <ListChecks />, hint: 'Markers, to-dos & clip notes' },
 ]
 
@@ -48,6 +50,7 @@ export function AssetsPanel() {
         {tab === 'effects' && <EffectsPanel />}
         {tab === 'transitions' && <TransitionsPanel />}
         {tab === 'looks' && <LooksPanel />}
+        {tab === 'script' && <ScriptPanel />}
         {tab === 'notes' && <NotesPanel />}
         {tab === 'generate' && <GeneratePanel />}
       </div>
