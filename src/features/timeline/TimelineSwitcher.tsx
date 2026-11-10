@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, ChevronDown, CopyPlus, Film, Layers, PencilLine, Plus, Smartphone, Trash, Video } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, CopyPlus, Film, GitBranch, GitCompare, Layers, PencilLine, Plus, Smartphone, Trash, Video } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button, IconButton } from '@/components/ui/button'
@@ -10,6 +10,8 @@ import { allSequences, clipsLength, getSequence, openSequenceId, openSequenceNam
 import { reframe } from '@/editor/smart'
 import { dispatch, getProject, useEditor } from '@/editor/store'
 import { openTimeline, timelineBack, useTimelineNav } from '@/editor/timeline-nav'
+import { useTimelineView } from '@/editor/timeline-view'
+import { timelineActions } from './timeline-actions'
 import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
 import { formatDuration } from '@/lib/time'
@@ -80,7 +82,7 @@ export function TimelineSwitcher() {
         <MenuContent className="w-72">
           <MenuLabel>Timelines</MenuLabel>
           {sequences.map((s) => (
-            <MenuItem key={s.id} icon={s.id === openId ? <Check /> : s.multicam ? <Video /> : <Film />} onSelect={() => openTimeline(s.id)}>
+            <MenuItem key={s.id} icon={s.id === openId ? <Check /> : s.multicam ? <Video /> : s.branchOf ? <GitBranch /> : <Film />} onSelect={() => openTimeline(s.id)}>
               <span className="flex min-w-0 flex-1 items-center gap-2">
                 <span className={cn('truncate', s.id === openId && 'text-fg')}>{s.name}</span>
                 <span className="ml-auto shrink-0 font-mono text-[10.5px] text-fg-4 tabular">
@@ -109,6 +111,14 @@ export function TimelineSwitcher() {
           </MenuSub>
           <MenuItem icon={<CopyPlus />} onSelect={() => dispatch('sequence.duplicate', { id: openId, open: true })}>
             Duplicate “{name}”
+          </MenuItem>
+          {!sequenceRef?.multicam && (
+            <MenuItem icon={<GitBranch />} onSelect={() => timelineActions.branch()}>
+              Branch “{name}”
+            </MenuItem>
+          )}
+          <MenuItem icon={<GitCompare />} onSelect={() => useTimelineView.getState().set({ compareOpen: true })}>
+            Compare versions…
           </MenuItem>
           <MenuItem icon={<PencilLine />} onSelect={() => useUI.getState().setRenamingTimeline(openId)}>
             Rename…

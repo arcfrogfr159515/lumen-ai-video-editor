@@ -101,6 +101,13 @@ export const timelineActions = {
     if (result.short) toast(`${asset.name} ran out ${formatDuration(result.short, p.settings.fps)} before the out point`, { description: 'The edit is shorter than the marked stretch.' })
   },
 
+  /** Branches the open timeline: a copy to try another cut on, which opens. */
+  branch() {
+    const res = dispatch('sequence.branch', {})
+    if (!res.ok) return void toast(res.error)
+    toast.success('You are on a branch', { description: 'Edit freely. “Compare versions” shows where it differs from the timeline it came from, and takes back what works.', action: { label: 'Compare', onClick: () => timelineView().set({ compareOpen: true }) } })
+  },
+
   /** Brings up the batch panel: the inspector, with two or more clips selected. */
   openBatch() {
     if (ui().selection.length < 2) return void toast('Select two or more clips', { description: 'Batch changes are made in the inspector to everything selected. Ctrl+A selects every clip.' })

@@ -11,6 +11,7 @@ import { uid } from '@/lib/id'
 import { createClip, createTrack, DEFAULT_BUS, DEFAULT_COMPRESSOR, DEFAULT_EQ, DEFAULT_LIMITER, IDENTITY_CURVES, NEUTRAL_WHEELS, TRACK_HEIGHTS } from './defaults'
 import { EASING_NAMES, type Easing } from './easing'
 import { batchNames, batchSkip, type BatchField } from './batch'
+import { takeHunk } from './diff'
 import { closeGaps, FLASH_FRAMES } from './gaps'
 import { ANIMATABLE, evalKeyframes } from './keyframes'
 import { defaultMarkerLabel, markerKindInfo, markerKindOf } from './markers'
@@ -53,6 +54,7 @@ import {
 import {
   angleTracks,
   blankSequence,
+  branchSequence,
   copySequence,
   freshName,
   getSequence,
@@ -1691,6 +1693,42 @@ export const commands = {
       const uses = usesOf(p, i.id)
       if (uses.length) throw new CommandError(`“${seq.name}” is nested in ${uses.map((u) => `“${u.name}”`).join(', ')} — remove it there first`)
       delete p.sequences![i.id]
+    },
+  }),
+
+  'sequence.branch': command({
+    description:
+      'Branch a timeline: a full copy to try another version of the cut on, that remembers where it came from. Compare a branch with the timeline it came from with compare_timelines, and take the stretches that work back with timeline_mergeFrom. id defaults to the open timeline; the branch opens unless open is false. Returns its id.',
+    input: z.object({ id: id.optional(), name: z.string().min(1).optional(), open: z.boolean().default(true) }),
+    title: () => 'Branch timeline',
+    run(p, i) {
+      const src = plainSequence(p, i.id ?? openSequenceId(p))
+      if (src.multicam) throw new CommandError('A multicam timeline holds camera angles, not a cut — branch the timeline that plays it')
+      const branch = branchSequence(src, i.name ?? freshName(p, `${src.name} · branch`))
+      p.sequences ??= {}
+      p.sequences[branch.id] = branch
+      if (i.open) swapIn(p, branch.id)
+      return branch.id
+    },
+  }),
+
+  'timeline.mergeFrom': command({
+    description:
+      'Take a stretch from another timeline (usually a branch) into the open one: over frames a.start–a.end of the open timeline it comes to play what the other plays over b.start–b.end. The open timeline’s stretch is taken out, room for the other’s is made, and copies of the other’s clips fill it, on every track that follows ripples — so everything after stays in step even when the two stretches differ in length. An empty a (start = end) inserts; an empty b removes. compare_timelines lists the stretches that differ with exactly these numbers. Returns { clipIds }.',
+    input: z
+      .object({
+        sequenceId: id,
+        a: z.object({ start: frame, end: frame }).refine((r) => r.end >= r.start, 'end must not be before start'),
+        b: z.object({ start: frame, end: frame }).refine((r) => r.end >= r.start, 'end must not be before start'),
+      })
+      .refine((i) => i.a.end > i.a.start || i.b.end > i.b.start, 'both stretches are empty'),
+    title: (i, p) => `Take a stretch from ${getSequence(p, i.sequenceId)?.name ?? 'another timeline'}`,
+    run(p, i) {
+      if (i.sequenceId === openSequenceId(p)) throw new CommandError('That is the open timeline — pick the other one')
+      const from = plainSequence(p, i.sequenceId)
+      if (from.settings.fps !== p.settings.fps) throw new CommandError(`“${from.name}” runs at ${from.settings.fps} fps and this timeline at ${p.settings.fps} — their frames don’t line up`)
+      const clipIds = takeHunk(p, from, { a: [i.a.start, i.a.end], b: [i.b.start, i.b.end], kind: i.a.end === i.a.start ? 'added' : i.b.end === i.b.start ? 'removed' : 'changed' })
+      return { clipIds }
     },
   }),
 

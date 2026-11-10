@@ -39,6 +39,7 @@ export function openSequence(p: Project): Sequence {
     ...(p.range ? { range: p.range } : {}),
     ...(p.master ? { master: p.master } : {}),
     ...(p.sequence?.multicam ? { multicam: true } : {}),
+    ...(p.sequence?.branchOf ? { branchOf: p.sequence.branchOf } : {}),
     createdAt: p.sequence?.createdAt ?? p.createdAt,
   }
 }
@@ -73,7 +74,7 @@ export function swapIn(p: Project, id: string) {
   p.sequences ??= {}
   p.sequences[stored.id] = stored
   delete p.sequences[id]
-  p.sequence = { id: next.id, name: next.name, ...(next.multicam ? { multicam: true } : {}), createdAt: next.createdAt }
+  p.sequence = { id: next.id, name: next.name, ...(next.multicam ? { multicam: true } : {}), ...(next.branchOf ? { branchOf: next.branchOf } : {}), createdAt: next.createdAt }
   p.settings = next.settings
   p.tracks = next.tracks
   p.clips = next.clips
@@ -113,7 +114,7 @@ export function sequenceView(p: Project, id: string): Project | null {
     markers: seq.markers,
     range: seq.range ?? null,
     master: seq.master,
-    sequence: { id: seq.id, name: seq.name, ...(seq.multicam ? { multicam: true } : {}), createdAt: seq.createdAt },
+    sequence: { id: seq.id, name: seq.name, ...(seq.multicam ? { multicam: true } : {}), ...(seq.branchOf ? { branchOf: seq.branchOf } : {}), createdAt: seq.createdAt },
   }
   views.set(seq, { base: p, view })
   return view
@@ -186,6 +187,36 @@ export function copySequence(seq: Sequence, name: string): Sequence {
     markers: src.markers.map((m) => ({ ...m, id: uid('mk') })),
     createdAt: Date.now(),
   }
+}
+
+/**
+ * A branch of a timeline: a full copy to try another cut on, that remembers
+ * where it came from and which track each of its tracks began as — so the two
+ * can be compared stretch by stretch and what works taken back.
+ */
+export function branchSequence(seq: Sequence, name: string): Sequence {
+  const copy = copySequence(seq, name)
+  return {
+    ...copy,
+    // A branch of a branch still lines its tracks up with the first timeline's.
+    tracks: copy.tracks.map((t, i) => ({ ...t, origin: seq.tracks[i].origin ?? seq.tracks[i].id })),
+    branchOf: { sequenceId: seq.id, at: Date.now() },
+  }
+}
+
+/** The branches of a timeline (and theirs), oldest first. */
+export function branchesOf(p: Project, id: string): Sequence[] {
+  const all = allSequences(p)
+  const out: Sequence[] = []
+  const walk = (from: string) => {
+    for (const s of all) {
+      if (s.branchOf?.sequenceId !== from || out.includes(s)) continue
+      out.push(s)
+      walk(s.id)
+    }
+  }
+  walk(id)
+  return out
 }
 
 // ─── Nesting ─────────────────────────────────────────────────────────────

@@ -219,6 +219,14 @@ export interface Track {
    * an edit elsewhere, not a ripple delete or ripple trim on the track itself.
    */
   rippleLock?: boolean
+  /** On a branch: the track of the timeline it was branched from that this one began as a copy of. */
+  origin?: string
+}
+
+/** Where a branch came from: the timeline it was copied from, and when. */
+export interface BranchOrigin {
+  sequenceId: string
+  at: number
 }
 
 // ─── Clips ───────────────────────────────────────────────────────────────
@@ -698,6 +706,8 @@ export interface Sequence {
   master?: BusMix
   /** A multicam source: each video track is one camera angle, its audio tracks the sound. */
   multicam?: boolean
+  /** A branch: another version of a timeline, to try a cut on and take back what works. */
+  branchOf?: BranchOrigin
   createdAt: number
 }
 
@@ -706,6 +716,7 @@ export interface SequenceRef {
   id: string
   name: string
   multicam?: boolean
+  branchOf?: BranchOrigin
   createdAt?: number
 }
 
