@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Copy, Flag, Magnet, MousePointer2, MoveHorizontal, Scissors, SeparatorVertical, SquareSplitHorizontal, Trash, UnfoldHorizontal, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { ArrowLeftRight, Copy, Flag, LayoutGrid, Magnet, MousePointer2, MoveHorizontal, Scissors, SeparatorVertical, SquareSplitHorizontal, Trash, UnfoldHorizontal, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -7,6 +7,7 @@ import { IconButton } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Kbd } from '@/components/ui/kbd'
 import { useEditor } from '@/editor/store'
+import { useTimelineView } from '@/editor/timeline-view'
 import { TRIM_SIDES, trimSides } from '@/editor/trim-mode'
 import { exitTrim, setTrimSide, useTrim } from '@/editor/trim-session'
 import { cn } from '@/lib/cn'
@@ -27,10 +28,15 @@ export function TimelineToolbar() {
   const pps = useUI((s) => s.pxPerSecond)
   const setZoom = useUI((s) => s.setZoom)
   const hasSelection = useUI((s) => s.selection.length > 0)
+  const storyboard = useTimelineView((s) => s.storyboard)
+  const setView = useTimelineView((s) => s.set)
 
   return (
     <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line px-2">
       <TimelineSwitcher />
+      <IconButton size="sm" label={storyboard ? 'Back to the lanes' : 'Storyboard — the timeline as cards'} shortcut="shift+s" active={storyboard} onClick={() => setView({ storyboard: !storyboard })}>
+        <LayoutGrid />
+      </IconButton>
       <div className="mx-1 h-4 w-px bg-line-2" />
       <div className="flex items-center gap-0.5 rounded-[9px] bg-black/25 p-[3px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
         <IconButton size="xs" label="Select" shortcut="v" active={tool === 'select'} onClick={() => setTool('select')}>

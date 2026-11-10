@@ -31,6 +31,7 @@ import { computeRows, LayoutContext, useLayout, type TimelineLayout } from './la
 import { Minimap } from './Minimap'
 import { ADD_ROW_H, HEADER_W, RULER_H, useDrag, type ClipPreview, type DropGhost } from './model'
 import { Ruler, TimecodeCell } from './Ruler'
+import { Storyboard } from './Storyboard'
 import { timelineActions } from './timeline-actions'
 import { TimelineToolbar } from './TimelineToolbar'
 import { TrackHeader } from './TrackHeader'
@@ -64,6 +65,7 @@ export function Timeline() {
   const tool = useUI((s) => s.tool)
   const fitRequest = useUI((s) => s.fitRequest)
   const minimap = useTimelineView((s) => s.minimap)
+  const storyboard = useTimelineView((s) => s.storyboard)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -372,10 +374,12 @@ export function Timeline() {
     <LayoutContext.Provider value={layout}>
       <div className="panel flex h-full flex-col overflow-hidden">
         <TimelineToolbar />
-        {minimap && <Minimap scrollRef={scrollRef} />}
+        {minimap && !storyboard && <Minimap scrollRef={scrollRef} />}
+        {storyboard && <Storyboard />}
         <ContextMenu.Root>
           <ContextMenu.Trigger asChild>
-            <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-auto overscroll-contain">
+            {/* The lanes stay mounted behind the storyboard, so their scroll position and zoom are there to come back to. */}
+            <div ref={scrollRef} className={cn('relative min-h-0 flex-1 overflow-auto overscroll-contain', storyboard && 'hidden')}>
               <div
                 ref={contentRef}
                 data-timeline-content

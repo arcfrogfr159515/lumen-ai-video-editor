@@ -30,6 +30,7 @@ import {
   insertGap,
   isMagneticTrack,
   liftRange,
+  moveRange,
   moveTrack,
   normalizeProject,
   overwriteRange,
@@ -2062,6 +2063,19 @@ export const commands = {
       // Packed now, so the answer says where the clip really is.
       normalizeProject(p)
       return { clipId: clip.id, start: p.clips[clip.id].start, duration: edit.duration, inPoint: edit.inPoint, speed: edit.speed, backtimed: edit.backtimed, short: edit.short }
+    },
+  }),
+
+  'timeline.moveRange': command({
+    description:
+      'Pick up a stretch of the whole timeline — frames start to end (exclusive) — and put it down so it starts where frame `to` is now, the stretch in between closing up behind it: reordering sections of the film with everything that goes with them (titles, B-roll, captions, sound, markers). `to` must be at or before start, or at or after end. It happens on every track that follows ripples; a clip lying across an edge of the stretch is cut there. Clips listed in keepWhole (music beds) are never cut, and their tracks are left as they are. Returns { movedBy } in frames (negative: earlier).',
+    input: z
+      .object({ start: frame, end: frame, to: frame, keepWhole: z.array(id).default([]) })
+      .refine((i) => i.end > i.start, 'end must be after start')
+      .refine((i) => i.to <= i.start || i.to >= i.end, 'to must be outside the stretch being moved'),
+    title: () => 'Move a stretch of the timeline',
+    run(p, i) {
+      return { movedBy: moveRange(p, i.start, i.end, i.to, new Set(i.keepWhole)) }
     },
   }),
 

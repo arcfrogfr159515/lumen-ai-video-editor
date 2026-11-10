@@ -2,7 +2,7 @@
  * The timeline's view options and tools, in one menu on the toolbar: what the
  * lanes show, and the dialogs that work on the whole timeline.
  */
-import { AudioLines, Copy, Eraser, GalleryHorizontalEnd, Gauge, ListChecks, MonitorPlay, Palette, ScanLine, SeparatorVertical, SlidersHorizontal, StickyNote, Wand } from 'lucide-react'
+import { AudioLines, Copy, Eraser, GalleryHorizontalEnd, Gauge, LayoutGrid, ListChecks, MonitorPlay, Palette, ScanLine, SeparatorVertical, SlidersHorizontal, StickyNote, Wand } from 'lucide-react'
 import { IconButton } from '@/components/ui/button'
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu'
 import { useUI } from '@/editor/ui-store'
@@ -21,6 +21,9 @@ export function TimelineTools() {
       </MenuTrigger>
       <MenuContent align="end" className="min-w-[270px]">
         <MenuLabel>Show</MenuLabel>
+        <MenuItem icon={<LayoutGrid />} shortcut="shift+s" checked={view.storyboard} onSelect={() => set({ storyboard: !view.storyboard })}>
+          Storyboard
+        </MenuItem>
         <MenuItem icon={<GalleryHorizontalEnd />} checked={view.minimap} onSelect={() => set({ minimap: !view.minimap })}>
           Overview strip
         </MenuItem>

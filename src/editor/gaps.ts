@@ -51,14 +51,13 @@ const flashes = (t: Track) => t.role !== 'captions'
 
 /** What is empty and what flashes, on the tracks that can be edited. */
 export function findGaps(project: Pick<Project, 'clips' | 'tracks'>, flashFrames = FLASH_FRAMES): GapReport {
-  const p = project as Project
   const gaps: TrackGap[] = []
   const flashClips: FlashClip[] = []
   for (const track of project.tracks) {
     if (!fixable(track)) continue
     let cursor = 0
     let first = true
-    for (const c of clipsOnTrack(p, track.id)) {
+    for (const c of clipsOnTrack(project, track.id)) {
       if (c.start > cursor && !isMagnetic(track)) {
         const frames = c.start - cursor
         // Space before the first clip is where the track comes in; only a sliver of it is a mistake.

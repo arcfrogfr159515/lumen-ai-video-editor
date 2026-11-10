@@ -1,5 +1,6 @@
 import { openRecorder } from '@/capture/recorder'
 import { playback } from '@/editor/playback'
+import { timelineView } from '@/editor/timeline-view'
 import { useUI } from '@/editor/ui-store'
 import { timelineActions } from '@/features/timeline/timeline-actions'
 import { actions } from './actions'
@@ -87,6 +88,7 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'zoom-out', label: 'Zoom out', group: 'View', keys: ['-'], run: () => actions.zoom(1 / 1.35) },
   { id: 'zoom-fit', label: 'Zoom to fit', group: 'View', keys: ['shift+z'], run: actions.zoomToFit },
   { id: 'guides', label: 'Toggle safe-area guides', group: 'View', keys: ['g'], run: () => ui().setShowGuides(!ui().showGuides) },
+  { id: 'storyboard', label: 'Storyboard: the timeline as cards', group: 'View', keys: ['shift+s'], run: () => timelineView().set({ storyboard: !timelineView().storyboard }) },
 
   // App
   { id: 'palette', label: 'Command palette', group: 'App', keys: ['mod+k'], run: () => ui().setPaletteOpen(!ui().paletteOpen), global: true },

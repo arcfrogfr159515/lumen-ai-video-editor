@@ -15,7 +15,7 @@ export const clipEnd = (c: Pick<Clip, 'start' | 'duration'>) => c.start + c.dura
 export const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
   aStart < bEnd && bStart < aEnd
 
-export function clipsOnTrack(p: Project, trackId: string, exclude?: ReadonlySet<string>): Clip[] {
+export function clipsOnTrack(p: Pick<Project, 'clips'>, trackId: string, exclude?: ReadonlySet<string>): Clip[] {
   const out: Clip[] = []
   for (const c of Object.values(p.clips)) {
     if (c.trackId === trackId && !exclude?.has(c.id)) out.push(c)
@@ -672,6 +672,52 @@ export function rippleInsert(p: Project, at: Frame, len: Frame, also?: string) {
   }
   for (const m of p.markers) if (m.frame >= at) m.frame += len
   if (p.range) p.range = shiftRange(p.range, (f) => (f >= at ? f + len : f))
+}
+
+/**
+ * Moves the stretch [a, b) of the whole timeline so it starts where `to` is
+ * now — picked up with everything in it and put down elsewhere, the stretch
+ * between closing up behind it. `to` is at or before `a`, or at or after `b`.
+ *
+ * It happens on every track that follows ripples. A clip lying across an edge
+ * of the stretch (or across `to`) is cut there, so each piece goes with the
+ * part of the timeline it belongs to. Clips in `keepWhole` (music beds) are
+ * never cut — and since nothing can be rearranged around them, their tracks are
+ * left exactly as they are. Markers and the marked stretch move too.
+ *
+ * Returns how many frames the stretch moved (negative: earlier).
+ */
+export function moveRange(p: Project, a: Frame, b: Frame, to: Frame, keepWhole: ReadonlySet<string> = new Set()): number {
+  const len = b - a
+  if (len <= 0 || (to > a && to < b) || to === a || to === b) return 0
+  const later = to > b
+  // The stretch between the one being moved and where it is going: it slides the other way to make room.
+  const [between0, between1] = later ? [b, to] : [to, a]
+  const carried = later ? to - b : to - a
+  const map = (f: Frame) => (f >= a && f < b ? f + carried : f >= between0 && f < between1 ? f + (later ? -len : len) : f)
+  const held = new Set(Object.values(p.clips).filter((c) => keepWhole.has(c.id)).map((c) => c.trackId))
+  const tracks = p.tracks.filter((t) => followsRipple(t) && !held.has(t.id))
+  const ids = new Set(tracks.map((t) => t.id))
+  const groupsBefore = new Set(Object.values(p.clips).map((c) => c.groupId).filter((g): g is string => Boolean(g)))
+  for (const edge of [a, b, to]) {
+    splitClips(
+      p,
+      Object.values(p.clips).filter((c) => ids.has(c.trackId) && c.start < edge && clipEnd(c) > edge),
+      edge,
+    )
+  }
+  for (const c of Object.values(p.clips)) if (ids.has(c.trackId)) c.start = map(c.start)
+  for (const m of p.markers) m.frame = map(m.frame)
+  p.markers.sort((x, y) => x.frame - y.frame)
+  if (p.range) {
+    // The marked stretch keeps its length where its start goes; marks split by the move are cleared.
+    const start = map(p.range.in)
+    const end = map(p.range.out - 1) + 1
+    p.range = end - start === p.range.out - p.range.in ? { in: start, out: end } : null
+  }
+  dropLoneGroups(p, [...groupsBefore, ...Object.values(p.clips).map((c) => c.groupId).filter((g): g is string => Boolean(g))])
+  normalizeProject(p)
+  return carried
 }
 
 // ─── Trim tools ──────────────────────────────────────────────────────────

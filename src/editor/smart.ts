@@ -112,6 +112,18 @@ export function timelineTranscript(project: Project, from = 0, to = Infinity): T
   return out.sort((a, b) => a.start - b.start)
 }
 
+/**
+ * Sound that plays under the edit rather than in it — music, ambience, effects:
+ * every audio clip that isn't speech. Edits that take time out of the timeline
+ * or move it around leave these whole instead of cutting them up.
+ */
+export function bedClips(project: Project): string[] {
+  const speech = new Set(voiceClips(project).map((c) => c.id))
+  return Object.values(project.clips)
+    .filter((c) => c.kind === 'audio' && !speech.has(c.id))
+    .map((c) => c.id)
+}
+
 /** Music beds: audible audio clips on music-ish tracks, or long audio without speech elsewhere. */
 export function musicClips(project: Project): Clip[] {
   const voices = new Set(voiceClips(project).map((c) => c.id))
@@ -231,10 +243,7 @@ export async function removePauses(opts: { clipIds?: string[]; minGap?: number }
   const project = getProject()
   const fps = project.settings.fps
   const cuts = await silentCuts(project, await findPauses(project, opts), opts)
-  const speech = new Set(voiceClips(project).map((c) => c.id))
-  const keepWhole = Object.values(project.clips)
-    .filter((c) => c.kind === 'audio' && !speech.has(c.id))
-    .map((c) => c.id)
+  const keepWhole = bedClips(project)
   const joins: number[] = []
   let removed = 0
   let seconds = 0
