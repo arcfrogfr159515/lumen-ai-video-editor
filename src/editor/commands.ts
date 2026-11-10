@@ -586,6 +586,7 @@ function applyPatch(p: Project, clip: Clip, patch: ClipPatch) {
     if (next && !isMagneticTrack(p, clip.trackId)) duration = Math.min(duration, next.start - clip.start)
     clip.speed = speed
     clip.duration = duration
+    delete clip.takeSlot
     // A length rounded up to a whole frame can ask for more footage than there is.
     fitToMedia(p, clip)
   }
@@ -1081,6 +1082,7 @@ export const commands = {
       // (The room up to the next clip is at least the clip's own length — a single frame, for the shortest.)
       if (next && !isMagneticTrack(p, clip.trackId)) duration = Math.min(duration, next.start - clip.start)
       clip.duration = duration
+      delete clip.takeSlot
       clip.keyframes.speed = points
         .map((pt) => ({ frame: Math.round(pt.at * duration), value: pt.speed, easing: pt.easing ?? ('ease' as const) }))
         .filter((k, n, all) => n === 0 || k.frame !== all[n - 1].frame)

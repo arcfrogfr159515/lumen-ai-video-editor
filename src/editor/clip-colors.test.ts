@@ -124,6 +124,23 @@ describe('clip notes and tasks', () => {
     expect('tasks' in clip(a)).toBe(false)
   })
 
+  it('stay with the first piece when the clip is cut, however many times', () => {
+    const a = add('Overlay', 0, 300, { assetId: 'cam_a' })
+    run('clip.update', { ids: [a], patch: { note: 'Too dark', label: 'red', speaker: 'Anna', tasks: addTask(undefined, 'Lift the shadows') } })
+    // Three cuts, a stretch taken out, and a freeze frame: one clip has become six.
+    run('clip.split', { frame: 100, ids: [a] })
+    run('clip.split', { frame: 200 })
+    run('timeline.removeRange', { start: 40, end: 60 })
+    run('clip.freeze', { id: a, frame: 20, duration: 10 })
+    const p = getProject()
+    expect(Object.keys(p.clips)).toHaveLength(6)
+    // The note and its task are still written once, on the piece that is still that clip.
+    expect(clipNotes(p).map((r) => [r.clipId, r.note, r.tasks.length])).toEqual([[a, 'Too dark', 1]])
+    expect(taskCounts(p)).toEqual({ clips: 1, tasks: 1, open: 1 })
+    // What the footage is — its colour, who speaks in it — goes with every piece.
+    expect(Object.values(p.clips).every((c) => c.label === 'red' && c.speaker === 'Anna')).toBe(true)
+  })
+
   it('read back as one list for the timeline', () => {
     const a = add('Main', 0, 200, { assetId: 'cam_a', name: 'Anna answers' })
     const b = add('Main', 200, 200, { assetId: 'cam_b', name: 'Cutaway' })

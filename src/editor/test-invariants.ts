@@ -72,6 +72,7 @@ export function problems(p: Project): string[] {
       for (const t of c.takes) if (t.assetId && !p.assets[t.assetId]) out.push(`${where}: a take of media that isn't in the project`)
     } else if (c.takeId || c.takeSlot !== undefined) out.push(`${where}: take leftovers on a clip without takes`)
     if (c.takeSlot !== undefined && c.takeSlot <= c.duration) out.push(`${where}: remembers a place (${c.takeSlot}) no longer than it is`)
+    if (c.freeze && c.takes) out.push(`${where}: a freeze frame with alternate takes`)
     if (c.tasks) for (const t of c.tasks) if (!t.id || typeof t.text !== 'string') out.push(`${where}: a task without an id or text`)
   }
   for (const t of p.tracks) {

@@ -95,27 +95,12 @@ export function packTrack(p: Project, trackId: string) {
 /** Packs magnetic tracks; with the state before the edit, grouped clips elsewhere follow their magnetic partners. */
 export function normalizeProject(p: Project, before?: Project) {
   for (const t of p.tracks) if (isMagnetic(t)) packTrack(p, t.id)
-  if (before) {
-    syncGroups(p, before)
-    forgetTakeSlots(p, before)
-  }
+  if (before) syncGroups(p, before)
 }
 
-/**
- * A clip made shorter by a short take remembers the length of its place, to
- * get it back with a longer take. Once its length is changed any other way —
- * a trim, a cut, a new speed — that is the length it was given, and the old
- * place is forgotten.
- */
-function forgetTakeSlots(p: Project, before: Project) {
-  // (A new frame rate changes every length, and the places with them: nothing was given a length by hand.)
-  const retimed = before.settings.fps !== p.settings.fps
-  for (const c of Object.values(p.clips)) {
-    if (c.takeSlot === undefined) continue
-    const was = before.clips[c.id]
-    if (c.takeSlot <= c.duration || (!retimed && was && was.takeId === c.takeId && was.duration !== c.duration)) delete c.takeSlot
-  }
-}
+// A clip made shorter by a short take remembers the length of its place (`takeSlot`), to get it back with a
+// longer take. Once its length is changed any other way — a trim, a cut, a new speed — that is the length it was
+// given, and the old place is forgotten: everything here that writes a clip's length forgets it.
 
 /**
  * Shortens a clip (a draft) that asks for more footage than its media has from
@@ -129,6 +114,7 @@ export function fitToMedia(p: Project, clip: Clip) {
   const available = Math.max(1, src - clip.inPoint)
   if (consumed(clip) <= available + 0.5) return
   clip.duration = Math.max(1, Math.floor(localForConsumed(clip, available) + 1e-6))
+  delete clip.takeSlot
   for (const prop of ANIMATABLE) {
     if (prop === 'speed') continue
     const kfs = clip.keyframes[prop]
@@ -291,6 +277,7 @@ export function setClipStart(clip: Clip, frame: Frame) {
   }
   clip.start += delta
   clip.duration -= delta
+  delete clip.takeSlot
   shiftKeyframes(clip, -delta)
   shiftFollow(clip, -delta)
 }
@@ -305,6 +292,7 @@ export function setClipEnd(clip: Clip, frame: Frame) {
     clip.inPoint = Math.max(0, clip.inPoint + Math.round(change))
   }
   clip.duration = duration
+  delete clip.takeSlot
 }
 
 /** Mutates `clip` (a draft) so the given edge lands on `frame`, respecting bounds. */
@@ -372,6 +360,9 @@ export function splitClip(p: Project, clip: Clip, frame: Frame): Clip | null {
   right.transitionIn = null
   right.animation.in = { ...right.animation.in, preset: 'none' }
   right.audio.fadeIn = 0
+  // A note and its tasks are written on the clip once: they stay with the first piece, not one copy on every piece.
+  delete right.note
+  delete right.tasks
   shiftFollow(right, -leftDuration)
   splitTakes(clip, right, leftDuration)
 
@@ -530,8 +521,10 @@ export function removeRange(p: Project, a: Frame, b: Frame, keepWhole: ReadonlyS
       const c = placed[i]
       const next = placed[i + 1]
       if (clipEnd(c) <= next.start) continue
-      if (next.start - c.start >= 1) c.duration = next.start - c.start
-      else delete p.clips[c.id]
+      if (next.start - c.start >= 1) {
+        c.duration = next.start - c.start
+        delete c.takeSlot
+      } else delete p.clips[c.id]
     }
   }
   for (const m of p.markers) {
@@ -561,6 +554,7 @@ function closeStretch(clip: Clip, at: Frame, len: Frame) {
     clip.keyframes[prop] = [...before, { frame: at, value: resume, easing }, ...after]
   }
   clip.duration -= len
+  delete clip.takeSlot
 }
 
 /** Clips whose span covers `frame` (on unlocked tracks). */
@@ -858,6 +852,12 @@ export function freezeFrame(p: Project, clip: Clip, frame: Frame, duration: Fram
   hold.reverse = false
   hold.transitionIn = null
   delete hold.groupId
+  // It holds one frame of what was showing: the other takes, and the notes on the clip, stay with the clip.
+  delete hold.takes
+  delete hold.takeId
+  delete hold.takeSlot
+  delete hold.note
+  delete hold.tasks
   hold.animation = { in: { ...clip.animation.in, preset: 'none' }, out: { ...clip.animation.out, preset: 'none' } }
   hold.audio = { ...clip.audio, fadeIn: 0, fadeOut: 0 }
   // The hold keeps whatever the clip looked like at that moment, un-animated.
