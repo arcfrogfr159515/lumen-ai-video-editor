@@ -653,6 +653,7 @@ function TimelineMenu({ clipId, frame }: { clipId: string | null; frame: number 
             ))}
           </ContextSub>
         )}
+        {nested?.multicam && <ContextItem onSelect={() => useTimelineView.getState().set({ directorOpen: true })}>Auto-direct: cut between the cameras…</ContextItem>}
         {clip.sequenceId ? (
           <>
             <ContextItem shortcut="mod+alt+enter" onSelect={() => openTimeline(clip.sequenceId!, true)}>

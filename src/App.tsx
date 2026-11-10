@@ -11,6 +11,7 @@ import { AssetsPanel } from '@/features/assets/AssetsPanel'
 import { CommandPalette } from '@/features/command/CommandPalette'
 import { ExportDialog } from '@/features/export/ExportDialog'
 import { RenderQueueDialog } from '@/features/export/RenderQueue'
+import { DirectorDialog } from '@/features/multicam/DirectorDialog'
 import { MulticamDialog } from '@/features/multicam/MulticamDialog'
 import { AboutDialog } from '@/features/shell/AboutDialog'
 import { GraphicsDialog } from '@/features/shell/GraphicsDialog'
@@ -80,6 +81,7 @@ export function App() {
         <RenameTimelineDialog />
         <RenderQueueDialog />
         <MulticamDialog />
+        <DirectorDialog />
         <IntegrationsHub />
         <AgentApprovals />
         <Toaster
