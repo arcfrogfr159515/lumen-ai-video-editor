@@ -164,6 +164,47 @@ describe('cleaning up', () => {
     expect(clip(sound).start).toBe(200)
   })
 
+  it('fills the sliver that closing a hole leaves behind', () => {
+    // Nothing plays from 100 to 148. The overlay's own gap is wider: 100 to 150 — two frames of it are left
+    // once the hole has closed, under the title.
+    add('Overlay', 0, 100, { assetId: 'long' })
+    add('Overlay', 150, 60, { assetId: 'long', inPoint: 300 })
+    run('clip.add', { trackId: trackId('Titles'), kind: 'text', start: 148, duration: 40 })
+    const r = clean()
+    expect(r).toMatchObject({ holesClosed: 1, framesRemoved: 48, flashGapsFilled: 1, left: 0 })
+    expect(spans('Overlay')).toEqual([
+      [0, 102],
+      [102, 162],
+    ])
+    expect(findGaps(getProject())).toMatchObject({ holes: [], gaps: [] })
+  })
+
+  it('takes flash clips that sit side by side out together', () => {
+    // Two leftovers in a row: neither is left to cover for the other, the clip before them takes the space.
+    const a = add('Overlay', 0, 100, { assetId: 'long' })
+    const one = add('Overlay', 100, 2, { assetId: 'long', inPoint: 200 })
+    const two = add('Overlay', 102, 3, { assetId: 'long', inPoint: 400 })
+    add('Overlay', 105, 60, { assetId: 'long', inPoint: 600 })
+    expect(clean()).toMatchObject({ flashClipsRemoved: 2 })
+    expect(clip(one)).toBeUndefined()
+    expect(clip(two)).toBeUndefined()
+    expect(clip(a).duration).toBe(105)
+    expect(findGaps(getProject())).toMatchObject({ gaps: [], flashClips: [] })
+  })
+
+  it('leaves no hole where the main track closes up over a flash clip', () => {
+    // The main track ends on a two-frame leftover that nothing can cover (the clip before it has no more footage);
+    // music starts where it ended.
+    add('Main', 0, 58, { assetId: 'short', inPoint: 2 })
+    add('Main', 58, 2, { assetId: 'long', inPoint: 500 })
+    add('Music', 60, 100, { assetId: 'song' })
+    const r = clean()
+    expect(r).toMatchObject({ flashClipsRemoved: 1, holesClosed: 1 })
+    expect(spans('Main')).toEqual([[0, 58]])
+    expect(spans('Music')).toEqual([[58, 158]])
+    expect(findHoles(getProject())).toEqual([])
+  })
+
   it('refuses tracks whose clips are meant to stay where they are', () => {
     run('track.update', { id: trackId('Music'), patch: { rippleLock: true } })
     expect(refusal('timeline.closeGaps', { trackIds: [trackId('Music')] })).toMatch(/ripple-locked/)

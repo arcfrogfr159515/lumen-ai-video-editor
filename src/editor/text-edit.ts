@@ -19,6 +19,8 @@ export interface ScriptWord {
   /** The frames it is said in, on the timeline: [start, end). */
   start: Frame
   end: Frame
+  /** Its middle, on the timeline (a fraction of a frame): a word is on the timeline while its middle is. */
+  mid: number
 }
 
 export interface ScriptLine {
@@ -88,11 +90,13 @@ export function timelineScript(project: Pick<Project, 'clips' | 'assets' | 'trac
     if (hidden.has(clip.trackId)) continue
     const asset = spoken(project, clip)
     if (!asset) continue
-    const from = clip.inPoint / fps
-    const to = (clip.inPoint + consumed(clip)) / fps
+    // The footage the clip plays, in frames of its media: compared in frames, so an edge is exactly an edge
+    // (a frame number turned into seconds and back can come out a hair short of itself).
+    const from = clip.inPoint
+    const to = clip.inPoint + consumed(clip)
     const speaker = clip.speaker?.trim() || undefined
     for (const seg of asset.transcript!) {
-      if (seg.end <= from || seg.start >= to || seg.end <= seg.start) continue
+      if (seg.end * fps <= from || seg.start * fps >= to || seg.end <= seg.start) continue
       const tokens = tokenize(seg.text)
       if (!tokens.length) continue
       const total = tokens.reduce((n, t) => n + weight(t), 0)
@@ -100,17 +104,18 @@ export function timelineScript(project: Pick<Project, 'clips' | 'assets' | 'trac
       let cursor = seg.start
       for (const token of tokens) {
         const length = ((seg.end - seg.start) * weight(token)) / total
-        const [a, b] = [cursor, cursor + length]
-        cursor = b
+        const [a, b] = [cursor * fps, (cursor + length) * fps]
+        cursor += length
         // A word belongs to the clip if its middle is in the footage the clip plays.
         const mid = (a + b) / 2
         if (mid < from || mid >= to) continue
-        const start = localForSource(clip, Math.max(a, from) * fps)
-        const end = localForSource(clip, Math.min(b, to) * fps)
-        if (start === null || end === null) continue
+        const start = localForSource(clip, Math.max(a, from))
+        const end = localForSource(clip, Math.min(b, to))
+        const middle = localForSource(clip, mid)
+        if (start === null || end === null || middle === null) continue
         const s = clip.start + Math.round(start)
         const e = Math.min(clipEnd(clip), Math.max(s + 1, clip.start + Math.round(end)))
-        words.push({ index: 0, text: token, clipId: clip.id, line: 0, start: s, end: e })
+        words.push({ index: 0, text: token, clipId: clip.id, line: 0, start: s, end: e, mid: clip.start + middle })
       }
       if (!words.length) continue
       lines.push({ clipId: clip.id, ...(speaker ? { speaker } : {}), start: words[0].start, end: words[words.length - 1].end, words, ...(words.length < tokens.length ? { partial: true } : {}) })
@@ -227,34 +232,45 @@ function quietNear(project: Pick<Project, 'assets' | 'settings'>, clip: Clip, fr
  * The stretches of timeline to take out so that the given words are no longer
  * said: [start, end) in frames, merged where they touch, earliest first. A
  * short pause after a cut word goes with it; each end of a stretch is then
- * moved to the quietest moment nearby, so a cut doesn't clip a syllable.
+ * moved to the quietest moment nearby, so a cut doesn't clip a syllable — but
+ * never past the middle of a word that stays, nor short of the middle of one
+ * that goes: the script afterwards is the script before, less those words.
  */
 export function cutRanges(project: Pick<Project, 'clips' | 'assets' | 'settings'>, lines: readonly ScriptLine[], indexes: readonly number[]): [Frame, Frame][] {
   const words = scriptWords(lines)
   const cut = new Set(indexes)
   const fps = project.settings.fps
-  const raw: [Frame, Frame, string][] = []
-  for (const w of words) {
-    if (!cut.has(w.index)) continue
+  /** A run of cut words said one after another in one clip: where it would be cut, and its first and last word. */
+  const runs: { a: Frame; b: Frame; clipId: string; first: ScriptWord; last: ScriptWord }[] = []
+  for (const w of [...words].filter((x) => cut.has(x.index)).sort((x, y) => x.start - y.start || x.index - y.index)) {
     const next = words[w.index + 1]
     // Up to the next word of the same clip when it follows closely, pause and all.
     const end = next && next.clipId === w.clipId && next.start >= w.end && next.start - w.end <= TRAILING_PAUSE * fps ? next.start : w.end
-    raw.push([w.start, end, w.clipId])
+    const run = runs[runs.length - 1]
+    if (run && w.start <= run.b && w.clipId === run.clipId) {
+      run.b = Math.max(run.b, end)
+      if (w.mid > run.last.mid) run.last = w
+    } else runs.push({ a: w.start, b: end, clipId: w.clipId, first: w, last: w })
   }
-  raw.sort((a, b) => a[0] - b[0])
-  const merged: [Frame, Frame, string][] = []
-  for (const r of raw) {
-    const last = merged[merged.length - 1]
-    if (last && r[0] <= last[1] && r[2] === last[2]) last[1] = Math.max(last[1], r[1])
-    else merged.push([...r])
+  /** The word of the same clip said just before or after one, when it is staying. */
+  const neighbour = (w: ScriptWord, step: 1 | -1) => {
+    const other = words[w.index + step]
+    return other && other.clipId === w.clipId && !cut.has(other.index) ? other : undefined
   }
+  const within = (frame: Frame, lo: Frame, hi: Frame) => (lo <= hi ? Math.min(hi, Math.max(lo, frame)) : frame)
   const out: [Frame, Frame][] = []
-  for (const [a, b, clipId] of merged) {
+  for (const { a, b, clipId, first, last } of runs) {
     const clip = project.clips[clipId]
     if (!clip) continue
+    // Where the cut may start: after the middle of the word before (which stays), at or before the middle of the first word going.
+    const before = neighbour(first, -1)
+    const [lo0, hi0] = [before ? Math.floor(before.mid) + 1 : clip.start, Math.max(clip.start, Math.floor(first.mid))]
+    // Where it may end: past the middle of the last word going, at or before the middle of the word after (which stays).
+    const after = neighbour(last, 1)
+    const [lo1, hi1] = [Math.floor(last.mid) + 1, after ? Math.floor(after.mid) : clipEnd(clip)]
     // A cut that starts or ends on the clip's own edge stays there; inside the clip it looks for quiet.
-    const start = a <= clip.start ? clip.start : quietNear(project, clip, a, clip.start, b - 1)
-    const end = b >= clipEnd(clip) ? clipEnd(clip) : quietNear(project, clip, b, start + 1, clipEnd(clip))
+    const start = a <= clip.start ? clip.start : lo0 <= hi0 ? quietNear(project, clip, within(a, lo0, hi0), lo0, Math.min(hi0, b - 1)) : a
+    const end = b >= clipEnd(clip) ? clipEnd(clip) : lo1 <= hi1 ? quietNear(project, clip, within(b, Math.max(lo1, start + 1), hi1), Math.max(lo1, start + 1), hi1) : Math.max(b, start + 1)
     if (end > start) out.push([start, end])
   }
   // Stretches from clips that play at the same time can overlap: together they are one.

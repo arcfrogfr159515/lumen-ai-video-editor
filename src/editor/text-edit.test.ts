@@ -162,6 +162,47 @@ describe('cutting by the words', () => {
     expect(cutRanges(getProject(), script(), [2])[0][0]).toBe(at)
   })
 
+  it('never moves a cut past the middle of a word that stays', () => {
+    // Five short words in a second, six frames each; the only quiet moment is late in “cc”, past its middle.
+    addAsset('fast', 10, 'audio', { transcript: transcript([0, 1, 'aa bb cc dd ee']) })
+    add('Voice', 0, 300, { assetId: 'fast' })
+    const w = words()
+    expect(w.map((x) => [x.text, x.start, x.end])).toEqual([
+      ['aa', 0, 6],
+      ['bb', 6, 12],
+      ['cc', 12, 18],
+      ['dd', 18, 24],
+      ['ee', 24, 30],
+    ])
+    const peaks = Array.from({ length: 10 * 50 }, () => 0.7)
+    peaks[Math.round((16 / 30) * 50)] = 0
+    run('asset.update', { id: 'fast', patch: { peaks } })
+    // Cutting “bb” would like to end on that quiet frame — which would take most of “cc” with it.
+    const [[a, b]] = cutRanges(getProject(), script(), [1])
+    expect(a).toBeGreaterThan(3)
+    expect(a).toBeLessThanOrEqual(9)
+    expect(b).toBeGreaterThan(9)
+    expect(b).toBeLessThanOrEqual(15)
+    run('timeline.removeRange', { start: a, end: b })
+    expect(said()).toBe('aa cc dd ee')
+  })
+
+  it('keeps the word a clip starts in the middle of, whatever frame the clip starts on', () => {
+    // One long word from 8 s to 9 s. Frame 246 is 8.2 s — and 8.2 s × 30 is a hair under 246.
+    addAsset('long word', 20, 'audio', { transcript: transcript([8, 9, 'Supercalifragilistic']) })
+    for (const inPoint of [241, 246, 250, 253]) {
+      freshProject('Script')
+      addAsset('long word', 20, 'audio', { transcript: transcript([8, 9, 'Supercalifragilistic']) })
+      add('Voice', 0, 90, { assetId: 'long word', inPoint })
+      expect(words().map((x) => [x.text, x.start]), `in-point ${inPoint}`).toEqual([['Supercalifragilistic', 0]])
+    }
+    // Once its middle (8.5 s, frame 255) is before the clip starts, the word isn't the clip's any more.
+    freshProject('Script')
+    addAsset('long word', 20, 'audio', { transcript: transcript([8, 9, 'Supercalifragilistic']) })
+    add('Voice', 0, 90, { assetId: 'long word', inPoint: 256 })
+    expect(words()).toEqual([])
+  })
+
   it('removes a whole clip’s worth of words back to the clip’s own edges', () => {
     const id = add('Main', 0, 75, { assetId: 'talk' })
     add('Main', 75, 100, { assetId: 'talk', inPoint: 75 })

@@ -4,7 +4,7 @@
  * only a frame or two long — and closing them without knocking anything out
  * of sync.
  */
-import { clipEnd, clipsOnTrack, dropLoneGroups, isMagnetic, isRippleLocked, mediaEdgeLimits, overlaps, removeRange, setClipEnd, setClipStart } from './ops'
+import { clipEnd, clipsOnTrack, dropLoneGroups, isMagnetic, isRippleLocked, mediaEdgeLimits, overlaps, packTrack, removeRange, setClipEnd, setClipStart } from './ops'
 import type { Clip, Frame, Project, Track } from './types'
 
 /** Empty space or a clip this short is a flash: a mistake nobody means to make. */
@@ -156,24 +156,34 @@ export function closeGaps(p: Project, opts: CloseGapsOptions = {}): CloseGapsRes
     for (const track of editable) {
       if (!flashes(track)) continue
       const groups: string[] = []
+      // Flash clips side by side go together, leaving one space between the clips either side of them.
+      const spaces: [Frame, Frame][] = []
       for (const c of clipsOnTrack(p, track.id)) {
-        if (c.duration > flashFrames || !p.clips[c.id]) continue
-        const list = clipsOnTrack(p, track.id)
-        const i = list.findIndex((x) => x.id === c.id)
-        const before = list[i - 1]
-        const after = list[i + 1]
+        if (c.duration > flashFrames) continue
         const [a, b] = [c.start, clipEnd(c)]
+        const last = spaces[spaces.length - 1]
+        if (last && last[1] === a) last[1] = b
+        else spaces.push([a, b])
         if (c.groupId) groups.push(c.groupId)
         delete p.clips[c.id]
-        // A neighbour takes up the frames, so nothing after it moves — on the main track too.
-        if (!cover(p, before, after, a, b) && isMagnetic(track)) out.framesRemoved += b - a
         out.flashClipsRemoved++
       }
+      const kept = clipsOnTrack(p, track.id)
+      for (const [a, b] of spaces) {
+        const before = kept.filter((k) => clipEnd(k) <= a).pop()
+        const after = kept.find((k) => k.start >= b)
+        // A neighbour takes up the frames, so nothing after it moves — on the main track too.
+        if (!cover(p, before, after, a, b) && isMagnetic(track)) out.framesRemoved += b - a
+      }
       dropLoneGroups(p, groups)
+      // The main track closes up over what nothing covered — now, so the holes below are looked for where things end up.
+      if (isMagnetic(track)) packTrack(p, track.id)
     }
   }
 
-  if (opts.flashGaps !== false) {
+  /** Fills the slivers on every track; says how many it had to leave. */
+  const fillSlivers = () => {
+    let left = 0
     for (const track of editable) {
       if (isMagnetic(track)) continue
       const list = clipsOnTrack(p, track.id)
@@ -183,20 +193,27 @@ export function closeGaps(p: Project, opts: CloseGapsOptions = {}): CloseGapsRes
         const frames = c.start - cursor
         if (frames > 0 && frames <= flashFrames) {
           if (cover(p, list[i - 1], c, cursor, c.start)) out.flashGapsFilled++
-          else out.left++
+          else left++
         }
         cursor = Math.max(cursor, clipEnd(c))
       }
     }
+    return left
   }
+
+  // Slivers first: a neighbour covers them and nothing moves. (One nothing covers on any track is a hole, and closes below.)
+  if (opts.flashGaps !== false) out.left = fillSlivers()
 
   if (opts.holes !== false) {
     // Last first, so the earlier ones are still where they were found.
-    for (const hole of findHoles(p).reverse()) {
+    const holes = findHoles(p).reverse()
+    for (const hole of holes) {
       removeRange(p, hole.start, hole.end)
       out.holesClosed++
       out.framesRemoved += hole.frames
     }
+    // A wide gap on one track with a hole in the middle of it is a sliver once the hole has closed.
+    if (holes.length && opts.flashGaps !== false) out.left = fillSlivers()
   }
 
   for (const trackId of opts.trackIds ?? []) {
