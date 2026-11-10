@@ -4,8 +4,21 @@ import {
   AudioLines,
   Blend,
   Captions,
+  CircleDot,
   Clapperboard,
   Crosshair,
+  Eraser,
+  FileText,
+  GalleryHorizontalEnd,
+  Gauge,
+  GitBranch,
+  GitCompare,
+  LayoutGrid,
+  ListChecks,
+  MonitorPlay,
+  Palette,
+  SeparatorVertical,
+  Wand,
   Layers,
   ListVideo,
   Move,
@@ -49,16 +62,18 @@ import { TITLE_PRESETS } from '@/editor/presets'
 import { allSequences, openSequenceId } from '@/editor/sequences'
 import { dispatch, getProject, useEditor } from '@/editor/store'
 import { openTimeline } from '@/editor/timeline-nav'
+import { timelineView as view } from '@/editor/timeline-view'
 import { useUI, type LeftTab } from '@/editor/ui-store'
 import { STARTERS } from '@/features/copilot/suggestions'
 import { sendPrompt } from '@/features/copilot/store'
 import { actions } from '@/features/shell/actions'
 import { SHORTCUTS, shortcutFor } from '@/features/shell/shortcuts'
+import { timelineActions } from '@/features/timeline/timeline-actions'
 import { collectProject } from '@/project/session'
 import { pickSubtitles, saveSubtitles } from '@/project/subtitle-files'
 
 /** Shortcuts already offered above under a friendlier name. */
-const LISTED = new Set(['split', 'duplicate', 'delete', 'ripple', 'marker', 'undo', 'redo', 'import', 'play', 'start', 'end', 'zoom-fit', 'guides', 'snapping', 'export', 'queue', 'save', 'save-as', 'open', 'new', 'help', 'palette', 'nest'])
+const LISTED = new Set(['split', 'duplicate', 'delete', 'ripple', 'marker', 'undo', 'redo', 'import', 'play', 'start', 'end', 'zoom-fit', 'guides', 'snapping', 'export', 'queue', 'save', 'save-as', 'open', 'new', 'help', 'palette', 'nest', 'storyboard', 'trim-mode', 'next-take', 'macro-record', 'macro-run'])
 
 const ui = () => useUI.getState()
 
@@ -200,6 +215,69 @@ export function CommandPalette() {
           </Item>
           <Item icon={<Crosshair />} keywords={['track', 'tracking', 'follow', 'pin', 'motion']} onSelect={run(() => actions.trackMotion())}>
             Track motion…
+          </Item>
+        </Command.Group>
+
+        <Command.Group heading="Timeline craft">
+          <Item icon={<FileText />} keywords={['transcript', 'text', 'words', 'delete', 'filler', 'um', 'paper edit', 'text-based']} onSelect={panel('script')}>
+            Edit by the script: cut words to cut the film
+          </Item>
+          <Item icon={<LayoutGrid />} shortcut={shortcutFor('storyboard')} keywords={['cards', 'reorder', 'sections', 'chapters', 'board']} onSelect={run(() => view().set({ storyboard: !view().storyboard }))}>
+            Storyboard: the film as cards
+          </Item>
+          <Item icon={<MonitorPlay />} keywords={['source', 'viewer', 'in', 'out', 'three-point', 'four-point', 'insert', 'overwrite']} onSelect={run(() => timelineActions.openSourceMonitor())}>
+            Source monitor for the selected media
+          </Item>
+          <Item icon={<SeparatorVertical />} shortcut={shortcutFor('trim-mode')} keywords={['trim', 'jkl', 'dynamic', 'roll', 'ripple', 'cut point']} onSelect={run(() => timelineActions.toggleTrimMode())}>
+            Trim mode on the nearest cut
+          </Item>
+          <Item icon={<Layers />} shortcut={shortcutFor('next-take')} keywords={['takes', 'alternate', 'audition', 'candidate', 'swap', 'stack']} onSelect={run(() => timelineActions.switchTake(1))}>
+            Show the next take of the clip
+          </Item>
+          <Item icon={<Clapperboard />} keywords={['multicam', 'auto', 'director', 'switch', 'cameras', 'speaker', 'podcast']} onSelect={run(() => view().set({ directorOpen: true }))}>
+            Auto-direct a multicam clip…
+          </Item>
+          <Item icon={<CircleDot />} shortcut={shortcutFor('macro-record')} keywords={['macro', 'record', 'repeat', 'replay', 'automate']} onSelect={run(() => void timelineActions.toggleRecording())}>
+            Record a macro on the selected clip / stop
+          </Item>
+          <Item icon={<CircleDot />} shortcut={shortcutFor('macro-run')} keywords={['macro', 'run', 'replay', 'repeat', 'apply']} onSelect={run(() => timelineActions.runMacro())}>
+            Run the last macro on the selection
+          </Item>
+          <Item icon={<CircleDot />} keywords={['macro', 'list', 'import', 'export']} onSelect={run(() => view().set({ macrosOpen: true }))}>
+            Macros…
+          </Item>
+          <Item icon={<Wand />} keywords={['batch', 'bulk', 'many', 'speed', 'volume', 'effects', 'rename', 'all']} onSelect={run(() => timelineActions.openBatch())}>
+            Batch-edit the selected clips
+          </Item>
+          <Item icon={<GitBranch />} keywords={['branch', 'version', 'alternative', 'copy', 'try', 'variant']} onSelect={run(() => timelineActions.branch())}>
+            Branch this timeline
+          </Item>
+          <Item icon={<GitCompare />} keywords={['compare', 'diff', 'versions', 'side by side', 'merge', 'branch']} onSelect={run(() => view().set({ compareOpen: true }))}>
+            Compare versions side by side…
+          </Item>
+          <Item icon={<Eraser />} keywords={['gaps', 'holes', 'flash frames', 'black', 'clean', 'close']} onSelect={run(() => view().set({ cleanup: 'gaps' }))}>
+            Clean up gaps and flash frames…
+          </Item>
+          <Item icon={<Gauge />} keywords={['vfr', 'variable frame rate', 'constant', 'conform', 'fps', 'drift', 'sync']} onSelect={run(() => view().set({ cleanup: 'rates' }))}>
+            Frame rates of the footage…
+          </Item>
+          <Item icon={<Palette />} keywords={['color', 'colour', 'label', 'rules', 'speaker', 'camera', 'source']} onSelect={run(() => view().set({ colorsOpen: true }))}>
+            Clip colours…
+          </Item>
+          <Item icon={<ListChecks />} keywords={['markers', 'chapters', 'todo', 'to-do', 'comments', 'notes', 'tasks', 'export', 'youtube']} onSelect={panel('notes')}>
+            Markers, chapters and clip notes
+          </Item>
+          <Item icon={<GalleryHorizontalEnd />} keywords={['minimap', 'overview', 'navigator', 'whole timeline']} onSelect={run(() => view().set({ minimap: !view().minimap }))}>
+            Toggle the overview strip
+          </Item>
+          <Item icon={<AudioLines />} keywords={['snap', 'guides', 'pauses', 'silence', 'speech']} onSelect={run(() => view().set({ pauseGuides: !view().pauseGuides }))}>
+            Toggle guides where speech pauses
+          </Item>
+          <Item icon={<ScanLine />} keywords={['snap', 'guides', 'shot', 'scene', 'cuts']} onSelect={run(() => view().set({ cutGuides: !view().cutGuides }))}>
+            Toggle guides at shot cuts
+          </Item>
+          <Item icon={<Copy />} keywords={['duplicate', 'reused', 'twice', 'repeat', 'footage', 'used']} onSelect={run(() => view().set({ showReuse: !view().showReuse }))}>
+            Toggle marking footage used more than once
           </Item>
         </Command.Group>
 

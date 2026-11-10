@@ -19,7 +19,7 @@ Lumen is a desktop video editor where the AI isn't a chatbot bolted onto a timel
 [![CI](https://img.shields.io/github/actions/workflow/status/Mas-inx/lumen-ai-video-editor/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/Mas-inx/lumen-ai-video-editor/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-d6ee00?style=flat-square)
 ![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-2b2c26?style=flat-square)
-![133 AI tools](https://img.shields.io/badge/AI%20tools-133-d6ee00?style=flat-square)
+![156 AI tools](https://img.shields.io/badge/AI%20tools-156-d6ee00?style=flat-square)
 ![MCP server and client](https://img.shields.io/badge/MCP-server%20%2B%20client-2b2c26?style=flat-square)
 ![Electron 44](https://img.shields.io/badge/Electron-44-2b2c26?style=flat-square&logo=electron)
 ![React 19](https://img.shields.io/badge/React-19-2b2c26?style=flat-square&logo=react)
@@ -80,6 +80,14 @@ It's an open-source alternative to editors like CapCut, Filmora and Descript —
 - **Multiple timelines and nesting:** as many timelines per project as you like — another cut, or a vertical copy reframed in one click — and **nest** any clips into a timeline of their own to grade, speed up or cut them as one piece (double-click to step inside; picture and sound both play through).
 - **Multicam:** pick the camera recordings and Lumen **lines them up by their sound** (to about a millisecond), then press `1`–`9` while it plays to cut between angles, with every camera live in a strip under the preview.
 - **Reads the footage:** **scene detection** splits or marks a clip at every shot change; **stabilization** smooths away camera shake with just enough zoom; **motion tracking** pins a title, sticker or mask to something moving — including a blur that follows a face.
+- **Edit by the script:** the Script panel shows every word said on the timeline. Delete words and the frames they are spoken in come out of the film, on every track at once — or take out every *um* and repeated word in one click.
+- **Try another cut without losing this one:** **branch** a timeline, **compare** two versions side by side with the stretches that differ highlighted, and take back the ones that work, one at a time. **Alternate takes** hang several candidates on one place in the cut; `Alt+T` flips between them in place.
+- **A source monitor** with in and out marks and **three- and four-point editing**; **dynamic trimming** — press `T` on a cut and trim it with `J` `K` `L` while it plays; and **sync lock** and **ripple lock** on every track to decide what follows a ripple.
+- **An auto-director for multicam:** cuts to whoever is speaking, to the wide shot when several do, and away to a listener when a shot runs long — by each camera's own sound, and by the picture if you ask.
+- **Macros:** press `Alt+R`, edit one clip — grade, trim, effects, cuts — and replay the same edits on any others with `Alt+Shift+R`, each measured from its own start and end.
+- **Storyboard:** the film as cards grouped by chapter; drag a card or a whole section and everything that goes with it — titles, B-roll, captions, sound — moves along.
+- **Speed curves:** time remapping drawn as a curve with Bézier handles, with the clip's new length shown as you drag.
+- **A timeline that looks after itself:** an **overview strip** of the whole film; clips **coloured by rule** (source, speaker, camera); **chapter, to-do and comment markers** you can filter and export (YouTube chapters, Markdown, CSV); **notes and task lists** on clips; snapping **guides at speech pauses and shot cuts**; a **clean-up** that finds and closes gaps and flash frames; marks on **footage used more than once**; **variable-frame-rate** footage detected on import and made constant in one click; and **batch changes** of speed, volume and effects across the selection.
 
 ### The Copilot sees, hears and edits
 
