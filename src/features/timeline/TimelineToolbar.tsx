@@ -6,6 +6,7 @@ import { AiSparkle } from '@/components/brand'
 import { IconButton } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Kbd } from '@/components/ui/kbd'
+import { cancelRecording, useMacros } from '@/editor/macro-store'
 import { useEditor } from '@/editor/store'
 import { useTimelineView } from '@/editor/timeline-view'
 import { TRIM_SIDES, trimSides } from '@/editor/trim-mode'
@@ -16,6 +17,7 @@ import { formatDuration } from '@/lib/time'
 import { suggestFor, type Suggestion } from '@/editor/smart'
 import { useCopilot } from '@/features/copilot/store'
 import { actions } from '@/features/shell/actions'
+import { timelineActions } from './timeline-actions'
 import { RenderMenu } from './RenderMenu'
 import { TimelineTools } from './TimelineTools'
 import { TimelineSwitcher } from './TimelineSwitcher'
@@ -75,6 +77,7 @@ export function TimelineToolbar() {
 
       <RangeChip />
       <TrimChip />
+      <RecordingChip />
 
       <div className="flex min-w-0 flex-1 justify-center px-3">
         <CopilotHint />
@@ -155,6 +158,28 @@ function TrimChip() {
         <Kbd combo="right" /> nudge
       </span>
       <button type="button" aria-label="Leave trim mode" title="Leave trim mode (Esc)" onClick={exitTrim} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
+        <X className="size-3" />
+      </button>
+    </div>
+  )
+}
+
+/** A macro being recorded: how many steps so far, what was left out, and the way to stop. */
+function RecordingChip() {
+  const recording = useMacros((s) => s.recording)
+  const name = useEditor((s) => (recording ? s.project.clips[recording.clipId]?.name : undefined))
+  if (!recording) return null
+  return (
+    <div data-recording-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-danger/12 pr-0.5 pl-2.5 text-2xs font-medium text-danger shadow-[inset_0_0_0_1px_rgb(255_93_93/0.35)]">
+      <span className="size-2 animate-pulse rounded-full bg-danger" />
+      <span className="max-w-[220px] truncate" title={recording.skipped.length ? `Left out:\n${recording.skipped.join('\n')}` : undefined}>
+        Recording{name ? ` on “${name}”` : ''} · {recording.steps.length} step{recording.steps.length === 1 ? '' : 's'}
+        {recording.skipped.length > 0 && <span className="text-fg-3"> · {recording.skipped.length} left out</span>}
+      </span>
+      <button type="button" onClick={() => void timelineActions.toggleRecording()} title="Stop and keep the macro (Alt+R)" className="h-5 rounded-full bg-danger px-2 font-semibold text-black outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-accent/60">
+        Stop
+      </button>
+      <button type="button" aria-label="Discard the recording" title="Discard the recording" onClick={cancelRecording} className="grid size-5 place-items-center rounded-full text-danger/80 hover:bg-white/[0.08] hover:text-fg">
         <X className="size-3" />
       </button>
     </div>

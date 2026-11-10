@@ -3,6 +3,7 @@
  * palette and buttons: one implementation, many entry points.
  */
 import { toast } from 'sonner'
+import { runMacro, startRecording, stopRecording, useMacros } from '@/editor/macro-store'
 import { clipsAt, framesIn } from '@/editor/ops'
 import { audioRole, pickTrack } from '@/editor/placement'
 import { bedClips } from '@/editor/smart'
@@ -126,6 +127,51 @@ export const timelineActions = {
     playback.pause()
     playback.seek(result.start + result.duration)
     if (result.short) toast(`${asset.name} ran out ${formatDuration(result.short, p.settings.fps)} before the out point`, { description: 'The edit is shorter than the marked stretch.' })
+  },
+
+  /**
+   * Starts recording a macro on the selected clip — or, when one is being
+   * recorded, stops and keeps it. True when a recording was started.
+   */
+  toggleRecording(): boolean {
+    if (useMacros.getState().recording) {
+      const macro = stopRecording(`Macro ${useMacros.getState().macros.length + 1}`)
+      if (!macro) toast('Nothing was recorded', { description: 'No edit was made to the clip while recording.' })
+      else
+        toast.success(`Recorded “${macro.name}” — ${plural(macro.steps.length, 'step')}`, {
+          description: 'Select other clips and press Alt+Shift+R to do the same to them.',
+          action: { label: 'Macros', onClick: () => timelineView().set({ macrosOpen: true }) },
+          duration: 6000,
+        })
+      return false
+    }
+    const clip = targetClips()[0]
+    if (!clip) {
+      toast('Select the clip to record on', { description: 'A macro is a run of edits made to one clip, to do again on others.' })
+      return false
+    }
+    ui().select([clip.id])
+    startRecording(clip.id)
+    toast(`Recording on “${clip.name}”`, { description: 'Edit it as you would. Alt+R stops and keeps the macro.', duration: 3500 })
+    return true
+  },
+
+  /** Runs a macro (the one last recorded or run, by default) on the selected clips. */
+  runMacro(id?: string) {
+    const { macros, lastId, recording } = useMacros.getState()
+    if (recording) return void toast('Stop recording first', { description: 'Alt+R stops and keeps the macro.' })
+    const macro = macros.find((m) => m.id === (id ?? lastId))
+    if (!macro) return void toast(macros.length ? 'Pick a macro to run' : 'No macro to run yet', { description: 'Timeline tools → Macros lists them and records new ones.', action: { label: 'Macros', onClick: () => timelineView().set({ macrosOpen: true }) } })
+    const ids = ui().selection.filter((clipId) => getProject().clips[clipId])
+    if (!ids.length) return void toast('Select the clips to run it on')
+    const r = runMacro(macro, ids)
+    const first = r.failed[0]
+    if (!r.done) toast.error(`“${macro.name}” couldn’t be done to ${ids.length === 1 ? 'that clip' : 'any of those clips'}`, { description: first ? `“${first.name}”: ${first.why}.` : undefined, duration: 7000 })
+    else
+      toast.success(`“${macro.name}” on ${plural(r.done, 'clip')}`, {
+        description: first ? `${plural(r.failed.length, 'clip')} left as ${r.failed.length === 1 ? 'it was' : 'they were'} — “${first.name}”: ${first.why}.` : 'One undo step.',
+        duration: first ? 7000 : 2500,
+      })
   },
 
   /** Branches the open timeline: a copy to try another cut on, which opens. */

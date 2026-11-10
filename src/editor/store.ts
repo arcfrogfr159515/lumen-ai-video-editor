@@ -56,6 +56,31 @@ interface EditorState {
 const HISTORY_LIMIT = 300
 const COALESCE_MS = 1200
 
+/** A command that went through and changed the project: what it was given, what it answered, and the project either side of it. */
+export interface DispatchEvent {
+  name: CommandName
+  /** The input as the command saw it (defaults filled in). */
+  input: unknown
+  result: unknown
+  before: Project
+  after: Project
+  source: ActionSource
+  /** The history label the edit goes under. */
+  label: string
+}
+
+const dispatchListeners = new Set<(e: DispatchEvent) => void>()
+
+/**
+ * Calls back after every command that changes the project and goes into history
+ * (not the background bookkeeping dispatched with `history: false`). For things
+ * that watch what is being done — the macro recorder. Returns the way to stop.
+ */
+export function onDispatch(fn: (e: DispatchEvent) => void) {
+  dispatchListeners.add(fn)
+  return () => void dispatchListeners.delete(fn)
+}
+
 let openTransaction: HistoryEntry | null = null
 let nextEntryId = 1
 
@@ -117,10 +142,17 @@ export const useEditor = create<EditorState>()((set, get) => ({
     }
 
     const version = get().version + 1
+    const label = opts.label ?? def.title(parsed.data, before)
+    const announce = () => {
+      if (!dispatchListeners.size) return
+      const event: DispatchEvent = { name, input: parsed.data, result, before, after: next, source: opts.source ?? openTransaction?.source ?? 'user', label }
+      for (const fn of dispatchListeners) fn(event)
+    }
     if (openTransaction) {
       openTransaction.patches.push(...patches)
       openTransaction.inverse.unshift(...inverse)
       set({ project: next, version })
+      announce()
       return { ok: true, result }
     }
 
@@ -133,7 +165,7 @@ export const useEditor = create<EditorState>()((set, get) => ({
     } else {
       const entry: HistoryEntry = {
         id: nextEntryId++,
-        label: opts.label ?? def.title(parsed.data, get().project),
+        label,
         source: opts.source ?? 'user',
         patches,
         inverse,
@@ -142,6 +174,7 @@ export const useEditor = create<EditorState>()((set, get) => ({
       }
       set({ project: next, past: [...past, entry].slice(-HISTORY_LIMIT), future: [], version })
     }
+    announce()
     return { ok: true, result }
   },
 

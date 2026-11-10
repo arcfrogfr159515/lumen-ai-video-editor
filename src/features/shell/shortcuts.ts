@@ -67,6 +67,8 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'nest', label: 'Nest selection into a timeline', group: 'Editing', keys: ['mod+alt+n'], run: actions.nestSelection },
   { id: 'open-nested', label: 'Open the nested timeline', group: 'Editing', keys: ['mod+alt+enter'], run: () => actions.openNested() },
   { id: 'trim-mode', label: 'Trim mode: trim the nearest cut with J K L', group: 'Editing', keys: ['t'], run: () => timelineActions.toggleTrimMode() },
+  { id: 'macro-record', label: 'Record a macro on the selected clip / stop recording', group: 'Editing', keys: ['alt+r'], run: () => void timelineActions.toggleRecording() },
+  { id: 'macro-run', label: 'Run the last macro on the selected clips', group: 'Editing', keys: ['alt+shift+r'], run: () => timelineActions.runMacro() },
   { id: 'source-insert', label: 'Insert from the source monitor', group: 'Editing', keys: [','], run: () => timelineActions.sourceEdit('insert') },
   { id: 'source-overwrite', label: 'Overwrite from the source monitor', group: 'Editing', keys: ['.'], run: () => timelineActions.sourceEdit('overwrite') },
   { id: 'next-take', label: 'Show the next take', group: 'Editing', keys: ['alt+t'], run: () => timelineActions.switchTake(1) },
