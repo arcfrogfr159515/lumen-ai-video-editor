@@ -30,6 +30,8 @@ import {
   withGroups,
 } from '@/editor/ops'
 import { timelineBeats } from '@/editor/beat-grid'
+import { nearestGuide, timelineGuides } from '@/editor/guides'
+import { timelineView } from '@/editor/timeline-view'
 import { playback, usePlayback } from '@/editor/playback'
 import { dispatch, getProject } from '@/editor/store'
 import { averageSpeed, consumed } from '@/editor/timing'
@@ -46,7 +48,18 @@ interface Env {
   layoutRef: RefObject<TimelineLayout>
 }
 
-function snapTargets(project: Project, exclude: Set<string>) {
+/** The guides that are switched on: where speech pauses and where shots change. */
+function shownGuides(project: Project) {
+  const { pauseGuides, cutGuides } = timelineView()
+  return pauseGuides || cutGuides ? timelineGuides(project, { pauses: pauseGuides, cuts: cutGuides }) : []
+}
+
+/**
+ * Where an edge can snap. Clips in `exclude` move with the gesture, so their
+ * edges are not targets — but the guides inside the clips in `still` are: what
+ * they show stays where it is on the timeline while an edge is trimmed.
+ */
+function snapTargets(project: Project, exclude: Set<string>, still: readonly string[] = []) {
   const set = new Set<number>([0, usePlayback.getState().frame])
   for (const c of Object.values(project.clips)) {
     if (exclude.has(c.id)) continue
@@ -56,6 +69,7 @@ function snapTargets(project: Project, exclude: Set<string>) {
   for (const m of project.markers) set.add(m.frame)
   // The music's beats, so cuts land on them.
   for (const b of timelineBeats(project)) set.add(b.frame)
+  for (const g of shownGuides(project)) if (!exclude.has(g.clipId) || still.includes(g.clipId)) set.add(g.frame)
   return [...set]
 }
 
@@ -294,7 +308,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
     const magnetic = isMagneticTrack(project, clip.trackId)
     const later = clipsOnTrack(project, clip.trackId).filter((c) => c.id !== clip.id && c.start >= clipEnd(clip))
     // Rippling neighbours move with the trim, so they can't be snap targets.
-    const targets = snapTargets(project, new Set([clip.id, ...later.map((c) => c.id)]))
+    const targets = snapTargets(project, new Set([clip.id, ...later.map((c) => c.id)]), [clip.id])
     const start = toContent(e.clientX, e.clientY).x
     let target = origin
     let ripple = magnetic
@@ -356,7 +370,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
     useUI.getState().select([left.id, right.id])
     const [min, max] = rollBounds(project, left, right)
     const origin = right.start
-    const targets = snapTargets(project, new Set([left.id, right.id]))
+    const targets = snapTargets(project, new Set([left.id, right.id]), [left.id, right.id])
     const start = toContent(e.clientX, e.clientY).x
     let target = origin
     document.body.style.cursor = 'col-resize'
@@ -526,10 +540,17 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
     )
   }
 
-  function blade(e: ReactPointerEvent, clip: Clip) {
-    let f = frameAtX(toContent(e.clientX, e.clientY).x)
+  /** Where the blade cuts for a pointer position: on the playhead, or on a guide, when one is near. */
+  function bladeFrame(contentX: number) {
+    const f = frameAtX(contentX)
+    if (!useUI.getState().snapping) return f
     const playhead = usePlayback.getState().frame
-    if (useUI.getState().snapping && Math.abs(playhead - f) <= snapThreshold()) f = playhead
+    if (Math.abs(playhead - f) <= snapThreshold()) return playhead
+    return nearestGuide(shownGuides(getProject()), f, snapThreshold())?.frame ?? f
+  }
+
+  function blade(e: ReactPointerEvent, clip: Clip) {
+    const f = bladeFrame(toContent(e.clientX, e.clientY).x)
     // Linked clips are cut together (Alt cuts just this one; Shift cuts every track).
     const ids = e.shiftKey ? undefined : e.altKey ? [clip.id] : withGroups(getProject(), [clip.id])
     const res = dispatch('clip.split', { frame: f, ids })
@@ -611,10 +632,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
       if (useDrag.getState().bladeFrame !== null) useDrag.setState({ bladeFrame: null })
       return
     }
-    let f = frameAtX(p.x)
-    const playhead = usePlayback.getState().frame
-    if (useUI.getState().snapping && Math.abs(playhead - f) <= snapThreshold()) f = playhead
-    useDrag.setState({ bladeFrame: f })
+    useDrag.setState({ bladeFrame: bladeFrame(p.x) })
   }
 
   const onPointerLeave = () => {

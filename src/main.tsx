@@ -42,7 +42,8 @@ if (import.meta.env.DEV || window.lumen?.testMode) {
     import('@/engine/preview-res'),
     import('@/engine/stills'),
     import('@/capture/recorder'),
-  ]).then(([store, ui, pb, copilot, ai, integrations, session, media, exporter, smart, transcribe, audio, tools, engineMedia, proxies, sequences, nav, analysis, queue, subtitles, compositor, mediabunny, previewStage, renders, previewRes, stills, recorder]) => {
+    import('@/editor/timeline-view'),
+  ]).then(([store, ui, pb, copilot, ai, integrations, session, media, exporter, smart, transcribe, audio, tools, engineMedia, proxies, sequences, nav, analysis, queue, subtitles, compositor, mediabunny, previewStage, renders, previewRes, stills, recorder, timelineView]) => {
     Object.assign(window, {
       __lumen: {
         editor: store.useEditor,
@@ -74,6 +75,7 @@ if (import.meta.env.DEV || window.lumen?.testMode) {
         previewRes,
         stills,
         recorder,
+        timelineView: timelineView.useTimelineView,
       },
     })
   })

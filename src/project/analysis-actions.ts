@@ -5,6 +5,7 @@
  * menus, the Inspector and the AI tools.
  */
 import { toast } from 'sonner'
+import { mergeSceneCuts } from '@/editor/guides'
 import { propAt } from '@/editor/keyframes'
 import { autoZoom, followOffset, stabilizeAt } from '@/editor/motion'
 import { clipEnd } from '@/editor/ops'
@@ -74,6 +75,8 @@ export async function scenesInClip(clipId: string, opts: { sensitivity?: number;
   const report = await detectScenes(asset, a, b, { sensitivity: opts.sensitivity }, onProgress, signal)
   const now = getProject().clips[clipId]
   if (!now) throw new Error('The clip was removed while it was being analysed.')
+  // Kept on the media, so the timeline can show the shot changes and snap to them wherever this footage plays.
+  if (getProject().assets[asset.id]) dispatch('asset.update', { id: asset.id, patch: { sceneCuts: mergeSceneCuts(getProject().assets[asset.id].sceneCuts, report.cuts, a, b) } }, { history: false })
   const cuts = [
     ...new Set(
       report.cuts

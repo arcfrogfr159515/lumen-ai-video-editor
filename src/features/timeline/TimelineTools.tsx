@@ -2,7 +2,7 @@
  * The timeline's view options and tools, in one menu on the toolbar: what the
  * lanes show, and the dialogs that work on the whole timeline.
  */
-import { Copy, Eraser, Gauge, ListChecks, Palette, SlidersHorizontal, StickyNote } from 'lucide-react'
+import { AudioLines, Copy, Eraser, GalleryHorizontalEnd, Gauge, ListChecks, Palette, ScanLine, SlidersHorizontal, StickyNote } from 'lucide-react'
 import { IconButton } from '@/components/ui/button'
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu'
 import { useUI } from '@/editor/ui-store'
@@ -20,8 +20,17 @@ export function TimelineTools() {
       </MenuTrigger>
       <MenuContent align="end" className="min-w-[270px]">
         <MenuLabel>Show</MenuLabel>
+        <MenuItem icon={<GalleryHorizontalEnd />} checked={view.minimap} onSelect={() => set({ minimap: !view.minimap })}>
+          Overview strip
+        </MenuItem>
         <MenuItem icon={<StickyNote />} checked={view.showNotes} onSelect={() => set({ showNotes: !view.showNotes })}>
           Notes and tasks on clips
+        </MenuItem>
+        <MenuItem icon={<AudioLines />} checked={view.pauseGuides} onSelect={() => set({ pauseGuides: !view.pauseGuides })}>
+          Guides where speech pauses
+        </MenuItem>
+        <MenuItem icon={<ScanLine />} checked={view.cutGuides} onSelect={() => set({ cutGuides: !view.cutGuides })}>
+          Guides at shot cuts
         </MenuItem>
         <MenuItem icon={<Copy />} checked={view.showReuse} onSelect={() => set({ showReuse: !view.showReuse })}>
           Footage used more than once

@@ -9,6 +9,7 @@ import { clipCues, cueText, cueTone } from '@/editor/cues'
 import { adjacentBefore, clipEnd, clipsAt, editPoints, projectDuration, withGroups } from '@/editor/ops'
 import { playback, usePlayback } from '@/editor/playback'
 import { dispatch, getProject, useEditor } from '@/editor/store'
+import { useTimelineView } from '@/editor/timeline-view'
 import type { Tool } from '@/editor/ui-store'
 import { useUI } from '@/editor/ui-store'
 import { importDropped, pickAndImport } from '@/project/media-import'
@@ -223,13 +224,17 @@ export const actions = {
   // ── Reading the footage ──
 
   /** Splits the selected video clip (or the one under the playhead) where its shots change — or marks them. */
-  async detectScenes(action: 'split' | 'markers' = 'split') {
+  async detectScenes(action: 'split' | 'markers' | 'guides' = 'split') {
     const clip = targetClips(['video']).find((c) => c.assetId)
     if (!clip) return void toast('Select a video clip first')
     try {
-      const r = await withProgress('Finding scene cuts', (onProgress, signal) => scenesInClip(clip.id, { action }, onProgress, signal))
+      const r = await withProgress('Finding scene cuts', (onProgress, signal) => scenesInClip(clip.id, { action: action === 'guides' ? 'none' : action }, onProgress, signal))
       if (!r.cuts.length) toast('No scene cuts found in that clip')
-      else toast.success(`${action === 'split' ? 'Split at' : 'Marked'} ${plural(r.cuts.length, 'scene cut')}`)
+      else if (action === 'guides') {
+        // Found cuts are kept on the media either way; this makes sure they are on show.
+        useTimelineView.getState().set({ cutGuides: true })
+        toast.success(`Found ${plural(r.cuts.length, 'scene cut')}`, { description: 'Shown as guides in the clip. Trims, moves and the blade snap to them.' })
+      } else toast.success(`${action === 'split' ? 'Split at' : 'Marked'} ${plural(r.cuts.length, 'scene cut')}`)
     } catch (err) {
       if (!(err instanceof AnalysisCancelled)) toast.error('Scene detection failed', { description: err instanceof Error ? err.message : String(err) })
     }

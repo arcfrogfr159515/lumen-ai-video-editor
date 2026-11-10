@@ -3,6 +3,7 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefOb
 import { clipBeats } from '@/editor/beat-grid'
 import { clipTint } from '@/editor/clip-colors'
 import { clipCues, cueText, cueTone, type ClipCue, type CueTone } from '@/editor/cues'
+import { clipGuides, type GuideKind } from '@/editor/guides'
 import { hasNotes, openTasks } from '@/editor/notes'
 import { allKeyframeFrames } from '@/editor/keyframes'
 import { angleTracks } from '@/editor/sequences'
@@ -88,6 +89,8 @@ export const ClipView = memo(function ClipView({ clipId, locked }: { clipId: str
       {showLabel && <ClipLabel clip={clip} asset={asset} nested={nested} />}
 
       {clip.kind === 'audio' && <Fades clip={clip} width={width} height={height} />}
+
+      {width > 48 && !preview && <GuideTicks clip={clip} width={width} />}
 
       <ReuseStripes clipId={clip.id} duration={clip.duration} />
 
@@ -263,6 +266,48 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
       {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-[9px] font-bold text-accent-fg [text-shadow:none]">AI</span>}
       <NoteBadge clip={clip} />
     </div>
+  )
+}
+
+const GUIDE_TITLE: Record<GuideKind, string> = { pause: 'Speech stops here', speech: 'Speech starts here', cut: 'A new shot starts here' }
+
+/** Where speech pauses and where shots change, as fine lines in the clip. Edits snap to them. */
+function GuideTicks({ clip, width }: { clip: Clip; width: number }) {
+  const pauses = useTimelineView((s) => s.pauseGuides)
+  const cuts = useTimelineView((s) => s.cutGuides)
+  const asset = useEditor((s) => (clip.assetId ? s.project.assets[clip.assetId] : undefined))
+  const track = useEditor((s) => s.project.tracks.find((t) => t.id === clip.trackId))
+  const { fps } = useLayout()
+  const guides = useMemo(() => {
+    if (!asset || !track || (!pauses && !cuts)) return []
+    const all = clipGuides({ assets: { [asset.id]: asset }, tracks: [track], settings: { width: 0, height: 0, fps, background: '' } }, clip, { pauses, cuts })
+    // Zoomed out, guides closer than a few pixels would smear into a band: every shot cut stays, pauses thin out.
+    let last = -Infinity
+    return all.filter((g) => {
+      const x = (g.local / clip.duration) * width
+      if (g.kind !== 'cut' && x - last < 5) return false
+      last = x
+      return true
+    })
+  }, [asset, track, clip, fps, pauses, cuts, width])
+  if (!guides.length) return null
+  return (
+    <>
+      {guides.map((g) => (
+        <span
+          key={`${g.kind}:${g.local}`}
+          data-guide={g.kind}
+          title={GUIDE_TITLE[g.kind]}
+          className={cn(
+            'pointer-events-none absolute bottom-0 z-[8] w-0 border-l',
+            g.kind === 'cut' ? 'top-[3px] border-dashed border-white/75' : 'top-[18px] border-dotted border-snap/80',
+          )}
+          style={{ left: `${(g.local / clip.duration) * 100}%` }}
+        >
+          {g.kind === 'cut' && <span className="absolute -top-px -left-[3.5px] size-0 border-x-[3px] border-t-[4px] border-x-transparent border-t-white/85" />}
+        </span>
+      ))}
+    </>
   )
 }
 

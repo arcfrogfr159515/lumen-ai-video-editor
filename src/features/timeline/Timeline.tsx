@@ -25,6 +25,7 @@ import { actions } from '@/features/shell/actions'
 import { useElementSize } from '@/lib/hooks'
 import { clamp } from '@/lib/math'
 import { computeRows, LayoutContext, type TimelineLayout } from './layout'
+import { Minimap } from './Minimap'
 import { ADD_ROW_H, HEADER_W, RULER_H, useDrag, type ClipPreview, type DropGhost } from './model'
 import { Ruler, TimecodeCell } from './Ruler'
 import { TimelineToolbar } from './TimelineToolbar'
@@ -58,6 +59,7 @@ export function Timeline() {
   const pps = useUI((s) => s.pxPerSecond)
   const tool = useUI((s) => s.tool)
   const fitRequest = useUI((s) => s.fitRequest)
+  const minimap = useTimelineView((s) => s.minimap)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -342,6 +344,7 @@ export function Timeline() {
     <LayoutContext.Provider value={layout}>
       <div className="panel flex h-full flex-col overflow-hidden">
         <TimelineToolbar />
+        {minimap && <Minimap scrollRef={scrollRef} />}
         <ContextMenu.Root>
           <ContextMenu.Trigger asChild>
             <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-auto overscroll-contain">
@@ -588,6 +591,7 @@ function TimelineMenu({ clipId, frame }: { clipId: string | null; frame: number 
           <ContextSub label="Scene cuts">
             <ContextItem onSelect={() => void actions.detectScenes('split')}>Split at scene cuts</ContextItem>
             <ContextItem onSelect={() => void actions.detectScenes('markers')}>Add markers at scene cuts</ContextItem>
+            <ContextItem onSelect={() => void actions.detectScenes('guides')}>Show scene cuts as guides</ContextItem>
           </ContextSub>
         )}
         {clip.kind === 'video' && clip.assetId && !clip.freeze &&
