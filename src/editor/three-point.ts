@@ -58,7 +58,8 @@ export function resolveEdit(pts: EditPoints, fps: number, mode: FourPointMode = 
   let sOut = pts.sourceOut !== undefined ? clamp(Math.round(pts.sourceOut), 1, finite ? length : Infinity) : undefined
   if (sIn !== undefined && sOut !== undefined && sOut <= sIn) sOut = undefined
   const tIn = pts.timelineIn !== undefined ? Math.max(0, Math.round(pts.timelineIn)) : undefined
-  let tOut = pts.timelineOut !== undefined ? Math.max(0, Math.round(pts.timelineOut)) : undefined
+  // (An out point at the very start of the timeline has nothing before it to end: that is no mark either.)
+  let tOut = pts.timelineOut !== undefined && Math.round(pts.timelineOut) > 0 ? Math.round(pts.timelineOut) : undefined
   if (tIn !== undefined && tOut !== undefined && tOut <= tIn) tOut = undefined
   const points = [sIn, sOut, tIn, tOut].filter((v) => v !== undefined).length
 

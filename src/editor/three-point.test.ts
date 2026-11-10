@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getProject } from './store'
 import { add, addAsset, clip, freshProject, onTrack, refusal, run, spans, trackId } from './test-helpers'
+import { rng } from './test-invariants'
 import { describeEdit, resolveEdit, type EditPoints } from './three-point'
 
 const base: EditPoints = { playhead: 500, sourceLength: 900 }
@@ -76,6 +77,57 @@ describe('working out an edit from its points', () => {
     expect(describeEdit(resolveEdit({ ...base, sourceIn: 100, sourceOut: 280, timelineIn: 300, timelineOut: 360 }, 30, 'fit'), 30, tc)).toBe('Four-point: 2 s at f300 · fitted at 3×')
     expect(describeEdit(resolveEdit(base, 30), 30, tc)).toBe('At the playhead: 30 s at f500')
   })
+})
+
+describe('whatever points are marked', () => {
+  for (let seed = 1; seed <= (Number(process.env.FUZZ_RUNS) || 40); seed++) {
+    it(`the edit keeps to the source and to the points it was given (run ${seed})`, () => {
+      const r = rng(seed * 3571)
+      const length = r.chance(0.1) ? Infinity : r.int(2, 2000)
+      const some = <T,>(make: () => T) => (r.chance(0.6) ? make() : undefined)
+      const limit = Number.isFinite(length) ? length : 2000
+      const pts: EditPoints = { playhead: r.int(0, 3000), sourceLength: length, sourceIn: some(() => r.int(0, limit + 20)), sourceOut: some(() => r.int(0, limit + 20)), timelineIn: some(() => r.int(0, 3000)), timelineOut: some(() => r.int(0, 3000)) }
+      const mode = r.pick(['fit', 'source', 'timeline'] as const)
+      const e = resolveEdit(pts, 30, mode)
+      const told = `seed ${seed}: ${JSON.stringify(pts)} ${mode} → ${JSON.stringify(e)}`
+      // It is a clip: on whole frames, on the timeline, with a length.
+      for (const n of [e.start, e.duration, e.inPoint]) expect(Number.isInteger(n), told).toBe(true)
+      expect(e.start, told).toBeGreaterThanOrEqual(0)
+      expect(e.duration, told).toBeGreaterThanOrEqual(1)
+      expect(e.inPoint, told).toBeGreaterThanOrEqual(0)
+      // It never plays past the end of the source (a hair's slack for a fitted speed rounded to three places).
+      if (Number.isFinite(length)) expect(e.inPoint + e.duration * e.speed, told).toBeLessThanOrEqual(length + 0.5 + e.duration * 0.0005)
+
+      // The marks as the edit reads them: outside the source or the wrong way round is unmarked.
+      const sIn = pts.sourceIn !== undefined ? Math.min(pts.sourceIn, Number.isFinite(length) ? length - 1 : Infinity) : undefined
+      let sOut = pts.sourceOut !== undefined ? Math.min(Math.max(pts.sourceOut, 1), length) : undefined
+      if (sIn !== undefined && sOut !== undefined && sOut <= sIn) sOut = undefined
+      const tIn = pts.timelineIn
+      let tOut = pts.timelineOut ? pts.timelineOut : undefined
+      if (tIn !== undefined && tOut !== undefined && tOut <= tIn) tOut = undefined
+      const S = sIn !== undefined && sOut !== undefined ? sOut - sIn : undefined
+      const T = tIn !== undefined && tOut !== undefined ? tOut - tIn : undefined
+
+      // A source in point is where it starts in the source — unless its head was lost to the start of the timeline.
+      if (sIn !== undefined && !e.headLost) expect(e.inPoint, told).toBe(sIn)
+      // It is never longer than a stretch that was marked, in the source or on the timeline.
+      if (S !== undefined && e.speed === 1 && !(T !== undefined && mode === 'timeline')) expect(e.duration, told).toBeLessThanOrEqual(S)
+      if (T !== undefined && !(S !== undefined && S !== T && mode === 'source')) expect(e.duration, told).toBeLessThanOrEqual(T)
+      // Only fitting changes the speed, and only when both stretches are marked and differ.
+      if (!(mode === 'fit' && S !== undefined && T !== undefined && S !== T)) expect(e.speed, told).toBe(1)
+      // A timeline in point is where it starts, unless the edit is placed from its end.
+      if (tIn !== undefined && !e.backtimed) expect(e.start, told).toBe(tIn)
+      // Placed from its end, it ends on the timeline out point.
+      if (e.backtimed) expect(e.start + e.duration, told).toBe(tOut)
+      // With nothing marked on the timeline it goes at the playhead.
+      if (tIn === undefined && tOut === undefined) expect(e.start, told).toBe(pts.playhead)
+      // Three points and enough source: the fourth is exactly what the other three make it.
+      if (S !== undefined && tIn !== undefined && tOut === undefined) expect([e.start, e.duration, e.inPoint], told).toEqual([tIn, S, sIn])
+      if (S !== undefined && tIn === undefined && tOut !== undefined && tOut >= S) expect([e.start, e.duration, e.inPoint], told).toEqual([tOut - S, S, sIn])
+      if (T !== undefined && sIn !== undefined && sOut === undefined && length - sIn >= T) expect([e.start, e.duration, e.inPoint], told).toEqual([tIn, T, sIn])
+      if (T !== undefined && sIn === undefined && sOut !== undefined && sOut >= T) expect([e.start, e.duration, e.inPoint], told).toEqual([tIn, T, sOut - T])
+    })
+  }
 })
 
 describe('the edit on the timeline', () => {

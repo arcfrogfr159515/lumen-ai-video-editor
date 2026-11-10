@@ -153,6 +153,15 @@ describe('recording', () => {
     cancelRecording()
   })
 
+  it('ends when another project is opened', async () => {
+    startRecording(a)
+    run('clip.update', { ids: [a], patch: { blend: 'screen' } })
+    await settle()
+    freshProject('Another')
+    expect(useMacros.getState().recording).toBeNull()
+    expect(useMacros.getState().macros).toEqual([])
+  })
+
   it('keeps nothing when nothing was recorded, and gives macros names of their own', async () => {
     startRecording(a)
     expect(stopRecording('Empty')).toBeNull()
@@ -277,6 +286,34 @@ describe('replaying', () => {
     expect(runMacro(macro, [b])).toEqual({ done: 1, failed: [] })
     expect(clip(b)).toMatchObject({ assetId: 'other', inPoint: 300 })
     expect(clip(b).takes!.map((t) => t.inPoint)).toEqual([1500, 300])
+  })
+
+  it('is worth the same time on a timeline at another frame rate', async () => {
+    // Recorded at 30 fps: a second off the end, a half-second fade in, a keyframe ten frames in, a 20-frame freeze at the cut.
+    const macro = await record(() => {
+      run('clip.trim', { id: a, edge: 'end', frame: 270 })
+      run('clip.update', { ids: [a], patch: { audio: { fadeIn: 15 } } })
+      run('keyframe.set', { clipId: a, prop: 'opacity', frame: 10, value: 0.5 })
+      run('clip.freeze', { id: a, frame: 130, duration: 20 })
+    })
+    expect(macro.fps).toBe(30)
+    useEditor.getState().undo()
+    useEditor.getState().undo()
+    useEditor.getState().undo()
+    useEditor.getState().undo()
+    // The same project at 60 fps: B is now 1400–2040.
+    run('project.update', { settings: { fps: 60 } })
+    expect(clip(b)).toMatchObject({ start: 1400, duration: 640 })
+    expect(runMacro(macro, [b])).toEqual({ done: 1, failed: [] })
+    const pieces = onTrack('Overlay').filter((c) => c.name.startsWith('B'))
+    // A second off the end is 60 frames; the freeze, a second in, lasts 40.
+    expect(pieces.map((c) => [c.start, c.duration, Boolean(c.freeze)])).toEqual([
+      [1400, 60, false],
+      [1460, 40, true],
+      [1500, 520, false],
+    ])
+    expect(pieces[0].audio.fadeIn).toBe(30)
+    expect(pieces[0].keyframes.opacity?.map((k) => k.frame)).toContain(20)
   })
 
   it('is not recorded while it runs', async () => {

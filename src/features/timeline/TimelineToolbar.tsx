@@ -131,8 +131,9 @@ function RangeChip() {
 function TrimChip() {
   const cut = useTrim((s) => s.cut)
   const side = useTrim((s) => s.side)
+  const tracks = useEditor((s) => s.project.tracks)
   if (!cut) return null
-  const sides = trimSides(cut)
+  const sides = trimSides(cut, { tracks })
   return (
     <div data-trim-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-accent/10 pr-0.5 pl-2.5 text-2xs font-medium text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]">
       <span className="font-semibold">Trim</span>

@@ -219,6 +219,36 @@ describe('trim mode from the keyboard', () => {
     expect(key('k')).toBe(false)
   })
 
+  it('only rolls a cut on a ripple-locked track, where clips hold their place', () => {
+    const x = add('Overlay', 0, 100, { assetId: 'long', inPoint: 100 })
+    const y = add('Overlay', 100, 100, { assetId: 'long', inPoint: 600 })
+    const z = add('Overlay', 300, 50, { assetId: 'long', inPoint: 900 })
+    run('track.update', { id: trackId('Overlay'), patch: { rippleLock: true } })
+    const cut = cutAt(getProject(), clip(y), 'start')
+    expect(trimSides(cut, getProject())).toEqual(['roll'])
+    enterTrim(cut)
+    expect(useTrim.getState().side).toBe('roll')
+    // Tab has nowhere to go; the roll moves the cut and nothing else.
+    key('Tab')
+    expect(useTrim.getState().side).toBe('roll')
+    nudgeTrim(-12)
+    expect(trimming()).toBe(true)
+    expect(spans('Overlay')).toEqual([
+      [0, 88],
+      [88, 200],
+      [300, 350],
+    ])
+    exitTrim()
+    // The end of a clip with nothing after it can still be trimmed: nothing has to follow.
+    const tail = cutAt(getProject(), clip(z), 'end')
+    expect(trimSides(tail, getProject())).toEqual(['out'])
+    enterTrim(tail)
+    nudgeTrim(-10)
+    expect(trimming()).toBe(true)
+    expect(spans('Overlay')[2]).toEqual([300, 340])
+    expect(clip(x).start).toBe(0)
+  })
+
   it('carries on after an undo, and ends when its cut is gone', () => {
     enterTrim(cutAt(getProject(), clip(b), 'start'))
     nudgeTrim(10)

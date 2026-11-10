@@ -2173,6 +2173,12 @@ export const commands = {
           c.animation.out.duration = Math.max(1, sc(c.animation.out.duration))
           if (c.transitionIn) c.transitionIn.duration = Math.max(2, sc(c.transitionIn.duration))
           for (const kfs of Object.values(c.keyframes)) kfs?.forEach((k) => (k.frame = sc(k.frame)))
+          // Alternate takes are kept in frames too: where each starts in its footage, its ramp, the length of the place.
+          for (const t of c.takes ?? []) {
+            t.inPoint = sc(t.inPoint)
+            t.ramp?.forEach((k) => (k.frame = sc(k.frame)))
+          }
+          if (c.takeSlot !== undefined) c.takeSlot = Math.max(1, sc(c.takeSlot))
         }
         for (const m of p.markers) m.frame = sc(m.frame)
         if (p.range) p.range = { in: sc(p.range.in), out: Math.max(sc(p.range.in) + 1, sc(p.range.out)) }

@@ -102,7 +102,7 @@ export function stopRecording(name?: string): Macro | null {
   const taken = new Set(macros.map((m) => m.name.toLowerCase()))
   let label = name?.trim() || 'Macro'
   for (let n = 2; taken.has(label.toLowerCase()); n++) label = `${name?.trim() || 'Macro'} ${n}`
-  const macro: Macro = { id: uid('macro'), name: label, steps: recording.steps.map(({ command, input, title }) => ({ command, input, title })), createdAt: Date.now() }
+  const macro: Macro = { id: uid('macro'), name: label, steps: recording.steps.map(({ command, input, title }) => ({ command, input, title })), createdAt: Date.now(), fps: getProject().settings.fps }
   useMacros.setState({ macros: [...macros, macro], lastId: macro.id, recording: null })
   return macro
 }
@@ -147,6 +147,8 @@ useEditor.subscribe((s, prev) => {
   const recording = useMacros.getState().recording
   if (!recording || s.past === prev.past) return
   const depth = s.past.length
+  // History starting afresh is another project being opened: the clip being recorded on went with the old one.
+  if (!depth && !s.future.length && s.project !== prev.project) return void cancelRecording()
   // An undo moves the last step of history to the front of what can be redone; a redo moves it back. (A new edit
   // also empties what can be redone — but what it puts in history is new.)
   const undid = s.future[0] !== undefined && s.future[0] === prev.past[prev.past.length - 1]
@@ -183,6 +185,8 @@ export function runMacro(macro: Macro, clipIds: readonly string[], source: 'user
     .sort((a, b) => a.start - b.start || (order.get(a.trackId) ?? 0) - (order.get(b.trackId) ?? 0))
     .map((c) => ({ id: c.id, name: c.name }))
   const run: MacroRun = { done: 0, failed: [] }
+  // Recorded at another frame rate, its lengths are worth the same time here.
+  const scale = macro.fps ? getProject().settings.fps / macro.fps : 1
   const opened = beginTransaction(`Macro: ${macro.name}`, source)
   replaying = true
   try {
@@ -197,7 +201,7 @@ export function runMacro(macro: Macro, clipIds: readonly string[], source: 'user
       for (const [n, step] of macro.steps.entries()) {
         try {
           const was = getProject()
-          const res = dispatch(step.command, instantiate(step, was, ctx) as never, { label: step.title, source })
+          const res = dispatch(step.command, instantiate(step, was, ctx, scale) as never, { label: step.title, source })
           if (!res.ok) {
             why = `step ${n + 1} (${step.title}): ${res.error}`
             break

@@ -5,7 +5,7 @@
  */
 import { clamp } from '@/lib/math'
 import type { CommandInput, CommandName } from './commands'
-import { adjacentAfter, adjacentBefore, clipEnd, isMagneticTrack, mediaEdgeLimits, rollBounds } from './ops'
+import { adjacentAfter, adjacentBefore, clipEnd, isMagneticTrack, isRippleLocked, mediaEdgeLimits, rollBounds } from './ops'
 import type { Clip, Frame, Project } from './types'
 
 /**
@@ -31,9 +31,13 @@ export interface TrimCut {
   right?: string
 }
 
-/** The sides of a cut that can be trimmed: rolling needs a clip either side. */
-export function trimSides(cut: TrimCut): TrimSide[] {
-  if (cut.left && cut.right) return ['roll', 'out', 'in']
+/**
+ * The sides of a cut that can be trimmed: rolling needs a clip either side.
+ * On a ripple-locked track, where clips hold their place, a cut between two
+ * clips can only be rolled — trimming one side would pull them apart.
+ */
+export function trimSides(cut: TrimCut, project?: Pick<Project, 'tracks'>): TrimSide[] {
+  if (cut.left && cut.right) return isRippleLocked(project?.tracks.find((t) => t.id === cut.trackId)) ? ['roll'] : ['roll', 'out', 'in']
   return cut.left ? ['out'] : cut.right ? ['in'] : []
 }
 

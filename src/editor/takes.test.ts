@@ -111,6 +111,19 @@ describe('alternate takes', () => {
     expect(c.takeSlot).toBe(590)
   })
 
+  it('are re-timed with the clip when the frame rate changes', () => {
+    const id = add('Overlay', 30, 150, { assetId: 'take1', inPoint: 90 })
+    run('take.add', { clipId: id, assetId: 'take2', inPoint: 300, show: false })
+    run('take.add', { clipId: id, assetId: 'short' })
+    expect(clip(id)).toMatchObject({ duration: 60, takeSlot: 150 })
+    run('project.update', { settings: { fps: 60 } })
+    // Everything is where it was in seconds: twice the frames.
+    expect(clip(id)).toMatchObject({ start: 60, duration: 120, takeSlot: 300 })
+    expect(clip(id).takes!.map((t) => t.inPoint)).toEqual([180, 600, 0])
+    run('take.switch', { clipId: id, step: -1 })
+    expect(clip(id)).toMatchObject({ assetId: 'take2', inPoint: 600, duration: 300 })
+  })
+
   it('never run into the next clip on a track that does not close up', () => {
     const id = add('Overlay', 0, 150, { assetId: 'take1' })
     run('take.add', { clipId: id, assetId: 'short' })

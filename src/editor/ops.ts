@@ -108,10 +108,12 @@ export function normalizeProject(p: Project, before?: Project) {
  * place is forgotten.
  */
 function forgetTakeSlots(p: Project, before: Project) {
+  // (A new frame rate changes every length, and the places with them: nothing was given a length by hand.)
+  const retimed = before.settings.fps !== p.settings.fps
   for (const c of Object.values(p.clips)) {
     if (c.takeSlot === undefined) continue
     const was = before.clips[c.id]
-    if (c.takeSlot <= c.duration || (was && was.takeId === c.takeId && was.duration !== c.duration)) delete c.takeSlot
+    if (c.takeSlot <= c.duration || (!retimed && was && was.takeId === c.takeId && was.duration !== c.duration)) delete c.takeSlot
   }
 }
 

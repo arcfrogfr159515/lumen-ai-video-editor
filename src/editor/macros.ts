@@ -47,6 +47,8 @@ export interface Macro {
   name: string
   steps: MacroStep[]
   createdAt: number
+  /** The frame rate it was recorded at. Run on a timeline at another rate, its lengths are scaled: half a second stays half a second. */
+  fps?: number
 }
 
 /** Commands a macro can hold: edits to clips and to the time around them. */
@@ -67,6 +69,21 @@ const FRAME_FIELDS: Partial<Record<CommandName, string[]>> = {
   'timeline.removeRange': ['start', 'end'],
   'timeline.liftRange': ['start', 'end'],
   'multicam.switch': ['frame'],
+}
+
+/** The fields that are lengths in frames rather than places on the timeline: scaled with the frame rate, like the distances from a clip's edges. */
+const LENGTH_FIELDS: Partial<Record<CommandName, string[]>> = {
+  'clip.slip': ['frames'],
+  'clip.slide': ['frames'],
+  'clip.freeze': ['duration'],
+  'clip.update': ['patch.audio.fadeIn', 'patch.audio.fadeOut', 'patch.animation.in.duration', 'patch.animation.out.duration'],
+  'clip.setTransition': ['transition.duration'],
+  'clip.animate': ['at', 'duration'],
+  'clip.batch': ['fadeIn', 'fadeOut'],
+  'keyframe.set': ['frame'],
+  'keyframe.remove': ['frame'],
+  'keyframe.move': ['from', 'to'],
+  'take.add': ['inPoint'],
 }
 
 const isPlain = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -243,9 +260,11 @@ export interface ReplayContext {
 /**
  * Turns a step back into a command's input for one clip, on the project as it
  * is now. Throws a MacroError when the clip hasn't what the step needs (an
- * effect it adjusts, a track that far away).
+ * effect it adjusts, a track that far away). `scale` is this timeline's frame
+ * rate over the one the macro was recorded at.
  */
-export function instantiate(step: MacroStep, project: Project, ctx: ReplayContext): unknown {
+export function instantiate(step: MacroStep, project: Project, ctx: ReplayContext, scale = 1): unknown {
+  const lengths = scale === 1 ? [] : (LENGTH_FIELDS[step.command] ?? [])
   const result = (value: Extract<Placeholder, { $result: unknown }>) => {
     const { step: n, path } = value.$result
     const found = at(ctx.results[n], path)
@@ -267,14 +286,15 @@ export function instantiate(step: MacroStep, project: Project, ctx: ReplayContex
   }
   const isRef = (v: unknown): v is ClipRef => isPlain(v) && ('$clip' in v || '$result' in v || '$made' in v)
   /** `owner`: the clip the surrounding input is addressed to — whose effects, masks and takes it means. */
-  const walk = (value: unknown, owner: ClipRef | undefined): unknown => {
-    if (Array.isArray(value)) return value.map((v) => walk(v, owner))
+  const walk = (value: unknown, owner: ClipRef | undefined, path: string): unknown => {
+    if (Array.isArray(value)) return value.map((v, i) => walk(v, owner, path ? `${path}.${i}` : String(i)))
+    if (typeof value === 'number' && lengths.some((f) => matches(path, f))) return Math.round(value * scale)
     if (!isPlain(value)) return value
     if ('$clip' in value) return ctx.clipId
     if ('$frame' in value) {
       const { from, offset, of } = (value as Extract<Placeholder, { $frame: unknown }>).$frame
       const c = clipOf(of)
-      return Math.max(0, Math.round((from === 'end' ? clipEnd(c) : c.start) + offset)) as Frame
+      return Math.max(0, Math.round((from === 'end' ? clipEnd(c) : c.start) + offset * scale)) as Frame
     }
     if ('$track' in value) {
       const { $track: by, of } = value as Extract<Placeholder, { $track: unknown }>
@@ -302,9 +322,9 @@ export function instantiate(step: MacroStep, project: Project, ctx: ReplayContex
       return take.id
     }
     const to = [value.clipId, value.id, Array.isArray(value.ids) ? value.ids[0] : undefined].find(isRef)
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, walk(v, to ?? owner)]))
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, walk(v, to ?? owner, path ? `${path}.${k}` : k)]))
   }
-  return walk(step.input, undefined)
+  return walk(step.input, undefined, '')
 }
 // ─── Files ───────────────────────────────────────────────────────────────
 
@@ -327,6 +347,7 @@ export function importMacros(text: string): Macro[] {
       isPlain(m) &&
       typeof m.id === 'string' &&
       typeof m.name === 'string' &&
+      (m.fps === undefined || (typeof m.fps === 'number' && m.fps > 0)) &&
       Array.isArray(m.steps) &&
       m.steps.every((s) => isPlain(s) && typeof s.command === 'string' && recordable(s.command) && typeof s.title === 'string' && 'input' in s),
   )

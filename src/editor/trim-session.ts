@@ -109,7 +109,7 @@ export function enterTrim(cut?: TrimCut, side?: TrimSide): boolean {
   const project = getProject()
   const target = cut ?? nearestCut(project, usePlayback.getState().frame, useUI.getState().selection)
   if (!target) return false
-  const sides = trimSides(target)
+  const sides = trimSides(target, project)
   if (!sides.length) return false
   if (usePlayback.getState().playing) quietly(() => playback.pause())
   rebase(target, side && sides.includes(side) ? side : sides[0])
@@ -129,7 +129,7 @@ export function exitTrim() {
 export function setTrimSide(next?: TrimSide) {
   const { cut, side } = state()
   if (!cut) return
-  const sides = trimSides(cut)
+  const sides = trimSides(cut, getProject())
   const to = next && sides.includes(next) ? next : sides[(sides.indexOf(side) + 1) % sides.length]
   if (to === side) return
   if (usePlayback.getState().playing) quietly(() => playback.pause())
