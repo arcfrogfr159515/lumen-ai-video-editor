@@ -506,6 +506,49 @@ export interface Clip {
   stabilize?: Stabilization
   /** Cut down to the subject (or, inverted, to everything but it) by an AI matte. */
   matte?: SubjectMatte
+  /** A colour label set by hand; it wins over the project's colour rules. */
+  label?: LabelColor
+  /** Who is speaking in the clip — for colour rules and switching cameras by speaker. */
+  speaker?: string
+  /** A remark about the clip, kept with the project. */
+  note?: string
+  /** Things still to do to the clip. */
+  tasks?: ClipTask[]
+}
+
+/** The colours a clip can be labelled with (see editor/clip-colors.ts for what each looks like). */
+export type LabelColor = 'red' | 'orange' | 'yellow' | 'green' | 'teal' | 'blue' | 'purple' | 'pink' | 'gray'
+
+export interface ClipTask {
+  id: string
+  text: string
+  done: boolean
+}
+
+/** What a colour rule looks at on a clip. */
+export type ColorRuleField = 'source' | 'speaker' | 'angle' | 'track' | 'name' | 'tag' | 'kind'
+
+/** “Clips whose <field> matches <value> are <color>”. The first rule that matches wins. */
+export interface ColorRule {
+  id: string
+  field: ColorRuleField
+  /**
+   * What to match, ignoring case: an asset id or part of a file name for source,
+   * part of a name for speaker / track / name / tag, an angle number or name for
+   * angle, a clip kind for kind. `*` matches every clip that has the field at all.
+   */
+  value: string
+  color: LabelColor
+}
+
+/**
+ * How clips are coloured on the timeline. `auto` gives every distinct value of
+ * a field its own colour (every source, every speaker, every camera); rules
+ * are checked before it; a label on the clip itself wins over both.
+ */
+export interface ClipColoring {
+  auto?: 'source' | 'speaker' | 'angle' | 'track'
+  rules: ColorRule[]
 }
 
 /** An AI matte applied to a clip: a video of the subject's shape (white = subject). */
@@ -542,11 +585,24 @@ export interface ProjectFont {
 
 export type MarkerColor = 'lime' | 'violet' | 'pink' | 'amber' | 'emerald' | 'sky'
 
+/**
+ * What a marker is for. A chapter starts a section of the film (and names it
+ * in a chapter list); a to-do is something still to fix, ticked off when done;
+ * a comment is a remark left for whoever reads the timeline next.
+ */
+export type MarkerKind = 'chapter' | 'todo' | 'comment'
+
 export interface Marker {
   id: string
   frame: Frame
   label: string
   color: MarkerColor
+  /** Missing on plain markers (and every marker from before kinds). */
+  kind?: MarkerKind
+  /** More to say than fits in the label. */
+  note?: string
+  /** A to-do that has been dealt with. */
+  done?: boolean
 }
 
 export interface ProjectSettings {
@@ -606,6 +662,8 @@ export interface Project {
   luts?: Record<string, ProjectLut>
   /** Imported fonts (from files or the system), embedded so the project travels. */
   fonts?: Record<string, ProjectFont>
+  /** How clips are coloured on the timeline (missing: by what kind of clip they are). */
+  clipColors?: ClipColoring
   /** The open timeline (missing in projects from before timelines: the main timeline). */
   sequence?: SequenceRef
   /** The project's other timelines, by id. */

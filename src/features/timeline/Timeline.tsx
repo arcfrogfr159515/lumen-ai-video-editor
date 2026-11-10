@@ -6,6 +6,8 @@ import { ContextContent, ContextItem, ContextSeparator, ContextSub } from '@/com
 import { AiSparkle } from '@/components/brand'
 import { useClipboard } from '@/editor/clipboard'
 import { clipEnd, findFreeStart, isMagneticTrack, magneticLayout, projectDuration, sourceFrames, trackAccepts } from '@/editor/ops'
+import { LABEL_COLORS } from '@/editor/clip-colors'
+import { MARKER_KINDS } from '@/editor/markers'
 import { applyEffect, applyLook, applyTransition, assetFrames, placeAsset, placeSequence, placeTitle, transitionSpot } from '@/editor/placement'
 import { angleTracks } from '@/editor/sequences'
 import { openTimeline } from '@/editor/timeline-nav'
@@ -29,6 +31,7 @@ import { TimelineToolbar } from './TimelineToolbar'
 import { TrackHeader } from './TrackHeader'
 import { TrackLane } from './TrackLane'
 import { usePointerController } from './usePointerController'
+import { useTimelineView } from './view-store'
 import { anchorNextZoom, useViewport } from './viewport'
 
 const SCISSORS_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
@@ -547,6 +550,18 @@ function TimelineMenu({ clipId, frame }: { clipId: string | null; frame: number 
         <ContextItem shortcut="x" onSelect={actions.markSelection}>
           Mark in and out around clip
         </ContextItem>
+        <ContextSub label="Label">
+          {LABEL_COLORS.map((c) => (
+            <ContextItem key={c.id} checked={clip.label === c.id} icon={<span className="size-3 rounded-full" style={{ background: c.css }} />} onSelect={() => dispatch('clip.update', { ids: selection(), patch: { label: c.id } }, { label: 'Label clip' })}>
+              {c.name}
+            </ContextItem>
+          ))}
+          <ContextSeparator />
+          <ContextItem disabled={!clip.label} onSelect={() => dispatch('clip.update', { ids: selection(), patch: { label: null } }, { label: 'Remove label' })}>
+            No label
+          </ContextItem>
+          <ContextItem onSelect={() => useTimelineView.getState().set({ colorsOpen: true })}>Colour rules…</ContextItem>
+        </ContextSub>
         <ContextSeparator />
         {nested?.multicam && (
           <ContextSub label="Camera angle">
@@ -637,7 +652,13 @@ function TimelineMenu({ clipId, frame }: { clipId: string | null; frame: number 
         Paste insert here
       </ContextItem>
       <ContextSeparator />
-      <ContextItem onSelect={() => dispatch('marker.add', { frame })}>Add marker here</ContextItem>
+      <ContextSub label="Add marker here">
+        {MARKER_KINDS.map((k) => (
+          <ContextItem key={k.id} shortcut={k.id === 'plain' ? 'm' : undefined} onSelect={() => dispatch('marker.add', { frame, ...(k.id === 'plain' ? {} : { kind: k.id }) })}>
+            {k.label}
+          </ContextItem>
+        ))}
+      </ContextSub>
       <ContextItem
         onSelect={() => {
           const id = placeTitle('cinematic', frame)

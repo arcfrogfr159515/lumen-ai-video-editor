@@ -11,6 +11,7 @@ import { uid } from '@/lib/id'
 import { createClip, createTrack, DEFAULT_BUS, DEFAULT_COMPRESSOR, DEFAULT_EQ, DEFAULT_LIMITER, IDENTITY_CURVES, NEUTRAL_WHEELS, TRACK_HEIGHTS } from './defaults'
 import { EASING_NAMES, type Easing } from './easing'
 import { ANIMATABLE, evalKeyframes } from './keyframes'
+import { defaultMarkerLabel, markerKindInfo, markerKindOf } from './markers'
 import { MOTION_PRESETS, mergeKeyframes, presetKeyframes, PRESET_IDS } from './motion-presets'
 import { EFFECTS } from './presets'
 import {
@@ -60,7 +61,7 @@ import {
   wouldLoop,
 } from './sequences'
 import { averageSpeed, consumed, localForConsumed, MAX_SPEED, MIN_SPEED } from './timing'
-import type { AnimatableProp, BusMix, Clip, Project, Sequence, Track } from './types'
+import type { AnimatableProp, BusMix, Clip, Marker, Project, Sequence, Track } from './types'
 
 export class CommandError extends Error {}
 
@@ -86,6 +87,10 @@ const easing = z
   ) as unknown as z.ZodType<Easing>
 const animatable = z.enum(['x', 'y', 'scale', 'rotation', 'opacity', 'volume', 'rotateX', 'rotateY', 'z', 'speed'])
 const markerColor = z.enum(['lime', 'violet', 'pink', 'amber', 'emerald', 'sky'])
+const markerKind = z.enum(['chapter', 'todo', 'comment'])
+const labelColor = z.enum(['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'purple', 'pink', 'gray'])
+const clipTask = z.object({ id, text: z.string().min(1).max(500), done: z.boolean() })
+const colorRule = z.object({ id, field: z.enum(['source', 'speaker', 'angle', 'track', 'name', 'tag', 'kind']), value: z.string().min(1).max(200), color: labelColor })
 const pct = z.number().min(-100).max(100)
 /** How clips land where others already are: slide to the nearest gap, cover them, or push them later. */
 const editMode = z.enum(['free', 'overwrite', 'insert'])
@@ -261,6 +266,14 @@ export const clipPatch = z
     stabilize: stabilization.partial().nullable(),
     /** A subject matte (make one with cut_out_subject); null removes it. */
     matte: subjectMatte.nullable(),
+    /** A colour label set by hand (wins over the project's colour rules); null removes it. */
+    label: labelColor.nullable(),
+    /** Who is speaking in the clip; null clears it. */
+    speaker: z.string().max(80).nullable(),
+    /** A remark about the clip, kept with the project; null clears it. */
+    note: z.string().max(4000).nullable(),
+    /** Things still to do to the clip: the whole list replaces the one it has; null clears it. */
+    tasks: z.array(clipTask).max(50).nullable(),
   })
   .partial()
 
@@ -299,6 +312,10 @@ export const clipSnapshot = z.object({
   follow: trackPath.optional(),
   stabilize: stabilization.optional(),
   matte: subjectMatte.optional(),
+  label: labelColor.optional(),
+  speaker: z.string().optional(),
+  note: z.string().optional(),
+  tasks: z.array(clipTask).optional(),
 })
 
 export type ClipSnapshot = z.infer<typeof clipSnapshot>
@@ -428,8 +445,22 @@ function plainSequence(p: Project, id: string): Sequence {
 }
 
 function applyPatch(p: Project, clip: Clip, patch: ClipPatch) {
-  const { transform, color, audio, text, animation, speed, crop, masks, angle, follow, stabilize, matte, ...flat } = patch
+  const { transform, color, audio, text, animation, speed, crop, masks, angle, follow, stabilize, matte, label, speaker, note, tasks, ...flat } = patch
   Object.assign(clip, flat)
+  if (label === null) delete clip.label
+  else if (label) clip.label = label
+  if (speaker !== undefined) {
+    if (speaker?.trim()) clip.speaker = speaker.trim()
+    else delete clip.speaker
+  }
+  if (note !== undefined) {
+    if (note?.trim()) clip.note = note.trim()
+    else delete clip.note
+  }
+  if (tasks !== undefined) {
+    if (tasks?.length) clip.tasks = tasks.map((t) => ({ id: t.id, text: t.text.trim(), done: t.done }))
+    else delete clip.tasks
+  }
   if (matte === null) delete clip.matte
   else if (matte) {
     const m = p.assets[matte.assetId]
@@ -1338,11 +1369,20 @@ export const commands = {
 
   // Markers
   'marker.add': command({
-    description: 'Drop a marker on the timeline ruler. Returns the id.',
-    input: z.object({ id: id.optional(), frame, label: z.string().optional(), color: markerColor.optional() }),
-    title: () => 'Add marker',
+    description:
+      'Drop a marker on the timeline ruler. kind says what it is for: chapter (starts a section of the film — chapters export as a chapter list and divide the storyboard), todo (something still to fix; tick it off with marker_update done), comment (a remark), or leave it out for a plain marker. note holds more than fits in the label. Returns the id.',
+    input: z.object({ id: id.optional(), frame, label: z.string().optional(), color: markerColor.optional(), kind: markerKind.optional(), note: z.string().max(2000).optional() }),
+    title: (i) => (i.kind ? `Add ${markerKindInfo(i.kind).label.toLowerCase()}` : 'Add marker'),
     run(p, i) {
-      const marker = { id: i.id ?? uid('mk'), frame: i.frame, label: i.label ?? `Marker ${p.markers.length + 1}`, color: i.color ?? 'lime' }
+      const kind = i.kind ?? 'plain'
+      const marker: Marker = {
+        id: i.id ?? uid('mk'),
+        frame: i.frame,
+        label: i.label?.trim() || defaultMarkerLabel(p.markers, kind),
+        color: i.color ?? markerKindInfo(kind).color,
+        ...(i.kind ? { kind: i.kind } : {}),
+        ...(i.note?.trim() ? { note: i.note.trim() } : {}),
+      }
       p.markers.push(marker)
       p.markers.sort((a, b) => a.frame - b.frame)
       return marker.id
@@ -1350,13 +1390,32 @@ export const commands = {
   }),
 
   'marker.update': command({
-    description: 'Move, rename or recolor a marker (marker ids are in get_project → markers).',
-    input: z.object({ id, patch: z.object({ frame, label: z.string(), color: markerColor }).partial() }),
-    title: () => 'Edit marker',
+    description:
+      'Move, rename or recolor a marker, change what it is for (kind: chapter, todo, comment; null makes it a plain marker), write its note (null clears it), or tick a to-do off (done). Marker ids are in get_project → markers.',
+    input: z.object({
+      id,
+      patch: z.object({ frame, label: z.string(), color: markerColor, kind: markerKind.nullable(), note: z.string().max(2000).nullable(), done: z.boolean() }).partial(),
+    }),
+    title: (i) => (i.patch.done !== undefined && Object.keys(i.patch).length === 1 ? (i.patch.done ? 'Tick off to-do' : 'Reopen to-do') : 'Edit marker'),
     run(p, i) {
       const m = p.markers.find((m) => m.id === i.id)
       if (!m) throw new CommandError('Marker not found')
-      Object.assign(m, i.patch)
+      const { kind, note, done, ...rest } = i.patch
+      Object.assign(m, rest)
+      if (kind === null) delete m.kind
+      else if (kind) {
+        // A marker still wearing its old kind's colour takes the new kind's.
+        if (rest.color === undefined && m.color === markerKindInfo(markerKindOf(m)).color) m.color = markerKindInfo(kind).color
+        m.kind = kind
+      }
+      if (note === null || note?.trim() === '') delete m.note
+      else if (note !== undefined) m.note = note.trim()
+      if (done !== undefined) {
+        if (m.kind !== 'todo') throw new CommandError('Only to-do markers can be ticked off — set kind to todo first')
+        if (done) m.done = true
+        else delete m.done
+      }
+      if (m.kind !== 'todo') delete m.done
       p.markers.sort((a, b) => a.frame - b.frame)
     },
   }),
@@ -1646,6 +1705,23 @@ export const commands = {
   }),
 
   // Project
+  'project.setClipColors': command({
+    description:
+      'How clips are coloured on the timeline. auto gives every distinct value of a field its own colour: source (each media item), speaker, angle (each camera of a multicam clip) or track; null goes back to colouring by kind. rules are checked first, in order — { field, value, color }: clips whose source / speaker / angle / track / name / tag / kind matches value (part of a name, ignoring case; * for any) get that colour. A label set on a clip itself (clip_update → label) wins over both. Colours: red, orange, yellow, green, teal, blue, purple, pink, gray.',
+    input: z.object({
+      auto: z.enum(['source', 'speaker', 'angle', 'track']).nullable().optional(),
+      rules: z.array(colorRule.extend({ id: id.optional() })).max(40).optional(),
+    }),
+    title: () => 'Clip colours',
+    run(p, i) {
+      const next = { auto: p.clipColors?.auto, rules: p.clipColors?.rules ?? [] }
+      if (i.auto !== undefined) next.auto = i.auto ?? undefined
+      if (i.rules) next.rules = i.rules.map((r) => ({ id: r.id ?? uid('rule'), field: r.field, value: r.value.trim(), color: r.color }))
+      if (!next.auto && !next.rules.length) delete p.clipColors
+      else p.clipColors = { ...(next.auto ? { auto: next.auto } : {}), rules: next.rules }
+    },
+  }),
+
   'project.update': command({
     description:
       'Rename the project or change the open timeline’s settings (width, height, fps, background color). Changing fps re-times every clip so nothing drifts.',

@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { ContextMenu } from 'radix-ui'
-import { Trash } from 'lucide-react'
+import { Check, PencilLine, Trash } from 'lucide-react'
 import { projectDuration } from '@/editor/ops'
 import { onPlayhead, playback, usePlayback } from '@/editor/playback'
 import { dispatch, useEditor } from '@/editor/store'
 import { useUI } from '@/editor/ui-store'
 import { useRenders } from '@/engine/render-cache'
-import type { Marker } from '@/editor/types'
+import { filterMarkers, MARKER_KINDS, markerKindInfo, markerKindOf, type MarkerFilter } from '@/editor/markers'
+import type { Marker, MarkerKind } from '@/editor/types'
+import { useTimelineView } from './view-store'
 import { formatDuration, parseTimecode, formatTimecode } from '@/lib/time'
 import { Tip } from '@/components/ui/tooltip'
 import { useLayout } from './layout'
@@ -38,7 +40,10 @@ export function Ruler({ width, laneViewport }: { width: number; laneViewport: nu
   const { pps, fps } = useLayout()
   const scrollLeft = useViewport((s) => s.scrollLeft)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const markers = useEditor((s) => s.project.markers)
+  const allMarkers = useEditor((s) => s.project.markers)
+  const markerKinds = useTimelineView((s) => s.markerKinds)
+  const hideDone = useTimelineView((s) => s.hideDone)
+  const markers = useMemo(() => filterMarkers(allMarkers, { kinds: markerKinds, hideDone }), [allMarkers, markerKinds, hideDone])
   const end = useEditor((s) => projectDuration(s.project))
   // The render bar follows what's on the timeline, what's rendered and the render resolution.
   const project = useEditor((s) => s.project)
@@ -100,11 +105,33 @@ export function Ruler({ width, laneViewport }: { width: number; laneViewport: nu
   )
 }
 
+/** A marker's shape says what it is for: a flag, a chapter tab, a to-do box or a speech bubble. */
+const MARKER_SHAPE: Record<MarkerFilter, string> = {
+  plain: 'M1 0h6.5a1 1 0 0 1 1 1v6.2a1 1 0 0 1-.37.78L4.75 10.9a.4.4 0 0 1-.5 0L.87 7.98A1 1 0 0 1 .5 7.2V.5A.5.5 0 0 1 1 0Z',
+  chapter: 'M1.2 0h6.6a.7.7 0 0 1 .7.7v10.2a.4.4 0 0 1-.65.31L4.5 8.6 1.15 11.2a.4.4 0 0 1-.65-.31V.7a.7.7 0 0 1 .7-.7Z',
+  todo: 'M1.6.5h5.8a1.1 1.1 0 0 1 1.1 1.1v5.8a1.1 1.1 0 0 1-1.1 1.1H5.3L4.5 11l-.8-2.5H1.6A1.1 1.1 0 0 1 .5 7.4V1.6A1.1 1.1 0 0 1 1.6.5Z',
+  comment: 'M4.5.4c2.3 0 4.1 1.6 4.1 3.7 0 2-1.8 3.7-4.1 3.7-.4 0-.8 0-1.1-.1L1.2 11l.5-3.6C.9 6.7.4 5.5.4 4.1.4 2 2.200 .4 4.5.4Z',
+}
+
 function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
   const color = MARKER_COLORS[marker.color]
+  const kind = markerKindOf(marker)
+  const done = marker.kind === 'todo' && marker.done
+  const patch = (p: { kind?: MarkerKind | null; done?: boolean }) => dispatch('marker.update', { id: marker.id, patch: p })
   return (
     <ContextMenu.Root>
-      <Tip content={marker.label} side="top">
+      <Tip
+        content={
+          <span className="block max-w-[260px]">
+            <span className="block font-medium">
+              {kind !== 'plain' && <span className="mr-1.5 text-fg-3">{markerKindInfo(kind).label}{done ? ' ✓' : ''}</span>}
+              {marker.label}
+            </span>
+            {marker.note && <span className="mt-0.5 block whitespace-pre-wrap text-fg-3">{marker.note}</span>}
+          </span>
+        }
+        side="top"
+      >
         <ContextMenu.Trigger asChild>
           <button
             type="button"
@@ -117,8 +144,9 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
             className="absolute top-[3px] z-10 -translate-x-[1px] outline-none transition-transform hover:scale-110"
             style={{ left: x }}
           >
-            <svg width="9" height="12" viewBox="0 0 9 12" aria-hidden>
-              <path d="M1 0h6.5a1 1 0 0 1 1 1v6.2a1 1 0 0 1-.37.78L4.75 10.9a.4.4 0 0 1-.5 0L.87 7.98A1 1 0 0 1 .5 7.2V.5A.5.5 0 0 1 1 0Z" fill={color} />
+            <svg width="9" height="12" viewBox="0 0 9 12" aria-hidden className={done ? 'opacity-45' : undefined}>
+              <path d={MARKER_SHAPE[kind]} fill={color} />
+              {done && <path d="M2.4 4.6 4 6.2l2.8-3" fill="none" stroke="#0b0c02" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />}
             </svg>
           </button>
         </ContextMenu.Trigger>
@@ -136,6 +164,35 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
               />
             ))}
           </div>
+          <div className="mx-1 my-1 h-px bg-line" />
+          {MARKER_KINDS.map((k) => (
+            <ContextMenu.Item
+              key={k.id}
+              onSelect={() => patch({ kind: k.id === 'plain' ? null : k.id })}
+              className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg"
+            >
+              <svg width="9" height="12" viewBox="0 0 9 12" aria-hidden className="shrink-0">
+                <path d={MARKER_SHAPE[k.id]} fill={kind === k.id ? color : 'currentColor'} opacity={kind === k.id ? 1 : 0.5} />
+              </svg>
+              <span className="flex-1">{k.label}</span>
+              {kind === k.id && <Check className="size-3.5 text-accent-2" />}
+            </ContextMenu.Item>
+          ))}
+          {marker.kind === 'todo' && (
+            <ContextMenu.Item
+              onSelect={() => patch({ done: !marker.done })}
+              className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg"
+            >
+              <Check className="size-4" /> {marker.done ? 'Reopen' : 'Tick off'}
+            </ContextMenu.Item>
+          )}
+          <ContextMenu.Item
+            onSelect={() => useUI.getState().setLeftTab('notes')}
+            className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg"
+          >
+            <PencilLine className="size-4" /> Rename or add a note…
+          </ContextMenu.Item>
+          <div className="mx-1 my-1 h-px bg-line" />
           <ContextMenu.Item
             onSelect={() => dispatch('marker.remove', { id: marker.id })}
             className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-danger outline-none data-[highlighted]:bg-white/[0.07]"

@@ -23,7 +23,7 @@ export function clipsOnTrack(p: Project, trackId: string, exclude?: ReadonlySet<
   return out.sort((a, b) => a.start - b.start)
 }
 
-export function projectDuration(p: Project): Frame {
+export function projectDuration(p: Pick<Project, 'clips'>): Frame {
   let max = 0
   for (const c of Object.values(p.clips)) max = Math.max(max, clipEnd(c))
   return max

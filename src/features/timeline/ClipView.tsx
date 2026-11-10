@@ -1,7 +1,9 @@
-import { AudioLines, Blend, Crosshair, Film, Gauge, Image as ImageIcon, Layers, Link2, Move, Snowflake, Sparkles, Type, Video } from 'lucide-react'
+import { AudioLines, Blend, Crosshair, Film, Gauge, Image as ImageIcon, Layers, Link2, Move, Snowflake, Sparkles, StickyNote, Type, Video } from 'lucide-react'
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { clipBeats } from '@/editor/beat-grid'
+import { clipTint } from '@/editor/clip-colors'
 import { clipCues, cueText, cueTone, type ClipCue, type CueTone } from '@/editor/cues'
+import { hasNotes, openTasks } from '@/editor/notes'
 import { allKeyframeFrames } from '@/editor/keyframes'
 import { angleTracks } from '@/editor/sequences'
 import { useEditor } from '@/editor/store'
@@ -16,6 +18,7 @@ import { clamp } from '@/lib/math'
 import { useLayout } from './layout'
 import { CLIP_COLOR, dbToGain, useDrag } from './model'
 import { cssColor, onThumb, paintFilm, paintWave } from './strips'
+import { useTimelineView } from './view-store'
 import { OVERSCAN, QUANTUM, useViewport } from './viewport'
 
 const INSET = 3
@@ -31,6 +34,8 @@ export const ClipView = memo(function ClipView({ clipId, locked }: { clipId: str
   const held = useDrag((s) => s.dragIds.includes(clipId))
   const moving = useDrag((s) => s.mode === 'move')
   const isDropTarget = useDrag((s) => s.dropTargetClip === clipId)
+  // A label, a colour rule or automatic colouring; otherwise the colour of its kind.
+  const tint = useEditor((s) => (s.project.clips[clipId] ? clipTint(s.project, s.project.clips[clipId])?.css : undefined))
 
   if (!clip) return null
 
@@ -43,7 +48,7 @@ export const ClipView = memo(function ClipView({ clipId, locked }: { clipId: str
   const laneH = rowHeight[trackId] ?? rowHeight[clip.trackId]
   const height = laneH - INSET * 2
   const dy = (rowTop[trackId] ?? 0) - (rowTop[clip.trackId] ?? 0)
-  const color = clip.sequenceId ? 'var(--color-clip-nest)' : CLIP_COLOR[clip.kind]
+  const color = tint ?? (clip.sequenceId ? 'var(--color-clip-nest)' : CLIP_COLOR[clip.kind])
   const lifted = held && moving
   // Neighbours making room glide; the clip under the pointer tracks it exactly.
   const gliding = Boolean(preview) && !held
@@ -76,7 +81,7 @@ export const ClipView = memo(function ClipView({ clipId, locked }: { clipId: str
       {clip.sequenceId ? (
         <NestBody clip={clip} seq={nested} inPoint={inPoint} duration={duration} width={width} height={height} />
       ) : (
-        <ClipBody clip={clip} asset={asset} inPoint={inPoint} duration={duration} left={left} width={width} height={height} />
+        <ClipBody clip={clip} asset={asset} inPoint={inPoint} duration={duration} left={left} width={width} height={height} tone={tint ?? CLIP_COLOR[clip.kind]} tinted={Boolean(tint)} />
       )}
 
       {showLabel && <ClipLabel clip={clip} asset={asset} nested={nested} />}
@@ -115,7 +120,7 @@ function useClipWindow(left: number, width: number): [number, number] {
   return [x0, x1]
 }
 
-function ClipBody({ clip, asset, inPoint, duration, left, width, height }: { clip: Clip; asset?: Asset; inPoint: number; duration: number; left: number; width: number; height: number }) {
+function ClipBody({ clip, asset, inPoint, duration, left, width, height, tone, tinted }: { clip: Clip; asset?: Asset; inPoint: number; duration: number; left: number; width: number; height: number; tone: string; tinted: boolean }) {
   const [x0, x1] = useClipWindow(left, width)
   const timing = useMemo<Timed>(
     () => ({ speed: clip.speed, duration, inPoint, reverse: clip.reverse, freeze: clip.freeze, keyframes: clip.keyframes }),
@@ -139,10 +144,11 @@ function ClipBody({ clip, asset, inPoint, duration, left, width, height }: { cli
         <>
           {asset && x1 > x0 && <FilmCanvas asset={asset} timing={timing} x0={x0} x1={x1} height={height - strip} />}
           <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black/60 to-transparent" />
-          <div className="absolute inset-x-0 top-0 h-[2px] opacity-90" style={{ background: 'var(--clip)' }} />
+          {/* A colour that says something (a label, a rule) gets a wider band than the colour of the kind. */}
+          <div className={cn('absolute inset-x-0 top-0 opacity-90', tinted ? 'h-[4px]' : 'h-[2px]')} style={{ background: 'var(--clip)' }} />
           {strip > 0 && asset && (
             <div className="absolute inset-x-0 bottom-0 border-t border-black/40 bg-[color-mix(in_oklab,var(--clip)_22%,#10110e)]" style={{ height: strip }}>
-              {x1 > x0 && <WaveCanvas asset={asset} timing={timing} x0={x0} x1={x1} height={strip - 1} gain={dbToGain(clip.audio.volume)} color={`color-mix(in oklab, ${CLIP_COLOR[clip.kind]} 70%, white)`} />}
+              {x1 > x0 && <WaveCanvas asset={asset} timing={timing} x0={x0} x1={x1} height={strip - 1} gain={dbToGain(clip.audio.volume)} color={`color-mix(in oklab, ${tone} 70%, white)`} />}
             </div>
           )}
           {cues.length > 0 && height >= 40 && x1 > x0 && <CueLane cues={cues} fps={fps} pps={pps} x0={x0} x1={x1} width={width} bottom={strip} />}
@@ -162,7 +168,7 @@ function ClipBody({ clip, asset, inPoint, duration, left, width, height }: { cli
               gain={dbToGain(clip.audio.volume)}
               fadeIn={clip.audio.fadeIn}
               fadeOut={clip.audio.fadeOut}
-              color={`color-mix(in oklab, ${CLIP_COLOR[clip.kind]} 82%, white)`}
+              color={`color-mix(in oklab, ${tone} 82%, white)`}
               beats={beats}
             />
           )}
@@ -252,7 +258,25 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
         </span>
       )}
       {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-[9px] font-bold text-accent-fg [text-shadow:none]">AI</span>}
+      <NoteBadge clip={clip} />
     </div>
+  )
+}
+
+/** A note or a task list on the clip: a sticky note, with how many tasks are still open. */
+function NoteBadge({ clip }: { clip: Clip }) {
+  const show = useTimelineView((s) => s.showNotes)
+  if (!show || !hasNotes(clip)) return null
+  const open = openTasks(clip)
+  const done = Boolean(clip.tasks?.length) && open === 0
+  return (
+    <span
+      aria-label={open ? `${open} open task${open === 1 ? '' : 's'}` : done ? 'Tasks done' : 'Has a note'}
+      className={cn('flex shrink-0 items-center gap-0.5 rounded px-1 py-px text-[9.5px] font-bold tabular [text-shadow:none]', open ? 'bg-warn text-black' : done ? 'bg-ok text-black' : 'bg-white/85 text-black')}
+    >
+      <StickyNote className="size-2.5" />
+      {open > 0 && open}
+    </span>
   )
 }
 

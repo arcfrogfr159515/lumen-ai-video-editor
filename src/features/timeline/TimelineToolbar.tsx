@@ -12,6 +12,7 @@ import { suggestFor, type Suggestion } from '@/editor/smart'
 import { useCopilot } from '@/features/copilot/store'
 import { actions } from '@/features/shell/actions'
 import { RenderMenu } from './RenderMenu'
+import { TimelineTools } from './TimelineTools'
 import { TimelineSwitcher } from './TimelineSwitcher'
 
 export function TimelineToolbar() {
@@ -68,6 +69,7 @@ export function TimelineToolbar() {
         <CopilotHint />
       </div>
 
+      <TimelineTools />
       <RenderMenu />
       <div className="mx-1 h-4 w-px bg-line-2" />
 
