@@ -13,7 +13,7 @@ import { Select } from '@/components/ui/select'
 import { diffTimelines, hunkAt, mapFrame, pairTracks, type Hunk, type TimelineDiff, type Version } from '@/editor/diff'
 import { clipEnd } from '@/editor/ops'
 import { usePlayback } from '@/editor/playback'
-import { allSequences, branchesOf, openSequence, openSequenceId, sequenceView } from '@/editor/sequences'
+import { allSequences, compareTarget, openSequence, openSequenceId, sequenceView } from '@/editor/sequences'
 import { dispatch, useEditor } from '@/editor/store'
 import { useTimelineView } from '@/editor/timeline-view'
 import type { Project, Sequence } from '@/editor/types'
@@ -39,21 +39,12 @@ export function CompareDialog() {
   )
 }
 
-/** The version to compare with at first: where a branch came from, else its newest branch, else another timeline. */
-function defaultOther(project: Project): string | null {
-  const openId = openSequenceId(project)
-  const from = project.sequence?.branchOf?.sequenceId
-  if (from && project.sequences?.[from]) return from
-  const branches = branchesOf(project, openId)
-  if (branches.length) return branches[branches.length - 1].id
-  return allSequences(project).find((s) => s.id !== openId && !s.multicam)?.id ?? null
-}
 
 function Body() {
   const project = useEditor((s) => s.project)
   const openId = openSequenceId(project)
   const others = useMemo(() => allSequences(project).filter((s) => s.id !== openId && !s.multicam), [project, openId])
-  const [otherId, setOtherId] = useState<string | null>(() => defaultOther(project))
+  const [otherId, setOtherId] = useState<string | null>(() => compareTarget(project))
   const other = otherId ? project.sequences?.[otherId] : undefined
   const mine = useMemo(() => openSequence(project), [project])
   const fps = project.settings.fps

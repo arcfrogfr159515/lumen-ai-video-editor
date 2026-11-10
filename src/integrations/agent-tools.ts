@@ -6,6 +6,7 @@
  */
 import type { BridgeToolResult, Job, McpServerState } from '@shared/integrations'
 import { commands, toolDefinitions, type CommandName } from '@/editor/commands'
+import { isUneven } from '@/editor/frame-rate'
 import { clipEnd, projectDuration } from '@/editor/ops'
 import { placeAsset } from '@/editor/placement'
 import { allSequences, openSequenceId, openSequenceName } from '@/editor/sequences'
@@ -23,6 +24,7 @@ import { useAi } from './ai'
 import { requestApproval } from './approvals'
 import { api, elevenMusic, elevenSfx, elevenSpeak, generateImage, generateVideo, importLink, loadGenModels, renderBlender, renderMotion, useGenModels, useIntegrations, type GenProvider } from './store'
 import { CONTROL_TOOLS } from './tools/control'
+import { CRAFT_TOOLS } from './tools/craft'
 import { emitToolImages, emitToolProgress } from './tools/events'
 import { FOOTAGE_TOOLS } from './tools/footage'
 import { INSPECT_TOOLS } from './tools/inspect'
@@ -151,6 +153,11 @@ function projectSummary() {
         ...(c.sequenceId && p.sequences?.[c.sequenceId]?.multicam ? { multicam_angle: Math.max(1, p.sequences[c.sequenceId].tracks.filter((t) => t.kind === 'video').findIndex((t) => t.id === c.angle) + 1) } : {}),
         ...(c.follow ? { follows_tracked_motion: true } : {}),
         ...(c.stabilize ? { stabilized: true } : {}),
+        ...(c.label ? { label: c.label } : {}),
+        ...(c.speaker ? { speaker: c.speaker } : {}),
+        ...(c.note ? { note: c.note } : {}),
+        ...(c.tasks?.length ? { tasks: c.tasks.length, open_tasks: c.tasks.filter((t) => !t.done).length } : {}),
+        ...(c.takes?.length ? { takes: c.takes.length } : {}),
       }))
   const duration = projectDuration(p)
   const timelines = allSequences(p)
@@ -158,8 +165,10 @@ function projectSummary() {
     name: p.name,
     file: useSession.getState().path,
     unsaved_changes: isDirty(),
-    timeline: { id: openSequenceId(p), name: openSequenceName(p), ...(p.sequence?.multicam ? { multicam: true } : {}) },
-    ...(timelines.length > 1 ? { other_timelines: timelines.filter((s) => s.id !== openSequenceId(p)).map((s) => ({ id: s.id, name: s.name, ...(s.multicam ? { multicam: true } : {}) })) } : {}),
+    timeline: { id: openSequenceId(p), name: openSequenceName(p), ...(p.sequence?.multicam ? { multicam: true } : {}), ...(p.sequence?.branchOf ? { branch_of: p.sequence.branchOf.sequenceId } : {}) },
+    ...(timelines.length > 1
+      ? { other_timelines: timelines.filter((s) => s.id !== openSequenceId(p)).map((s) => ({ id: s.id, name: s.name, ...(s.multicam ? { multicam: true } : {}), ...(s.branchOf ? { branch_of: s.branchOf.sequenceId } : {}) })) }
+      : {}),
     settings: p.settings,
     duration_frames: duration,
     duration_seconds: Math.round((duration / fps) * 100) / 100,
@@ -168,7 +177,7 @@ function projectSummary() {
     selection: useUI.getState().selection,
     ...(p.range ? { in_out: { in: p.range.in, out: p.range.out } } : {}),
     ...(p.master ? { master_mix: p.master } : {}),
-    tracks: p.tracks.map((t) => ({ id: t.id, name: t.name, kind: t.kind, role: t.role, locked: t.locked, hidden: t.hidden, ...(t.muted ? { muted: true } : {}), ...(t.solo ? { solo: true } : {}), ...(t.mix ? { mix: t.mix } : {}), clips: clipsOn(t.id) })),
+    tracks: p.tracks.map((t) => ({ id: t.id, name: t.name, kind: t.kind, role: t.role, locked: t.locked, hidden: t.hidden, ...(t.muted ? { muted: true } : {}), ...(t.solo ? { solo: true } : {}), ...(t.mix ? { mix: t.mix } : {}), ...(t.syncLock === false ? { sync_lock: false } : {}), ...(t.rippleLock ? { ripple_lock: true } : {}), clips: clipsOn(t.id) })),
     media: Object.values(p.assets).map((a) => ({
       id: a.id,
       name: a.name,
@@ -181,8 +190,11 @@ function projectSummary() {
       ...(a.source.missing ? { offline: true } : {}),
       ...(a.source.type === 'file' && a.source.path ? { path: a.source.path } : {}),
       ...(a.generated ? { generated_by: a.provenance?.integration ?? 'ai' } : {}),
+      ...(isUneven(a.frameTiming) ? { uneven_frame_rate: true } : {}),
+      ...(a.conformedFrom ? { constant_rate_copy: true } : {}),
     })),
-    markers: p.markers.map((m) => ({ id: m.id, frame: m.frame, label: m.label, color: m.color })),
+    markers: p.markers.map((m) => ({ id: m.id, frame: m.frame, label: m.label, color: m.color, ...(m.kind ? { kind: m.kind } : {}), ...(m.note ? { note: m.note } : {}), ...(m.kind === 'todo' ? { done: m.done === true } : {}) })),
+    ...(p.clipColors ? { clip_colors: p.clipColors } : {}),
     ...(p.luts && Object.keys(p.luts).length ? { luts: Object.values(p.luts).map((l) => ({ id: l.id, name: l.name, size: l.size })) } : {}),
     ...(p.fonts && Object.keys(p.fonts).length ? { fonts: Object.values(p.fonts).map((f) => ({ ref: `custom:${f.id}`, name: f.name })) } : {}),
   }
@@ -711,7 +723,7 @@ function mcpAgentTools(servers: Record<string, McpServerState>): AgentTool[] {
 
 let cache: AgentTool[] | null = null
 export function agentTools(servers: Record<string, McpServerState> = useIntegrations.getState().servers): AgentTool[] {
-  cache ??= [...INTEGRATION_TOOLS, ...VISION_TOOLS, ...INSPECT_TOOLS, ...CONTROL_TOOLS, ...FOOTAGE_TOOLS, ...WEB_TOOLS, ...SKILL_TOOLS, ...BEAT_TOOLS, ...SUBJECT_TOOLS, ...INGEST_TOOLS, ...CAPTURE_TOOLS, ...ATTACHMENT_TOOLS, ...editorTools()]
+  cache ??= [...INTEGRATION_TOOLS, ...VISION_TOOLS, ...INSPECT_TOOLS, ...CONTROL_TOOLS, ...FOOTAGE_TOOLS, ...CRAFT_TOOLS, ...WEB_TOOLS, ...SKILL_TOOLS, ...BEAT_TOOLS, ...SUBJECT_TOOLS, ...INGEST_TOOLS, ...CAPTURE_TOOLS, ...ATTACHMENT_TOOLS, ...editorTools()]
   const mcp = mcpAgentTools(servers)
   return mcp.length ? [...cache, ...mcp] : cache
 }

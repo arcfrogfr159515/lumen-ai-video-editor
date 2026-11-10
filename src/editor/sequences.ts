@@ -204,6 +204,16 @@ export function branchSequence(seq: Sequence, name: string): Sequence {
   }
 }
 
+/** The version the open timeline is most likely compared with: where it was branched from, else its newest branch, else another timeline. */
+export function compareTarget(p: Project): string | null {
+  const openId = openSequenceId(p)
+  const from = p.sequence?.branchOf?.sequenceId
+  if (from && p.sequences?.[from]) return from
+  const branches = branchesOf(p, openId)
+  if (branches.length) return branches[branches.length - 1].id
+  return allSequences(p).find((s) => s.id !== openId && !s.multicam)?.id ?? null
+}
+
 /** The branches of a timeline (and theirs), oldest first. */
 export function branchesOf(p: Project, id: string): Sequence[] {
   const all = allSequences(p)

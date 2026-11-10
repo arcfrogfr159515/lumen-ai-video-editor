@@ -1,6 +1,6 @@
 # Lumen AI tools
 
-Every AI that works in Lumen — the Copilot's API models, your own Claude Code or Codex, and any agent connected to Lumen's MCP server — uses this same set of **133 tools**. This page is generated from the tool registry ([`src/integrations/agent-tools.ts`](../src/integrations/agent-tools.ts) and [`src/integrations/tools/`](../src/integrations/tools)).
+Every AI that works in Lumen — the Copilot's API models, your own Claude Code or Codex, and any agent connected to Lumen's MCP server — uses this same set of **156 tools**. This page is generated from the tool registry ([`src/integrations/agent-tools.ts`](../src/integrations/agent-tools.ts) and [`src/integrations/tools/`](../src/integrations/tools)).
 
 - **Times:** the helper tools take seconds; editor commands take integer frames at the project's fps (see `get_project`).
 - **Pictures:** `get_frame`, `get_contact_sheet`, `get_media_frames` and `get_editor_screenshot` return an image block along with JSON — over MCP as `image` content, and to the Copilot's models as real images.
@@ -17,9 +17,10 @@ Every AI that works in Lumen — the Copilot's API models, your own Claude Code 
 - [Smart edits](#smart-edits) — 9 tools
 - [Generate and import](#generate-and-import) — 18 tools
 - [Timelines and footage](#timelines-and-footage) — 8 tools
+- [Craft of the cut](#craft-of-the-cut) — 13 tools
 - [Record](#record) — 9 tools
 - [Web, files and skills](#web-files-and-skills) — 8 tools
-- [Editor commands](#editor-commands) — 58 tools
+- [Editor commands](#editor-commands) — 68 tools
 
 ## See
 
@@ -666,6 +667,127 @@ The render queue (exports lined up with their files chosen; add to it with expor
 | `action` | `list` · `start` · `clear_finished` | What to do (default list) |
 | `wait_seconds` | number | With start: wait up to this long for the queue to finish (max 600, default 0) |
 
+## Craft of the cut
+
+What an editor checks and reaches for while cutting: gaps and flash frames, footage used twice, uneven frame rates, what differs between two versions of a timeline, cutting by what is said, cutting between cameras, chapters and to-dos, clip notes, the storyboard, and the user’s macros. These find and report; the edits they lead to are editor commands below (timeline_closeGaps, timeline_mergeFrom, timeline_moveRange, sequence_branch, take_*, clip_batch, timeline_threePointEdit…).
+
+### `find_gaps`
+
+What is empty and what flashes on the open timeline: holes (stretches where no track has anything — black and silent in the film), gaps between clips track by track (flash: true for slivers a few frames long that flicker by), and flash clips (clips only a few frames long, usually leftovers of a split). Frames and seconds. Fix them with timeline_closeGaps: by default it closes the holes, fills the slivers and removes the flash clips; wide gaps on a track are left unless you name the track in trackIds.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `flash_frames` | integer | How short counts as a flash, in frames (default 3) |
+
+### `find_reused_footage`
+
+Footage the open timeline uses more than once: every stretch of a media item that plays in two or more clips, with each clip that plays it and where on the timeline. Picture and sound are looked at separately, so a video and its own detached sound count once. Use it before delivering a cut (a shot seen twice is usually a mistake) or to find B-roll that needs replacing.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `min_seconds` | number | Leave out repeats shorter than this (default 0.1) |
+
+### `check_frame_rates`
+
+Check the videos in the project for uneven frame timing: variable frame rate (phones, screen recordings, game capture) and dropped frames. Such footage drifts out of sync with its sound and stutters when cut. Lists every video with what its timing is and, for uneven ones, the constant rate that suits it; conform_frame_rate makes the constant-rate copy.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `asset_ids` | string[] | Only these media items (default: every video) |
+| `recheck` | boolean | Read the files again even if they were checked before |
+
+### `conform_frame_rate`
+
+Make a constant-frame-rate copy of a video and have the project play the copy instead (check_frame_rates finds the videos that need it). Every clip of that media keeps its place and timing; the original file is untouched and can be restored from the Media panel. Re-encodes the whole file, so it takes a while for long footage. One undo step.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `asset_id` **(required)** | string | The video |
+| `fps` | number | The constant rate (default: the one that suits the footage and the timeline) |
+
+### `compare_timelines`
+
+What differs between the open timeline and another version of it (a branch made with sequence_branch, the timeline a branch came from, or any other timeline at the same frame rate): the stretches where they play something different, each as a (frames of the open timeline) and b (frames of the other), and whether it was changed, added (only the other has it) or removed (only the open one has it). Everything between the stretches plays the same in both. To take a stretch into the open timeline, give its a and b to timeline_mergeFrom exactly as listed — last stretch first, so the earlier ones stay where they were found.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `timeline_id` | string | The other timeline (default: the one this was branched from, else its newest branch). list_timelines gives ids. |
+
+### `get_script`
+
+The words spoken on the open timeline, as the film plays them: one line per phrase, with who says it, when, and the index of its first word — every word has an index, counted from 0 across the whole script. Also lists the indexes of filler words (um, uh, 嗯…) and of words said twice in a row. Needs transcripts (transcribe_media). Cut words out of the film with cut_spoken_text. Indexes change after every cut: read the script again before cutting more.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `from_seconds` | number | Only lines from here |
+| `to_seconds` | number | Only lines up to here |
+
+### `cut_spoken_text`
+
+Cut words out of the film by what is said: the frames they are spoken in come out of the whole timeline (picture, captions, B-roll and markers close up together; music beds play on whole), each cut placed in the quietest moment around the words. Give phrases (each exactly as spoken; a phrase said more than once needs all_occurrences, or word_indexes for the one meant), word_indexes from get_script, fillers: true for every um and uh, repeats: true for words said twice in a row — any mix, one undo step. Returns how much time came out.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `phrases` | string[] | Words to cut, as spoken |
+| `all_occurrences` | boolean | Cut every time a phrase is said, not just when it is said once |
+| `word_indexes` | integer[] | Indexes of words to cut (get_script) |
+| `fillers` | boolean | Cut every filler word |
+| `repeats` | boolean | Cut the first of every word or phrase said twice in a row |
+
+### `auto_direct_multicam`
+
+Cut a multicam clip between its cameras the way a director would: to whoever is speaking (each camera is judged by its own microphone), to the wide shot when several speak or nobody does, with cutaways to a listener when one shot runs long — never shorter than min_shot_seconds. watch_picture also looks at how much each picture moves, for cameras with no sound of their own (slower). dry_run plans without cutting. Needs a multicam clip on the open timeline (create_multicam, or multicam_create). One undo step; change single cuts afterwards with multicam_switch.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `clip_ids` | string[] | The multicam clips to cut (default: every multicam clip on the open timeline that plays the same multicam timeline as the first) |
+| `min_shot_seconds` | number | Shortest shot (default 2.5) |
+| `max_shot_seconds` | number | A shot longer than this gets a cutaway (default 14) |
+| `wide_angle` | integer | The camera that shows everyone, 1 = first (default: none) |
+| `reactions` | boolean | Cut away to listeners in long shots (default true) |
+| `watch_picture` | boolean | Also judge cameras by how much their picture moves (default false) |
+| `dry_run` | boolean | Plan and report without cutting |
+
+### `export_markers`
+
+The open timeline’s markers as text. Markers come in kinds: chapter (starts a section of the film), todo (something to fix — done or not), comment, and plain. Formats: youtube — a chapter list ready for a video description (0:00 first; warnings say when a video site would refuse it); markdown — chapters, a to-do checklist and comments; csv and json — one row per marker. Make markers with marker_add (kind, note) and tick to-dos off with marker_update (done).
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `format` | `youtube` · `markdown` · `csv` · `json` | Default markdown |
+| `kinds` | `chapter` · `todo` · `comment` · `plain`[] | Only these kinds (default: all) |
+| `open_only` | boolean | Leave out to-dos that are done |
+
+### `list_clip_notes`
+
+The notes and task lists written on clips of the open timeline (who needs to fix what, where): each clip with its note, its tasks and which are done, in timeline order. Write them with clip_update → patch.note and patch.tasks ([{ id, text, done }]); timeline-wide remarks are markers of kind todo or comment (export_markers).
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `open_only` | boolean | Only clips with tasks still to do |
+| `text` | string | Only notes and tasks containing this |
+
+### `get_storyboard`
+
+The film as a storyboard: the clips of the story track (the main track) in order, grouped into sections by chapter markers, with the frames each card and each section covers. To reorder the film, give a card’s or a section’s start and end to timeline_moveRange with `to` set to the start of the card it should come before (or the end of the film): everything that goes with it — titles, B-roll, captions, sound, markers — moves along.
+
+_No parameters._
+
+### `list_macros`
+
+The editor’s macros: runs of edits the user recorded on one clip to do again on others (a grade, a trim measured from the clip’s own start or end, effects, a cut…). Each with its steps in words. Run one with run_macro. Macros are recorded by the user (Alt+R in the editor) and kept in their profile, not in the project.
+
+_No parameters._
+
+### `run_macro`
+
+Run one of the user’s macros (list_macros) on clips: each clip gets the macro’s steps in turn, measured from its own start, end and track. One undo step. A clip a step can’t be done to (it adjusts an effect the clip hasn’t got, say) is left exactly as it was and reported in skipped with the reason; the others still get the macro.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `macro` **(required)** | string | The macro’s id or name |
+| `clip_ids` **(required)** | string[] | The clips to run it on |
+
 ## Record
 
 Record a screen or a window into the project — picture at up to 4K and 60 fps, its sound, the microphone and the camera — then follow the pointer’s clicks. The first call asks the user to allow screen recording for the session. See [Recording](RECORDING.md).
@@ -959,7 +1081,7 @@ Delete clips. With ripple, later clips on the same track shift left to close the
 
 ### `timeline_removeRange`
 
-Take a stretch of time out of the whole timeline (like Extract): clips inside it are removed, clips across it lose that stretch, and everything later — on every unlocked track, plus markers — moves left to close up. Clips listed in keepWhole (music beds, ambience) are not cut: they keep playing through the join and end earlier.
+Take a stretch of time out of the whole timeline (like Extract): clips inside it are removed, clips across it lose that stretch, and everything later — on every unlocked track, plus markers — moves left to close up. Clips listed in keepWhole (music beds, ambience) are not cut: they keep playing through the join and end earlier. Tracks with sync lock off or ripple lock on (track_update) are left exactly as they are.
 
 | Parameter | Type | Description |
 | --- | --- | --- |
@@ -1193,7 +1315,7 @@ Add a video or audio track. Video tracks go on top by default, audio tracks at t
 
 ### `track_update`
 
-Rename a track, toggle hidden / muted / locked / solo (while any track is soloed only soloed tracks are heard), or change its height.
+Rename a track, toggle hidden / muted / locked / solo (while any track is soloed only soloed tracks are heard), or change its height. syncLock (default on): whether the track follows edits that ripple the whole timeline — timeline_removeRange, timeline_closeGaps, three-point inserts, moving a stretch; turn it off for a music bed that should stay put. rippleLock (default off): clips on the track hold their place in time — nothing ripples them, a ripple delete or ripple trim there leaves the gap, and inserts are refused (not for the main track, which always closes its gaps).
 
 | Parameter | Type | Description |
 | --- | --- | --- |
@@ -1245,7 +1367,7 @@ Lift a stretch of time: clear everything between two frames on every unlocked tr
 
 ### `marker_add`
 
-Drop a marker on the timeline ruler. Returns the id.
+Drop a marker on the timeline ruler. kind says what it is for: chapter (starts a section of the film — chapters export as a chapter list and divide the storyboard), todo (something still to fix; tick it off with marker_update done), comment (a remark), or leave it out for a plain marker. note holds more than fits in the label. Returns the id.
 
 | Parameter | Type | Description |
 | --- | --- | --- |
@@ -1253,10 +1375,12 @@ Drop a marker on the timeline ruler. Returns the id.
 | `frame` **(required)** | integer | (≥ 0) |
 | `label` | string |  |
 | `color` | `lime` · `violet` · `pink` · `amber` · `emerald` · `sky` |  |
+| `kind` | `chapter` · `todo` · `comment` |  |
+| `note` | string |  |
 
 ### `marker_update`
 
-Move, rename or recolor a marker (marker ids are in get_project → markers).
+Move, rename or recolor a marker, change what it is for (kind: chapter, todo, comment; null makes it a plain marker), write its note (null clears it), or tick a to-do off (done). Marker ids are in get_project → markers.
 
 | Parameter | Type | Description |
 | --- | --- | --- |
@@ -1374,6 +1498,26 @@ Delete a timeline (sequence). Not the open one, and not one another timeline sti
 | --- | --- | --- |
 | `id` **(required)** | string |  |
 
+### `sequence_branch`
+
+Branch a timeline: a full copy to try another version of the cut on, that remembers where it came from. Compare a branch with the timeline it came from with compare_timelines, and take the stretches that work back with timeline_mergeFrom. id defaults to the open timeline; the branch opens unless open is false. Returns its id.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `id` | string |  |
+| `name` | string |  |
+| `open` **(required)** | boolean | Default `true`. |
+
+### `timeline_mergeFrom`
+
+Take a stretch from another timeline (usually a branch) into the open one: over frames a.start–a.end of the open timeline it comes to play what the other plays over b.start–b.end. The open timeline’s stretch is taken out, room for the other’s is made, and copies of the other’s clips fill it, on every track that follows ripples — so everything after stays in step even when the two stretches differ in length. An empty a (start = end) inserts; an empty b removes. compare_timelines lists the stretches that differ with exactly these numbers. Returns { clipIds }.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `sequenceId` **(required)** | string |  |
+| `a` **(required)** | object |  |
+| `b` **(required)** | object |  |
+
 ### `clip_nest`
 
 Nest clips: move them (and anything linked to them) into a new timeline, and put one clip playing that timeline where they were — then grade, transform, speed up or cut them as one piece. sequence_open the new timeline to edit inside it. Returns { clipId, sequenceId }.
@@ -1413,6 +1557,107 @@ Cut to another camera angle of a multicam clip at a frame: the clip is split the
 | `frame` **(required)** | integer | (≥ 0) |
 | `angle` **(required)** | integer | (≥ 1, ≤ 16) |
 | `clipId` | string |  |
+
+### `clip_batch`
+
+One change to many clips at once, each from where it stands — what clip_update (which makes them all the same) can’t do. speed: { mode: "scale", value: 2 } makes each twice as fast as it is, { mode: "set", value } gives them all one speed. volume: { mode: "offset", value: -3 } turns each down 3 dB (volume keyframes move with it), { mode: "set", value } sets a level (clips with volume keyframes are left). fadeIn / fadeOut in frames. opacity 0–1. scale: { mode: "scale" | "set", value }. reverse, blend, label (null removes it). effects: { add: [kinds], remove: [kinds] or "all", enabled: true/false to switch every effect on or off }. rename: a pattern with {n} (number in timeline order), {nn} (with a leading zero), {name}, {source}, {track}, {tc}. Each operation applies to the clips it makes sense for; the rest are reported in skipped with the reason. One undo step. Returns { changed, skipped: [{ id, name, why }] }.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `ids` **(required)** | string[] |  |
+| `speed` | object |  |
+| `volume` | object |  |
+| `fadeIn` | integer | (≥ 0) |
+| `fadeOut` | integer | (≥ 0) |
+| `opacity` | number | (≥ 0, ≤ 1) |
+| `scale` | object |  |
+| `reverse` | boolean |  |
+| `blend` | `normal` · `screen` · `multiply` · `overlay` · `soft-light` · `lighten` · `darken` · `color-dodge` · `difference` |  |
+| `label` | `red` · `orange` · `yellow` · `green` · `teal` · `blue` · `purple` · `pink` · `gray` or null |  |
+| `effects` | object |  |
+| `rename` | string |  |
+
+### `take_add`
+
+Add a media item as an alternate take of a clip: another candidate for the same place (another take of the line, another piece of B-roll). The clip keeps its start, length, grade, effects and sound settings; only what plays there changes when takes are switched. The clip’s own footage becomes its first take. inPoint is where in the media the take starts (project frames). show (default true) switches to the new take straight away. Returns { takeId, shortenedBy, slidBack }.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `clipId` **(required)** | string |  |
+| `assetId` **(required)** | string |  |
+| `inPoint` | integer | (≥ 0) |
+| `name` | string |  |
+| `speed` | number | (≥ 0.1, ≤ 16) |
+| `show` **(required)** | boolean | Default `true`. |
+
+### `take_switch`
+
+Show another take of a clip in its place. Give takeId (get_clip → takes), or step: 1 for the next take, -1 for the one before (wrapping round). The clip keeps its start and length when the take has the footage for it: a take that starts too near the end of its media starts earlier (slidBack frames), and one that is too short altogether makes the clip shorter (shortenedBy frames) until a longer take is shown again. Returns { takeId, shortenedBy, slidBack }.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `clipId` **(required)** | string |  |
+| `takeId` | string |  |
+| `step` | integer | (≥ -64, ≤ 64) |
+
+### `take_remove`
+
+Take a candidate off a clip. Removing the take that is showing shows the one before it first. With all: true, every candidate but the one showing goes and the clip is a plain clip again.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `clipId` **(required)** | string |  |
+| `takeId` | string |  |
+| `all` **(required)** | boolean | Default `false`. |
+
+### `timeline_threePointEdit`
+
+Put a stretch of a media item on the timeline by its edit points — three- and four-point editing. Any of four points can be given: sourceIn / sourceOut (frames into the media, out exclusive) and the timeline’s marked stretch (timeline_setRange, or timelineIn / timelineOut here). Three settle the fourth: an out point without its in point backtimes the edit (it is placed from its end). With fewer, `at` (the playhead) and the ends of the media fill in. When all four are marked and the lengths differ, fit decides: "source" (default) takes the source as marked, "timeline" fills the timeline stretch from the source in, "fit" changes the clip’s speed so the source fills the stretch exactly. mode "overwrite" (default) covers what is on the track there and moves nothing; "insert" cuts every track that follows ripples at the point and moves everything after it later (tracks with sync lock off stay). Returns { clipId, start, duration, inPoint, speed, backtimed, short } — short is how many frames the media ran out before the stretch was filled.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `assetId` **(required)** | string |  |
+| `trackId` **(required)** | string |  |
+| `at` **(required)** | integer | (≥ 0) Default `0`. |
+| `sourceIn` | integer | (≥ 0) |
+| `sourceOut` | integer | (≥ 0) |
+| `timelineIn` | integer | (≥ 0) |
+| `timelineOut` | integer | (≥ 0) |
+| `useRange` **(required)** | boolean | Default `true`. |
+| `mode` **(required)** | `insert` · `overwrite` | Default `"overwrite"`. |
+| `fit` **(required)** | `fit` · `source` · `timeline` | Default `"source"`. |
+
+### `timeline_moveRange`
+
+Pick up a stretch of the whole timeline — frames start to end (exclusive) — and put it down so it starts where frame `to` is now, the stretch in between closing up behind it: reordering sections of the film with everything that goes with them (titles, B-roll, captions, sound, markers). `to` must be at or before start, or at or after end. It happens on every track that follows ripples; a clip lying across an edge of the stretch is cut there. Clips listed in keepWhole (music beds) are never cut, and their tracks are left as they are. Returns { movedBy } in frames (negative: earlier).
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `start` **(required)** | integer | (≥ 0) |
+| `end` **(required)** | integer | (≥ 0) |
+| `to` **(required)** | integer | (≥ 0) |
+| `keepWhole` **(required)** | string[] | Default `[]`. |
+
+### `timeline_closeGaps`
+
+Clean the timeline up. holes (default true): take out every stretch where no track has anything, closing the timeline up on every track that follows ripples. flashGaps (default true): fill slivers of empty space between clips (flashFrames or shorter, default 3) by letting the clip before run a few frames longer, or the clip after start earlier — nothing else moves. flashClips (default true): remove clips that short (leftovers of a split), a neighbour taking up the space. trackIds: on these tracks, also close every gap between clips by moving the later clips up (linked clips move with them; this changes what the track lines up with). Returns what was done. find_gaps lists what there is first.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `holes` **(required)** | boolean | Default `true`. |
+| `flashGaps` **(required)** | boolean | Default `true`. |
+| `flashClips` **(required)** | boolean | Default `true`. |
+| `flashFrames` **(required)** | integer | (≥ 1, ≤ 12) Default `3`. |
+| `trackIds` **(required)** | string[] | Default `[]`. |
+
+### `project_setClipColors`
+
+How clips are coloured on the timeline. auto gives every distinct value of a field its own colour: source (each media item), speaker, angle (each camera of a multicam clip) or track; null goes back to colouring by kind. rules are checked first, in order — { field, value, color }: clips whose source / speaker / angle / track / name / tag / kind matches value (part of a name, ignoring case; * for any) get that colour. A label set on a clip itself (clip_update → label) wins over both. Colours: red, orange, yellow, green, teal, blue, purple, pink, gray.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `auto` | `source` · `speaker` · `angle` · `track` or null |  |
+| `rules` | object[] |  |
 
 ### `project_update`
 

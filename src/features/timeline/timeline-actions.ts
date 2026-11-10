@@ -6,8 +6,7 @@ import { toast } from 'sonner'
 import { runMacro, startRecording, stopRecording, useMacros } from '@/editor/macro-store'
 import { clipsAt, framesIn } from '@/editor/ops'
 import { audioRole, pickTrack } from '@/editor/placement'
-import { bedClips } from '@/editor/smart'
-import { cutRanges, timelineScript } from '@/editor/text-edit'
+import { cutSpokenWords } from '@/editor/smart'
 import { playback, usePlayback } from '@/editor/playback'
 import { dispatch, getProject, useEditor } from '@/editor/store'
 import { canHaveTakes, type SwitchResult } from '@/editor/takes'
@@ -68,23 +67,9 @@ export function sourceEditFor(assetId: string) {
  * frames went.
  */
 export function cutWords(indexes: readonly number[], label?: string): number {
-  const project = getProject()
-  const lines = timelineScript(project)
-  const ranges = cutRanges(project, lines, indexes)
-  if (!ranges.length) return 0
-  const keepWhole = bedClips(project)
-  let removed = 0
-  let error: string | undefined
-  useEditor.getState().transaction(label ?? `Delete ${plural(indexes.length, 'word')}`, 'user', () => {
-    // Last stretch first, so the earlier ones are still where they were found.
-    for (const [start, end] of [...ranges].reverse()) {
-      const res = dispatch('timeline.removeRange', { start, end, keepWhole })
-      if (res.ok) removed += end - start
-      else error = res.error
-    }
-  })
-  if (error) toast.error(error)
-  return removed
+  const r = cutSpokenWords(indexes, { label })
+  if (r.error) toast.error(r.error)
+  return r.frames
 }
 
 export const timelineActions = {

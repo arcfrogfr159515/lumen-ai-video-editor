@@ -142,7 +142,7 @@ export interface MacroRun {
  * Runs a macro on clips, one after another, as one undo step. A clip a step
  * can't be done to is put back as it was (the others still get the macro).
  */
-export function runMacro(macro: Macro, clipIds: readonly string[]): MacroRun {
+export function runMacro(macro: Macro, clipIds: readonly string[], source: 'user' | 'ai' = 'user'): MacroRun {
   const order = new Map(getProject().tracks.map((t, i) => [t.id, i]))
   const targets = clipIds
     .map((id) => getProject().clips[id])
@@ -150,7 +150,7 @@ export function runMacro(macro: Macro, clipIds: readonly string[]): MacroRun {
     .sort((a, b) => a.start - b.start || (order.get(a.trackId) ?? 0) - (order.get(b.trackId) ?? 0))
     .map((c) => ({ id: c.id, name: c.name }))
   const run: MacroRun = { done: 0, failed: [] }
-  const opened = beginTransaction(`Macro: ${macro.name}`, 'user')
+  const opened = beginTransaction(`Macro: ${macro.name}`, source)
   replaying = true
   try {
     for (const target of targets) {
@@ -163,7 +163,7 @@ export function runMacro(macro: Macro, clipIds: readonly string[]): MacroRun {
       let why: string | undefined
       for (const [n, step] of macro.steps.entries()) {
         try {
-          const res = dispatch(step.command, instantiate(step, getProject(), ctx) as never, { label: step.title })
+          const res = dispatch(step.command, instantiate(step, getProject(), ctx) as never, { label: step.title, source })
           if (!res.ok) {
             why = `step ${n + 1} (${step.title}): ${res.error}`
             break

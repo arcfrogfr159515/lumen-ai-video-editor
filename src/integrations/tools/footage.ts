@@ -39,6 +39,7 @@ export const FOOTAGE_TOOLS: AgentTool[] = [
           fps: s.settings.fps,
           duration_seconds: Math.round((clipsLength(s.clips) / s.settings.fps) * 100) / 100,
           clips: Object.keys(s.clips).length,
+          ...(s.branchOf ? { branch_of: s.branchOf.sequenceId } : {}),
           ...(s.multicam ? { multicam: true, angles: s.tracks.filter((t) => t.kind === 'video').map((t, i) => ({ angle: i + 1, track_id: t.id, name: t.name })) } : {}),
           nested_in: all.filter((o) => Object.values(o.clips).some((c) => c.sequenceId === s.id)).map((o) => o.id),
         })),

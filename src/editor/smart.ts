@@ -8,6 +8,7 @@ import { speechScript } from '@/engine/audio'
 import { clipEnd } from './ops'
 import { dispatch, getProject, useEditor } from './store'
 import { captionStyle, layCaptions, type CaptionStyle } from './subtitles'
+import { cutRanges, timelineScript } from './text-edit'
 import { consumed, localForSource } from './timing'
 import type { Clip, Project } from './types'
 
@@ -232,6 +233,32 @@ export async function silentCuts(project: Project, reports: PauseReport[], opts:
     else merged.push([a, b])
   }
   return merged
+}
+
+/**
+ * Takes words out of the film (their places in `timelineScript`): the frames
+ * they are said in come out of the whole timeline, music beds staying whole.
+ * One undo step. Says how many frames went, in how many cuts, and what stopped
+ * a cut that couldn't be made.
+ */
+export function cutSpokenWords(indexes: readonly number[], opts: { label?: string; source?: 'user' | 'ai' } = {}): { frames: number; cuts: number; error?: string } {
+  const project = getProject()
+  const ranges = cutRanges(project, timelineScript(project), indexes)
+  const out: { frames: number; cuts: number; error?: string } = { frames: 0, cuts: 0 }
+  if (!ranges.length) return out
+  const keepWhole = bedClips(project)
+  const source = opts.source ?? 'user'
+  useEditor.getState().transaction(opts.label ?? `Delete ${indexes.length} word${indexes.length === 1 ? '' : 's'}`, source, () => {
+    // Last stretch first, so the earlier ones are still where they were found.
+    for (const [start, end] of [...ranges].reverse()) {
+      const res = dispatch('timeline.removeRange', { start, end, keepWhole }, { source })
+      if (res.ok) {
+        out.frames += end - start
+        out.cuts++
+      } else out.error = res.error
+    }
+  })
+  return out
 }
 
 /**
