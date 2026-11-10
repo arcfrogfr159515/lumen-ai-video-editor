@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { handleTrimKey } from '@/editor/trim-session'
 import { useUI } from '@/editor/ui-store'
 import { platform } from '@/lib/platform'
 import { useSession } from '@/project/session'
@@ -53,6 +54,11 @@ export function useGlobalShortcuts() {
       if (keyName(e) === 'enter' && pressable(e.target)) return
       const { paletteOpen, exportOpen, shortcutsOpen } = useUI.getState()
       const modal = paletteOpen || exportOpen || shortcutsOpen || document.querySelector('[role="menu"],[role="dialog"]')
+      // Trim mode takes a few keys for itself (K, the arrows, Tab, Esc); the rest work as always.
+      if (!typing && !modal && !useSession.getState().home && handleTrimKey(e)) {
+        e.preventDefault()
+        return
+      }
 
       for (const s of SHORTCUTS) {
         if (!s.keys.some((combo) => matchesCombo(e, combo))) continue

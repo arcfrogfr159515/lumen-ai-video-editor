@@ -5,7 +5,11 @@ import { toast } from 'sonner'
 import { AiSparkle } from '@/components/brand'
 import { IconButton } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
+import { Kbd } from '@/components/ui/kbd'
 import { useEditor } from '@/editor/store'
+import { TRIM_SIDES, trimSides } from '@/editor/trim-mode'
+import { exitTrim, setTrimSide, useTrim } from '@/editor/trim-session'
+import { cn } from '@/lib/cn'
 import { useUI, ZOOM_MAX, ZOOM_MIN } from '@/editor/ui-store'
 import { formatDuration } from '@/lib/time'
 import { suggestFor, type Suggestion } from '@/editor/smart'
@@ -64,6 +68,7 @@ export function TimelineToolbar() {
       </IconButton>
 
       <RangeChip />
+      <TrimChip />
 
       <div className="flex min-w-0 flex-1 justify-center px-3">
         <CopilotHint />
@@ -107,6 +112,43 @@ function RangeChip() {
         In–Out {formatDuration(range.out - range.in, fps)}
       </button>
       <button type="button" aria-label="Clear in and out" onClick={actions.clearInOut} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
+        <X className="size-3" />
+      </button>
+    </div>
+  )
+}
+
+/** Trim mode: which side of the cut is being trimmed, and the keys that do it. */
+function TrimChip() {
+  const cut = useTrim((s) => s.cut)
+  const side = useTrim((s) => s.side)
+  if (!cut) return null
+  const sides = trimSides(cut)
+  return (
+    <div data-trim-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-accent/10 pr-0.5 pl-2.5 text-2xs font-medium text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]">
+      <span className="font-semibold">Trim</span>
+      <div className="flex items-center gap-0.5">
+        {TRIM_SIDES.filter((s) => sides.includes(s.id)).map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            title={s.hint}
+            aria-pressed={side === s.id}
+            onClick={() => setTrimSide(s.id)}
+            className={cn('h-5 rounded-full px-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60', side === s.id ? 'bg-accent text-accent-fg' : 'text-accent-2/80 hover:bg-white/[0.08] hover:text-fg')}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+      <span className="hidden items-center gap-1 text-fg-3 xl:flex">
+        <Kbd combo="j" />
+        <Kbd combo="l" /> play
+        <Kbd combo="k" className="ml-1" /> trim here
+        <Kbd combo="left" className="ml-1" />
+        <Kbd combo="right" /> nudge
+      </span>
+      <button type="button" aria-label="Leave trim mode" title="Leave trim mode (Esc)" onClick={exitTrim} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
         <X className="size-3" />
       </button>
     </div>

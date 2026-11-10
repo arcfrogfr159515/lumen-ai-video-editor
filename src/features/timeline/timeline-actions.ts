@@ -10,6 +10,7 @@ import { dispatch, getProject, useEditor } from '@/editor/store'
 import { canHaveTakes, type SwitchResult } from '@/editor/takes'
 import { resolveEdit } from '@/editor/three-point'
 import { timelineView } from '@/editor/timeline-view'
+import { enterTrim, exitTrim, trimming } from '@/editor/trim-session'
 import type { Clip } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { useMediaSelection } from '@/features/assets/media-selection'
@@ -98,6 +99,12 @@ export const timelineActions = {
     playback.pause()
     playback.seek(result.start + result.duration)
     if (result.short) toast(`${asset.name} ran out ${formatDuration(result.short, p.settings.fps)} before the out point`, { description: 'The edit is shorter than the marked stretch.' })
+  },
+
+  /** Trim mode on the cut nearest the playhead (a cut on a selected clip first) — or off, if it is on. */
+  toggleTrimMode() {
+    if (trimming()) return exitTrim()
+    if (!enterTrim()) toast('No cut to trim', { description: 'Trim mode works on a place where a clip ends or another begins.' })
   },
 
   /** Shows the next (or previous) take of the selected clips. */

@@ -65,6 +65,7 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'ungroup', label: 'Ungroup clips', group: 'Editing', keys: ['mod+shift+g'], run: actions.ungroup },
   { id: 'nest', label: 'Nest selection into a timeline', group: 'Editing', keys: ['mod+alt+n'], run: actions.nestSelection },
   { id: 'open-nested', label: 'Open the nested timeline', group: 'Editing', keys: ['mod+alt+enter'], run: () => actions.openNested() },
+  { id: 'trim-mode', label: 'Trim mode: trim the nearest cut with J K L', group: 'Editing', keys: ['t'], run: () => timelineActions.toggleTrimMode() },
   { id: 'source-insert', label: 'Insert from the source monitor', group: 'Editing', keys: [','], run: () => timelineActions.sourceEdit('insert') },
   { id: 'source-overwrite', label: 'Overwrite from the source monitor', group: 'Editing', keys: ['.'], run: () => timelineActions.sourceEdit('overwrite') },
   { id: 'next-take', label: 'Show the next take', group: 'Editing', keys: ['alt+t'], run: () => timelineActions.switchTake(1) },

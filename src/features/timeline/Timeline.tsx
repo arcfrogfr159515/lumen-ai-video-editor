@@ -25,7 +25,9 @@ import { dnd } from '@/features/dnd'
 import { actions } from '@/features/shell/actions'
 import { useElementSize } from '@/lib/hooks'
 import { clamp } from '@/lib/math'
-import { computeRows, LayoutContext, type TimelineLayout } from './layout'
+import { cn } from '@/lib/cn'
+import { useTrim } from '@/editor/trim-session'
+import { computeRows, LayoutContext, useLayout, type TimelineLayout } from './layout'
 import { Minimap } from './Minimap'
 import { ADD_ROW_H, HEADER_W, RULER_H, useDrag, type ClipPreview, type DropGhost } from './model'
 import { Ruler, TimecodeCell } from './Ruler'
@@ -475,6 +477,7 @@ function Overlays() {
           style={{ left: x(range.in), width: x(range.out) - x(range.in), top: RULER_H }}
         />
       )}
+      <TrimMarker />
       <PlayheadLine />
       {snapFrame !== null && (
         <div className="pointer-events-none absolute top-0 bottom-0 z-[22] w-px -translate-x-1/2 bg-snap shadow-[0_0_8px_var(--color-snap)]" style={{ left: x(snapFrame) }}>
@@ -502,6 +505,28 @@ function Overlays() {
         </div>
       )}
     </>
+  )
+}
+
+/** Trim mode: the cut being trimmed, bracketed on the side (or sides) that will move, with how far it has gone. */
+function TrimMarker() {
+  const cut = useTrim((s) => s.cut)
+  const side = useTrim((s) => s.side)
+  const moved = useTrim((s) => s.moved)
+  const { pps, fps, rowTop, rowHeight } = useLayout()
+  if (!cut || rowTop[cut.trackId] === undefined) return null
+  const x = HEADER_W + (cut.frame / fps) * pps
+  const top = rowTop[cut.trackId]
+  const height = rowHeight[cut.trackId]
+  const bracket = 'absolute top-[2px] bottom-[2px] w-[7px] border-y-[3px] border-accent'
+  return (
+    <div data-trim-cut={side} className="pointer-events-none absolute z-[23]" style={{ left: x, top, height }}>
+      {side !== 'in' && <span className={cn(bracket, 'right-0 rounded-r-[4px] border-r-[3px]')} />}
+      {side !== 'out' && <span className={cn(bracket, 'left-0 rounded-l-[4px] border-l-[3px]')} />}
+      <span className="absolute -top-[18px] left-1/2 -translate-x-1/2 rounded-md bg-accent px-1.5 py-0.5 font-mono text-[10px] leading-none font-semibold whitespace-nowrap text-accent-fg tabular">
+        {moved === 0 ? '±0' : `${moved > 0 ? '+' : '−'}${Math.abs(moved)}f`}
+      </span>
+    </div>
   )
 }
 
