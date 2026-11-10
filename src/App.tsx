@@ -23,6 +23,7 @@ import { VersionHistoryDialog } from '@/features/shell/VersionHistoryDialog'
 import { SidePanel } from '@/features/shell/SidePanel'
 import { TitleBar } from '@/features/shell/TitleBar'
 import { useGlobalShortcuts } from '@/features/shell/useGlobalShortcuts'
+import { CleanupDialog } from '@/features/timeline/CleanupDialog'
 import { ClipColorsDialog } from '@/features/timeline/ClipColorsDialog'
 import { PasteAttributesDialog } from '@/features/timeline/PasteAttributesDialog'
 import { RenameTimelineDialog } from '@/features/timeline/TimelineSwitcher'
@@ -70,6 +71,7 @@ export function App() {
         <GraphicsDialog />
         <PasteAttributesDialog />
         <ClipColorsDialog />
+        <CleanupDialog />
         <VersionHistoryDialog />
         <RenameTimelineDialog />
         <RenderQueueDialog />

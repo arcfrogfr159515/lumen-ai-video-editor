@@ -5,7 +5,9 @@
  */
 import { toast } from 'sonner'
 import type { MediaFileInfo } from '@shared/app'
+import { isUneven } from '@/editor/frame-rate'
 import { dispatch, getProject, useEditor } from '@/editor/store'
+import { useTimelineView } from '@/editor/timeline-view'
 import type { Asset } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { audioLeaves, audioSourceUrl, computePeaks, computePeaksStreamed, isLongAudio, loadAudio, pruneAudio } from '@/engine/audio-engine'
@@ -29,6 +31,7 @@ async function assetFromFile(file: MediaFileInfo): Promise<Asset> {
     width: meta.width,
     height: meta.height,
     fps: meta.fps,
+    ...(meta.frameTiming ? { frameTiming: meta.frameTiming } : {}),
     hasAudio: meta.kind === 'image' ? undefined : meta.hasAudio,
     source: { type: 'file', url: file.url, path: file.path, mime: file.mime, fileName: file.name, size: file.size, mtime: file.mtime, poster: meta.poster },
     addedAt: Date.now(),
@@ -92,6 +95,13 @@ export async function importMediaFiles(files: MediaFileInfo[], failures: ImportF
     })
     useUI.getState().setLeftTab('media')
     void analyzeAssets(assets.map((a) => a.id))
+    const uneven = assets.filter((a) => isUneven(a.frameTiming))
+    if (uneven.length)
+      toast(uneven.length === 1 ? `${uneven[0].name} has an uneven frame rate` : `${uneven.length} videos have an uneven frame rate`, {
+        description: 'They play as they are. A constant-frame-rate copy steps and scrubs frame by frame.',
+        action: { label: 'Review', onClick: () => useTimelineView.getState().set({ cleanup: 'rates' }) },
+        duration: 9000,
+      })
   }
   if (failed.length === 1 && !assets.length) toast.error(`Couldn’t import ${failed[0].name}`, { id, description: failed[0].reason })
   else if (failed.length) toast.error(`Imported ${assets.length}, couldn’t import ${failed.length}`, { id, description: failed.map((f) => `${f.name}: ${f.reason}`).join('\n') })

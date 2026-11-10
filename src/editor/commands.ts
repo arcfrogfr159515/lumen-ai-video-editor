@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { uid } from '@/lib/id'
 import { createClip, createTrack, DEFAULT_BUS, DEFAULT_COMPRESSOR, DEFAULT_EQ, DEFAULT_LIMITER, IDENTITY_CURVES, NEUTRAL_WHEELS, TRACK_HEIGHTS } from './defaults'
 import { EASING_NAMES, type Easing } from './easing'
+import { closeGaps, FLASH_FRAMES } from './gaps'
 import { ANIMATABLE, evalKeyframes } from './keyframes'
 import { defaultMarkerLabel, markerKindInfo, markerKindOf } from './markers'
 import { MOTION_PRESETS, mergeKeyframes, presetKeyframes, PRESET_IDS } from './motion-presets'
@@ -361,6 +362,32 @@ const cursorTrack = z.object({
   rate: z.number().positive(),
 })
 
+const frameTiming = z.object({
+  variable: z.boolean().optional(),
+  dropped: z.boolean().optional(),
+  min: z.number().positive(),
+  max: z.number().positive(),
+  average: z.number().positive(),
+  median: z.number().positive(),
+  grid: z.number().positive().optional(),
+  frames: z.number().int().min(1),
+})
+
+const originalMedia = z.object({
+  url: z.string(),
+  path: z.string().optional(),
+  relPath: z.string().optional(),
+  mime: z.string(),
+  fileName: z.string(),
+  size: z.number(),
+  mtime: z.number().optional(),
+  fps: z.number().optional(),
+  duration: z.number().positive().optional(),
+  frameTiming: frameTiming.optional(),
+})
+
+const sceneCuts = z.array(z.number().min(0)).max(20000)
+
 const asset = z.object({
   id,
   name: z.string().min(1),
@@ -384,6 +411,9 @@ const asset = z.object({
   matteOf: z
     .object({ assetId: z.string(), subject: z.enum(['person', 'any']), from: z.number(), to: z.number(), box: z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() }).optional() })
     .optional(),
+  frameTiming: frameTiming.optional(),
+  conformedFrom: originalMedia.optional(),
+  sceneCuts: sceneCuts.optional(),
   addedAt: z.number(),
 })
 
@@ -1509,17 +1539,29 @@ export const commands = {
           proxy: z.object({ path: z.string(), url: z.string(), width: z.number(), height: z.number() }).nullable(),
           beats: z.object({ bpm: z.number(), times: z.array(z.number()), downbeats: z.array(z.number()), confidence: z.number() }),
           cues: z.array(assetCue),
+          /** What its frame timestamps say about its frame rate; null forgets it. */
+          frameTiming: frameTiming.nullable(),
+          /** The file a constant-frame-rate copy stands in for; null once the original is back. */
+          conformedFrom: originalMedia.nullable(),
+          /** The shot changes found in it, in source seconds; null forgets them. */
+          sceneCuts: sceneCuts.nullable(),
         })
         .partial(),
     }),
-    title: (i) => (i.patch.source ? 'Relink media' : i.patch.proxy === null ? 'Remove proxy' : 'Edit media'),
+    title: (i) => (i.patch.conformedFrom ? 'Use a constant-frame-rate copy' : i.patch.conformedFrom === null ? 'Use the original file' : i.patch.source ? 'Relink media' : i.patch.proxy === null ? 'Remove proxy' : 'Edit media'),
     run(p, i) {
       const a = p.assets[i.id]
       if (!a) throw new CommandError('Asset not found')
-      const { proxy, ...rest } = i.patch
+      const { proxy, frameTiming, conformedFrom, sceneCuts, ...rest } = i.patch
       Object.assign(a, rest)
       if (proxy === null) delete a.proxy
       else if (proxy) a.proxy = proxy
+      if (frameTiming === null) delete a.frameTiming
+      else if (frameTiming) a.frameTiming = frameTiming
+      if (conformedFrom === null) delete a.conformedFrom
+      else if (conformedFrom) a.conformedFrom = conformedFrom
+      if (sceneCuts === null) delete a.sceneCuts
+      else if (sceneCuts) a.sceneCuts = [...sceneCuts].sort((x, y) => x - y)
     },
   }),
 
@@ -1705,6 +1747,28 @@ export const commands = {
   }),
 
   // Project
+  // Timeline tools
+  'timeline.closeGaps': command({
+    description:
+      'Clean the timeline up. holes (default true): take out every stretch where no track has anything, closing the timeline up on every track that follows ripples. flashGaps (default true): fill slivers of empty space between clips (flashFrames or shorter, default 3) by letting the clip before run a few frames longer, or the clip after start earlier — nothing else moves. flashClips (default true): remove clips that short (leftovers of a split), a neighbour taking up the space. trackIds: on these tracks, also close every gap between clips by moving the later clips up (linked clips move with them; this changes what the track lines up with). Returns what was done. find_gaps lists what there is first.',
+    input: z.object({
+      holes: z.boolean().default(true),
+      flashGaps: z.boolean().default(true),
+      flashClips: z.boolean().default(true),
+      flashFrames: z.number().int().min(1).max(12).default(FLASH_FRAMES),
+      trackIds: z.array(id).default([]),
+    }),
+    title: () => 'Clean up gaps',
+    run(p, i) {
+      for (const trackId of i.trackIds) {
+        const track = getTrack(p, trackId)
+        if (track.locked) throw new CommandError(`${track.name} is locked`)
+        if (track.rippleLock) throw new CommandError(`${track.name} is ripple-locked: its clips hold their place, so its gaps stay`)
+      }
+      return closeGaps(p, i)
+    },
+  }),
+
   'project.setClipColors': command({
     description:
       'How clips are coloured on the timeline. auto gives every distinct value of a field its own colour: source (each media item), speaker, angle (each camera of a multicam clip) or track; null goes back to colouring by kind. rules are checked first, in order — { field, value, color }: clips whose source / speaker / angle / track / name / tag / kind matches value (part of a name, ignoring case; * for any) get that colour. A label set on a clip itself (clip_update → label) wins over both. Colours: red, orange, yellow, green, teal, blue, purple, pink, gray.',

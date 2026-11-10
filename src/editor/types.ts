@@ -68,6 +68,37 @@ export interface AssetCue {
   data?: Record<string, string | number | boolean>
 }
 
+/** What a video's frame timestamps say about its frame rate (see editor/frame-rate.ts). */
+export interface FrameTiming {
+  /** No grid fits the frames: a variable frame rate. */
+  variable?: boolean
+  /** The frames sit on a grid, with some missing. */
+  dropped?: boolean
+  /** Frames per second: the slowest stretch, the fastest, the average, and the usual (the median). */
+  min: number
+  max: number
+  average: number
+  median: number
+  /** The rate of the grid the frames sit on, when there is one. */
+  grid?: number
+  /** How many frames were looked at. */
+  frames: number
+}
+
+/** The file an asset was imported as, kept while a constant-frame-rate copy stands in for it. */
+export interface OriginalMedia {
+  url: string
+  path?: string
+  relPath?: string
+  mime: string
+  fileName: string
+  size: number
+  mtime?: number
+  fps?: number
+  duration?: number
+  frameTiming?: FrameTiming
+}
+
 export interface Asset {
   id: string
   name: string
@@ -96,6 +127,12 @@ export interface Asset {
   cues?: AssetCue[]
   /** A screen recording's pointer: where it was and when it clicked (see shared/capture.ts). */
   cursor?: CursorTrack
+  /** What its frame timestamps say about its frame rate (videos, once checked). */
+  frameTiming?: FrameTiming
+  /** The asset plays a constant-frame-rate copy Lumen made; this is the file it was made from. */
+  conformedFrom?: OriginalMedia
+  /** The shot changes found in it (source seconds), kept so the timeline can show and snap to them. */
+  sceneCuts?: number[]
   /** The music's beat grid, once detected (source seconds). */
   beats?: { bpm: number; times: number[]; downbeats: number[]; confidence: number }
   /** A subject matte made from another media item (kept with the project, not listed in the Media panel). */

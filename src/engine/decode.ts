@@ -7,6 +7,8 @@
  * multi-gigabyte files never have to be loaded into memory.
  */
 import { ALL_FORMATS, AudioBufferSink, CanvasSink, EncodedPacketSink, Input, UrlSource, type EncodedPacket, type InputVideoTrack, type WrappedCanvas } from 'mediabunny'
+import { timingFromMetrics } from '@/editor/frame-rate'
+import type { FrameTiming } from '@/editor/types'
 
 export type MediaKind = 'video' | 'audio' | 'image'
 
@@ -17,6 +19,8 @@ export interface ProbeResult {
   height?: number
   fps?: number
   hasAudio: boolean
+  /** What the frame timestamps say about the frame rate: constant, frames missing, or variable (videos). */
+  frameTiming?: FrameTiming
   /** JPEG data URL of a representative frame (videos). */
   poster?: string
   videoCodec?: string | null
@@ -80,10 +84,8 @@ export async function probeMedia(url: string, mime: string): Promise<ProbeResult
         )
       }
       const duration = await input.computeDuration()
-      const fps = await video
-        .computeFrameRateMetrics()
-        .then((m) => m.bestGuessFrameRate)
-        .catch(() => undefined)
+      const metrics = await video.computeFrameRateMetrics().catch(() => undefined)
+      const fps = metrics?.bestGuessFrameRate
       const sink = new CanvasSink(video, { width: 480 })
       const posterAt = Math.min(1, duration / 3)
       const wrapped = await sink.getCanvas(posterAt).catch(() => null)
@@ -94,6 +96,7 @@ export async function probeMedia(url: string, mime: string): Promise<ProbeResult
         width: video.displayWidth,
         height: video.displayHeight,
         fps: fps ? Math.round(fps * 1000) / 1000 : undefined,
+        frameTiming: (metrics && timingFromMetrics(metrics)) ?? undefined,
         hasAudio: audioOk,
         poster,
         videoCodec: video.codec,

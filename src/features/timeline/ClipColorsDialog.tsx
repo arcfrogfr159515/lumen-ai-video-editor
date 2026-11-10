@@ -15,7 +15,7 @@ import { dispatch, useEditor } from '@/editor/store'
 import type { ClipColoring, ColorRule, ColorRuleField, LabelColor } from '@/editor/types'
 import { uid } from '@/lib/id'
 import { cn } from '@/lib/cn'
-import { useTimelineView } from './view-store'
+import { useTimelineView } from '@/editor/timeline-view'
 
 type Auto = NonNullable<ClipColoring['auto']> | 'kind'
 

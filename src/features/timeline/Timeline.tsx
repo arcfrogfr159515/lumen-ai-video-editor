@@ -31,7 +31,7 @@ import { TimelineToolbar } from './TimelineToolbar'
 import { TrackHeader } from './TrackHeader'
 import { TrackLane } from './TrackLane'
 import { usePointerController } from './usePointerController'
-import { useTimelineView } from './view-store'
+import { useTimelineView } from '@/editor/timeline-view'
 import { anchorNextZoom, useViewport } from './viewport'
 
 const SCISSORS_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(

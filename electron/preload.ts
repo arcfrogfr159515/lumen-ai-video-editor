@@ -123,6 +123,7 @@ const appApi: AppAPI = {
     saveMedia: (folder, fileName, data) => invoke(APP_IPC.saveMedia, folder, fileName, data),
     urlForPath: (path) => invoke(APP_IPC.mediaUrlForPath, path),
     beginProxy: (key) => invoke(APP_IPC.proxyBegin, key),
+    beginConform: (key) => invoke(APP_IPC.conformBegin, key),
   },
   renders: {
     write: (projectId, key, data) => invoke(APP_IPC.renderWrite, projectId, key, data),

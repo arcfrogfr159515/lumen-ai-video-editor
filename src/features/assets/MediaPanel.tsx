@@ -5,16 +5,19 @@ import { useShallow } from 'zustand/react/shallow'
 import { Button, IconButton } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/input'
 import { ContextContent, ContextItem, ContextRoot, ContextSeparator, ContextTrigger } from '@/components/ui/menu'
+import { describeTiming, isUneven } from '@/editor/frame-rate'
 import { placeAsset } from '@/editor/placement'
 import { monitorLevel, onMonitorChange, usePlayback } from '@/editor/playback'
 import { dispatch, useEditor } from '@/editor/store'
 import type { Asset, AssetKind } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { dnd } from '@/features/dnd'
+import { useTimelineView } from '@/editor/timeline-view'
 import { actions } from '@/features/shell/actions'
 import { cn } from '@/lib/cn'
 import { desktop, platform } from '@/lib/platform'
 import { formatSeconds } from '@/lib/time'
+import { useConformJobs } from '@/project/conform'
 import { relinkAsset } from '@/project/media-import'
 import { cancelProxy, canProxy, makeProxy, removeProxy, useProxyJobs } from '@/project/proxies'
 import { canTranscribe, ensureTranscripts, TRANSCRIBER_NAMES, transcribers } from '@/project/transcribe'
@@ -346,6 +349,11 @@ function AssetMenu({ asset, children }: { asset: Asset; children: ReactNode }) {
               Make a proxy for smooth playback
             </ContextItem>
           ))}
+        {asset.kind === 'video' && asset.source.type === 'file' && !missing(asset) && (
+          <ContextItem icon={<Gauge />} onSelect={() => useTimelineView.getState().set({ cleanup: 'rates' })}>
+            Frame rate: {asset.conformedFrom ? 'a constant-rate copy' : describeTiming(asset.frameTiming).toLowerCase()}…
+          </ContextItem>
+        )}
         <ContextItem icon={<Heart />} onSelect={() => dispatch('asset.update', { id: asset.id, patch: { favorite: !asset.favorite } })}>
           {asset.favorite ? 'Remove from favorites' : 'Add to favorites'}
         </ContextItem>
@@ -408,6 +416,31 @@ function ProxyBadge({ asset }: { asset: Asset }) {
     <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-accent-2 backdrop-blur-sm" title={`Plays a ${asset.proxy.height}p proxy in the preview; exports use the original`}>
       PROXY
     </span>
+  )
+}
+
+/** Frame-rate state on a card: VFR for footage whose frames arrive unevenly, CFR once it plays a constant-rate copy. */
+function RateBadge({ asset }: { asset: Asset }) {
+  const making = useConformJobs((s) => s.jobs[asset.id])
+  const open = () => useTimelineView.getState().set({ cleanup: 'rates' })
+  const place = cn('absolute left-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-semibold backdrop-blur-sm', asset.proxy || asset.alpha ? 'bottom-6' : 'bottom-1.5')
+  if (making !== undefined)
+    return (
+      <span className={cn(place, 'bg-black/65 text-white/85')} title="Making a constant-frame-rate copy">
+        CFR {Math.round(making * 100)}%
+      </span>
+    )
+  if (asset.conformedFrom)
+    return (
+      <button type="button" onClick={open} className={cn(place, 'bg-black/60 text-ok')} title={`Plays a constant-frame-rate copy (was: ${describeTiming(asset.conformedFrom.frameTiming).toLowerCase()})`}>
+        CFR
+      </button>
+    )
+  if (!isUneven(asset.frameTiming)) return null
+  return (
+    <button type="button" onClick={open} className={cn(place, 'bg-warn text-black')} title={`${describeTiming(asset.frameTiming)} — click to make a constant-frame-rate copy`}>
+      VFR
+    </button>
   )
 }
 
@@ -484,6 +517,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
           )}
           {asset.alpha && <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-white/80 backdrop-blur-sm">ALPHA</span>}
           <ProxyBadge asset={asset} />
+          <RateBadge asset={asset} />
           {asset.kind === 'image' && (
             <span className="absolute top-1.5 left-1.5 grid size-5 place-items-center rounded-md bg-black/50 text-white backdrop-blur-sm">
               <ImageIcon className="size-3" />

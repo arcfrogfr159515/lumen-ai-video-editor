@@ -17,8 +17,9 @@ import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
 import { useLayout } from './layout'
 import { CLIP_COLOR, dbToGain, useDrag } from './model'
+import { reuseOf } from './reuse-view'
 import { cssColor, onThumb, paintFilm, paintWave } from './strips'
-import { useTimelineView } from './view-store'
+import { useTimelineView } from '@/editor/timeline-view'
 import { OVERSCAN, QUANTUM, useViewport } from './viewport'
 
 const INSET = 3
@@ -87,6 +88,8 @@ export const ClipView = memo(function ClipView({ clipId, locked }: { clipId: str
       {showLabel && <ClipLabel clip={clip} asset={asset} nested={nested} />}
 
       {clip.kind === 'audio' && <Fades clip={clip} width={width} height={height} />}
+
+      <ReuseStripes clipId={clip.id} duration={clip.duration} />
 
       {selected && <KeyframeDiamonds clip={clip} duration={duration} width={width} />}
 
@@ -260,6 +263,25 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
       {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-[9px] font-bold text-accent-fg [text-shadow:none]">AI</span>}
       <NoteBadge clip={clip} />
     </div>
+  )
+}
+
+/** Footage that plays somewhere else on the timeline too: a hatched band along the bottom of the stretch that repeats. */
+function ReuseStripes({ clipId, duration }: { clipId: string; duration: number }) {
+  const show = useTimelineView((s) => s.showReuse)
+  const ranges = useEditor((s) => (show ? reuseOf(s.project).byClip.get(clipId) : undefined))
+  if (!ranges?.length) return null
+  return (
+    <>
+      {ranges.map(([a, b]) => (
+        <span
+          key={a}
+          title="This footage plays somewhere else on the timeline too"
+          className="absolute bottom-0 z-[9] h-[5px] bg-[repeating-linear-gradient(135deg,var(--color-warn)_0_3px,rgb(0_0_0/0.55)_3px_6px)] shadow-[0_-1px_0_rgb(0_0_0/0.5)]"
+          style={{ left: `${(a / duration) * 100}%`, width: `${((b - a) / duration) * 100}%` }}
+        />
+      ))}
+    </>
   )
 }
 

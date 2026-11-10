@@ -51,6 +51,11 @@ export function registerAppIpc(isTrustedUrl: (url: string) => boolean, getStartu
     if (!name) throw new Error('Bad proxy name')
     return beginFile(path.join(mediaRoot(), 'proxies', `${name}.mp4`))
   })
+  handle(APP_IPC.conformBegin, (_win, key: unknown) => {
+    const name = str(key).replace(/[^\w-]/g, '').slice(0, 120)
+    if (!name) throw new Error('Bad file name')
+    return beginFile(path.join(mediaRoot(), 'conformed', `${name}.mp4`))
+  })
   handle(APP_IPC.renderWrite, (_win, projectId: unknown, key: unknown, data: unknown) => writeRender(str(projectId), str(key), data as Uint8Array))
   handle(APP_IPC.renderList, (_win, projectId: unknown) => listRenders(str(projectId)))
   handle(APP_IPC.renderRemove, (_win, projectId: unknown, keys: unknown) =>

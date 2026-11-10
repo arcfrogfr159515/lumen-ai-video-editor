@@ -144,6 +144,7 @@ export const APP_IPC = {
   projectSnapshot: 'lumen:project:snapshot',
   projectCollect: 'lumen:project:collect',
   proxyBegin: 'lumen:files:proxy-begin',
+  conformBegin: 'lumen:files:conform-begin',
   renderWrite: 'lumen:renders:write',
   renderList: 'lumen:renders:list',
   renderRemove: 'lumen:renders:remove',
@@ -255,6 +256,8 @@ export interface AppAPI {
     urlForPath(path: string): Promise<MediaFileInfo | null>
     /** Opens a proxy file in Lumen's media folder for streamed writes (then export.write / finish / abort). */
     beginProxy(key: string): Promise<ExportHandle>
+    /** Opens a constant-frame-rate copy in Lumen's media folder for streamed writes (then export.write / finish / abort). */
+    beginConform(key: string): Promise<ExportHandle>
   }
   /** Render previews: rendered stretches of a project's timeline, kept on disk. */
   renders: {
