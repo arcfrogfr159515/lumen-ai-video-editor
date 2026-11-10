@@ -61,6 +61,7 @@ import {
   usesOf,
   wouldLoop,
 } from './sequences'
+import { addTake, clearTakes, neighbourTake, removeTake, switchTake, TakeError } from './takes'
 import { averageSpeed, consumed, localForConsumed, MAX_SPEED, MIN_SPEED } from './timing'
 import type { AnimatableProp, BusMix, Clip, Marker, Project, Sequence, Track } from './types'
 
@@ -282,6 +283,21 @@ export type ClipPatch = z.infer<typeof clipPatch>
 
 const keyframe = z.object({ frame, value: z.number(), easing })
 
+const clipTake = z.object({
+  id,
+  name: z.string(),
+  kind: z.enum(['video', 'image', 'audio']),
+  assetId: id.optional(),
+  sequenceId: id.optional(),
+  angle: id.optional(),
+  inPoint: z.number().min(0),
+  speed: z.number().min(MIN_SPEED).max(MAX_SPEED),
+  reverse: z.boolean(),
+  ramp: z.array(keyframe).optional(),
+  matte: subjectMatte.optional(),
+  stabilize: stabilization.optional(),
+})
+
 /** A whole clip as get_clip or a copy holds it — what paste and paste-attributes take. */
 export const clipSnapshot = z.object({
   id,
@@ -317,6 +333,9 @@ export const clipSnapshot = z.object({
   speaker: z.string().optional(),
   note: z.string().optional(),
   tasks: z.array(clipTask).optional(),
+  takes: z.array(clipTake).optional(),
+  takeId: id.optional(),
+  takeSlot: length.optional(),
 })
 
 export type ClipSnapshot = z.infer<typeof clipSnapshot>
@@ -453,6 +472,16 @@ function assertCanInsert(p: Project, trackId: string) {
 }
 
 const NO_CROP = { left: 0, right: 0, top: 0, bottom: 0, radius: 0 }
+
+/** Take operations report problems as TakeErrors; commands turn them into CommandErrors. */
+function takes<T>(fn: () => T): T {
+  try {
+    return fn()
+  } catch (err) {
+    if (err instanceof TakeError) throw new CommandError(err.message)
+    throw err
+  }
+}
 
 /** Timeline operations report problems as TimelineErrors; commands turn them into CommandErrors. */
 function timeline<T>(fn: () => T): T {
@@ -1579,6 +1608,14 @@ export const commands = {
       // Clips cut out with a removed matte show whole again.
       for (const c of Object.values(p.clips)) if (c.matte && ids.has(c.matte.assetId)) delete c.matte
       for (const seq of Object.values(p.sequences ?? {})) for (const c of Object.values(seq.clips)) if (c.matte && ids.has(c.matte.assetId)) delete c.matte
+      // Alternate takes of removed media go; a clip left with one take is a plain clip again.
+      for (const clips of [p.clips, ...Object.values(p.sequences ?? {}).map((seq) => seq.clips)]) {
+        for (const c of Object.values(clips)) {
+          if (!c.takes?.some((t) => t.assetId && ids.has(t.assetId))) continue
+          c.takes = c.takes.filter((t) => !(t.assetId && ids.has(t.assetId)))
+          if (c.takes.length <= 1) clearTakes(c)
+        }
+      }
       for (const assetId of ids) delete p.assets[assetId]
     },
   }),
@@ -1747,6 +1784,49 @@ export const commands = {
   }),
 
   // Project
+  // Alternate takes
+  'take.add': command({
+    description:
+      'Add a media item as an alternate take of a clip: another candidate for the same place (another take of the line, another piece of B-roll). The clip keeps its start, length, grade, effects and sound settings; only what plays there changes when takes are switched. The clip’s own footage becomes its first take. inPoint is where in the media the take starts (project frames). show (default true) switches to the new take straight away. Returns { takeId, shortenedBy, slidBack }.',
+    input: z.object({ clipId: id, assetId: id, inPoint: frame.optional(), name: z.string().min(1).max(120).optional(), speed: z.number().min(MIN_SPEED).max(MAX_SPEED).optional(), show: z.boolean().default(true) }),
+    title: () => 'Add take',
+    run(p, i) {
+      const clip = getClip(p, i.clipId)
+      assertEditable(p, clip)
+      return takes(() => {
+        const takeId = addTake(p, clip, i)
+        return i.show ? switchTake(p, clip, takeId) : { takeId, shortenedBy: 0, slidBack: 0 }
+      })
+    },
+  }),
+
+  'take.switch': command({
+    description:
+      'Show another take of a clip in its place. Give takeId (get_clip → takes), or step: 1 for the next take, -1 for the one before (wrapping round). The clip keeps its start and length when the take has the footage for it: a take that starts too near the end of its media starts earlier (slidBack frames), and one that is too short altogether makes the clip shorter (shortenedBy frames) until a longer take is shown again. Returns { takeId, shortenedBy, slidBack }.',
+    input: z.object({ clipId: id, takeId: id.optional(), step: z.number().int().min(-64).max(64).optional() }).refine((i) => i.takeId !== undefined || (i.step !== undefined && i.step !== 0), 'give takeId or a step'),
+    title: () => 'Switch take',
+    run(p, i) {
+      const clip = getClip(p, i.clipId)
+      assertEditable(p, clip)
+      if (!clip.takes?.length) throw new CommandError(`“${clip.name}” has no alternate takes — add one with take_add`)
+      const target = i.takeId ?? neighbourTake(clip, i.step!)?.id
+      if (!target) throw new CommandError(`“${clip.name}” has only one take`)
+      return takes(() => switchTake(p, clip, target))
+    },
+  }),
+
+  'take.remove': command({
+    description: 'Take a candidate off a clip. Removing the take that is showing shows the one before it first. With all: true, every candidate but the one showing goes and the clip is a plain clip again.',
+    input: z.object({ clipId: id, takeId: id.optional(), all: z.boolean().default(false) }).refine((i) => i.all || i.takeId !== undefined, 'give takeId, or all: true'),
+    title: (i) => (i.all ? 'Keep only this take' : 'Remove take'),
+    run(p, i) {
+      const clip = getClip(p, i.clipId)
+      assertEditable(p, clip)
+      if (i.all) return void clearTakes(clip)
+      takes(() => removeTake(p, clip, i.takeId!))
+    },
+  }),
+
   // Timeline tools
   'timeline.closeGaps': command({
     description:

@@ -551,6 +551,37 @@ export interface Clip {
   note?: string
   /** Things still to do to the clip. */
   tasks?: ClipTask[]
+  /** Alternate takes: the footage that can play in this place, the one showing included. */
+  takes?: ClipTake[]
+  /** The take that is showing. */
+  takeId?: string
+  /** How long this place was before a take too short to fill it was shown — restored when a longer one comes back. */
+  takeSlot?: Frame
+}
+
+/**
+ * A candidate for a clip's place: footage that can be swapped in without moving
+ * anything else. Everything done to the clip (grade, effects, position, sound
+ * settings) stays with the place; a take only says what plays there.
+ */
+export interface ClipTake {
+  id: string
+  name: string
+  kind: 'video' | 'image' | 'audio'
+  assetId?: string
+  /** A nested timeline instead of media. */
+  sequenceId?: string
+  /** For a multicam timeline, the camera shown. */
+  angle?: string
+  /** Where in the footage the take starts, in project frames at 1× speed. */
+  inPoint: Frame
+  speed: number
+  reverse: boolean
+  /** A speed ramp, if the take has one. */
+  ramp?: Keyframe[]
+  /** What was measured on this footage, so it comes back with it. */
+  matte?: SubjectMatte
+  stabilize?: Stabilization
 }
 
 /** The colours a clip can be labelled with (see editor/clip-colors.ts for what each looks like). */

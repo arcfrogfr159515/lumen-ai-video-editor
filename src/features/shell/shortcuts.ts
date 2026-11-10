@@ -1,6 +1,7 @@
 import { openRecorder } from '@/capture/recorder'
 import { playback } from '@/editor/playback'
 import { useUI } from '@/editor/ui-store'
+import { timelineActions } from '@/features/timeline/timeline-actions'
 import { actions } from './actions'
 
 export interface Shortcut {
@@ -64,6 +65,8 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'ungroup', label: 'Ungroup clips', group: 'Editing', keys: ['mod+shift+g'], run: actions.ungroup },
   { id: 'nest', label: 'Nest selection into a timeline', group: 'Editing', keys: ['mod+alt+n'], run: actions.nestSelection },
   { id: 'open-nested', label: 'Open the nested timeline', group: 'Editing', keys: ['mod+alt+enter'], run: () => actions.openNested() },
+  { id: 'next-take', label: 'Show the next take', group: 'Editing', keys: ['alt+t'], run: () => timelineActions.switchTake(1) },
+  { id: 'prev-take', label: 'Show the previous take', group: 'Editing', keys: ['alt+shift+t'], run: () => timelineActions.switchTake(-1) },
 
   // Multicam
   ...Array.from({ length: 9 }, (_, i): Shortcut => ({ id: `angle-${i + 1}`, label: `Cut to camera ${i + 1}`, group: 'Multicam', keys: [String(i + 1)], run: () => actions.cutToAngle(i + 1) })),

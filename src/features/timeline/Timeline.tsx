@@ -10,6 +10,7 @@ import { LABEL_COLORS } from '@/editor/clip-colors'
 import { MARKER_KINDS } from '@/editor/markers'
 import { applyEffect, applyLook, applyTransition, assetFrames, placeAsset, placeSequence, placeTitle, transitionSpot } from '@/editor/placement'
 import { angleTracks } from '@/editor/sequences'
+import { canHaveTakes, takeIndex } from '@/editor/takes'
 import { openTimeline } from '@/editor/timeline-nav'
 import { onPlayhead, usePlayback } from '@/editor/playback'
 import { SPEED_RAMPS, TITLE_PRESETS } from '@/editor/presets'
@@ -28,6 +29,7 @@ import { computeRows, LayoutContext, type TimelineLayout } from './layout'
 import { Minimap } from './Minimap'
 import { ADD_ROW_H, HEADER_W, RULER_H, useDrag, type ClipPreview, type DropGhost } from './model'
 import { Ruler, TimecodeCell } from './Ruler'
+import { timelineActions } from './timeline-actions'
 import { TimelineToolbar } from './TimelineToolbar'
 import { TrackHeader } from './TrackHeader'
 import { TrackLane } from './TrackLane'
@@ -253,8 +255,27 @@ export function Timeline() {
       useDrag.setState({ dropTargetClip: ok ? clipId! : null, dropGhost: null })
       return
     }
+    // Alt over a clip: the media becomes a take of that clip instead of a clip of its own.
+    if (payload?.type === 'asset' && e.altKey) {
+      const target = takeTarget(e, payload.assetIds ?? [payload.assetId])
+      if (target) {
+        e.dataTransfer.dropEffect = 'link'
+        useDrag.setState({ dropTargetClip: target, dropGhost: null, previews: {} })
+        return
+      }
+    }
     const ghost = ghostFor(e)
     useDrag.setState({ dropGhost: ghost, dropTargetClip: null, previews: makeRoom(ghost, hitTest(e).frame) })
+  }
+
+  /** The clip under the pointer, if the dragged media could be takes of it. */
+  const takeTarget = (e: DragEvent, assetIds: string[]) => {
+    const { clipId } = hitTest(e)
+    const project = getProject()
+    const clip = clipId ? project.clips[clipId] : undefined
+    const track = clip && project.tracks.find((t) => t.id === clip.trackId)
+    if (!clip || !track || track.locked || !canHaveTakes(clip)) return null
+    return assetIds.some((id) => project.assets[id] && trackAccepts(track, project.assets[id].kind)) ? clip.id : null
   }
 
   const clearDrop = () => useDrag.setState({ dropGhost: null, dropTargetClip: null, dropTransition: null, previews: {} })
@@ -281,6 +302,11 @@ export function Timeline() {
     switch (payload.type) {
       case 'asset': {
         const ids = payload.assetIds ?? [payload.assetId]
+        const takeOn = e.altKey ? takeTarget(e, ids) : null
+        if (takeOn) {
+          timelineActions.addTakes(takeOn, ids)
+          break
+        }
         let at = ghost?.start ?? frame
         const placed: string[] = []
         useEditor.getState().transaction(ids.length > 1 ? `Add ${ids.length} clips` : 'Add clip', 'user', () => {
@@ -553,6 +579,29 @@ function TimelineMenu({ clipId, frame }: { clipId: string | null; frame: number 
         <ContextItem shortcut="x" onSelect={actions.markSelection}>
           Mark in and out around clip
         </ContextItem>
+        {canHaveTakes(clip) && (
+          <ContextSub label={clip.takes && clip.takes.length > 1 ? `Takes (${takeIndex(clip) + 1} of ${clip.takes.length})` : 'Takes'}>
+            {(clip.takes ?? []).map((t, i) => (
+              <ContextItem key={t.id} checked={t.id === clip.takeId} onSelect={() => dispatch('take.switch', { clipId: clip.id, takeId: t.id })}>
+                {i + 1} · {t.name}
+              </ContextItem>
+            ))}
+            {clip.takes && clip.takes.length > 1 && (
+              <>
+                <ContextSeparator />
+                <ContextItem shortcut="alt+t" onSelect={() => timelineActions.switchTake(1)}>
+                  Next take
+                </ContextItem>
+                <ContextItem shortcut="alt+shift+t" onSelect={() => timelineActions.switchTake(-1)}>
+                  Previous take
+                </ContextItem>
+                <ContextItem onSelect={() => dispatch('take.remove', { clipId: clip.id, all: true })}>Keep only this one</ContextItem>
+                <ContextSeparator />
+              </>
+            )}
+            <ContextItem onSelect={() => timelineActions.addTakes(clip.id)}>Add the selected media as takes</ContextItem>
+          </ContextSub>
+        )}
         <ContextSub label="Label">
           {LABEL_COLORS.map((c) => (
             <ContextItem key={c.id} checked={clip.label === c.id} icon={<span className="size-3 rounded-full" style={{ background: c.css }} />} onSelect={() => dispatch('clip.update', { ids: selection(), patch: { label: c.id } }, { label: 'Label clip' })}>

@@ -335,6 +335,7 @@ export function splitClip(p: Project, clip: Clip, frame: Frame): Clip | null {
   right.animation.in = { ...right.animation.in, preset: 'none' }
   right.audio.fadeIn = 0
   shiftFollow(right, -leftDuration)
+  splitTakes(clip, right, leftDuration)
 
   // Keyframes: both halves keep an exact keyframe at the cut so motion is continuous.
   right.keyframes = {}
@@ -354,6 +355,32 @@ export function splitClip(p: Project, clip: Clip, frame: Frame): Clip | null {
   clip.audio.fadeOut = 0
   p.clips[right.id] = right
   return right
+}
+
+/**
+ * Alternate takes are cut where the clip is: on the right half each candidate
+ * starts as far into its footage as the cut is into the clip, so switching
+ * takes there shows the same moment it would have shown before the cut.
+ */
+function splitTakes(left: Clip, right: Clip, leftDuration: Frame) {
+  if (!right.takes?.length) return
+  // The showing take is the clip's own footage, already cut above; a place shortened by a short take stays so.
+  delete left.takeSlot
+  delete right.takeSlot
+  const ids = new Map(right.takes.map((t) => [t.id, uid('take')]))
+  right.takes = right.takes.map((t) => {
+    const moved = { ...t, id: ids.get(t.id)! }
+    if (t.id === left.takeId || t.ramp) return moved
+    const used = Math.round(leftDuration * t.speed)
+    // Played backwards, the left half shows the top of the footage: that one moves on, the right half stays.
+    if (t.reverse) return moved
+    return { ...moved, inPoint: t.inPoint + used }
+  })
+  if (right.takeId) right.takeId = ids.get(right.takeId)
+  if (left.takes) {
+    const rightLength = right.duration
+    left.takes = left.takes.map((t) => (t.id !== left.takeId && t.reverse && !t.ramp ? { ...t, inPoint: t.inPoint + Math.round(rightLength * t.speed) } : t))
+  }
 }
 
 /**

@@ -1,4 +1,4 @@
-import { AudioLines, Blend, Crosshair, Film, Gauge, Image as ImageIcon, Layers, Link2, Move, Snowflake, Sparkles, StickyNote, Type, Video } from 'lucide-react'
+import { AudioLines, Blend, Crosshair, Film, Gauge, Image as ImageIcon, Layers, Layers2, Link2, Move, Snowflake, Sparkles, StickyNote, Type, Video } from 'lucide-react'
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { clipBeats } from '@/editor/beat-grid'
 import { clipTint } from '@/editor/clip-colors'
@@ -8,6 +8,7 @@ import { hasNotes, openTasks } from '@/editor/notes'
 import { allKeyframeFrames } from '@/editor/keyframes'
 import { angleTracks } from '@/editor/sequences'
 import { useEditor } from '@/editor/store'
+import { takeIndex } from '@/editor/takes'
 import { openTimeline } from '@/editor/timeline-nav'
 import { isRamped, type Timed } from '@/editor/timing'
 import type { Asset, Clip, Sequence } from '@/editor/types'
@@ -264,6 +265,12 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
         </span>
       )}
       {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-[9px] font-bold text-accent-fg [text-shadow:none]">AI</span>}
+      {clip.takes && clip.takes.length > 1 && (
+        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold tabular" aria-label={`Take ${takeIndex(clip) + 1} of ${clip.takes.length}`}>
+          <Layers2 className="size-2.5" />
+          {takeIndex(clip) + 1}/{clip.takes.length}
+        </span>
+      )}
       <NoteBadge clip={clip} />
     </div>
   )

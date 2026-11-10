@@ -24,6 +24,7 @@ import { CropSection } from './CropSection'
 import { MaskSection } from './MaskSection'
 import { MotionSection, NestSection } from './MotionSections'
 import { NotesSection } from './NotesSection'
+import { TakesSection } from './TakesSection'
 import { AnimateSection, AudioSection, ColorSections, CompositingSection, EffectsSection, Space3DSection, SpeedSection, TextSection, TransformSection } from './sections'
 
 export function Inspector() {
@@ -142,6 +143,7 @@ function ClipInspector({ clip }: { clip: Clip }) {
       {tab === 'audio' && <AudioSection clip={clip} fps={fps} />}
       {tab === 'speed' && <SpeedSection clips={[clip]} fps={fps} />}
       {tab === 'animate' && <AnimateSection clip={clip} fps={fps} />}
+      <TakesSection clip={clip} />
       <NotesSection clips={[clip]} />
     </div>
   )
