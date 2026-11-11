@@ -3,11 +3,14 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import { ErrorBoundary } from './components/ui/error-boundary'
 import { language } from './lib/i18n'
+import * as theme from './lib/theme'
 import { desktop } from './lib/platform'
 import { saveProjectAs } from './project/session'
 import { installDecoderRepair } from './engine/codec-repair'
 import './styles/index.css'
 
+// Before anything is drawn.
+theme.applyTheme()
 installDecoderRepair()
 // The system's own dialogs (Open, Save, "Save changes?") are shown by the main process: in this window's language.
 desktop?.system.setLanguage?.(language)
@@ -57,6 +60,7 @@ if (import.meta.env.DEV || window.lumen?.testMode) {
   ]).then(([store, ui, pb, copilot, ai, integrations, session, media, exporter, smart, transcribe, audio, tools, engineMedia, proxies, sequences, nav, analysis, queue, subtitles, compositor, mediabunny, previewStage, renders, previewRes, stills, recorder, timelineView, macros, trim]) => {
     Object.assign(window, {
       __lumen: {
+        theme,
         editor: store.useEditor,
         dispatch: store.dispatch,
         ui: ui.useUI,

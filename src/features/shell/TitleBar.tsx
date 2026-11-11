@@ -26,6 +26,7 @@ import {
   Undo2,
   Upload,
   Languages,
+  SunMoon,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { openRecorder, stopRecording, useRecorder } from '@/capture/recorder'
@@ -43,7 +44,8 @@ import { cn } from '@/lib/cn'
 import { desktop, platform } from '@/lib/platform'
 import { checkForUpdates, installUpdate, useUpdates } from '@/lib/updates'
 import { collectProject, openProject, refreshRecent, useDirty, useSession } from '@/project/session'
-import { LANGUAGES, languageChoice } from '@/lib/i18n'
+import { LANGUAGES, languageChoice, ttc } from '@/lib/i18n'
+import { chooseTheme, themeChoice } from '@/lib/theme'
 import { switchLanguage } from './language'
 import { pickSubtitles, saveSubtitles } from '@/project/subtitle-files'
 import { actions } from './actions'
@@ -239,6 +241,19 @@ function AppMenu() {
         <MenuItem icon={<Cpu />} disabled={!desktop} onSelect={() => useUI.getState().setGraphicsOpen(true)}>
           {tt('Graphics and encoding…')}
         </MenuItem>
+        <MenuSub icon={<SunMoon />} label={tt('Appearance')}>
+          {(
+            [
+              ['dark', ttc('theme', 'Dark')],
+              ['light', ttc('theme', 'Light')],
+              ['system', tt('Same as this computer')],
+            ] as const
+          ).map(([id, label]) => (
+            <MenuItem key={id} checked={themeChoice() === id} onSelect={() => chooseTheme(id)}>
+              {label}
+            </MenuItem>
+          ))}
+        </MenuSub>
         {/* In both languages, so it can be found by someone who reads neither of what is on screen. */}
         <MenuSub icon={<Languages />} label="Language · 语言">
           <MenuItem checked={languageChoice() === 'system'} onSelect={() => switchLanguage('system')}>

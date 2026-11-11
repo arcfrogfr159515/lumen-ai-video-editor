@@ -184,6 +184,7 @@ export const APP_IPC = {
   graphicsSet: 'lumen:app:graphics-set',
   relaunch: 'lumen:app:relaunch',
   language: 'lumen:app:language',
+  theme: 'lumen:app:theme',
 
   /** main → renderer */
   openRequest: 'lumen:project:open-request',
@@ -359,6 +360,8 @@ export interface AppAPI {
     relaunch(): void
     /** Tells the main process which language the window speaks, for the system dialogs it shows. */
     setLanguage(language: 'en' | 'zh-CN'): void
+    /** Tells the main process which theme the window is in: its caption buttons and background follow. */
+    setTheme(theme: 'dark' | 'light'): void
   }
   updates: {
     state(): Promise<UpdateState>

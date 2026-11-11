@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url'
 import { app, BrowserWindow, nativeTheme, protocol, shell } from 'electron'
 import { APP_IPC } from '../shared/app'
 import { registerAppIpc } from './app-ipc'
+import { theme, windowLook } from './appearance'
 import { initCapture, stopCapture } from './capture'
 import { abortAllExports } from './export'
 import { registerMediaProtocol } from './files'
@@ -22,7 +23,7 @@ const indexHtml = path.join(import.meta.dirname, '../dist/index.html')
 
 // Must match --color-canvas in src/styles/index.css so there is no flash on open
 // and the native window controls blend into the custom title bar.
-const CANVAS = '#080807'
+
 const TITLEBAR_HEIGHT = 44
 
 // Imported, rendered and downloaded media is served as lumen-media://…
@@ -60,11 +61,11 @@ function createWindow() {
     minHeight: 700,
     show: false,
     title: 'Lumen',
-    backgroundColor: CANVAS,
+    backgroundColor: windowLook().canvas,
     titleBarStyle: 'hidden',
     ...(isMac
       ? { trafficLightPosition: { x: 16, y: 15 } }
-      : { titleBarOverlay: { color: CANVAS, symbolColor: '#a2a39b', height: TITLEBAR_HEIGHT } }),
+      : { titleBarOverlay: { color: windowLook().canvas, symbolColor: windowLook().symbol, height: TITLEBAR_HEIGHT } }),
     webPreferences: {
       preload: path.join(import.meta.dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -143,7 +144,7 @@ app.on('open-file', (e, file) => {
   openInWindow(file)
 })
 
-nativeTheme.themeSource = 'dark'
+nativeTheme.themeSource = theme()
 app.setAppUserModelId('app.lumen.editor')
 
 void app.whenReady().then(() => {

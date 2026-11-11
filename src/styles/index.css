@@ -168,6 +168,51 @@
   }
 }
 
+/* ───────────────────────────── Light theme ───────────────────────────── */
+
+/* The same olive-tinted greys, turned over: paper where there was graphite, and ink that is nearly black. Everything
+   drawn in ink — lines, washes, bright controls — follows by itself. The lime stays for what is filled with it (dark
+   text sits on it either way); where the accent is text or a thin line it is a deep olive, which can be read on
+   paper. Every text colour reads at 4.5:1 or better on the surfaces text sits on. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-ink: #16170f;
+  --color-ink-fg: #ffffff;
+
+  --color-canvas: #e7e7e1;
+  --color-surface: #f6f6f2;
+  --color-surface-2: #ffffff;
+  --color-surface-3: #efefea;
+  --color-surface-4: #e4e4dd;
+  --color-surface-5: #d8d8d0;
+
+  --color-fg: #191a14;
+  --color-fg-2: #3f4038;
+  --color-fg-3: #55564d;
+  --color-fg-4: #65665d;
+  --color-fg-disabled: #a5a69d;
+
+  --color-accent: #c6dd00;
+  --color-accent-2: #566200;
+  --color-accent-3: #6d7b00;
+  --color-ai-1: #7f9000;
+  --color-ai-2: #0a8f5a;
+  --color-ai-3: #087f9c;
+
+  --color-danger: #b71c1c;
+  --color-warn: #8a5a00;
+  --color-ok: #0a6e46;
+  --color-snap: #086f89;
+
+  /* On paper a shadow is seen, so it is lighter; and the hairline is what holds a panel's edge. */
+  --shadow-panel: 0 0 0 1px rgb(from var(--color-ink) r g b / 0.08), 0 10px 28px -18px rgb(from var(--color-shade) r g b / 0.3);
+  --shadow-pop:
+    0 0 0 1px rgb(from var(--color-ink) r g b / 0.1), 0 18px 44px -14px rgb(from var(--color-shade) r g b / 0.3),
+    0 4px 12px -4px rgb(from var(--color-shade) r g b / 0.14);
+  --shadow-control: 0 0 0 1px rgb(from var(--color-ink) r g b / 0.12);
+}
+
 /* ───────────────────────────── Base ───────────────────────────── */
 
 @layer base {
