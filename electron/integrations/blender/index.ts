@@ -139,29 +139,45 @@ export async function renderBlender(req: BlenderRenderRequest): Promise<Job> {
   const job = createJob('blender', label)
   const out = jobDir('blender', job.id)
   const work = workDir('blender', job.id)
-  const transparent = req.transparent ?? req.template !== 'shapes'
-  const spec = {
-    template: req.template,
-    params: req.params,
-    script: req.script,
-    width: req.width,
-    height: req.height,
-    fps: req.fps,
-    duration: req.duration,
-    quality: req.quality ?? 'standard',
-    transparent,
-    out,
-    fonts: stageFonts(work),
+  /** The script and its fonts are never needed again; the frames only when the render came through. */
+  const tidy = (keepFrames: boolean) => {
+    fs.rmSync(work, { recursive: true, force: true })
+    if (!keepFrames) fs.rmSync(out, { recursive: true, force: true })
   }
-  const runnerPath = path.join(work, 'lumen_runner.py')
-  const specPath = path.join(work, 'spec.json')
-  fs.writeFileSync(runnerPath, runnerSource)
-  fs.writeFileSync(specPath, JSON.stringify(spec))
-
-  const child = spawn(info.path, ['-b', '--factory-startup', '-noaudio', '--python-exit-code', '1', '-P', runnerPath, '--', specPath], {
-    windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  })
+  const transparent = req.transparent ?? req.template !== 'shapes'
+  const blender = info.path
+  const start = () => {
+    const spec = {
+      template: req.template,
+      params: req.params,
+      script: req.script,
+      width: req.width,
+      height: req.height,
+      fps: req.fps,
+      duration: req.duration,
+      quality: req.quality ?? 'standard',
+      transparent,
+      out,
+      fonts: stageFonts(work),
+    }
+    const runnerPath = path.join(work, 'lumen_runner.py')
+    const specPath = path.join(work, 'spec.json')
+    fs.writeFileSync(runnerPath, runnerSource)
+    fs.writeFileSync(specPath, JSON.stringify(spec))
+    return spawn(blender, ['-b', '--factory-startup', '-noaudio', '--python-exit-code', '1', '-P', runnerPath, '--', specPath], {
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+  }
+  let child: ReturnType<typeof start>
+  try {
+    child = start()
+  } catch (err) {
+    // The job is already in the list: it fails there too, rather than staying "running" for good.
+    failJob(job.id, err)
+    tidy(false)
+    throw err
+  }
   setCanceller(job.id, () => child.kill())
   updateJob(job.id, { message: 'Starting Blender…' })
 
@@ -186,16 +202,17 @@ export async function renderBlender(req: BlenderRenderRequest): Promise<Job> {
     if (log.length > 60) log.shift()
   })
 
-  child.on('error', (err) => failJob(job.id, err))
+  child.on('error', (err) => {
+    failJob(job.id, err)
+    tidy(false)
+  })
   child.on('close', (code) => {
-    if (isCancelled(job.id)) {
-      fs.rmSync(out, { recursive: true, force: true })
-      return
-    }
+    if (isCancelled(job.id)) return tidy(false)
     const frames = fs.existsSync(out) ? fs.readdirSync(out).filter((f) => /^frame_\d+\.png$/.test(f)).sort() : []
     if (code !== 0 || !frames.length) {
       failJob(job.id, error ?? (log.filter((l) => /error|exception/i.test(l)).slice(-3).join('\n') || `Blender exited with code ${code}`))
-      return
+      // Half a render is of no use in the library, where nothing shows it and nothing would ever remove it.
+      return tidy(false)
     }
     const base = `${mediaUrl(out)}/`
     const asset: GeneratedAsset = {
@@ -219,7 +236,7 @@ export async function renderBlender(req: BlenderRenderRequest): Promise<Job> {
       provenance: { integration: 'blender', tool: req.template, prompt: req.prompt, params: req.script ? { ...req.params, script: req.script } : req.params },
     }
     finishJob(job.id, { assets: [asset], message: `${frames.length} frames` })
-    fs.rmSync(work, { recursive: true, force: true })
+    tidy(true)
   })
   return job
 }
