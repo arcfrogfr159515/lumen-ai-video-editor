@@ -351,7 +351,52 @@ const BUILDERS: Partial<Record<TransitionKind, (pw: number, ph: number) => Trans
   spin: buildSpin,
 }
 
+// One scene per transition kind and project size. A resolution change over a long
+// session would otherwise leave a full textured scene per kind behind forever, so
+// keep the most-recently-used few (insertion order is LRU order) and dispose the
+// rest. Normal use touches ~10 kinds across one or two sizes, well under the cap.
+const SCENE_CACHE = 24
 const scenes = new Map<string, TransitionScene>()
+
+/** Frees the GPU resources a transition scene owns. The two shot textures are shared (owned by stage.ts), so they are kept. */
+function disposeTransitionScene(ts: TransitionScene) {
+  const shared = new Set<THREE.Texture>()
+  for (const m of [...ts.a, ...ts.b]) if (m.map) shared.add(m.map)
+  ts.scene.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh) return
+    mesh.geometry.dispose()
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    for (const m of mats) {
+      const map = (m as THREE.MeshBasicMaterial).map
+      if (map && !shared.has(map)) map.dispose()
+      m.dispose()
+    }
+  })
+}
+
+function transitionScene(key: string, build: (pw: number, ph: number) => TransitionScene, pw: number, ph: number): TransitionScene {
+  const existing = scenes.get(key)
+  if (existing) {
+    scenes.delete(key)
+    scenes.set(key, existing)
+    return existing
+  }
+  const ts = build(pw, ph)
+  scenes.set(key, ts)
+  while (scenes.size > SCENE_CACHE) {
+    const oldest = scenes.keys().next().value as string
+    disposeTransitionScene(scenes.get(oldest)!)
+    scenes.delete(oldest)
+  }
+  return ts
+}
+
+/** Releases every cached transition scene (e.g. when tearing the engine down). */
+export function disposeTransitionScenes() {
+  for (const ts of scenes.values()) disposeTransitionScene(ts)
+  scenes.clear()
+}
 
 /**
  * Renders a 3D transition frame on `stage` (which must already be sized) and
@@ -361,8 +406,7 @@ export function renderTransition3D(stage: Stage, kind: TransitionKind, p: number
   const build = BUILDERS[kind]
   if (!build) return null
   const key = `${kind}:${stage.pw}x${stage.ph}`
-  let ts = scenes.get(key)
-  if (!ts) scenes.set(key, (ts = build(stage.pw, stage.ph)))
+  const ts = transitionScene(key, build, stage.pw, stage.ph)
   const ta = canvasTexture(from, stage.renderer)
   const tb = canvasTexture(to, stage.renderer)
   for (const m of ts.a) m.map = ta

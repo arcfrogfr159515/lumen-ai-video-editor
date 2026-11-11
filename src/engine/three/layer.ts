@@ -44,7 +44,46 @@ interface LayerScene {
   waveY: Float32Array
 }
 
+// One scene per project size. Only a handful of sizes are ever live at once (the
+// editor preview, exports, 1080p thumbnails), but a long session that changes
+// resolution would otherwise pile up abandoned scenes — each a full set of GPU
+// geometries, materials and textures — forever. Keep the most-recently-used few
+// and dispose the rest. Insertion order of a Map is its LRU order here.
+const SCENE_CACHE = 8
 const scenes = new Map<string, LayerScene>()
+
+/** Frees every GPU resource this scene owns. The clip texture (`material.map`) is shared and owned by stage.ts, so it is left alone. */
+function disposeLayerScene(s: LayerScene) {
+  for (const mesh of [s.flat, s.curved, s.waving, s.cube, s.reflection, s.shadow]) mesh.geometry.dispose()
+  s.roundMask.dispose()
+  s.cubeTex?.dispose()
+  s.reflectionMaterial.alphaMap?.dispose()
+  s.shadowMaterial.alphaMap?.dispose()
+  for (const m of [s.material, s.cubeMaterial, s.reflectionMaterial, s.shadowMaterial]) m.dispose()
+}
+
+function layerScene(key: string, pw: number, ph: number): LayerScene {
+  const existing = scenes.get(key)
+  if (existing) {
+    scenes.delete(key)
+    scenes.set(key, existing)
+    return existing
+  }
+  const s = build(pw, ph)
+  scenes.set(key, s)
+  while (scenes.size > SCENE_CACHE) {
+    const oldest = scenes.keys().next().value as string
+    disposeLayerScene(scenes.get(oldest)!)
+    scenes.delete(oldest)
+  }
+  return s
+}
+
+/** Releases every cached 3D-layer scene (e.g. when tearing the engine down). */
+export function disposeLayer3DScenes() {
+  for (const s of scenes.values()) disposeLayerScene(s)
+  scenes.clear()
+}
 
 function gradientTexture(draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, w = 256, h = 256) {
   const c = document.createElement('canvas')
@@ -147,8 +186,7 @@ function build(pw: number, ph: number): LayerScene {
 export function renderLayer3D(stage: Stage, layer: Layer3D) {
   const { pw, ph } = stage
   const key = `${pw}x${ph}`
-  let s = scenes.get(key)
-  if (!s) scenes.set(key, (s = build(pw, ph)))
+  const s = layerScene(key, pw, ph)
 
   const amount = (kind: Effect['kind']) => (layer.effects.find((e) => e.kind === kind && e.enabled)?.amount ?? 0) / 100
   const tilt = amount('tilt3d')
