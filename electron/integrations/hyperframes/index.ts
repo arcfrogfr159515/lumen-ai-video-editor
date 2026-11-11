@@ -100,11 +100,11 @@ window.__lumenSeek = async (t) => {
   return /<\/body>/i.test(out) ? out.replace(/<\/body>/i, `${inject}\n</body>`) : out + inject
 }
 
-async function waitFor(win: BrowserWindow, expr: string, timeoutMs: number) {
+async function waitFor(win: BrowserWindow, expr: string, timeoutMs: number, ask: <T>(asked: Promise<T>) => Promise<T> = (asked) => asked) {
   const start = Date.now()
   while (Date.now() - start < timeoutMs) {
     if (win.isDestroyed()) throw new Error('Renderer closed')
-    if (await win.webContents.executeJavaScript(`Boolean(${expr})`)) return
+    if (await ask(win.webContents.executeJavaScript(`Boolean(${expr})`))) return
     await new Promise((r) => setTimeout(r, 50))
   }
   throw new Error('The composition never became ready — check that it registers window.__timelines["<composition id>"].')
@@ -165,11 +165,19 @@ async function render(jobId: string, req: MotionRenderRequest, label: string, ou
   win.webContents.on('will-navigate', (e) => e.preventDefault())
   // Frames are stepped by seeking, so a fast paint clock only shortens the wait per frame.
   win.webContents.setFrameRate(240)
+  // What is asked of a window that then goes away — the render was stopped, its process died — is never answered:
+  // the frame being waited on would be waited on for ever, and nothing after it (clearing up included) would run.
+  const gone = new Promise<never>((_resolve, reject) => {
+    win.once('closed', () => reject(new Error('The render window closed part-way.')))
+    win.webContents.once('render-process-gone', () => reject(new Error('The render window stopped working part-way.')))
+  })
+  gone.catch(() => {})
+  const ask = <T>(asked: Promise<T>) => Promise.race([asked, gone])
 
   try {
-    await win.loadFile(htmlPath)
-    await waitFor(win, 'window.__playerReady && window.__player', 20_000)
-    const duration = req.duration ?? (req.template === 'custom' ? Number(await win.webContents.executeJavaScript('window.__player.getDuration()')) : templateDuration(req.template, req.params))
+    await ask(win.loadFile(htmlPath))
+    await waitFor(win, 'window.__playerReady && window.__player', 20_000, ask)
+    const duration = req.duration ?? (req.template === 'custom' ? Number(await ask(win.webContents.executeJavaScript('window.__player.getDuration()'))) : templateDuration(req.template, req.params))
     if (!Number.isFinite(duration) || duration <= 0) throw new Error('The composition has no duration.')
     const frames = Math.max(1, Math.round(duration * fps))
     updateJob(jobId, { message: `Rendering ${frames} frames` })
@@ -178,8 +186,8 @@ async function render(jobId: string, req: MotionRenderRequest, label: string, ou
       if (isCancelled(jobId)) return false
       // Gone without being cancelled (its process died): that is a failure to report, not a render to wait on for good.
       if (win.isDestroyed()) throw new Error('The render window closed part-way.')
-      await win.webContents.executeJavaScript(`window.__lumenSeek(${i / fps})`)
-      let image = await win.webContents.capturePage()
+      await ask(win.webContents.executeJavaScript(`window.__lumenSeek(${i / fps})`))
+      let image = await ask(win.webContents.capturePage())
       const size = image.getSize()
       if (size.width !== width || size.height !== height) image = image.resize({ width, height, quality: 'best' })
       fs.writeFileSync(path.join(out, `frame_${String(i + 1).padStart(4, '0')}.png`), image.toPNG())
