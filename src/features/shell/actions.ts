@@ -156,13 +156,13 @@ export const actions = {
 
   group() {
     const ids = ui().selection
-    if (ids.length < 2) return void toast('Select two or more clips to group')
+    if (ids.length < 2) return void toast(tt('Select two or more clips to group'))
     if (ok(dispatch('clip.group', { ids }))) toast(tt('Grouped {0}', plural(withGroups(getProject(), ids).length, 'clip')))
   },
 
   ungroup() {
     const ids = ui().selection
-    if (!ids.some((id) => getProject().clips[id]?.groupId)) return void toast('Nothing selected is grouped')
+    if (!ids.some((id) => getProject().clips[id]?.groupId)) return void toast(tt('Nothing selected is grouped'))
     ok(dispatch('clip.ungroup', { ids }))
   },
 

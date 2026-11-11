@@ -11,7 +11,7 @@ import { dispatch } from '@/editor/store'
 import type { Clip } from '@/editor/types'
 import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
 
 /** A tiny drawing of a curve (time across, value up). */
 export function CurveIcon({ easing, className }: { easing: Easing | string; className?: string }) {
@@ -65,8 +65,8 @@ export function EasingMenu({ value, onChange, children, allowPreset }: { value: 
 
 const GROUPS: { id: PresetGroup; label: string; icon: ReactNode; hint: string }[] = [
   { id: 'camera', label: tt('Camera'), icon: <Clapperboard />, hint: tt('Over the whole clip') },
-  { id: 'in', label: tt('In'), icon: <LogIn />, hint: tt('At the start') },
-  { id: 'out', label: tt('Out'), icon: <LogOut />, hint: tt('At the end') },
+  { id: 'in', label: ttc('animation', 'In'), icon: <LogIn />, hint: tt('At the start') },
+  { id: 'out', label: ttc('animation', 'Out'), icon: <LogOut />, hint: tt('At the end') },
   { id: 'emphasis', label: tt('Emphasis'), icon: <Zap />, hint: tt('At the playhead') },
 ]
 

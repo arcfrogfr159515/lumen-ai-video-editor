@@ -322,7 +322,7 @@ class Track {
     transfer: Transferable[],
     onNote: (text: string) => void,
   ) {
-    this.worker = new Worker(new URL('./capture.worker.ts', import.meta.url), { type: 'module', name: tt('record-{0}', role) })
+    this.worker = new Worker(new URL('./capture.worker.ts', import.meta.url), { type: 'module', name: `record-${role}` })
     let readyOk: (v: VideoReady | undefined) => void = () => {}
     let readyFail: (e: Error) => void = () => {}
     let doneOk: () => void = () => {}
@@ -474,7 +474,7 @@ export interface StartOptions {
 }
 
 /** A screen that shows more colours than sRGB (most laptop panels made since 2021). */
-export const wideGamutDisplay = () => typeof matchMedia === 'function' && matchMedia(tt('(color-gamut: p3)')).matches
+export const wideGamutDisplay = () => typeof matchMedia === 'function' && matchMedia('(color-gamut: p3)').matches
 
 /**
  * What a recording says its colours are. Capture hands over the numbers the

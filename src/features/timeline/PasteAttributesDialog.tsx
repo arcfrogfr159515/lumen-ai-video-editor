@@ -13,14 +13,14 @@ import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 const LABEL: Record<Attribute, { name: string; detail: string }> = {
-  transform: { name: tt('Transform'), detail: 'Position, scale, rotation, opacity, 3D — with keyframes' },
-  crop: { name: tt('Crop'), detail: 'Edges and rounded corners' },
+  transform: { name: tt('Transform'), detail: tt('Position, scale, rotation, opacity, 3D — with keyframes') },
+  crop: { name: tt('Crop'), detail: tt('Edges and rounded corners') },
   color: { name: tt('Color'), detail: tt('Grade and look') },
   effects: { name: tt('Effects'), detail: tt('Every effect and its amount') },
   audio: { name: tt('Audio'), detail: tt('Volume (with keyframes), fades, voice clean-up') },
   speed: { name: tt('Speed'), detail: tt('Speed, ramp and reverse') },
   animation: { name: tt('Animation'), detail: tt('In and out animations') },
-  text: { name: tt('Text style'), detail: 'Font, size, color, shadow — not the words' },
+  text: { name: tt('Text style'), detail: tt('Font, size, color, shadow — not the words') },
   blend: { name: tt('Blend mode'), detail: tt('How the clip mixes with what’s below') },
 }
 

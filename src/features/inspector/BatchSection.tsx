@@ -17,7 +17,7 @@ import { dispatch, getProject, useEditor } from '@/editor/store'
 import type { Clip, EffectKind } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 type Ops = Omit<CommandInput<'clip.batch'>, 'ids'>
@@ -102,8 +102,8 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
           </Button>
         </Row>
         <Row label={tt('Fades')}>
-          <ScrubInput aria-label={tt('Fade in, seconds')} prefix={tt('In')} value={fadeIn} onChange={setFadeIn} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[78px]" disabled={!sound} />
-          <ScrubInput aria-label={tt('Fade out, seconds')} prefix={tt('Out')} value={fadeOut} onChange={setFadeOut} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[84px]" disabled={!sound} />
+          <ScrubInput aria-label={tt('Fade in, seconds')} prefix={ttc('fade', 'In')} value={fadeIn} onChange={setFadeIn} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[78px]" disabled={!sound} />
+          <ScrubInput aria-label={tt('Fade out, seconds')} prefix={ttc('fade', 'Out')} value={fadeOut} onChange={setFadeOut} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[84px]" disabled={!sound} />
           <Button size="xs" variant="secondary" disabled={!sound} onClick={() => run({ fadeIn: Math.round(fadeIn * fps), fadeOut: Math.round(fadeOut * fps) }, tt('Fades on {0} clips', sound))}>
             {tt('Set')}
           </Button>

@@ -167,7 +167,7 @@ export function contactSheet(cells: SheetCell[]): HTMLCanvasElement {
   ctx.fillStyle = '#0b0b0a'
   ctx.fillRect(0, 0, sheet.width, sheet.height)
   const font = Math.max(11, Math.min(16, Math.round(cw / 22)))
-  ctx.font = tt('600 {0}px system-ui, sans-serif', font)
+  ctx.font = `600 ${font}px system-ui, sans-serif`
   ctx.textBaseline = 'middle'
   cells.forEach((cell, i) => {
     const x = SHEET_GAP + (i % cols) * (cw + SHEET_GAP)

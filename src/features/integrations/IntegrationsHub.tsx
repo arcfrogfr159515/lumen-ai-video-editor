@@ -181,7 +181,7 @@ function ServerGlyph({ config }: { config: Pick<McpServerConfig, 'id' | 'name' |
   if (config.preset === 'runway' || config.preset === 'replicate' || config.preset === 'fal')
     return (
       <IconTile tone="mcp" size="sm">
-        <span className="text-[11px] font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? tt('Re') : 'f'}</span>
+        <span className="text-[11px] font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? 'Re' : 'f'}</span>
       </IconTile>
     )
   if (config.preset === 'higgsfield')
@@ -473,7 +473,7 @@ function ServerGlyphLarge({ config }: { config: Pick<McpServerConfig, 'transport
   if (config.preset === 'runway' || config.preset === 'replicate' || config.preset === 'fal')
     return (
       <IconTile tone="mcp">
-        <span className="text-base font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? tt('Re') : 'f'}</span>
+        <span className="text-base font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? 'Re' : 'f'}</span>
       </IconTile>
     )
   if (config.preset === 'higgsfield')

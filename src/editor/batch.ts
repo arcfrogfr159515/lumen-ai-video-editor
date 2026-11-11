@@ -50,7 +50,7 @@ export function batchSkip(project: Pick<Project, 'assets'>, clip: Clip, field: B
 /** What a rename pattern can hold. */
 export const RENAME_TOKENS: { token: string; means: string }[] = [
   { token: '{n}', means: tt('its number among the clips, in timeline order') },
-  { token: '{nn}', means: 'the same, with a leading zero' },
+  { token: '{nn}', means: tt('the same, with a leading zero') },
   { token: '{name}', means: tt('the name it has now') },
   { token: '{source}', means: tt('the name of its media') },
   { token: '{track}', means: tt('the track it is on') },

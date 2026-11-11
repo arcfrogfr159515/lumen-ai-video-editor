@@ -906,7 +906,7 @@ export const commands = {
     description:
       'Set or clear the transition on the cut before this clip (from the previous clip into this one). align says where it sits on the cut: "after" (default) starts at the cut, over the start of this clip; "center" straddles the cut; "before" ends at the cut, over the end of the previous clip. Durations are in frames.',
     input: z.object({ id, transition: transition.nullable() }),
-    title: (i) => (i.transition ? 'Add transition' : 'Remove transition'),
+    title: (i) => (i.transition ? tt('Add transition') : tt('Remove transition')),
     run(p, i) {
       const clip = getClip(p, i.id)
       assertEditable(p, clip)
@@ -1284,7 +1284,7 @@ export const commands = {
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
-      if (clip.kind === 'audio') throw new CommandError('Audio clips have no picture to animate')
+      if (clip.kind === 'audio') throw new CommandError(tt('Audio clips have no picture to animate'))
       const snapshot = isDraft(clip) ? current(clip) : clip
       const { keys, range } = presetKeyframes(snapshot, i.preset, p.settings, { at: i.at, duration: i.duration, intensity: i.intensity, easing: i.easing })
       for (const [prop, list] of Object.entries(keys) as [AnimatableProp, NonNullable<(typeof keys)[AnimatableProp]>][]) {

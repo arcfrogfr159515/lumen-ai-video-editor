@@ -25,6 +25,7 @@ import {
   Square,
   Undo2,
   Upload,
+  Languages,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { openRecorder, stopRecording, useRecorder } from '@/capture/recorder'
@@ -42,6 +43,8 @@ import { cn } from '@/lib/cn'
 import { desktop, platform } from '@/lib/platform'
 import { checkForUpdates, installUpdate, useUpdates } from '@/lib/updates'
 import { collectProject, openProject, refreshRecent, useDirty, useSession } from '@/project/session'
+import { LANGUAGES, languageChoice } from '@/lib/i18n'
+import { switchLanguage } from './language'
 import { pickSubtitles, saveSubtitles } from '@/project/subtitle-files'
 import { actions } from './actions'
 import { tt } from '@/lib/i18n'
@@ -236,6 +239,17 @@ function AppMenu() {
         <MenuItem icon={<Cpu />} disabled={!desktop} onSelect={() => useUI.getState().setGraphicsOpen(true)}>
           {tt('Graphics and encoding…')}
         </MenuItem>
+        {/* In both languages, so it can be found by someone who reads neither of what is on screen. */}
+        <MenuSub icon={<Languages />} label="Language · 语言">
+          <MenuItem checked={languageChoice() === 'system'} onSelect={() => switchLanguage('system')}>
+            {tt('Same as this computer')}
+          </MenuItem>
+          {LANGUAGES.map((l) => (
+            <MenuItem key={l.id} checked={languageChoice() === l.id} onSelect={() => switchLanguage(l.id)}>
+              {l.name}
+            </MenuItem>
+          ))}
+        </MenuSub>
         {updateReady ? (
           <MenuItem icon={<RefreshCw />} onSelect={() => void installUpdate()}>
             {tt('Restart to update')}

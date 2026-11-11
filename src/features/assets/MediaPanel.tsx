@@ -641,7 +641,7 @@ function AudioRow({ asset, used, order }: { asset: Asset; used: boolean; order: 
             {used && <span className="size-1.5 shrink-0 rounded-full bg-ok" title={tt('Used in timeline')} />}
           </div>
           <div className="mt-1 h-3 text-clip-audio/50">
-            {offline ? <span className="text-2xs text-warn">Offline — right-click to locate</span> : <MiniWave peaks={asset.peaks} bars={34} />}
+            {offline ? <span className="text-2xs text-warn">{tt('Offline — right-click to locate')}</span> : <MiniWave peaks={asset.peaks} bars={34} />}
           </div>
         </div>
         <span className="shrink-0 font-mono text-2xs text-fg-4 tabular">{formatSeconds(asset.duration ?? 0)}</span>

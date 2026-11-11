@@ -25,7 +25,7 @@ export interface MotionPreset {
 export const MOTION_PRESETS: MotionPreset[] = [
   { id: 'ken-burns', name: tt('Ken Burns'), group: 'camera', description: tt('Slow push in with a gentle drift') },
   { id: 'ken-burns-out', name: tt('Ken Burns out'), group: 'camera', description: tt('Slow pull back with a gentle drift') },
-  { id: 'push-in', name: tt('Push in'), group: 'camera', description: 'Move in to focus — builds tension' },
+  { id: 'push-in', name: tt('Push in'), group: 'camera', description: tt('Move in to focus — builds tension') },
   { id: 'pull-out', name: tt('Pull out'), group: 'camera', description: tt('Move back to reveal the scene') },
   { id: 'pan-left', name: tt('Pan left'), group: 'camera', description: tt('Glide across to the left') },
   { id: 'pan-right', name: tt('Pan right'), group: 'camera', description: tt('Glide across to the right') },

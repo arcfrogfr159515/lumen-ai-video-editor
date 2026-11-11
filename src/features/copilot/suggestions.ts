@@ -8,6 +8,6 @@ export const STARTERS = [
   { title: tt('Duck the music'), subtitle: tt('Lower it under the voice'), prompt: tt('Duck the music under the speech') },
   { title: tt('Tighten the pacing'), subtitle: tt('Trim slow shots'), prompt: tt('Tighten the pacing: trim the slowest shots so the edit moves') },
   { title: tt('Vertical for Reels'), subtitle: tt('Reframe to 9:16'), prompt: tt('Make this a vertical 9:16 edit for Reels and TikTok') },
-  { title: 'Smooth transitions', subtitle: tt('Between every shot'), prompt: 'Add tasteful transitions between the shots on the main track' },
+  { title: tt('Smooth transitions'), subtitle: tt('Between every shot'), prompt: tt('Add tasteful transitions between the shots on the main track') },
   { title: tt('Review my edit'), subtitle: tt('Pacing, audio and color notes'), prompt: tt('Review my edit and tell me what to improve') },
 ]

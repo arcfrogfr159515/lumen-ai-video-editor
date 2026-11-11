@@ -318,7 +318,7 @@ export function CommandPalette() {
             {tt('Show effects')}
           </Item>
           <Item icon={<Blend />} onSelect={panel('transitions')}>
-            Show transitions
+            {tt('Show transitions')}
           </Item>
           <Item icon={<Aperture />} onSelect={panel('looks')}>
             {tt('Show color looks')}

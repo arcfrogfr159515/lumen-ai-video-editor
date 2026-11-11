@@ -56,7 +56,7 @@ import { playback } from '@/editor/playback'
 import { CurvesSection, HslSection, LutSection, WheelsSection } from './GradeSections'
 import { FontPicker } from './FontPicker'
 import { fontCss } from '@/engine/fonts'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 const update = (ids: string[], patch: ClipPatch, key?: string) =>
@@ -129,7 +129,7 @@ function PositionRow({ clip }: { clip: Clip }) {
       </Row>
       {clip.keyframes.y?.length ? (
         <Row label="" trailing={<KeyframeButton clip={clip} prop="y" />} className="-mt-1 min-h-6">
-          <span className="text-2xs text-fg-4">Y is animated separately</span>
+          <span className="text-2xs text-fg-4">{tt('Y is animated separately')}</span>
         </Row>
       ) : null}
     </>
@@ -408,7 +408,7 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
     const spec = clip.animation[dir]
     return (
       <div className="space-y-2">
-        <div className="text-xs font-medium text-fg-2">{dir === 'in' ? tt('In') : tt('Out')}</div>
+        <div className="text-xs font-medium text-fg-2">{dir === 'in' ? ttc('animation', 'In') : ttc('animation', 'Out')}</div>
         <div className="grid grid-cols-3 gap-1">
           {presets.map((a) => (
             <button

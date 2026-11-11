@@ -374,7 +374,7 @@ export async function attachFiles(files: File[]) {
       .slice(0, 12)
       .map(async (file) => {
         const id = uid('file')
-        const name = file.name || (file.type.startsWith('image/') ? tt('pasted-{0}.{1}', new Date().toTimeString().slice(0, 8).replace(/:/g, ''), file.type.slice(6).replace('jpeg', 'jpg')) : 'pasted.txt')
+        const name = file.name || (file.type.startsWith('image/') ? `pasted-${new Date().toTimeString().slice(0, 8).replace(/:/g, '')}.${file.type.slice(6).replace('jpeg', 'jpg')}` : 'pasted.txt')
         useAttachments.setState((s) => ({ items: [...s.items, { id, name, kind: 'file', status: 'reading' }] }))
         const conversationId = useCopilot.getState().conversationId
         try {
@@ -500,9 +500,9 @@ function sendNext() {
 function turnContext(context: { id: string; name: string }[], assets: AssetAttachment[]) {
   const fps = getProject().settings.fps
   const frame = usePlayback.getState().frame
-  const lines = [tt('[Lumen] Playhead at frame {0} ({1}).', frame, formatTimecode(frame, fps))]
-  if (context.length) lines.push(tt('Selected clips: {0}.', context.map((c) => `${c.name} (${c.id})`).join(', ')))
-  if (assets.length) lines.push(tt('Media the user attached (asset ids): {0}.', assets.map((a) => `${a.name} (${a.id})`).join(', ')))
+  const lines = [`[Lumen] Playhead at frame ${frame} (${formatTimecode(frame, fps)}).`]
+  if (context.length) lines.push(`Selected clips: ${context.map((c) => `${c.name} (${c.id})`).join(', ')}.`)
+  if (assets.length) lines.push(`Media the user attached (asset ids): ${assets.map((a) => `${a.name} (${a.id})`).join(', ')}.`)
   return lines.join(' ')
 }
 

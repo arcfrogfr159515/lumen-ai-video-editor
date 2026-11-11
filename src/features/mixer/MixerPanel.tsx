@@ -15,7 +15,7 @@ import { onMeterFrame } from '@/engine/meter-clock'
 import { cn } from '@/lib/cn'
 import { ChannelEditor } from './ChannelEditor'
 import { FADER_MARKS, faderDb, faderPos, formatDb, meterPos } from './scales'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
 
 type Target = 'master' | string
 
@@ -160,7 +160,7 @@ function Strip({
           </button>
         </div>
       ) : (
-        <div className="grid h-6 place-items-center text-[9px] font-semibold tracking-wider text-fg-4 uppercase">{tt('Out')}</div>
+        <div className="grid h-6 place-items-center text-[9px] font-semibold tracking-wider text-fg-4 uppercase">{ttc('mixer', 'Out')}</div>
       )}
     </div>
   )

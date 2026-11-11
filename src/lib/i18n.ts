@@ -51,8 +51,9 @@ export function languageChoice(): LanguageChoice {
 
 /** The language the computer asks for, among those Lumen speaks. */
 export function systemLanguage(): Language {
-  // Only in a window. Node has a `navigator` too, with the language of whoever runs the tests.
-  if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'en'
+  // Only in a window. Node has a `navigator` too, with the language of whoever runs the tests — and the tests are
+  // written in English, wherever they run and whatever they stand in for a window.
+  if (typeof window === 'undefined' || typeof navigator === 'undefined' || import.meta.env?.MODE === 'test') return 'en'
   for (const tag of navigator.languages?.length ? navigator.languages : [navigator.language]) {
     const found = tag ? languageFor(tag) : null
     if (found) return found

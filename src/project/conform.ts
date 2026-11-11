@@ -96,7 +96,7 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
   try {
     const track = await input.getPrimaryVideoTrack()
     if (!track) throw new Error(tt('It has no video.'))
-    const handle = api ? await api.files.beginConform(tt('{0}-{1}-{2}fps', assetId, source.mtime ?? 0, String(rate).replace('.', '_'))) : null
+    const handle = api ? await api.files.beginConform(`${assetId}-${source.mtime ?? 0}-${String(rate).replace('.', '_')}fps`) : null
     const memory = handle ? null : new BufferTarget()
     const target = handle
       ? new StreamTarget(new WritableStream<StreamTargetChunk>({ write: (chunk) => api!.export.write(handle.id, chunk.position, chunk.data.slice()) }), { chunked: true, chunkSize: 4 * 1024 * 1024 })

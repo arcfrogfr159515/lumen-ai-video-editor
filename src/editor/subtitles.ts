@@ -73,7 +73,7 @@ export function formatSrt(cues: Cue[]) {
 }
 
 export function formatVtt(cues: Cue[]) {
-  return tt('WEBVTT\n\n{0}', cues.map((c) => `${stamp(c.start, '.')} --> ${stamp(c.end, '.')}\n${c.text}\n`).join('\n'))
+  return `WEBVTT\n\n${cues.map((c) => `${stamp(c.start, '.')} --> ${stamp(c.end, '.')}\n${c.text}\n`).join('\n')}`
 }
 
 export type SubtitleFormat = 'srt' | 'vtt'
@@ -149,7 +149,7 @@ export const CAPTION_STYLES: CaptionStyleSpec[] = [
   {
     id: 'bold',
     name: tt('Bold'),
-    description: 'Big outlined caps, a few words at a time',
+    description: tt('Big outlined caps, a few words at a time'),
     words: 3,
     size: 0.075,
     y: 0.24,

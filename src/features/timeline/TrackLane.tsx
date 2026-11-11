@@ -206,7 +206,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
                   key={a.id}
                   type="button"
                   title={a.hint}
-                  onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: { ...tr, align: a.id } }, { label: 'Move transition' })}
+                  onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: { ...tr, align: a.id } }, { label: tt('Move transition') })}
                   className={cn('h-6 rounded-md text-2xs font-medium text-fg-3 transition-colors hover:text-fg', a.id === align && 'bg-white/[0.12] text-fg')}
                 >
                   {a.label}
@@ -225,7 +225,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
             <span className="w-10 text-right text-xs text-fg-2 tabular">{formatDuration(tr.duration, fps)}</span>
           </div>
           <Button variant="danger" size="sm" className="mt-3 w-full" onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: null })}>
-            {audio ? tt('Remove crossfade') : 'Remove transition'}
+            {audio ? tt('Remove crossfade') : tt('Remove transition')}
           </Button>
         </PopoverContent>
       </Popover>
