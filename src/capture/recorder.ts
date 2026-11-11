@@ -789,7 +789,7 @@ async function finish(s: Session, opts: StopOptions): Promise<RecordingResult | 
     })
     return result
   } catch (err) {
-    toast.error('The recording couldn’t be finished', { id: busy, description: message(err), duration: 10_000 })
+    toast.error(tt('The recording couldn’t be finished'), { id: busy, description: message(err), duration: 10_000 })
     set({ error: message(err) })
     for (const stream of s.streams) stopStream(stream)
     throw err
@@ -1008,5 +1008,5 @@ async function recover(paths: string[]) {
     }
   }
   if (done) toast.success(tt('Recovered {0}', done === 1 ? tt('the recording') : tt('{0} recordings', done)), { id: busy, description: tt('In the media library.'), action: { label: tt('Show'), onClick: () => useUI.getState().setLeftTab('media') } })
-  else toast.error('Nothing could be recovered', { id: busy, description: 'The files were too short or damaged.' })
+  else toast.error(tt('Nothing could be recovered'), { id: busy, description: tt('The files were too short or damaged.') })
 }

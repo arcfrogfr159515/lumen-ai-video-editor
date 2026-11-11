@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { app, dialog, safeStorage } from 'electron'
 import { keepUnreadable, userDir, writeFileAtomic } from './paths'
+import { mt } from '../i18n'
 
 /**
  * API keys and other secrets, encrypted with the OS keychain (DPAPI on
@@ -112,8 +113,8 @@ function load() {
           .showMessageBox({
             type: 'warning',
             title: 'Lumen',
-            message: 'Your saved keys couldn’t be read',
-            detail: `The API keys and sign-ins saved on this computer can’t be read: the file is damaged, or was saved under another account or keychain.\n\nEnter them again in Settings.\n\nThe old file is kept as:\n${copy.path}`,
+            message: mt('Your saved keys couldn’t be read'),
+            detail: mt('The API keys and sign-ins saved on this computer can’t be read: the file is damaged, or was saved under another account or keychain.\n\nEnter them again in Settings.\n\nThe old file is kept as:\n{0}', copy.path),
           })
           .catch(() => {})
       if (app.isReady()) tell()
@@ -132,7 +133,7 @@ export function getSecret(name: string): string | undefined {
 export function setSecret(name: string, value: string | null) {
   const all = load()
   // The file is there but couldn't be opened: writing now would replace every saved key with this one.
-  if (!cache) throw new Error('The saved keys can’t be opened right now. Try again in a moment.')
+  if (!cache) throw new Error(mt('The saved keys can’t be opened right now. Try again in a moment.'))
   if (value) all[name] = value
   else delete all[name]
   const json = JSON.stringify(all)

@@ -2,12 +2,15 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import { ErrorBoundary } from './components/ui/error-boundary'
+import { language } from './lib/i18n'
 import { desktop } from './lib/platform'
 import { saveProjectAs } from './project/session'
 import { installDecoderRepair } from './engine/codec-repair'
 import './styles/index.css'
 
 installDecoderRepair()
+// The system's own dialogs (Open, Save, "Save changes?") are shown by the main process: in this window's language.
+desktop?.system.setLanguage?.(language)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

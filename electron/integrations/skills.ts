@@ -4,6 +4,7 @@ import path from 'node:path'
 import { dialog, shell, type BrowserWindow } from 'electron'
 import { fallbackDescription, parseSkill, skillSlug, writeSkill, type SkillDoc, type SkillInfo, type SkillSource } from '../../shared/skills'
 import { ensureDir, userDir } from './paths'
+import { mt } from '../i18n'
 
 /**
  * Skills on disk: yours in userData/skills (created, imported or edited in
@@ -105,17 +106,17 @@ export function readSkillFile(source: SkillSource, folder: string, rel: string):
 /** Creates or updates one of your skills; renaming moves its folder. */
 export function saveSkill(input: { folder?: string; name: string; description: string; body: string }): SkillInfo {
   const name = input.name.trim()
-  if (!name) throw new Error('Give the skill a name.')
-  if (!input.description.trim()) throw new Error('Describe when the skill should be used — that’s how the Copilot finds it.')
+  if (!name) throw new Error(mt('Give the skill a name.'))
+  if (!input.description.trim()) throw new Error(mt('Describe when the skill should be used — that’s how the Copilot finds it.'))
   const slug = skillSlug(name)
   const root = userRoot()
   let dir = path.join(root, slug)
   if (input.folder && input.folder !== slug) {
     const old = skillDir('user', input.folder)
-    if (fs.existsSync(dir)) throw new Error(`You already have a skill called “${name}”.`)
+    if (fs.existsSync(dir)) throw new Error(mt('You already have a skill called “{0}”.', name))
     if (fs.existsSync(old)) fs.renameSync(old, dir)
   } else if (!input.folder && fs.existsSync(dir)) {
-    throw new Error(`You already have a skill called “${name}”.`)
+    throw new Error(mt('You already have a skill called “{0}”.', name))
   }
   dir = ensureDir(dir)
   fs.writeFileSync(path.join(dir, 'SKILL.md'), writeSkill(name, input.description, input.body))
@@ -139,12 +140,12 @@ function sizeOf(dir: string): number {
 
 /** Copies a skill folder (one with a SKILL.md) into your skills. */
 export async function importSkill(win: BrowserWindow | null): Promise<SkillInfo | null> {
-  const opts: Electron.OpenDialogOptions = { title: 'Import a skill folder', buttonLabel: 'Import', properties: ['openDirectory'] }
+  const opts: Electron.OpenDialogOptions = { title: mt('Import a skill folder'), buttonLabel: mt('Import'), properties: ['openDirectory'] }
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
   const src = res.filePaths[0]
   if (res.canceled || !src) return null
-  if (!fs.existsSync(path.join(src, 'SKILL.md'))) throw new Error('That folder has no SKILL.md, so it isn’t a skill.')
-  if (sizeOf(src) > MAX_IMPORT) throw new Error('That skill folder is over 32 MB — too large to import.')
+  if (!fs.existsSync(path.join(src, 'SKILL.md'))) throw new Error(mt('That folder has no SKILL.md, so it isn’t a skill.'))
+  if (sizeOf(src) > MAX_IMPORT) throw new Error(mt('That skill folder is over 32 MB — too large to import.'))
   const parsed = parseSkill(fs.readFileSync(path.join(src, 'SKILL.md'), 'utf8'))
   let slug = skillSlug(parsed.name ?? path.basename(src))
   for (let n = 2; fs.existsSync(path.join(userRoot(), slug)); n++) slug = `${skillSlug(parsed.name ?? path.basename(src))}-${n}`

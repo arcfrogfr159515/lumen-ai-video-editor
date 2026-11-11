@@ -237,7 +237,7 @@ export const actions = {
         toast.success(tt('Found {0}', plural(r.cuts.length, 'scene cut')), { description: tt('Shown as guides in the clip. Trims, moves and the blade snap to them.') })
       } else toast.success(`${action === 'split' ? 'Split at' : 'Marked'} ${plural(r.cuts.length, 'scene cut')}`)
     } catch (err) {
-      if (!(err instanceof AnalysisCancelled)) toast.error('Scene detection failed', { description: err instanceof Error ? err.message : String(err) })
+      if (!(err instanceof AnalysisCancelled)) toast.error(tt('Scene detection failed'), { description: err instanceof Error ? err.message : String(err) })
     }
   },
 
@@ -249,7 +249,7 @@ export const actions = {
       const r = await withProgress('Stabilizing', (onProgress, signal) => stabilizeClip(clip.id, {}, onProgress, signal))
       toast.success(tt('Stabilized'), { description: r.zoom > 1.001 ? tt('Zoomed in {0}% to hide the moving edges.', Math.round((r.zoom - 1) * 100)) : undefined })
     } catch (err) {
-      if (!(err instanceof AnalysisCancelled)) toast.error('Couldn’t stabilize', { description: err instanceof Error ? err.message : String(err) })
+      if (!(err instanceof AnalysisCancelled)) toast.error(tt('Couldn’t stabilize'), { description: err instanceof Error ? err.message : String(err) })
     }
   },
 
@@ -359,7 +359,7 @@ export const actions = {
       const grid = await analyzeBeats(clip.assetId)
       toast.success(grid.times.length ? tt('{0} BPM — {1} beats', Math.round(grid.bpm), grid.times.length) : tt('No steady beat in this one'), { id, description: grid.times.length ? tt('Cuts now snap to the beat.') : undefined })
     } catch (err) {
-      toast.error('Couldn’t find the beat', { id, description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t find the beat'), { id, description: err instanceof Error ? err.message : String(err) })
     }
   },
 
@@ -389,7 +389,7 @@ export const actions = {
       })
       toast.success(tt('Added {0} markers on the downbeats', downs.length))
     } catch (err) {
-      toast.error('Couldn’t find the beat', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t find the beat'), { description: err instanceof Error ? err.message : String(err) })
     }
   },
 
@@ -401,7 +401,7 @@ export const actions = {
       const res = await cutToBeats(ids, { every })
       toast.success(tt('Cut {0} clips to the beat ({1} BPM)', res.placed.length, Math.round(res.bpm)), { id })
     } catch (err) {
-      toast.error('Couldn’t cut to the beat', { id, description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t cut to the beat'), { id, description: err instanceof Error ? err.message : String(err) })
     }
   },
 

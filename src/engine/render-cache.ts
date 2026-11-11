@@ -444,7 +444,7 @@ export async function renderPreviews(range: [number, number], label: string, opt
   }
   if (failed) {
     if (background) useUI.getState().setBackgroundRender(false)
-    toast.error('Rendering previews stopped', { description: failed instanceof Error ? failed.message : String(failed) })
+    toast.error(tt('Rendering previews stopped'), { description: failed instanceof Error ? failed.message : String(failed) })
   }
 }
 

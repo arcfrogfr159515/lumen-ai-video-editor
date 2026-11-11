@@ -187,7 +187,7 @@ export async function conformWithToast(assetId: string, fps?: number) {
     return ok
   } catch (err) {
     if (err instanceof Error && err.name === 'ConversionCanceledError') toast(tt('Stopped'), { description: tt('{0} still plays the original file.', name) })
-    else toast.error('Couldn’t make a constant-frame-rate copy', { description: `${name}: ${err instanceof Error ? err.message : String(err)}` })
+    else toast.error(tt('Couldn’t make a constant-frame-rate copy'), { description: `${name}: ${err instanceof Error ? err.message : String(err)}` })
     return false
   }
 }
@@ -202,7 +202,7 @@ export async function restoreOriginal(assetId: string) {
   if (desktop && from.path) {
     const info = await desktop.files.urlForPath(from.path)
     if (!info) {
-      toast.error('The original file isn’t where it was', { description: from.path })
+      toast.error(tt('The original file isn’t where it was'), { description: from.path })
       return false
     }
     url = info.url

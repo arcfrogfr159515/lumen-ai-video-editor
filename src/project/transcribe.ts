@@ -107,7 +107,7 @@ export async function ensureTranscripts(assetIds: string[]) {
     toast.success(tt('Transcribed'), { id, description: TRANSCRIBER_NAMES[using] })
     return true
   } catch (err) {
-    toast.error('Transcription failed', { id, description: err instanceof Error ? err.message : String(err) })
+    toast.error(tt('Transcription failed'), { id, description: err instanceof Error ? err.message : String(err) })
     return false
   }
 }

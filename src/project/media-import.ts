@@ -104,8 +104,8 @@ export async function importMediaFiles(files: MediaFileInfo[], failures: ImportF
         duration: 9000,
       })
   }
-  if (failed.length === 1 && !assets.length) toast.error(`Couldn’t import ${failed[0].name}`, { id, description: failed[0].reason })
-  else if (failed.length) toast.error(`Imported ${assets.length}, couldn’t import ${failed.length}`, { id, description: failed.map((f) => `${f.name}: ${f.reason}`).join('\n') })
+  if (failed.length === 1 && !assets.length) toast.error(tt('Couldn’t import {0}', failed[0].name), { id, description: failed[0].reason })
+  else if (failed.length) toast.error(tt('Imported {0}, couldn’t import {1}', assets.length, failed.length), { id, description: failed.map((f) => `${f.name}: ${f.reason}`).join('\n') })
   else if (id) toast.success(tt('Imported {0}', plural(assets.length, 'file')), { id })
   return [...assets, ...existing]
 }
@@ -113,7 +113,7 @@ export async function importMediaFiles(files: MediaFileInfo[], failures: ImportF
 /** The native Import dialog. */
 export async function pickAndImport() {
   if (!desktop) {
-    toast.error('Importing files needs the Lumen desktop app.')
+    toast.error(tt('Importing files needs the Lumen desktop app.'))
     return []
   }
   return importMediaFiles(await desktop.files.pickMedia())
@@ -127,14 +127,14 @@ export async function importDropped(files: File[]): Promise<Asset[]> {
   files = files.filter((f) => !subs.includes(f))
   if (!files.length) return []
   if (!desktop) {
-    toast.error('Importing files needs the Lumen desktop app.')
+    toast.error(tt('Importing files needs the Lumen desktop app.'))
     return []
   }
   const paths = files.map((f) => desktop!.files.pathForFile(f)).filter(Boolean)
   if (!paths.length) return []
   const infos = await desktop.files.register(paths)
   if (!infos.length) {
-    toast.error('Nothing to import', { description: 'Lumen imports video, audio and image files.' })
+    toast.error(tt('Nothing to import'), { description: tt('Lumen imports video, audio and image files.') })
     return []
   }
   return importMediaFiles(infos)
@@ -162,7 +162,7 @@ export async function relinkAsset(assetId: string) {
     void analyzeAssets([assetId], true)
     return true
   } catch (err) {
-    toast.error('Couldn’t relink', { description: err instanceof Error ? err.message : String(err) })
+    toast.error(tt('Couldn’t relink'), { description: err instanceof Error ? err.message : String(err) })
     return false
   }
 }

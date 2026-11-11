@@ -147,7 +147,7 @@ async function importJob(job: Job) {
     try {
       ids.push(await addGeneratedAsset(g))
     } catch (err) {
-      toast.error(`Couldn’t add ${g.name}`, { description: String(err) })
+      toast.error(tt('Couldn’t add {0}', g.name), { description: String(err) })
     }
   }
   useIntegrations.setState((s) => ({ imported: { ...s.imported, [job.id]: ids } }))

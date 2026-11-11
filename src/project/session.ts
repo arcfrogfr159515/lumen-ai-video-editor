@@ -127,7 +127,7 @@ export async function openProject(path?: string) {
     }
     return true
   } catch (err) {
-    toast.error('Couldn’t open the project', { description: errorText(err) })
+    toast.error(tt('Couldn’t open the project'), { description: errorText(err) })
     if (path) void refreshRecent()
     return false
   } finally {
@@ -148,7 +148,7 @@ export async function saveProject(): Promise<boolean> {
     void refreshRecent()
     return true
   } catch (err) {
-    toast.error('Couldn’t save the project', { description: errorText(err) })
+    toast.error(tt('Couldn’t save the project'), { description: errorText(err) })
     return false
   }
 }
@@ -171,7 +171,7 @@ export async function saveProjectAs(): Promise<boolean> {
     toast.success(tt('Project saved'), { description: res.path })
     return true
   } catch (err) {
-    toast.error('Couldn’t save the project', { description: errorText(err) })
+    toast.error(tt('Couldn’t save the project'), { description: errorText(err) })
     return false
   }
 }
@@ -192,7 +192,7 @@ export async function recover() {
   try {
     load(JSON.parse(info.text) as Project, info.path)
   } catch (err) {
-    toast.error('Couldn’t recover the project', { description: errorText(err) })
+    toast.error(tt('Couldn’t recover the project'), { description: errorText(err) })
     return
   }
   // Recovered work isn't on disk yet: keep it marked as unsaved.
@@ -241,7 +241,7 @@ export async function restoreVersion(version: ProjectVersion, asCopy = false) {
     if (opened.missing.length) toast.warning(tt('{0} media file{1} missing', opened.missing.length, opened.missing.length > 1 ? tt('s are') : (' ' + tt('is'))))
     return true
   } catch (err) {
-    toast.error('Couldn’t restore that version', { description: errorText(err) })
+    toast.error(tt('Couldn’t restore that version'), { description: errorText(err) })
     return false
   }
 }
@@ -265,7 +265,7 @@ export async function collectProject() {
       duration: 12000,
     })
   } catch (err) {
-    toast.error('Couldn’t collect the project', { id, description: errorText(err) })
+    toast.error(tt('Couldn’t collect the project'), { id, description: errorText(err) })
   } finally {
     off()
   }
@@ -331,7 +331,7 @@ export async function startSession() {
     // Closing follows a save that got everything: an edit that arrived while the file was being written is saved too.
     for (let tries = 0; tries < 3 && isDirty(); tries++) if (!(await saveProject())) return
     if (!isDirty()) desktop!.project.closeWindow()
-    else toast.info('Not closed yet', { description: 'The project kept changing while it was being saved. Close again once the edits are done.' })
+    else toast.info(tt('Not closed yet'), { description: tt('The project kept changing while it was being saved. Close again once the edits are done.') })
   })
   syncWindow()
   const [startup, recovery] = await Promise.all([desktop.project.startupFile(), desktop.project.recovery()])

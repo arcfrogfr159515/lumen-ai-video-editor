@@ -223,6 +223,7 @@ const appApi: AppAPI = {
     gpu: () => invoke(APP_IPC.gpuInfo),
     setGraphics: (patch) => invoke(APP_IPC.graphicsSet, patch),
     relaunch: () => ipcRenderer.send(APP_IPC.relaunch),
+    setLanguage: (language) => ipcRenderer.send(APP_IPC.language, language),
   },
   updates: {
     state: () => invoke(APP_IPC.updateState),

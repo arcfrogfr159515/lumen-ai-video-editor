@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { app, BrowserWindow, dialog } from 'electron'
 import type { ExportHandle, ExportTarget } from '../shared/app'
 import { ensureDir } from './integrations/paths'
+import { mt } from './i18n'
 
 /**
  * Export files: the editor encodes (WebCodecs) and streams the container bytes
@@ -66,8 +67,8 @@ export async function pickExport(win: BrowserWindow | null, opts: ExportRequest)
     if (testDir) parent = ensureDir(testDir)
     else {
       const dialogOpts: Electron.OpenDialogOptions = {
-        title: `Choose where the ${String(opts.filterName || 'frames')} go`,
-        buttonLabel: 'Export here',
+        title: mt('Choose where the {0} go', String(opts.filterName || mt('frames'))),
+        buttonLabel: mt('Export here'),
         defaultPath: dir,
         properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
       }
@@ -82,8 +83,8 @@ export async function pickExport(win: BrowserWindow | null, opts: ExportRequest)
     if (testDir) target = path.join(ensureDir(testDir), `${base}.${ext}`)
     else {
       const dialogOpts: Electron.SaveDialogOptions = {
-        title: 'Export',
-        buttonLabel: 'Export',
+        title: mt('Export'),
+        buttonLabel: mt('Export'),
         defaultPath: path.join(dir, `${base}.${ext}`),
         filters: [{ name: String(opts.filterName || ext.toUpperCase()), extensions: [ext] }],
       }
@@ -110,13 +111,13 @@ function freeFolder(target: string) {
       /* not usable — try the next name */
     }
   }
-  throw new Error('Couldn’t find a free folder name for the frames.')
+  throw new Error(mt('Couldn’t find a free folder name for the frames.'))
 }
 
 /** Opens a picked destination for writing. */
 export function openPicked(token: string): ExportHandle {
   const p = picked.get(String(token))
-  if (!p) throw new Error('That export destination is no longer available — choose it again.')
+  if (!p) throw new Error(mt('That export destination is no longer available — choose it again.'))
   picked.delete(String(token))
   const id = randomUUID()
   if (p.folder) {
@@ -156,7 +157,7 @@ export function beginFile(target: string, opts: { keepOnQuit?: boolean } = {}): 
 
 function get(id: string) {
   const e = open.get(String(id))
-  if (!e) throw new Error('That export is no longer open.')
+  if (!e) throw new Error(mt('That export is no longer open.'))
   return e
 }
 
@@ -250,7 +251,7 @@ export function finishExport(id: string): { path: string; size: number; warnings
     target = moveIntoPlace(e.partial, e.path)
   } catch (err) {
     // Everything is written; only the name is missing. The file stays (aborting this export no longer deletes it).
-    throw new Error(`The file is complete, but it couldn’t be saved as “${path.basename(e.path)}” (${err instanceof Error ? err.message : String(err)}). It is kept as “${e.partial}” — rename it to use it.`)
+    throw new Error(mt('The file is complete, but it couldn’t be saved as “{0}” ({1}). It is kept as “{2}” — rename it to use it.', path.basename(e.path), err instanceof Error ? err.message : String(err), e.partial))
   }
   finished.add(path.resolve(target))
   const size = fs.statSync(target).size
@@ -297,7 +298,7 @@ export function abortAllExports() {
 /** Captions saved beside a finished export: `Video.mp4` → `Video.srt` (inside the folder for an image sequence). */
 export function writeSidecar(exportPath: string, extension: string, text: string) {
   const abs = path.resolve(String(exportPath))
-  if (!finished.has(abs)) throw new Error('Captions can only be saved next to a video exported in this session.')
+  if (!finished.has(abs)) throw new Error(mt('Captions can only be saved next to a video exported in this session.'))
   const ext = extension === 'vtt' ? 'vtt' : 'srt'
   const isDir = fs.existsSync(abs) && fs.statSync(abs).isDirectory()
   const target = isDir ? path.join(abs, `${path.basename(abs)}.${ext}`) : `${abs.slice(0, abs.length - path.extname(abs).length)}.${ext}`

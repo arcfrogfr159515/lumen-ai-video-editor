@@ -80,7 +80,7 @@ async function receive(clip: IngestClip) {
     if (session.proxy) await api.export.abort(session.proxy.id).catch(() => {})
     await api.ingest.fail(clip.id, reason)
     if (cancelled) toast.dismiss(toastId)
-    else toast.error(`Couldn’t receive ${clip.name}`, { id: toastId, description: reason, duration: 8000 })
+    else toast.error(tt('Couldn’t receive {0}', clip.name), { id: toastId, description: reason, duration: 8000 })
   }
 
   const finish = async (done: Extract<IngestFromWorker, { type: 'done' }>) => {

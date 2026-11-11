@@ -39,7 +39,7 @@ function apply(state: UpdateState) {
   if (state.status === 'up-to-date') toast.success(tt('Lumen {0} is the latest version.', state.current))
   else if (state.status === 'downloading') toast(tt('Downloading Lumen {0}…', state.version), { description: tt('It installs when you restart.') })
   else if (state.status === 'ready' && state.version) readyToast(state.version)
-  else if (state.status === 'error') toast.error(state.error ?? 'Couldn’t check for updates.')
+  else if (state.status === 'error') toast.error(state.error ?? tt('Couldn’t check for updates.'))
   else if (state.status === 'unsupported') toast(tt('This build doesn’t update itself'), { description: tt('Updates come to the installed app — download it from the Releases page.') })
 }
 
@@ -58,5 +58,5 @@ export async function checkForUpdates() {
 
 export async function installUpdate() {
   if (!desktop) return
-  if (!(await desktop.updates.install())) toast.error('There’s no downloaded update to install yet.')
+  if (!(await desktop.updates.install())) toast.error(tt('There’s no downloaded update to install yet.'))
 }

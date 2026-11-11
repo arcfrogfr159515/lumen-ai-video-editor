@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { ProjectVersion, VersionKind } from '../shared/app'
 import { ensureDir, userDir, writeFileAtomic } from './integrations/paths'
+import { mt } from './i18n'
 
 /**
  * Version history: a copy of the project at every save, plus a snapshot every so
@@ -127,6 +128,6 @@ export function listVersions(projectId: string): ProjectVersion[] {
 export function readVersionText(projectId: string, versionId: string): string {
   const dir = dirFor(projectId)
   const entry = readIndex(dir).find((v) => v.id === versionId)
-  if (!entry) throw new Error('That version is no longer there.')
+  if (!entry) throw new Error(mt('That version is no longer there.'))
   return fs.readFileSync(path.join(dir, entry.file), 'utf8')
 }

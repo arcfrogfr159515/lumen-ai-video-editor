@@ -5,6 +5,7 @@ import { APP_IPC, type CloseChoice, type OpenedProject, type RecentProject, type
 import { fileInfo, urlFor } from './files'
 import { allowPath, ensureDir, mediaPath, readJson, userDir, writeFileAtomic, writeJson } from './integrations/paths'
 import { readVersionText, writeVersion } from './versions'
+import { mt } from './i18n'
 
 /**
  * Project files (.lumen): JSON documents that reference media by absolute path
@@ -175,11 +176,11 @@ function parseEnvelope(text: string): ProjectEnvelope {
   try {
     data = JSON.parse(text)
   } catch {
-    throw new Error('This file isn’t a Lumen project (it isn’t valid JSON).')
+    throw new Error(mt('This file isn’t a Lumen project (it isn’t valid JSON).'))
   }
   const env = data as Partial<ProjectEnvelope>
-  if (env?.format !== FORMAT || typeof env.project !== 'object' || !env.project) throw new Error('This file isn’t a Lumen project.')
-  if ((env.version ?? 1) > FORMAT_VERSION) throw new Error('This project was saved by a newer version of Lumen. Update Lumen to open it.')
+  if (env?.format !== FORMAT || typeof env.project !== 'object' || !env.project) throw new Error(mt('This file isn’t a Lumen project.'))
+  if ((env.version ?? 1) > FORMAT_VERSION) throw new Error(mt('This project was saved by a newer version of Lumen. Update Lumen to open it.'))
   return env as ProjectEnvelope
 }
 
@@ -219,18 +220,19 @@ export function forgetRecent(file: string): RecentProject[] {
 
 // ─── Open / save ─────────────────────────────────────────────────────────
 
-const FILTERS = [{ name: 'Lumen project', extensions: [PROJECT_EXT] }]
+// Made when asked for: the language isn't known while this file is first read.
+const filters = () => [{ name: mt('Lumen project'), extensions: [PROJECT_EXT] }]
 
 export async function openProject(win: BrowserWindow | null, file?: string): Promise<OpenedProject | null> {
   let target = file
   if (!target) {
-    const opts: Electron.OpenDialogOptions = { title: 'Open project', properties: ['openFile'], filters: FILTERS, defaultPath: lastProjectDir() }
+    const opts: Electron.OpenDialogOptions = { title: mt('Open project'), properties: ['openFile'], filters: filters(), defaultPath: lastProjectDir() }
     const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
     if (res.canceled || !res.filePaths[0]) return null
     target = res.filePaths[0]
   }
   const abs = path.resolve(target)
-  if (!fs.existsSync(abs)) throw new Error(`“${path.basename(abs)}” can’t be found. It may have been moved or deleted.`)
+  if (!fs.existsSync(abs)) throw new Error(mt('“{0}” can’t be found. It may have been moved or deleted.', path.basename(abs)))
   const env = parseEnvelope(fs.readFileSync(abs, 'utf8'))
   const { project, missing } = fromStored(env.project, abs)
   touchRecent(abs, typeof project.name === 'string' ? project.name : path.basename(abs, `.${PROJECT_EXT}`))
@@ -257,9 +259,9 @@ export function saveProject(file: string, projectText: string) {
 export async function saveProjectAs(win: BrowserWindow | null, suggestedName: string, projectText: string) {
   const base = suggestedName.replace(/[<>:"/\\|?*\u0000-\u001f]+/g, ' ').trim() || 'Untitled'
   const opts: Electron.SaveDialogOptions = {
-    title: 'Save project',
+    title: mt('Save project'),
     defaultPath: path.join(lastProjectDir(), `${base}.${PROJECT_EXT}`),
-    filters: FILTERS,
+    filters: filters(),
   }
   const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts)
   if (res.canceled || !res.filePath) return null
@@ -339,13 +341,13 @@ export function setProjectState(win: BrowserWindow, next: { name?: unknown; path
 export async function confirmDiscard(win: BrowserWindow | null, name: string): Promise<CloseChoice> {
   const opts: Electron.MessageBoxOptions = {
     type: 'warning',
-    buttons: ['Save', 'Don’t save', 'Cancel'],
+    buttons: [mt('Save'), mt('Don’t save'), mt('Cancel')],
     defaultId: 0,
     cancelId: 2,
     noLink: true,
     title: 'Lumen',
-    message: `Save changes to “${name}”?`,
-    detail: 'Your changes will be lost if you don’t save them.',
+    message: mt('Save changes to “{0}”?', name),
+    detail: mt('Your changes will be lost if you don’t save them.'),
   }
   const { response } = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts)
   return response === 0 ? 'save' : response === 1 ? 'discard' : 'cancel'

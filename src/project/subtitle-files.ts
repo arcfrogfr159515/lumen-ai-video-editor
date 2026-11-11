@@ -31,7 +31,7 @@ export async function loadSubtitleFile(file: File) {
     toast.success(tt('{0} caption{1} from {2}', res.added, res.added === 1 ? '' : 's', file.name))
     return res
   } catch (err) {
-    toast.error(`Couldn’t read ${file.name}`, { description: err instanceof Error ? err.message : String(err) })
+    toast.error(tt('Couldn’t read {0}', file.name), { description: err instanceof Error ? err.message : String(err) })
     return null
   }
 }

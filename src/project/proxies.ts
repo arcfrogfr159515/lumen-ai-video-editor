@@ -75,7 +75,7 @@ async function pump() {
       } catch (err) {
         failed.add(assetId)
         if (!(err instanceof Error && err.name === 'ConversionCanceledError'))
-          toast.error('Couldn’t make a proxy', { description: `${getProject().assets[assetId]?.name ?? 'Video'}: ${err instanceof Error ? err.message : String(err)}` })
+          toast.error(tt('Couldn’t make a proxy'), { description: `${getProject().assets[assetId]?.name ?? 'Video'}: ${err instanceof Error ? err.message : String(err)}` })
       } finally {
         cancels.delete(assetId)
         setProgress(assetId, null)

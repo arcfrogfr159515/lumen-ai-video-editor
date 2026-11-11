@@ -19,6 +19,7 @@ import {
 } from '../shared/capture'
 import { abortExport, beginFile, finishExport } from './export'
 import { ensureDir, userDir } from './integrations/paths'
+import { mt } from './i18n'
 
 /**
  * Screen recording, the main process's half: which screens and windows there
@@ -70,7 +71,7 @@ export function captureFolder(): CaptureFolderState {
 }
 
 export async function pickCaptureFolder(win: BrowserWindow | null): Promise<CaptureFolderState> {
-  const opts: Electron.OpenDialogOptions = { title: 'Where recordings are saved', buttonLabel: 'Save recordings here', defaultPath: folder(), properties: ['openDirectory', 'createDirectory'] }
+  const opts: Electron.OpenDialogOptions = { title: mt('Where recordings are saved'), buttonLabel: mt('Save recordings here'), defaultPath: folder(), properties: ['openDirectory', 'createDirectory'] }
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
   if (!res.canceled && res.filePaths[0]) writeSettings({ folder: res.filePaths[0] })
   return captureFolder()
@@ -104,7 +105,7 @@ function helperPath(): string | null {
 function ask<T>(args: string[], timeout = 5000): Promise<T> {
   return new Promise((resolve, reject) => {
     const file = helperPath()
-    if (!file) return reject(new Error('The capture helper isn’t installed.'))
+    if (!file) return reject(new Error(mt('The capture helper isn’t installed.')))
     execFile(file, args, { timeout, maxBuffer: 16 * 1024 * 1024, windowsHide: true }, (err, stdout, stderr) => {
       if (err) return reject(new Error(helperError(String(stderr)) ?? err.message))
       try {
@@ -264,7 +265,7 @@ export async function arm(sourceId: string, systemAudio: boolean) {
     await listSources()
     source = listed.get(sourceId)
   }
-  if (!source) throw new Error('That screen or window isn’t there any more. Pick it again.')
+  if (!source) throw new Error(mt('That screen or window isn’t there any more. Pick it again.'))
   armed = { source, audio: systemAudio, at: Date.now() }
 }
 
@@ -307,9 +308,9 @@ const FRAME_BYTES = 8
 export function startAppAudio(key: string, target: { hwnd?: number; pid?: number }): Promise<AppAudioFormat> {
   return new Promise((resolve, reject) => {
     const file = helperPath()
-    if (!file) return reject(new Error('The capture helper isn’t installed, so one app’s sound can’t be recorded.'))
+    if (!file) return reject(new Error(mt('The capture helper isn’t installed, so one app’s sound can’t be recorded.')))
     const who = Number.isFinite(target.pid) ? ['--pid', String(Math.trunc(target.pid!))] : Number.isFinite(target.hwnd) ? ['--hwnd', String(Math.trunc(target.hwnd!))] : null
-    if (!who) return reject(new Error('Pick a window to record its sound.'))
+    if (!who) return reject(new Error(mt('Pick a window to record its sound.')))
     streams.get(key)?.stop()
     const child = stream(file, ['audio', ...who])
     let header: Buffer | null = Buffer.alloc(0)
@@ -356,7 +357,7 @@ export function startAppAudio(key: string, target: { hwnd?: number; pid?: number
       clearInterval(timer)
       flush()
       const said = helperError(errors)
-      if (!settled) reject(new Error(said ?? 'This app’s sound couldn’t be recorded.'))
+      if (!settled) reject(new Error(said ?? mt('This app’s sound couldn’t be recorded.')))
       settled = true
       endStream(key, said ?? (/process-exited/.test(errors) ? 'The app closed.' : 'ended'))
     })
@@ -435,7 +436,7 @@ function freeName(dir: string, base: string, ext: string) {
     const file = path.join(dir, `${base}${n === 1 ? '' : ` ${n}`}.${ext}`)
     if (!fs.existsSync(file) && !fs.existsSync(`${file}.partial`)) return file
   }
-  throw new Error('Couldn’t find a free file name for the recording.')
+  throw new Error(mt('Couldn’t find a free file name for the recording.'))
 }
 
 /** Files being written now: a crash leaves these behind, and they aren't offered for recovery while they're open. */
@@ -526,7 +527,7 @@ export function recoverable(): RecoverableRecording[] {
 function leftover(file: string) {
   const abs = path.resolve(String(file))
   const found = recoverable().find((r) => path.resolve(r.path) === abs)
-  if (!found) throw new Error('That recording isn’t there any more.')
+  if (!found) throw new Error(mt('That recording isn’t there any more.'))
   return abs
 }
 

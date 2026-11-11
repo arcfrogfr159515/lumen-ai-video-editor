@@ -3,6 +3,7 @@ import path from 'node:path'
 import { BrowserWindow, dialog } from 'electron'
 import { APP_IPC, type CollectResult } from '../shared/app'
 import { mediaPath } from './integrations/paths'
+import { mt } from './i18n'
 
 /**
  * Collect project: copies the project and every media file it uses into one
@@ -56,7 +57,7 @@ export async function collectProject(win: BrowserWindow | null, projectText: str
   // Automated tests collect into a fixed folder instead of asking.
   let parent = process.env.LUMEN_TEST_EXPORT_DIR
   if (!parent) {
-    const opts: Electron.OpenDialogOptions = { title: 'Collect project — choose where', buttonLabel: 'Collect here', properties: ['openDirectory', 'createDirectory'] }
+    const opts: Electron.OpenDialogOptions = { title: mt('Collect project — choose where'), buttonLabel: mt('Collect here'), properties: ['openDirectory', 'createDirectory'] }
     const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
     if (res.canceled || !res.filePaths[0]) return null
     parent = res.filePaths[0]

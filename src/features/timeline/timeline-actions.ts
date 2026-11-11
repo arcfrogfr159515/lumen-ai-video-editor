@@ -107,7 +107,7 @@ export const timelineActions = {
       if (res.ok) result = res.result as typeof result
       else error = res.error
     })
-    if (!result) return void toast.error(error ?? 'The edit couldn’t be made')
+    if (!result) return void toast.error(error ?? tt('The edit couldn’t be made'))
     ui().select([result.clipId])
     // The playhead goes to the end of what was just laid down, ready for the next edit.
     playback.pause()
@@ -152,7 +152,7 @@ export const timelineActions = {
     if (!ids.length) return void toast(tt('Select the clips to run it on'))
     const r = runMacro(macro, ids)
     const first = r.failed[0]
-    if (!r.done) toast.error(`“${macro.name}” couldn’t be done to ${ids.length === 1 ? 'that clip' : 'any of those clips'}`, { description: first ? `“${first.name}”: ${first.why}.` : undefined, duration: 7000 })
+    if (!r.done) toast.error(tt('“{0}” couldn’t be done to {1}', macro.name, ids.length === 1 ? tt('that clip') : tt('any of those clips')), { description: first ? `“${first.name}”: ${first.why}.` : undefined, duration: 7000 })
     else
       toast.success(`“${macro.name}” on ${plural(r.done, 'clip')}`, {
         description: first ? tt('{0} left as {1} — “{2}”: {3}.', plural(r.failed.length, 'clip'), r.failed.length === 1 ? tt('it was') : tt('they were'), first.name, first.why) : tt('One undo step.'),

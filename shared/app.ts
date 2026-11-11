@@ -183,6 +183,7 @@ export const APP_IPC = {
   gpuInfo: 'lumen:app:gpu-info',
   graphicsSet: 'lumen:app:graphics-set',
   relaunch: 'lumen:app:relaunch',
+  language: 'lumen:app:language',
 
   /** main → renderer */
   openRequest: 'lumen:project:open-request',
@@ -356,6 +357,8 @@ export interface AppAPI {
     setGraphics(patch: Partial<GraphicsSettings>): Promise<GpuInfo>
     /** Closes and reopens Lumen at once — save the project first. */
     relaunch(): void
+    /** Tells the main process which language the window speaks, for the system dialogs it shows. */
+    setLanguage(language: 'en' | 'zh-CN'): void
   }
   updates: {
     state(): Promise<UpdateState>

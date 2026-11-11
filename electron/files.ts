@@ -8,6 +8,7 @@ import type { MediaFileInfo, MediaFolder } from '../shared/app'
 import { serveIngest } from './ingest'
 import { steadyFetch } from './integrations/deadline'
 import { allowPath, ensureDir, fileUrl, isInside, MEDIA_SCHEME, mediaPath, mediaRoot, mediaUrl, userDir } from './integrations/paths'
+import { mt } from './i18n'
 
 /**
  * Media on disk: the lumen-media:// protocol (with byte ranges, so video can
@@ -180,22 +181,23 @@ export function registerMediaProtocol() {
 
 // ─── Dialogs & files ─────────────────────────────────────────────────────
 
-const MEDIA_FILTERS = [
-  { name: 'Media', extensions: [...VIDEO_EXT, ...AUDIO_EXT, ...IMAGE_EXT] },
-  { name: 'Video', extensions: VIDEO_EXT },
-  { name: 'Audio', extensions: AUDIO_EXT },
-  { name: 'Images', extensions: IMAGE_EXT },
+// Made when asked for: the language isn't known while this file is first read.
+const mediaFilters = () => [
+  { name: mt('Media'), extensions: [...VIDEO_EXT, ...AUDIO_EXT, ...IMAGE_EXT] },
+  { name: mt('Video'), extensions: VIDEO_EXT },
+  { name: mt('Audio'), extensions: AUDIO_EXT },
+  { name: mt('Images'), extensions: IMAGE_EXT },
 ]
 
 let lastImportDir: string | undefined
 
 export async function pickMedia(win: BrowserWindow | null): Promise<MediaFileInfo[]> {
   const opts: Electron.OpenDialogOptions = {
-    title: 'Import media',
-    buttonLabel: 'Import',
+    title: mt('Import media'),
+    buttonLabel: mt('Import'),
     defaultPath: lastImportDir,
     properties: ['openFile', 'multiSelections'],
-    filters: MEDIA_FILTERS,
+    filters: mediaFilters(),
   }
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
   if (res.canceled || !res.filePaths.length) return []
@@ -234,11 +236,11 @@ export function register(paths: string[]): MediaFileInfo[] {
 export async function relink(win: BrowserWindow | null, name: string): Promise<MediaFileInfo | null> {
   const ext = path.extname(name).replace('.', '').toLowerCase()
   const opts: Electron.OpenDialogOptions = {
-    title: `Locate “${name}”`,
-    buttonLabel: 'Relink',
+    title: mt('Locate “{0}”', name),
+    buttonLabel: mt('Relink'),
     defaultPath: lastImportDir,
     properties: ['openFile'],
-    filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }, ...MEDIA_FILTERS] : MEDIA_FILTERS,
+    filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }, ...mediaFilters()] : mediaFilters(),
   }
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
   if (res.canceled || !res.filePaths[0]) return null
@@ -267,7 +269,7 @@ export function saveMedia(folder: MediaFolder, fileName: string, data: Uint8Arra
   const abs = path.join(dir, `${base}-${randomUUID().slice(0, 8)}${ext}`)
   fs.writeFileSync(abs, data)
   const info = fileInfo(abs)
-  if (!info) throw new Error('Could not save the file')
+  if (!info) throw new Error(mt('Could not save the file'))
   return info
 }
 

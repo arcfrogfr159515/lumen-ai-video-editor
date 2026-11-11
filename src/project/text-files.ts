@@ -66,7 +66,7 @@ export async function copyText(text: string, done = 'Copied') {
     toast.success(done)
     return true
   } catch {
-    toast.error('Couldn’t reach the clipboard')
+    toast.error(tt('Couldn’t reach the clipboard'))
     return false
   }
 }

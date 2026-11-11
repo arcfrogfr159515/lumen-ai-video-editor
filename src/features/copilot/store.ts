@@ -365,7 +365,7 @@ export async function attachFiles(files: File[]) {
     try {
       for (const a of await importDropped(media)) attach({ id: a.id, name: a.name, kind: 'asset' })
     } catch (err) {
-      toast.error('Couldn’t add that to Media', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t add that to Media'), { description: err instanceof Error ? err.message : String(err) })
     }
   }
   await Promise.all(
@@ -387,7 +387,7 @@ export async function attachFiles(files: File[]) {
           useAttachments.setState((s) => ({ items: s.items.map((i) => (i.id === id ? { id, name: kept.name, kind: 'file', status: 'ready', file: kept, thumb } : i)) }))
         } catch (err) {
           useAttachments.setState((s) => ({ items: s.items.filter((i) => i.id !== id) }))
-          toast.error(`Couldn’t attach ${name}`, { description: (err instanceof Error ? err.message : String(err)).replace(/^Error invoking remote method '[^']+': (?:\w*Error: )?/, ''), duration: 8000 })
+          toast.error(tt('Couldn’t attach {0}', name), { description: (err instanceof Error ? err.message : String(err)).replace(/^Error invoking remote method '[^']+': (?:\w*Error: )?/, ''), duration: 8000 })
         }
       }),
   )

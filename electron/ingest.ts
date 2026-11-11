@@ -26,6 +26,7 @@ import {
 } from '../shared/ingest'
 import { abortExport, beginFile } from './export'
 import { ensureDir, MEDIA_SCHEME, mediaRoot, readJson, writeJson } from './integrations/paths'
+import { mt } from './i18n'
 
 /**
  * The frame-ingest receiver. Another app on this computer (GS Cinematic Studio
@@ -668,8 +669,8 @@ export function setIngestOptions(opts: { quality?: unknown; folder?: unknown }):
 /** Lets the user choose where masters are written (they are large; another drive is common). */
 export async function pickIngestFolder(win: BrowserWindow | null): Promise<IngestState> {
   const opts: Electron.OpenDialogOptions = {
-    title: 'Where should received clips be saved?',
-    buttonLabel: 'Save clips here',
+    title: mt('Where should received clips be saved?'),
+    buttonLabel: mt('Save clips here'),
     defaultPath: ingestState().folder,
     properties: ['openDirectory', 'createDirectory'],
   }
