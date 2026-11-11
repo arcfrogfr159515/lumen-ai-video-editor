@@ -148,7 +148,7 @@ function blocks(text: string) {
         )
       case 'table':
         return (
-          <div key={i} className="overflow-x-auto rounded-lg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)]">
+          <div key={i} className="overflow-x-auto rounded-lg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.07)]">
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr>
@@ -181,7 +181,7 @@ function blocks(text: string) {
 
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
   return (
-    <div className="overflow-hidden rounded-lg bg-black/35 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)]">
+    <div className="overflow-hidden rounded-lg bg-shade/35 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.07)]">
       <div className="flex h-7 items-center border-b border-line px-2.5 text-2xs/[inherit] text-fg-4">
         <span className="font-mono">{lang || tt('text')}</span>
         <CopyButton text={code} className="ml-auto" />
@@ -208,7 +208,7 @@ export function CopyButton({ text, className, label = 'Copy' }: { text: string |
       onClick={copy}
       aria-label={copied ? tt('Copied') : label}
       title={copied ? tt('Copied') : label}
-      className={cn('grid size-6 place-items-center rounded-md text-fg-4 transition-colors hover:bg-white/[0.07] hover:text-fg-2', className)}
+      className={cn('grid size-6 place-items-center rounded-md text-fg-4 transition-colors hover:bg-ink/[0.07] hover:text-fg-2', className)}
     >
       {copied ? <Check className="size-3.5 text-ok" strokeWidth={2.5} /> : <Copy className="size-3.5" />}
     </button>
@@ -238,14 +238,14 @@ export function inline(text: string): ReactNode[] {
     const at = m.index ?? 0
     if (at > last) out.push(text.slice(last, at))
     const [whole, code, image, link, bold, strike, italic, url] = m
-    if (code) out.push(<code key={k++} className="rounded bg-white/[0.08] px-1 py-px font-mono text-[0.86em] text-fg">{code.slice(1, -1)}</code>)
+    if (code) out.push(<code key={k++} className="rounded bg-ink/[0.08] px-1 py-px font-mono text-[0.86em] text-fg">{code.slice(1, -1)}</code>)
     else if (image) {
       const [, alt, src] = /!\[([^\]]*)\]\(([^)\s]+)\)/.exec(image)!
       const href = safeUrl(src)
       out.push(
         href ? (
           <a key={k++} href={href} target="_blank" rel="noreferrer noopener" className="my-1 block w-fit">
-            <img src={href} alt={alt} loading="lazy" className="max-h-56 max-w-full rounded-lg ring-1 ring-white/10" />
+            <img src={href} alt={alt} loading="lazy" className="max-h-56 max-w-full rounded-lg ring-1 ring-ink/10" />
           </a>
         ) : (
           alt

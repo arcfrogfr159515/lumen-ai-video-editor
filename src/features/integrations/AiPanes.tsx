@@ -82,7 +82,7 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
   return (
     <Card className="p-3.5">
       <div className="flex items-center gap-3">
-        <span className={cn('grid size-8 shrink-0 place-items-center rounded-lg [&_svg]:size-4', connected ? 'bg-accent/15 text-accent-2' : 'bg-white/[0.05] text-fg-3')}>
+        <span className={cn('grid size-8 shrink-0 place-items-center rounded-lg [&_svg]:size-4', connected ? 'bg-accent/15 text-accent-2' : 'bg-ink/[0.05] text-fg-3')}>
           {spec.local ? <Server /> : <KeyRound />}
         </span>
         <div className="min-w-0 flex-1">
@@ -258,7 +258,7 @@ function LocalAgentCard({ id }: { id: LocalAgentId }) {
   return (
     <Card className="p-3.5">
       <div className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[0.05] text-fg-2 [&_svg]:size-4">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-ink/[0.05] text-fg-2 [&_svg]:size-4">
           <Terminal />
         </span>
         <div className="min-w-0 flex-1">

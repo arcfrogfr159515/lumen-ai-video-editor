@@ -283,20 +283,20 @@ export function ExportDialog() {
       <div className="grid grid-cols-[1fr_1.15fr] gap-6 px-5 pt-1 pb-5">
         {/* Preview */}
         <div>
-          <div className="relative aspect-video overflow-hidden rounded-xl bg-black shadow-[0_0_0_1px_rgb(255_255_255/0.08),0_16px_40px_-16px_rgb(0_0_0/0.9)] [background-image:repeating-conic-gradient(#1a1a1a_0_25%,#101010_0_50%)] [background-size:16px_16px]">
+          <div className="relative aspect-video overflow-hidden rounded-xl bg-shade shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08),0_16px_40px_-16px_rgb(from_var(--color-shade)_r_g_b/0.9)] [background-image:repeating-conic-gradient(#1a1a1a_0_25%,#101010_0_50%)] [background-size:16px_16px]">
             {preview && <img src={preview} alt="" className="h-full w-full object-contain" />}
             <AnimatePresence>
               {state.kind !== 'idle' && state.kind !== 'error' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 grid place-items-center bg-black/45 backdrop-blur-[1px]">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 grid place-items-center bg-shade/45 backdrop-blur-[1px]">
                   {state.kind === 'running' ? (
                     <div className="text-center">
-                      <div className="text-3xl font-semibold tracking-tight text-white tabular">{Math.round(pct * 100)}%</div>
-                      <div className="mt-1 text-xs text-white/70 tabular">
+                      <div className="text-3xl font-semibold tracking-tight text-on-media tabular">{Math.round(pct * 100)}%</div>
+                      <div className="mt-1 text-xs text-on-media/70 tabular">
                         {progress?.phase === 'rendering' ? `${info.video ? tt('Frame') : tt('Block')} ${progress.done} / ${progress.total}` : progress?.message}
                       </div>
                     </div>
                   ) : (
-                    <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 22 }} className="grid size-14 place-items-center rounded-full bg-ok text-black shadow-[0_0_40px_rgb(60_207_145/0.5)]">
+                    <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 22 }} className="grid size-14 place-items-center rounded-full bg-ok text-ink-fg shadow-[0_0_40px_rgb(from_var(--color-ok)_r_g_b/0.5)]">
                       <Check className="size-7" strokeWidth={3} />
                     </motion.div>
                   )}
@@ -426,10 +426,10 @@ export function ExportDialog() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 border-t border-line bg-black/15 px-5 py-3.5">
+      <div className="flex items-center gap-3 border-t border-line bg-shade/15 px-5 py-3.5">
         {state.kind === 'running' ? (
           <div className="min-w-0 flex-1">
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+            <div className="h-1.5 overflow-hidden rounded-full bg-ink/[0.08]">
               <div className="h-full rounded-full bg-gradient-to-r from-accent to-ai-2 transition-[width] duration-150" style={{ width: `${pct * 100}%` }} />
             </div>
             <div className="mt-1.5 flex items-center gap-1.5 text-2xs text-fg-4">
@@ -514,7 +514,7 @@ export function ExportDialog() {
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white/[0.035] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+    <div className="rounded-lg bg-ink/[0.035] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
       <div className="text-2xs text-fg-4">{label}</div>
       <div className="text-sm font-semibold text-fg tabular">{value}</div>
     </div>

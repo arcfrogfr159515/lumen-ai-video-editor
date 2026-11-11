@@ -76,13 +76,13 @@ function Body() {
           </Button>
         </div>
         {rules.length === 0 ? (
-          <p className="rounded-lg bg-white/[0.03] px-3 py-3 text-xs leading-relaxed text-fg-4">
+          <p className="rounded-lg bg-ink/[0.03] px-3 py-3 text-xs leading-relaxed text-fg-4">
             {tt('No rules. A rule says “clips whose source, speaker, camera, track, name, tag or kind matches this are that colour” — the first rule that matches wins, before the automatic colours above.')}
           </p>
         ) : (
           <ul className="space-y-1.5">
             {rules.map((rule, i) => (
-              <li key={rule.id} className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] p-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+              <li key={rule.id} className="flex items-center gap-1.5 rounded-lg bg-ink/[0.03] p-1.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
                 <ColorPick value={rule.color} onChange={(color) => setRule(rule.id, { color })} />
                 <Select
                   aria-label={tt('What the rule looks at')}
@@ -114,7 +114,7 @@ function Body() {
           <h3 className="mb-2 text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('On the timeline now')}</h3>
           <ul className="flex flex-wrap gap-1.5">
             {legend.map((row) => (
-              <li key={`${row.color}|${row.label}`} className="flex h-6 max-w-full items-center gap-1.5 rounded-full bg-white/[0.04] pr-2 pl-1.5 text-2xs text-fg-2">
+              <li key={`${row.color}|${row.label}`} className="flex h-6 max-w-full items-center gap-1.5 rounded-full bg-ink/[0.04] pr-2 pl-1.5 text-2xs text-fg-2">
                 <span className="size-3 shrink-0 rounded-full" style={{ background: labelCss(row.color) }} />
                 <span className="truncate">{row.label}</span>
                 <span className="shrink-0 text-fg-4 tabular">{row.clips}</span>
@@ -146,7 +146,7 @@ function RuleValue({ rule, onChange }: { rule: ColorRule; onChange: (value: stri
         e.stopPropagation()
         if (e.key === 'Enter') e.currentTarget.blur()
       }}
-      className="h-7 min-w-0 flex-1 rounded-md bg-white/[0.05] px-2 text-sm text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
+      className="h-7 min-w-0 flex-1 rounded-md bg-ink/[0.05] px-2 text-sm text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
     />
   )
 }
@@ -155,7 +155,7 @@ function ColorPick({ value, onChange }: { value: LabelColor; onChange: (color: L
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" aria-label={tt('Colour: {0}', value)} className="size-6 shrink-0 rounded-md ring-1 ring-white/15 outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-accent/60" style={{ background: labelCss(value) }} />
+        <button type="button" aria-label={tt('Colour: {0}', value)} className="size-6 shrink-0 rounded-md ring-1 ring-ink/15 outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-accent/60" style={{ background: labelCss(value) }} />
       </PopoverTrigger>
       <PopoverContent side="bottom" align="start" className="w-auto p-2">
         <div className="grid grid-cols-5 gap-1.5">
@@ -166,7 +166,7 @@ function ColorPick({ value, onChange }: { value: LabelColor; onChange: (color: L
                 aria-label={c.name}
                 title={c.name}
                 onClick={() => onChange(c.id)}
-                className={cn('size-6 rounded-md ring-1 ring-white/15 outline-none transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-accent/60', value === c.id && 'ring-2 ring-accent')}
+                className={cn('size-6 rounded-md ring-1 ring-ink/15 outline-none transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-accent/60', value === c.id && 'ring-2 ring-accent')}
                 style={{ background: c.css }}
               />
             </PopoverClose>

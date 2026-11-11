@@ -84,8 +84,8 @@ export function CropSection({ clip }: { clip: Clip }) {
               className={cn(
                 'h-7 rounded-md text-2xs font-medium tabular transition-colors',
                 (shape?.id ?? (clip.crop ? 'free' : '')) === s.id
-                  ? 'bg-accent/18 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.4)]'
-                  : 'bg-white/[0.04] text-fg-3 hover:bg-white/[0.07] hover:text-fg',
+                  ? 'bg-accent/18 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.4)]'
+                  : 'bg-ink/[0.04] text-fg-3 hover:bg-ink/[0.07] hover:text-fg',
               )}
             >
               {s.label}

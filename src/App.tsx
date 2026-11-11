@@ -92,7 +92,7 @@ export function App() {
               toast: 'popover flex w-[360px] items-center gap-3 rounded-xl px-3.5 py-3 text-sm text-fg',
               title: 'font-medium text-fg',
               description: 'text-xs text-fg-3 whitespace-pre-line',
-              actionButton: 'ml-auto shrink-0 rounded-md bg-white/[0.08] px-2 py-1 text-xs font-medium text-fg hover:bg-white/[0.14]',
+              actionButton: 'ml-auto shrink-0 rounded-md bg-ink/[0.08] px-2 py-1 text-xs font-medium text-fg hover:bg-ink/[0.14]',
               icon: 'relative grid size-5 shrink-0 place-items-center text-accent-2',
             },
           }}

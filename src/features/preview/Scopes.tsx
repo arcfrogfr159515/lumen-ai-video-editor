@@ -65,7 +65,7 @@ export function Scopes() {
           { value: 'histogram', label: tt('Histo') },
         ]}
       />
-      <canvas ref={out} width={276} height={200} className="w-full rounded-md shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]" />
+      <canvas ref={out} width={276} height={200} className="w-full rounded-md shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" />
     </div>
   )
 }

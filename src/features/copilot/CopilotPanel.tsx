@@ -158,7 +158,7 @@ export function CopilotPanel() {
               exit={{ opacity: 0, y: 6 }}
               onClick={toBottom}
               aria-label={tt('Go to the latest')}
-              className="popover absolute bottom-3 left-1/2 flex h-7 -translate-x-1/2 items-center gap-1.5 rounded-full pr-3 pl-2 text-2xs font-medium text-fg-2 shadow-[0_8px_24px_-8px_rgb(0_0_0/0.9)] hover:text-fg"
+              className="popover absolute bottom-3 left-1/2 flex h-7 -translate-x-1/2 items-center gap-1.5 rounded-full pr-3 pl-2 text-2xs font-medium text-fg-2 shadow-[0_8px_24px_-8px_rgb(from_var(--color-shade)_r_g_b/0.9)] hover:text-fg"
             >
               <ArrowDown className="size-3.5" />
               {fresh ? tt('New below') : tt('Latest')}
@@ -184,7 +184,7 @@ function StatusBar() {
       <EffortPicker />
       <Popover>
         <PopoverTrigger asChild>
-          <button type="button" className="ml-auto flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 transition-colors hover:bg-white/[0.06] hover:text-fg">
+          <button type="button" className="ml-auto flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 transition-colors hover:bg-ink/[0.06] hover:text-fg">
             <PlugZap className="size-3" />
             {ttx('{0} tools', tools.length)}
           </button>
@@ -196,7 +196,7 @@ function StatusBar() {
           </div>
           <div className="max-h-72 overflow-y-auto p-1.5">
             {tools.map((t) => (
-              <div key={t.name} className="rounded-md px-2 py-1.5 hover:bg-white/[0.04]">
+              <div key={t.name} className="rounded-md px-2 py-1.5 hover:bg-ink/[0.04]">
                 <div className="font-mono text-xs/[inherit] text-accent-2">{t.name}</div>
                 <div className="line-clamp-2 text-2xs leading-snug text-fg-4">{t.description}</div>
               </div>
@@ -247,7 +247,7 @@ function ChatsMenu() {
               newChat()
               setOpen(false)
             }}
-            className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-1 text-2xs font-medium text-fg-3 hover:bg-white/[0.06] hover:text-fg disabled:opacity-40"
+            className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-1 text-2xs font-medium text-fg-3 hover:bg-ink/[0.06] hover:text-fg disabled:opacity-40"
           >
             <Plus className="size-3" />{' '}{tt('New chat')}
           </button>
@@ -295,12 +295,12 @@ function ChatRow({ chat, active, disabled, onOpen }: { chat: Chat; active: boole
             e.stopPropagation()
             if (e.key === 'Escape') setEditing(false)
           }}
-          className="h-8 w-full rounded-md bg-white/[0.06] px-2 text-xs text-fg outline-none ring-1 ring-accent/50"
+          className="h-8 w-full rounded-md bg-ink/[0.06] px-2 text-xs text-fg outline-none ring-1 ring-accent/50"
         />
       </form>
     )
   return (
-    <div className={cn('group/chat flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/[0.05]', active && 'bg-white/[0.06]')}>
+    <div className={cn('group/chat flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-ink/[0.05]', active && 'bg-ink/[0.06]')}>
       <button type="button" disabled={disabled && !active} onClick={onOpen} className="min-w-0 flex-1 text-left disabled:opacity-50">
         <div className={cn('truncate text-xs', active ? 'font-medium text-fg' : 'text-fg-2')}>{chatTitle(chat)}</div>
         <div className="text-2xs/[inherit] text-fg-4">
@@ -314,7 +314,7 @@ function ChatRow({ chat, active, disabled, onOpen }: { chat: Chat; active: boole
           setName(chatTitle(chat))
           setEditing(true)
         }}
-        className="grid size-6 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 transition-opacity group-hover/chat:opacity-100 hover:bg-white/[0.08] hover:text-fg-2"
+        className="grid size-6 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 transition-opacity group-hover/chat:opacity-100 hover:bg-ink/[0.08] hover:text-fg-2"
       >
         <Pencil className="size-3" />
       </button>
@@ -323,7 +323,7 @@ function ChatRow({ chat, active, disabled, onOpen }: { chat: Chat; active: boole
         aria-label={tt('Delete chat')}
         disabled={disabled && active}
         onClick={() => deleteChat(chat.id)}
-        className="grid size-6 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 transition-opacity group-hover/chat:opacity-100 hover:bg-white/[0.08] hover:text-danger disabled:opacity-0"
+        className="grid size-6 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 transition-opacity group-hover/chat:opacity-100 hover:bg-ink/[0.08] hover:text-danger disabled:opacity-0"
       >
         <Trash className="size-3" />
       </button>
@@ -335,8 +335,8 @@ function Welcome() {
   return (
     <div className="flex min-h-full flex-col pt-8 pb-2">
       <div className="relative mx-auto mb-5 grid size-16 place-items-center">
-        <div className="absolute inset-0 animate-aurora rounded-full bg-[conic-gradient(from_90deg,#d6ee00,#5ef2a6,#36d6f2,#d6ee00)] opacity-40 blur-xl" />
-        <div className="relative grid size-14 place-items-center rounded-2xl bg-surface-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1),0_10px_30px_-8px_rgb(0_0_0/0.8)]">
+        <div className="absolute inset-0 animate-aurora rounded-full bg-[conic-gradient(from_90deg,var(--color-accent),var(--color-ai-2),var(--color-ai-3),var(--color-accent))] opacity-40 blur-xl" />
+        <div className="relative grid size-14 place-items-center rounded-2xl bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.1),0_10px_30px_-8px_rgb(from_var(--color-shade)_r_g_b/0.8)]">
           <AiSparkle className="size-7" />
         </div>
       </div>
@@ -352,7 +352,7 @@ function Welcome() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.04 * i, type: 'spring', stiffness: 400, damping: 30 }}
             onClick={() => void sendPrompt(s.prompt)}
-            className="group rounded-xl bg-white/[0.035] p-3 text-left shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] outline-none transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:bg-white/[0.06] hover:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)] focus-visible:ring-2 focus-visible:ring-accent/60"
+            className="group rounded-xl bg-ink/[0.035] p-3 text-left shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] outline-none transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:bg-ink/[0.06] hover:shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.1)] focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             <div className="text-sm leading-snug font-medium text-fg">{s.title}</div>
             <div className="mt-0.5 text-2xs leading-snug text-fg-4 group-hover:text-fg-3">{s.subtitle}</div>
@@ -379,7 +379,7 @@ function RecentChats() {
             key={c.id}
             type="button"
             onClick={() => openChat(c.id)}
-            className="flex w-full items-center gap-2 rounded-lg bg-white/[0.03] px-3 py-2 text-left shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] transition-colors hover:bg-white/[0.06]"
+            className="flex w-full items-center gap-2 rounded-lg bg-ink/[0.03] px-3 py-2 text-left shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] transition-colors hover:bg-ink/[0.06]"
           >
             <History className="size-3.5 shrink-0 text-fg-4" />
             <span className="min-w-0 flex-1 truncate text-xs text-fg-2">{chatTitle(c)}</span>
@@ -404,12 +404,12 @@ function FileBadge({ file }: { file: FileChip }) {
   }
   if (file.kind === 'image')
     return (
-      <button type="button" title={tt('{0} — click to enlarge', file.name)} onClick={() => void open()} className="cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-white/10 transition-shadow hover:ring-accent/60">
-        {file.thumb ? <img src={file.thumb} alt={file.name} className="block h-16 w-auto max-w-[160px] object-cover" draggable={false} /> : <span className="grid h-16 w-20 place-items-center bg-white/[0.05] text-fg-4"><ImageIcon className="size-4" /></span>}
+      <button type="button" title={tt('{0} — click to enlarge', file.name)} onClick={() => void open()} className="cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-ink/10 transition-shadow hover:ring-accent/60">
+        {file.thumb ? <img src={file.thumb} alt={file.name} className="block h-16 w-auto max-w-[160px] object-cover" draggable={false} /> : <span className="grid h-16 w-20 place-items-center bg-ink/[0.05] text-fg-4"><ImageIcon className="size-4" /></span>}
       </button>
     )
   return (
-    <span className="flex max-w-[220px] items-center gap-1.5 rounded-lg bg-white/[0.05] px-2 py-1.5 text-2xs text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+    <span className="flex max-w-[220px] items-center gap-1.5 rounded-lg bg-ink/[0.05] px-2 py-1.5 text-2xs text-fg-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
       <FileText className="size-3.5 shrink-0 text-fg-3" />
       <span className="min-w-0">
         <span className="block truncate font-medium">{file.name}</span>
@@ -427,7 +427,7 @@ function UserBubble({ message }: { message: Message }) {
       {message.context && message.context.length > 0 && (
         <div className="flex flex-wrap justify-end gap-1">
           {message.context.map((c) => (
-            <span key={c.id} className="rounded-md bg-white/[0.05] px-1.5 py-0.5 text-2xs text-fg-3">
+            <span key={c.id} className="rounded-md bg-ink/[0.05] px-1.5 py-0.5 text-2xs text-fg-3">
               ◧ {c.name}
             </span>
           ))}
@@ -442,7 +442,7 @@ function UserBubble({ message }: { message: Message }) {
       )}
       <div className="flex max-w-[88%] items-start gap-1">
         <CopyButton text={message.text} label={tt('Copy request')} className="mt-1 opacity-0 transition-opacity group-hover/user:opacity-100" />
-        <div className="min-w-0 rounded-2xl rounded-br-md bg-white/[0.075] px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] [overflow-wrap:anywhere]">
+        <div className="min-w-0 rounded-2xl rounded-br-md bg-ink/[0.075] px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] [overflow-wrap:anywhere]">
           {message.text}
         </div>
       </div>
@@ -517,13 +517,13 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
   const live = p.status === 'writing' ? tt('Writing the request{0}', p.chars ? (' ' + tt('— {0} characters so far', p.chars.toLocaleString())) : '…') : p.status === 'running' ? p.progress : undefined
   const details = Boolean(p.input || p.output)
   return (
-    <motion.div layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cn('rounded-lg', busy && 'bg-white/[0.04]', undone && 'opacity-50')}>
+    <motion.div layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cn('rounded-lg', busy && 'bg-ink/[0.04]', undone && 'opacity-50')}>
       <button
         type="button"
         disabled={!details}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className={cn('flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left', details && 'hover:bg-white/[0.035]')}
+        className={cn('flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left', details && 'hover:bg-ink/[0.035]')}
       >
         <span className="mt-[3px] grid size-3.5 shrink-0 place-items-center">{icon[p.status]}</span>
         <span className="min-w-0 flex-1">
@@ -557,7 +557,7 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
                   type="button"
                   title={tt('What the Copilot looked at — click to enlarge')}
                   onClick={() => usePicture.setState({ src })}
-                  className="cursor-zoom-in overflow-hidden rounded-md ring-1 ring-white/10 transition-shadow hover:ring-accent/60"
+                  className="cursor-zoom-in overflow-hidden rounded-md ring-1 ring-ink/10 transition-shadow hover:ring-accent/60"
                 >
                   <img src={src} alt="" className="block h-16 w-auto max-w-[220px] object-cover" draggable={false} />
                 </button>
@@ -574,7 +574,7 @@ function Detail({ label, text, bad }: { label: string; text: string; bad?: boole
   return (
     <div className="relative">
       <div className="mb-0.5 text-2xs/[inherit] font-semibold tracking-wider text-fg-4 uppercase">{label}</div>
-      <pre className={cn('max-h-56 overflow-auto rounded-md bg-black/30 p-2 font-mono text-2xs leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]', bad ? 'text-danger' : 'text-fg-3')}>{text}</pre>
+      <pre className={cn('max-h-56 overflow-auto rounded-md bg-shade/30 p-2 font-mono text-2xs leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]', bad ? 'text-danger' : 'text-fg-3')}>{text}</pre>
       <CopyButton text={text} label={tt('Copy what {0}', label === tt('Sent') ? tt('was sent') : tt('came back'))} className="absolute top-0 right-0" />
     </div>
   )
@@ -611,7 +611,7 @@ function AssistantMessage({ message: m }: { message: Message }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2.5">
-      <div className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg bg-surface-4 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]">
+      <div className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg bg-surface-4 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)]">
         <AiSparkle className="size-3.5" />
       </div>
       <div className="group/reply min-w-0 flex-1 text-sm leading-relaxed text-fg-2">
@@ -629,7 +629,7 @@ function AssistantMessage({ message: m }: { message: Message }) {
                 </div>
               )
             return (
-              <div key={p.id} className="overflow-hidden rounded-xl bg-black/20 p-1 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+              <div key={p.id} className="overflow-hidden rounded-xl bg-shade/20 p-1 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
                 {p.items.map((t) => (
                   <ToolStep key={t.id} part={t} undone={m.undone} now={now} />
                 ))}
@@ -638,7 +638,7 @@ function AssistantMessage({ message: m }: { message: Message }) {
                   <div className="flex h-7 items-center gap-2 border-t border-line px-2 text-2xs">
                     <span className="font-medium text-fg-3">{m.undone ? tt('Reverted') : tt('Edited the timeline')}</span>
                     {canUndo && !busy && (
-                      <button type="button" onClick={() => undoMessage(m.id)} className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-fg-3 transition-colors hover:bg-white/[0.07] hover:text-fg">
+                      <button type="button" onClick={() => undoMessage(m.id)} className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-fg-3 transition-colors hover:bg-ink/[0.07] hover:text-fg">
                         <RotateCcw className="size-3" />
                         {tt('Undo all')}
                       </button>
@@ -690,7 +690,7 @@ function AssistantMessage({ message: m }: { message: Message }) {
                 key={s}
                 type="button"
                 onClick={() => void sendPrompt(s)}
-                className="rounded-full bg-white/[0.04] px-2.5 py-1 text-xs text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)] transition-colors hover:bg-white/[0.08] hover:text-fg"
+                className="rounded-full bg-ink/[0.04] px-2.5 py-1 text-xs text-fg-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.07)] transition-colors hover:bg-ink/[0.08] hover:text-fg"
               >
                 {s}
               </button>
@@ -733,7 +733,7 @@ function LinkPreviews({ text }: { text: string }) {
           href={c.url}
           target="_blank"
           rel="noreferrer noopener"
-          className="flex overflow-hidden rounded-xl bg-white/[0.03] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)] transition-colors hover:bg-white/[0.06]"
+          className="flex overflow-hidden rounded-xl bg-ink/[0.03] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.07)] transition-colors hover:bg-ink/[0.06]"
         >
           {c.image && <img src={c.image} alt="" loading="lazy" className="h-[68px] w-[104px] shrink-0 object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />}
           <div className="min-w-0 flex-1 px-3 py-2">
@@ -782,7 +782,7 @@ function AgentError({ error }: { error: NonNullable<Message['error']> }) {
       </button>
     )
   return (
-    <div className="mt-2.5 flex gap-2 rounded-lg bg-danger/10 px-3 py-2 text-xs leading-relaxed text-danger shadow-[inset_0_0_0_1px_rgb(255_93_93/0.18)]">
+    <div className="mt-2.5 flex gap-2 rounded-lg bg-danger/10 px-3 py-2 text-xs leading-relaxed text-danger shadow-[inset_0_0_0_1px_rgb(from_var(--color-danger)_r_g_b/0.18)]">
       <CircleAlert className="mt-0.5 size-3.5 shrink-0" />
       <div className="min-w-0 break-words">
         {error.message} {action && <span className="ml-1 text-fg-2">{action}</span>}
@@ -813,14 +813,14 @@ function PictureViewer() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] grid cursor-zoom-out place-items-center bg-black/80 p-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] grid cursor-zoom-out place-items-center bg-shade/80 p-8 backdrop-blur-sm"
         >
           <motion.img
             src={src}
             alt={tt('What the Copilot looked at')}
             initial={{ scale: 0.96 }}
             animate={{ scale: 1 }}
-            className="max-h-full max-w-full rounded-xl shadow-2xl ring-1 ring-white/10"
+            className="max-h-full max-w-full rounded-xl shadow-2xl ring-1 ring-ink/10"
             draggable={false}
           />
         </motion.button>
@@ -838,14 +838,14 @@ function QueueList() {
   const busy = useCopilot((s) => s.busy)
   if (!queue.length) return null
   return (
-    <div className="mb-2 overflow-hidden rounded-xl bg-white/[0.035] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+    <div className="mb-2 overflow-hidden rounded-xl bg-ink/[0.035] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
       <div className="flex h-7 items-center gap-1.5 border-b border-line px-2.5 text-2xs text-fg-4">
         <ListPlus className="size-3" />
         {held ? tt('Waiting — the last reply failed. Send the next one when you’re ready.') : busy ? tt('{0} queued — {1} when this reply is done', queue.length, queue.length === 1 ? tt('it goes') : tt('they go')) : tt('{0} queued', queue.length)}
       </div>
       <div className="max-h-28 overflow-y-auto p-1">
         {queue.map((q, i) => (
-          <div key={q.id} className="group/q flex items-center gap-1 rounded-lg py-1 pr-1 pl-2 hover:bg-white/[0.04]">
+          <div key={q.id} className="group/q flex items-center gap-1 rounded-lg py-1 pr-1 pl-2 hover:bg-ink/[0.04]">
             <span className="w-3 shrink-0 text-2xs/[inherit] text-fg-4 tabular">{i + 1}</span>
             <span className="min-w-0 flex-1 truncate text-xs text-fg-2">
               {q.text}
@@ -930,7 +930,7 @@ function Composer() {
         }}
         onDragLeave={() => setDropping(false)}
         onDrop={onDrop}
-        className={cn('ring-ai relative rounded-2xl bg-surface-2 p-2 shadow-[0_-12px_30px_-18px_rgb(0_0_0/0.9)]', dropping && 'shadow-[0_0_0_2px_var(--color-accent)]')}
+        className={cn('ring-ai relative rounded-2xl bg-surface-2 p-2 shadow-[0_-12px_30px_-18px_rgb(from_var(--color-shade)_r_g_b/0.9)]', dropping && 'shadow-[0_0_0_2px_var(--color-accent)]')}
       >
         {dropping && (
           <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-2xl bg-surface-2/90 text-xs font-medium text-accent-2">{tt('Drop to attach — pictures, PDFs, documents, video or audio')}</div>
@@ -938,7 +938,7 @@ function Composer() {
         {attachments.length > 0 && (
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5 px-1">
             {attachments.map((a) => (
-              <span key={a.id} className="flex items-center gap-1.5 rounded-lg bg-white/[0.06] py-0.5 pr-0.5 pl-1 text-2xs text-fg-2">
+              <span key={a.id} className="flex items-center gap-1.5 rounded-lg bg-ink/[0.06] py-0.5 pr-0.5 pl-1 text-2xs text-fg-2">
                 {a.kind === 'file' && a.thumb ? (
                   <img src={a.thumb} alt="" className="size-6 rounded-md object-cover" draggable={false} />
                 ) : a.kind === 'file' && a.status !== 'ready' ? (
@@ -1011,7 +1011,7 @@ function Composer() {
                 aria-label={tt('Stop')}
                 title={tt('Stop the reply')}
                 onClick={() => stopCopilot()}
-                className="flex h-7 items-center gap-1.5 rounded-full bg-white/[0.1] pr-2.5 pl-2 text-2xs font-medium text-fg transition-colors hover:bg-white/[0.16]"
+                className="flex h-7 items-center gap-1.5 rounded-full bg-ink/[0.1] pr-2.5 pl-2 text-2xs font-medium text-fg transition-colors hover:bg-ink/[0.16]"
               >
                 <Square className="size-2.5" fill="currentColor" />{' '}{tt('Stop')}
               </button>
@@ -1025,7 +1025,7 @@ function Composer() {
                 disabled={!canSend}
                 className={cn(
                   'grid size-7 place-items-center rounded-full transition-[background,transform,opacity] duration-200',
-                  canSend ? 'bg-ai text-accent-fg shadow-[0_4px_14px_-4px_rgb(94_242_166/0.6)] hover:scale-105' : 'bg-white/[0.07] text-fg-4',
+                  canSend ? 'bg-ai text-accent-fg shadow-[0_4px_14px_-4px_rgb(from_var(--color-ai-2)_r_g_b/0.6)] hover:scale-105' : 'bg-ink/[0.07] text-fg-4',
                 )}
               >
                 {busy ? <ListPlus className="size-4" strokeWidth={2.25} /> : <ArrowUp className="size-4" strokeWidth={2.5} />}
@@ -1063,8 +1063,8 @@ function AttachMenu() {
             setOpen(false)
           }}
         />
-        <button type="button" onClick={() => input.current?.click()} className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-xs text-fg-2 hover:bg-white/[0.06] hover:text-fg">
-          <span className="grid h-7 w-11 shrink-0 place-items-center rounded-md bg-white/[0.05] text-fg-3">
+        <button type="button" onClick={() => input.current?.click()} className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-xs text-fg-2 hover:bg-ink/[0.06] hover:text-fg">
+          <span className="grid h-7 w-11 shrink-0 place-items-center rounded-md bg-ink/[0.05] text-fg-3">
             <Upload className="size-3.5" />
           </span>
           <span className="min-w-0">
@@ -1082,9 +1082,9 @@ function AttachMenu() {
                 key={a.id}
                 type="button"
                 onClick={() => attach({ id: a.id, name: a.name, kind: 'asset' })}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-fg-2 hover:bg-white/[0.06] hover:text-fg"
+                className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-fg-2 hover:bg-ink/[0.06] hover:text-fg"
               >
-                <span className="grid h-7 w-11 shrink-0 place-items-center overflow-hidden rounded-md bg-white/[0.05] text-fg-4 [&_svg]:size-3.5">
+                <span className="grid h-7 w-11 shrink-0 place-items-center overflow-hidden rounded-md bg-ink/[0.05] text-fg-4 [&_svg]:size-3.5">
                   {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : a.kind === 'audio' ? <AudioLines /> : a.kind === 'video' ? <Video /> : <ImageIcon />}
                 </span>
                 <span className="min-w-0 flex-1 truncate">{a.name}</span>

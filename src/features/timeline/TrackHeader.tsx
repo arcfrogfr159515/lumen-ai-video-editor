@@ -88,7 +88,7 @@ export function TrackHeader({ track }: { track: Track }) {
         <GripVertical />
       </span>
       <span className="h-[55%] w-[3px] shrink-0 rounded-full" style={{ background: trackColor(track), opacity: visibilityOn || (soloing && !track.solo) ? 0.35 : 0.9 }} />
-      <span className={cn('grid size-6 shrink-0 place-items-center rounded-md bg-white/[0.05] text-fg-3 [&_svg]:size-3.5', compact && 'size-5')}>
+      <span className={cn('grid size-6 shrink-0 place-items-center rounded-md bg-ink/[0.05] text-fg-3 [&_svg]:size-3.5', compact && 'size-5')}>
         <TrackIcon track={track} />
       </span>
       <div className="min-w-0 flex-1" onDoubleClick={() => (setDraft(track.name), setRenaming(true))}>
@@ -104,7 +104,7 @@ export function TrackHeader({ track }: { track: Track }) {
               if (e.key === 'Enter') commit()
               if (e.key === 'Escape') setRenaming(false)
             }}
-            className="h-6 w-full rounded bg-white/[0.07] px-1.5 text-sm text-fg outline-none ring-1 ring-accent/60"
+            className="h-6 w-full rounded bg-ink/[0.07] px-1.5 text-sm text-fg outline-none ring-1 ring-accent/60"
           />
         ) : (
           <>

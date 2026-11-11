@@ -144,7 +144,7 @@ export function Generate3D() {
               onClick={() => setTemplate(id)}
               className={cn(
                 'flex flex-col items-center gap-1 rounded-[10px] py-2 text-2xs font-medium transition-colors [&_svg]:size-4',
-                template === id ? 'bg-white/[0.08] text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]' : 'text-fg-3 hover:bg-white/[0.04] hover:text-fg-2',
+                template === id ? 'bg-ink/[0.08] text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)]' : 'text-fg-3 hover:bg-ink/[0.04] hover:text-fg-2',
               )}
             >
               {icon}
@@ -162,7 +162,7 @@ export function Generate3D() {
                   <button key={m.id} type="button" onClick={() => setMaterial(m.id)} className="group/mat flex flex-col items-center gap-1">
                     <span
                       className={cn(
-                        'size-8 rounded-full shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12),0_4px_10px_-4px_rgb(0_0_0/0.8)] transition-transform group-hover/mat:scale-105',
+                        'size-8 rounded-full shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.12),0_4px_10px_-4px_rgb(from_var(--color-shade)_r_g_b/0.8)] transition-transform group-hover/mat:scale-105',
                         material === m.id && 'ring-2 ring-accent ring-offset-2 ring-offset-surface',
                       )}
                       style={{ background: m.swatch, ['--c' as string]: color }}
@@ -184,7 +184,7 @@ export function Generate3D() {
                     key={f.id}
                     type="button"
                     onClick={() => setFont(f.id)}
-                    className={cn('h-9 rounded-lg text-md transition-colors', font === f.id ? 'bg-white/[0.1] text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)]' : 'text-fg-3 hover:bg-white/[0.04]')}
+                    className={cn('h-9 rounded-lg text-md transition-colors', font === f.id ? 'bg-ink/[0.1] text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.1)]' : 'text-fg-3 hover:bg-ink/[0.04]')}
                     style={{ fontFamily: f.css, fontStyle: f.italic ? 'italic' : undefined, fontWeight: f.id.startsWith('serif') ? 400 : 700 }}
                   >
                     {tt('Aa')}
@@ -216,9 +216,9 @@ export function Generate3D() {
                     key={p.id}
                     type="button"
                     onClick={() => setPalette(p.id)}
-                    className={cn('flex flex-col items-center gap-1 rounded-lg p-1.5 transition-colors', palette === p.id ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]')}
+                    className={cn('flex flex-col items-center gap-1 rounded-lg p-1.5 transition-colors', palette === p.id ? 'bg-ink/[0.08]' : 'hover:bg-ink/[0.04]')}
                   >
-                    <span className="grid size-8 grid-cols-2 overflow-hidden rounded-full shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)]">
+                    <span className="grid size-8 grid-cols-2 overflow-hidden rounded-full shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.1)]">
                       {p.colors.map((c) => (
                         <span key={c} style={{ background: c }} />
                       ))}
@@ -247,7 +247,7 @@ export function Generate3D() {
               onChange={(e) => setScript(e.target.value)}
               rows={9}
               spellCheck={false}
-              className="w-full resize-y rounded-control bg-black/35 px-3 py-2.5 font-mono text-xs leading-relaxed text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none focus:shadow-[inset_0_0_0_1px_rgb(214_238_0/0.6)]"
+              className="w-full resize-y rounded-control bg-shade/35 px-3 py-2.5 font-mono text-xs leading-relaxed text-fg-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none focus:shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.6)]"
             />
             <div className="flex items-center justify-between">
               <span className="text-xs text-fg-2">{tt('Transparent background')}</span>
@@ -308,7 +308,7 @@ export function Generate3D() {
 function NoBlender() {
   return (
     <div className="px-3.5">
-      <div className="rounded-xl bg-white/[0.03] p-4 text-center shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+      <div className="rounded-xl bg-ink/[0.03] p-4 text-center shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
         <div className="mx-auto mb-3 w-fit">
           <IconTile tone="blender">
             <Box />

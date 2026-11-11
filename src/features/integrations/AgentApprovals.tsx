@@ -25,7 +25,7 @@ export function AgentApprovals() {
             </div>
           </div>
           {current.code && (
-            <pre className="mt-4 max-h-[46vh] overflow-auto rounded-xl bg-black/40 px-4 py-3 font-mono text-xs leading-relaxed text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">{current.code}</pre>
+            <pre className="mt-4 max-h-[46vh] overflow-auto rounded-xl bg-shade/40 px-4 py-3 font-mono text-xs leading-relaxed text-fg-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">{current.code}</pre>
           )}
           <p className="mt-3 text-2xs leading-relaxed text-fg-4">{current.note ?? tt('This runs with your permissions on this computer. Only allow code you’re comfortable with.')}</p>
           <div className="mt-5 flex items-center justify-end gap-2">

@@ -24,7 +24,7 @@ export function Segmented<T extends string>({ value, options, onChange, size = '
     <div
       role="tablist"
       className={cn(
-        'inline-flex items-center gap-0.5 rounded-[9px] bg-black/25 p-[3px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]',
+        'inline-flex items-center gap-0.5 rounded-[9px] bg-shade/25 p-[3px] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]',
         stretch && 'flex w-full',
         className,
       )}
@@ -49,7 +49,7 @@ export function Segmented<T extends string>({ value, options, onChange, size = '
             {active && (
               <motion.span
                 layoutId={`seg-${id}`}
-                className="absolute inset-0 rounded-[6px] bg-surface-5 shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_1px_3px_rgb(0_0_0/0.4)]"
+                className="absolute inset-0 rounded-[6px] bg-surface-5 shadow-[inset_0_1px_0_rgb(from_var(--color-ink)_r_g_b/0.08),0_1px_3px_rgb(from_var(--color-shade)_r_g_b/0.4)]"
                 transition={{ type: 'spring', stiffness: 520, damping: 38 }}
               />
             )}

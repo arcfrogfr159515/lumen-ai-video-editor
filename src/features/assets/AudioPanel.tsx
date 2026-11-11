@@ -100,13 +100,13 @@ function SfxRow({ sfx }: { sfx: SfxDef }) {
       onDragStart={(e) => dnd.start(e, { type: 'sfx', sfxId: sfx.id }, sfx.name)}
       onDragEnd={dnd.end}
       onDoubleClick={() => void add()}
-      className="group/row flex h-12 cursor-grab items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-white/[0.04] active:cursor-grabbing"
+      className="group/row flex h-12 cursor-grab items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-ink/[0.04] active:cursor-grabbing"
     >
       <button
         type="button"
         aria-label={playing ? tt('Stop {0}', sfx.name) : tt('Play {0}', sfx.name)}
         onClick={toggle}
-        className={cn('grid size-9 shrink-0 place-items-center rounded-lg transition-colors', playing ? 'bg-accent text-accent-fg' : 'bg-white/[0.05] text-fg-2 hover:bg-white/[0.1] hover:text-fg')}
+        className={cn('grid size-9 shrink-0 place-items-center rounded-lg transition-colors', playing ? 'bg-accent text-accent-fg' : 'bg-ink/[0.05] text-fg-2 hover:bg-ink/[0.1] hover:text-fg')}
       >
         {playing ? <Pause className="size-3.5" fill="currentColor" /> : <Play className="size-3.5" fill="currentColor" />}
       </button>
@@ -120,7 +120,7 @@ function SfxRow({ sfx }: { sfx: SfxDef }) {
         aria-label={tt('Add {0} at playhead', sfx.name)}
         onClick={() => void add()}
         disabled={adding || !desktop}
-        className="grid size-7 shrink-0 place-items-center rounded-full bg-white/[0.06] text-fg-2 opacity-0 transition-[opacity,background-color] group-hover/row:opacity-100 hover:bg-white hover:text-black disabled:opacity-40"
+        className="grid size-7 shrink-0 place-items-center rounded-full bg-ink/[0.06] text-fg-2 opacity-0 transition-[opacity,background-color] group-hover/row:opacity-100 hover:bg-ink hover:text-ink-fg disabled:opacity-40"
       >
         <Plus className="size-3.5" />
       </button>
@@ -149,7 +149,7 @@ function GenerateCards() {
             key={c.mode}
             type="button"
             onClick={() => open(c.mode)}
-            className="rounded-xl bg-white/[0.03] p-2.5 text-left shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] transition-colors hover:bg-white/[0.06] [&_svg]:size-4"
+            className="rounded-xl bg-ink/[0.03] p-2.5 text-left shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] transition-colors hover:bg-ink/[0.06] [&_svg]:size-4"
           >
             <span className="text-accent-2">{c.icon}</span>
             <div className="mt-1.5 text-xs font-medium text-fg">{c.title}</div>
@@ -229,13 +229,13 @@ function RecordCard() {
 
   if (rec) {
     return (
-      <div className="mt-1 rounded-xl bg-danger/[0.07] p-3 shadow-[inset_0_0_0_1px_rgb(255_93_93/0.25)]">
+      <div className="mt-1 rounded-xl bg-danger/[0.07] p-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-danger)_r_g_b/0.25)]">
         <div className="flex items-center gap-2">
           <Circle className="size-2.5 animate-pulse-soft text-danger" fill="currentColor" />
           <span className="text-sm font-medium text-fg">{tt('Recording')}</span>
           <span className="ml-auto font-mono text-sm text-fg tabular">{formatSeconds(elapsed)}</span>
         </div>
-        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink/[0.08]">
           <div className={cn('h-full rounded-full transition-[width] duration-75', level > 0.9 ? 'bg-danger' : level > 0.5 ? 'bg-warn' : 'bg-ok')} style={{ width: `${Math.min(100, level * 110)}%` }} />
         </div>
         <div className="mt-3 flex gap-2">
@@ -251,7 +251,7 @@ function RecordCard() {
   }
 
   return (
-    <div className="mt-1 rounded-xl bg-white/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+    <div className="mt-1 rounded-xl bg-ink/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
       <div className="flex items-center gap-2.5">
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-danger/15 text-danger">
           <Mic className="size-4" />

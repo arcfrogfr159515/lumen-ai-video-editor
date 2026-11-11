@@ -43,12 +43,12 @@ export function RenderMenu() {
     <div className="flex items-center">
       {job && (
         <div
-          className={`mr-1 flex h-7 items-center gap-1.5 rounded-full pr-0.5 pl-2 text-2xs font-medium tabular ${job.background ? 'bg-white/[0.04] text-fg-3' : 'bg-accent/10 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.25)]'}`}
+          className={`mr-1 flex h-7 items-center gap-1.5 rounded-full pr-0.5 pl-2 text-2xs font-medium tabular ${job.background ? 'bg-white/[0.04] text-fg-3' : 'bg-accent/10 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.25)]'}`}
           title={job.label}
         >
           <LoaderCircle className="size-3 animate-spin" />
           <span>{ttx('Rendering {0}/{1}', Math.min(job.done + 1, job.total), job.total)}</span>
-          <button type="button" aria-label={tt('Stop rendering')} onClick={cancelRender} className="grid size-5 place-items-center rounded-full opacity-80 hover:bg-white/[0.08] hover:opacity-100">
+          <button type="button" aria-label={tt('Stop rendering')} onClick={cancelRender} className="grid size-5 place-items-center rounded-full opacity-80 hover:bg-ink/[0.08] hover:opacity-100">
             <X className="size-3" />
           </button>
         </div>
@@ -59,7 +59,7 @@ export function RenderMenu() {
             <button
               type="button"
               aria-label={tt('Render previews')}
-              className="flex h-7 items-center gap-1 rounded-lg px-1.5 text-fg-3 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.08] data-[state=open]:text-fg"
+              className="flex h-7 items-center gap-1 rounded-lg px-1.5 text-fg-3 outline-none transition-colors hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.08] data-[state=open]:text-fg"
             >
               <Zap className="size-4" />
               <ChevronDown className="size-3 text-fg-4" />

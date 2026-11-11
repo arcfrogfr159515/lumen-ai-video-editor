@@ -24,7 +24,7 @@ export function JobsIndicator() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-fg-3 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.07]"
+                  className="flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-fg-3 outline-none transition-colors hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.07]"
                 >
                   {running.length ? (
                     <>

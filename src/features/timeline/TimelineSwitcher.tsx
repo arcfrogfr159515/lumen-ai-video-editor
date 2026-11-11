@@ -71,13 +71,13 @@ export function TimelineSwitcher() {
         <MenuTrigger asChild>
           <button
             type="button"
-            className="flex h-7 max-w-[220px] min-w-0 items-center gap-1.5 rounded-[9px] px-2 text-xs font-semibold text-fg-2 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.08]"
+            className="flex h-7 max-w-[220px] min-w-0 items-center gap-1.5 rounded-[9px] px-2 text-xs font-semibold text-fg-2 outline-none transition-colors hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.08]"
             title={tt('Timelines')}
           >
             {trail.length > 0 && <span className="truncate font-medium text-fg-4">{trail.map((t) => t.name).join(' › ')} ›</span>}
             {sequenceRef?.multicam ? <Video className="size-3.5 shrink-0 text-accent-2" /> : <Layers className="size-3.5 shrink-0 text-fg-3" />}
             <span className="truncate">{name}</span>
-            {sequences.length > 1 && <span className="rounded bg-white/[0.07] px-1 text-2xs/[inherit] font-medium text-fg-4 tabular">{sequences.length}</span>}
+            {sequences.length > 1 && <span className="rounded bg-ink/[0.07] px-1 text-2xs/[inherit] font-medium text-fg-4 tabular">{sequences.length}</span>}
             <ChevronDown className="size-3 shrink-0 text-fg-4" />
           </button>
         </MenuTrigger>

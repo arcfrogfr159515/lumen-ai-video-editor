@@ -82,7 +82,7 @@ export function GraphicsDialog() {
           {devices.length ? (
             <div className="space-y-1.5">
               {devices.map((d, i) => (
-                <div key={i} className="flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-3 py-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+                <div key={i} className="flex items-center gap-2.5 rounded-lg bg-ink/[0.03] px-3 py-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
                   <span className={`size-1.5 shrink-0 rounded-full ${d.active ? 'bg-ok' : 'bg-white/20'}`} />
                   <span className="min-w-0 flex-1 truncate text-sm text-fg-2">
                     <span className="text-fg-4">{d.vendor}</span> {d.name}
@@ -109,7 +109,7 @@ export function GraphicsDialog() {
               {FEATURES.map(([key, label]) => {
                 const state = featureState(info.features[key])
                 return (
-                  <div key={key} className="flex items-center justify-between gap-2 rounded-lg bg-white/[0.03] px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+                  <div key={key} className="flex items-center justify-between gap-2 rounded-lg bg-ink/[0.03] px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
                     <span className="text-fg-2">{label}</span>
                     <span className={state === 'on' ? 'text-ok' : state === 'software' ? 'text-warn' : 'text-fg-4'}>{state === 'on' ? tt('Graphics card') : state === 'software' ? tt('Processor') : state === 'off' ? tt('Off') : '—'}</span>
                   </div>
@@ -127,10 +127,10 @@ export function GraphicsDialog() {
             </button>
           }
         >
-          <div className="overflow-hidden rounded-lg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+          <div className="overflow-hidden rounded-lg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-white/[0.03] text-left text-2xs font-medium text-fg-4">
+                <tr className="bg-ink/[0.03] text-left text-2xs font-medium text-fg-4">
                   <th className="px-3 py-1.5 font-medium">{tt('Codec')}</th>
                   {CHECK_SIZES.map((s) => (
                     <th key={s.label} colSpan={2} className="px-3 py-1.5 font-medium">
@@ -141,7 +141,7 @@ export function GraphicsDialog() {
               </thead>
               <tbody>
                 {CHECK_CODECS.map((codec) => (
-                  <tr key={codec} className="border-t border-white/[0.05]">
+                  <tr key={codec} className="border-t border-ink/[0.05]">
                     <td className="px-3 py-1.5 text-fg-2">{CODEC_NAME[codec]}</td>
                     {CHECK_SIZES.map((s) => {
                       const row = rows.find((r) => r.codec === codec && r.size === s.label)
@@ -170,7 +170,7 @@ export function GraphicsDialog() {
               </span>
             </label>
             {info.restartNeeded && (
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-accent/[0.07] px-3 py-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.18)]">
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-accent/[0.07] px-3 py-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.18)]">
                 <span className="text-xs text-fg-2">{tt('These apply the next time Lumen starts. Your project is saved first.')}</span>
                 <Button size="sm" variant="primary" onClick={() => void restart()}>
                   {tt('Restart Lumen')}

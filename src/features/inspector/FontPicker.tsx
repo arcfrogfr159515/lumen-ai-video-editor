@@ -97,7 +97,7 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-8 w-full min-w-0 items-center gap-2 rounded-control bg-white/[0.045] px-2.5 text-left text-sm text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none hover:bg-white/[0.07] focus-visible:ring-2 focus-visible:ring-accent/60"
+          className="flex h-8 w-full min-w-0 items-center gap-2 rounded-control bg-ink/[0.045] px-2.5 text-left text-sm text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none hover:bg-ink/[0.07] focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           <span className="min-w-0 flex-1 truncate" style={{ fontFamily: fontCss(value, project) }}>
             {fontLabel(value, project)}
@@ -121,17 +121,17 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
               </Item>
             ))}
             <div className="mx-1 my-1.5 h-px bg-line" />
-            <button type="button" onClick={() => void showSystem()} className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-fg-2 hover:bg-white/[0.06] hover:text-fg">
+            <button type="button" onClick={() => void showSystem()} className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-fg-2 hover:bg-ink/[0.06] hover:text-fg">
               <HardDrive className="size-4 text-fg-3" />{' '}{tt('Fonts on this computer…')}
             </button>
-            <button type="button" onClick={() => file.current?.click()} className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-fg-2 hover:bg-white/[0.06] hover:text-fg">
+            <button type="button" onClick={() => file.current?.click()} className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-fg-2 hover:bg-ink/[0.06] hover:text-fg">
               <FileUp className="size-4 text-fg-3" />{' '}{tt('Import a font file…')}
             </button>
             <input ref={file} type="file" accept=".ttf,.otf,.woff,.woff2,font/*" className="hidden" onChange={(e) => void addFile(e.target.files).finally(() => (e.target.value = ''))} />
           </div>
         ) : (
           <div>
-            <div className="mb-1.5 flex items-center gap-1.5 rounded-md bg-white/[0.05] px-2">
+            <div className="mb-1.5 flex items-center gap-1.5 rounded-md bg-ink/[0.05] px-2">
               <Search className="size-3.5 text-fg-4" />
               <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.stopPropagation()} placeholder={tt('Search fonts')} className="h-8 min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-4" />
             </div>
@@ -148,7 +148,7 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
                   type="button"
                   disabled={busy !== null}
                   onClick={() => void addSystem(f)}
-                  className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-fg-2 hover:bg-white/[0.06] hover:text-fg disabled:opacity-50"
+                  className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-fg-2 hover:bg-ink/[0.06] hover:text-fg disabled:opacity-50"
                 >
                   <span className="min-w-0 flex-1 truncate" style={{ fontFamily: `"${f.family}"` }}>
                     {f.fullName}
@@ -157,7 +157,7 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
                 </button>
               ))}
             </div>
-            <button type="button" onClick={() => setView('list')} className="mt-1 h-7 w-full rounded-md text-xs text-fg-3 hover:bg-white/[0.05] hover:text-fg">
+            <button type="button" onClick={() => setView('list')} className="mt-1 h-7 w-full rounded-md text-xs text-fg-3 hover:bg-ink/[0.05] hover:text-fg">
               {tt('Back')}
             </button>
           </div>
@@ -173,7 +173,7 @@ function Heading({ children }: { children: string }) {
 
 function Item({ active, onClick, family, children }: { active: boolean; onClick: () => void; family: string; children: string }) {
   return (
-    <button type="button" onClick={onClick} className={cn('flex h-8 w-full items-center rounded-md px-2 text-left text-md/[inherit] text-fg-2 hover:bg-white/[0.06] hover:text-fg', active && 'bg-accent/12 text-accent-2')} style={{ fontFamily: family }}>
+    <button type="button" onClick={onClick} className={cn('flex h-8 w-full items-center rounded-md px-2 text-left text-md/[inherit] text-fg-2 hover:bg-ink/[0.06] hover:text-fg', active && 'bg-accent/12 text-accent-2')} style={{ fontFamily: family }}>
       <span className="truncate">{children}</span>
     </button>
   )

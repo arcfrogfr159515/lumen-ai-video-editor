@@ -134,7 +134,7 @@ function Field({ name, schema, required, value, onChange }: { name: string; sche
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.stopPropagation()}
         placeholder={schema.default !== undefined ? String(schema.default) : undefined}
-        className="w-full resize-y rounded-control bg-white/[0.045] px-2.5 py-2 text-sm leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none placeholder:text-fg-4 focus:bg-white/[0.07] focus:shadow-[inset_0_0_0_1px_rgb(214_238_0/0.5),0_0_0_3px_rgb(214_238_0/0.12)]"
+        className="w-full resize-y rounded-control bg-ink/[0.045] px-2.5 py-2 text-sm leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none placeholder:text-fg-4 focus:bg-ink/[0.07] focus:shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.5),0_0_0_3px_rgb(from_var(--color-accent)_r_g_b/0.12)]"
       />
     )
   } else {
@@ -183,7 +183,7 @@ function JsonField({ id, value, onChange }: { id: string; value: unknown; onChan
       }}
       onKeyDown={(e) => e.stopPropagation()}
       placeholder={tt('JSON')}
-      className="w-full resize-y rounded-control bg-white/[0.045] px-2.5 py-2 font-mono text-xs leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none placeholder:text-fg-4 focus:bg-white/[0.07]"
+      className="w-full resize-y rounded-control bg-ink/[0.045] px-2.5 py-2 font-mono text-xs leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none placeholder:text-fg-4 focus:bg-ink/[0.07]"
     />
   )
 }

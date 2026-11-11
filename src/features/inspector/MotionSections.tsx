@@ -26,7 +26,7 @@ export function NestSection({ clip }: { clip: Clip }) {
         <p className="text-2xs text-danger">{tt('Its timeline is missing from the project.')}</p>
       ) : (
         <div className="space-y-2.5">
-          <div className="flex items-center gap-2 rounded-lg bg-white/[0.035] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+          <div className="flex items-center gap-2 rounded-lg bg-ink/[0.035] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
             <div className="min-w-0 flex-1">
               <div className="truncate text-xs font-medium text-fg">{seq.name}</div>
               <div className="text-2xs text-fg-4 tabular">
@@ -48,7 +48,7 @@ export function NestSection({ clip }: { clip: Clip }) {
                     onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { angle: t.id } })}
                     className={cn(
                       'flex min-w-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs transition-colors',
-                      t.id === active ? 'bg-accent/15 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.35)]' : 'bg-white/[0.035] text-fg-2 hover:bg-white/[0.07] hover:text-fg',
+                      t.id === active ? 'bg-accent/15 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.35)]' : 'bg-ink/[0.035] text-fg-2 hover:bg-ink/[0.07] hover:text-fg',
                     )}
                   >
                     {i < 9 && <Kbd combo={String(i + 1)} />}

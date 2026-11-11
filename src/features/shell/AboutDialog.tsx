@@ -20,7 +20,7 @@ export function AboutDialog() {
     <Dialog open={open} onOpenChange={setOpen} title={tt('About Lumen')} className="w-[min(420px,calc(100vw-32px))]">
       <div className="px-5 pt-1 pb-5">
         <div className="flex items-center gap-3">
-          <LogoMark className="size-12 drop-shadow-[0_6px_24px_rgb(214_238_0/0.28)]" />
+          <LogoMark className="size-12 drop-shadow-[0_6px_24px_rgb(from_var(--color-accent)_r_g_b/0.28)]" />
           <div>
             <div className="font-display text-xl font-semibold tracking-tight text-fg">{tt('Lumen')}</div>
             <div className="text-xs text-fg-3">{tt('AI-native video editor')}</div>
@@ -100,7 +100,7 @@ function Updates() {
       action = check
   }
   return (
-    <div className="mt-5 rounded-xl bg-white/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+    <div className="mt-5 rounded-xl bg-ink/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <div className="text-xs font-medium text-fg-2">{tt('Updates')}</div>
@@ -109,7 +109,7 @@ function Updates() {
         {action}
       </div>
       {u.status === 'downloading' && (
-        <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-ink/[0.06]">
           <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${percent}%` }} />
         </div>
       )}

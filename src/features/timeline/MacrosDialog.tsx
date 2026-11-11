@@ -78,7 +78,7 @@ function Body({ onClose }: { onClose: () => void }) {
       </div>
 
       {macros.length === 0 ? (
-        <div className="rounded-xl bg-white/[0.03] p-5 text-center">
+        <div className="rounded-xl bg-ink/[0.03] p-5 text-center">
           <CircleDot className="mx-auto size-6 text-fg-3" />
           <p className="mt-2 text-sm font-medium text-fg">{tt('No macros yet')}</p>
           <p className="mx-auto mt-1 max-w-[440px] text-xs leading-relaxed text-fg-3">
@@ -103,7 +103,7 @@ function MacroRow({ macro, last, selected, onSave }: { macro: Macro; last: boole
   const [name, setName] = useState(macro.name)
   const [open, setOpen] = useState(false)
   return (
-    <li className={cn('rounded-lg bg-white/[0.03] p-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]', last && 'shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]')}>
+    <li className={cn('rounded-lg bg-ink/[0.03] p-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]', last && 'shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.3)]')}>
       <div className="flex items-center gap-2">
         <input
           value={name}
@@ -114,9 +114,9 @@ function MacroRow({ macro, last, selected, onSave }: { macro: Macro; last: boole
             e.stopPropagation()
             if (e.key === 'Enter') e.currentTarget.blur()
           }}
-          className="h-7 min-w-0 flex-1 rounded-md bg-transparent px-1.5 text-sm font-medium text-fg outline-none hover:bg-white/[0.04] focus:bg-white/[0.07] focus:ring-1 focus:ring-accent/60"
+          className="h-7 min-w-0 flex-1 rounded-md bg-transparent px-1.5 text-sm font-medium text-fg outline-none hover:bg-ink/[0.04] focus:bg-ink/[0.07] focus:ring-1 focus:ring-accent/60"
         />
-        <button type="button" onClick={() => setOpen(!open)} className="shrink-0 rounded px-1.5 py-0.5 text-2xs text-fg-3 outline-none hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60" aria-expanded={open}>
+        <button type="button" onClick={() => setOpen(!open)} className="shrink-0 rounded px-1.5 py-0.5 text-2xs text-fg-3 outline-none hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60" aria-expanded={open}>
           {ttx('{0} step{1}', macro.steps.length, macro.steps.length === 1 ? '' : 's')}
         </button>
         <Button size="xs" variant="secondary" disabled={!selected} onClick={() => timelineActions.runMacro(macro.id)} title={selected ? undefined : tt('Select the clips to run it on first')}>

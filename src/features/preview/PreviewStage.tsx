@@ -169,9 +169,9 @@ export function PreviewStage() {
   }, [])
 
   return (
-    <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgb(255_255_255/0.025),transparent_70%)]">
+    <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-[radial-gradient(ellipse_at_center,rgb(from_var(--color-ink)_r_g_b/0.025),transparent_70%)]">
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[3px] bg-black shadow-[0_0_0_1px_rgb(255_255_255/0.06),0_24px_70px_-18px_rgb(0_0_0/0.95)]"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[3px] bg-shade shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06),0_24px_70px_-18px_rgb(from_var(--color-shade)_r_g_b/0.95)]"
         style={{ width: fw, height: fh }}
       >
         <canvas ref={canvasRef} className="block h-full w-full rounded-[3px]" style={{ width: fw, height: fh }} />
@@ -185,10 +185,10 @@ export function PreviewStage() {
 function SafeGuides() {
   return (
     <div className="pointer-events-none absolute inset-0">
-      <div className="absolute inset-[3.5%] rounded-[2px] border border-dashed border-white/25" />
-      <div className="absolute inset-[10%] rounded-[2px] border border-dashed border-white/15" />
-      <div className="absolute top-0 bottom-0 left-1/2 w-px bg-white/15" />
-      <div className="absolute top-1/2 right-0 left-0 h-px bg-white/15" />
+      <div className="absolute inset-[3.5%] rounded-[2px] border border-dashed border-ink/25" />
+      <div className="absolute inset-[10%] rounded-[2px] border border-dashed border-ink/15" />
+      <div className="absolute top-0 bottom-0 left-1/2 w-px bg-ink/15" />
+      <div className="absolute top-1/2 right-0 left-0 h-px bg-ink/15" />
     </div>
   )
 }
@@ -246,7 +246,7 @@ function CropGizmo({ clip, b, scale }: { clip: Clip; b: ClipBounds; scale: numbe
   }
 
   const handle = (h: CropHandle, className: string, cursor: string) => (
-    <span key={h} onPointerDown={(e) => startDrag(e, h)} className={cn('absolute z-10 bg-white shadow-[0_0_0_1.5px_var(--color-accent),0_1px_4px_rgb(0_0_0/0.6)]', className)} style={{ cursor }} />
+    <span key={h} onPointerDown={(e) => startDrag(e, h)} className={cn('absolute z-10 bg-ink shadow-[0_0_0_1.5px_var(--color-accent),0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.6)]', className)} style={{ cursor }} />
   )
 
   return (
@@ -255,15 +255,15 @@ function CropGizmo({ clip, b, scale }: { clip: Clip; b: ClipBounds; scale: numbe
         className="absolute overflow-hidden"
         style={{ left: (full.cx - full.w / 2) * scale, top: (full.cy - full.h / 2) * scale, width: full.w * scale, height: full.h * scale, transform: `rotate(${b.rotation}deg)` }}
       >
-        <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.25)]" />
+        <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.25)]" />
         <div
-          className="absolute cursor-move shadow-[0_0_0_9999px_rgb(0_0_0/0.55)]"
+          className="absolute cursor-move shadow-[0_0_0_9999px_rgb(from_var(--color-shade)_r_g_b/0.55)]"
           onPointerDown={(e) => startDrag(e, 'move')}
           style={{ left: box.left * scale, top: box.top * scale, width: box.width * scale, height: box.height * scale }}
         >
           <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_1.5px_var(--color-accent)]" />
           {/* Rule of thirds */}
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,transparent_calc(33.33%-0.5px),rgb(255_255_255/0.28)_calc(33.33%-0.5px),rgb(255_255_255/0.28)_calc(33.33%+0.5px),transparent_calc(33.33%+0.5px),transparent_calc(66.66%-0.5px),rgb(255_255_255/0.28)_calc(66.66%-0.5px),rgb(255_255_255/0.28)_calc(66.66%+0.5px),transparent_calc(66.66%+0.5px)),linear-gradient(to_bottom,transparent_calc(33.33%-0.5px),rgb(255_255_255/0.28)_calc(33.33%-0.5px),rgb(255_255_255/0.28)_calc(33.33%+0.5px),transparent_calc(33.33%+0.5px),transparent_calc(66.66%-0.5px),rgb(255_255_255/0.28)_calc(66.66%-0.5px),rgb(255_255_255/0.28)_calc(66.66%+0.5px),transparent_calc(66.66%+0.5px))]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,transparent_calc(33.33%-0.5px),rgb(from_var(--color-ink)_r_g_b/0.28)_calc(33.33%-0.5px),rgb(from_var(--color-ink)_r_g_b/0.28)_calc(33.33%+0.5px),transparent_calc(33.33%+0.5px),transparent_calc(66.66%-0.5px),rgb(from_var(--color-ink)_r_g_b/0.28)_calc(66.66%-0.5px),rgb(from_var(--color-ink)_r_g_b/0.28)_calc(66.66%+0.5px),transparent_calc(66.66%+0.5px)),linear-gradient(to_bottom,transparent_calc(33.33%-0.5px),rgb(from_var(--color-ink)_r_g_b/0.28)_calc(33.33%-0.5px),rgb(from_var(--color-ink)_r_g_b/0.28)_calc(33.33%+0.5px),transparent_calc(33.33%+0.5px),transparent_calc(66.66%-0.5px),rgb(from_var(--color-ink)_r_g_b/0.28)_calc(66.66%-0.5px),rgb(from_var(--color-ink)_r_g_b/0.28)_calc(66.66%+0.5px),transparent_calc(66.66%+0.5px))]" />
           {handle('l', '-left-[3px] top-1/2 h-6 w-[6px] -translate-y-1/2 rounded-full', 'ew-resize')}
           {handle('r', '-right-[3px] top-1/2 h-6 w-[6px] -translate-y-1/2 rounded-full', 'ew-resize')}
           {handle('t', '-top-[3px] left-1/2 h-[6px] w-6 -translate-x-1/2 rounded-full', 'ns-resize')}
@@ -278,7 +278,7 @@ function CropGizmo({ clip, b, scale }: { clip: Clip; b: ClipBounds; scale: numbe
         type="button"
         onPointerDown={(e) => e.stopPropagation()}
         onClick={() => useUI.getState().setCropMode(false)}
-        className="absolute top-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-fg shadow-[0_4px_16px_-4px_rgb(0_0_0/0.7)] hover:bg-accent-2"
+        className="absolute top-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-fg shadow-[0_4px_16px_-4px_rgb(from_var(--color-shade)_r_g_b/0.7)] hover:bg-accent-2"
       >
         {tt('Done cropping')}
       </button>
@@ -357,7 +357,7 @@ function MaskGizmo({ clip, mask, layer, pw, ph, scale, frame }: { clip: Clip; ma
   }
 
   const knob = (h: MaskHandle, className: string, cursor: string) => (
-    <span key={h} onPointerDown={(e) => startDrag(e, h)} className={cn('absolute z-10 size-2.5 rounded-[3px] border-[1.5px] border-accent bg-white shadow-[0_1px_4px_rgb(0_0_0/0.5)]', className)} style={{ cursor }} />
+    <span key={h} onPointerDown={(e) => startDrag(e, h)} className={cn('absolute z-10 size-2.5 rounded-[3px] border-[1.5px] border-accent bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.5)]', className)} style={{ cursor }} />
   )
 
   return (
@@ -368,7 +368,7 @@ function MaskGizmo({ clip, mask, layer, pw, ph, scale, frame }: { clip: Clip; ma
         style={{ left: (cx - w / 2) * scale, top: (cy - h / 2) * scale, width: w * scale, height: h * scale, transform: `rotate(${angle}deg)` }}
       >
         <div
-          className={cn('pointer-events-none absolute inset-0 border-[1.5px] border-dashed border-accent shadow-[0_0_0_1px_rgb(0_0_0/0.35)]', mask.shape === 'ellipse' ? 'rounded-[50%]' : 'rounded-[2px]')}
+          className={cn('pointer-events-none absolute inset-0 border-[1.5px] border-dashed border-accent shadow-[0_0_0_1px_rgb(from_var(--color-shade)_r_g_b/0.35)]', mask.shape === 'ellipse' ? 'rounded-[50%]' : 'rounded-[2px]')}
           style={mask.shape === 'rectangle' ? { borderRadius: `${(mask.roundness * Math.min(w, h) * scale) / 2}px` } : undefined}
         />
         {mask.feather > 0 && (
@@ -386,13 +386,13 @@ function MaskGizmo({ clip, mask, layer, pw, ph, scale, frame }: { clip: Clip; ma
         {knob('w', 'top-1/2 -left-[5px] -translate-y-1/2', 'ew-resize')}
         {knob('e', 'top-1/2 -right-[5px] -translate-y-1/2', 'ew-resize')}
         <span className="pointer-events-none absolute -top-6 left-1/2 h-6 w-px -translate-x-1/2 bg-accent/70" />
-        <span onPointerDown={(e) => startDrag(e, 'rotate')} className="absolute -top-[30px] left-1/2 size-3 -translate-x-1/2 cursor-grab rounded-full border-[1.5px] border-accent bg-white shadow-[0_1px_4px_rgb(0_0_0/0.5)]" />
+        <span onPointerDown={(e) => startDrag(e, 'rotate')} className="absolute -top-[30px] left-1/2 size-3 -translate-x-1/2 cursor-grab rounded-full border-[1.5px] border-accent bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.5)]" />
       </div>
       <button
         type="button"
         onPointerDown={(e) => e.stopPropagation()}
         onClick={() => useUI.getState().setMaskEdit(null)}
-        className="absolute top-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-fg shadow-[0_4px_16px_-4px_rgb(0_0_0/0.7)] hover:bg-accent-2"
+        className="absolute top-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-fg shadow-[0_4px_16px_-4px_rgb(from_var(--color-shade)_r_g_b/0.7)] hover:bg-accent-2"
       >
         {tt('Done with mask')}
       </button>
@@ -475,14 +475,14 @@ function TrackGizmo({ edit, pw, ph, scale }: { edit: TrackEdit; pw: number; ph: 
   }
 
   const knob = (h: BoxHandle, className: string, cursor: string) => (
-    <span key={h} onPointerDown={(e) => startDrag(e, h)} className={cn('absolute z-10 size-2.5 rounded-[3px] border-[1.5px] border-accent bg-white shadow-[0_1px_4px_rgb(0_0_0/0.5)]', className)} style={{ cursor }} />
+    <span key={h} onPointerDown={(e) => startDrag(e, h)} className={cn('absolute z-10 size-2.5 rounded-[3px] border-[1.5px] border-accent bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.5)]', className)} style={{ cursor }} />
   )
   const btn = 'flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold transition-colors disabled:opacity-50'
 
   return (
     <>
       <div className="absolute cursor-move" onPointerDown={(e) => startDrag(e, 'move')} style={{ left: box.x * scale, top: box.y * scale, width: box.w * scale, height: box.h * scale }}>
-        <div className="pointer-events-none absolute inset-0 rounded-[2px] border-[1.5px] border-accent shadow-[0_0_0_9999px_rgb(0_0_0/0.3)]" />
+        <div className="pointer-events-none absolute inset-0 rounded-[2px] border-[1.5px] border-accent shadow-[0_0_0_9999px_rgb(from_var(--color-shade)_r_g_b/0.3)]" />
         <span className="pointer-events-none absolute top-1/2 left-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-accent" />
         <span className="pointer-events-none absolute top-1/2 left-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-accent" />
         {knob('nw', '-top-[5px] -left-[5px]', 'nwse-resize')}
@@ -490,18 +490,18 @@ function TrackGizmo({ edit, pw, ph, scale }: { edit: TrackEdit; pw: number; ph: 
         {knob('sw', '-bottom-[5px] -left-[5px]', 'nesw-resize')}
         {knob('se', '-right-[5px] -bottom-[5px]', 'nwse-resize')}
       </div>
-      <div onPointerDown={(e) => e.stopPropagation()} className="popover absolute top-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full p-1 shadow-[0_6px_20px_-6px_rgb(0_0_0/0.8)]">
+      <div onPointerDown={(e) => e.stopPropagation()} className="popover absolute top-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full p-1 shadow-[0_6px_20px_-6px_rgb(from_var(--color-shade)_r_g_b/0.8)]">
         <span className="px-2 text-2xs font-medium whitespace-nowrap text-fg-3">{busy ? tt('Tracking…') : edit.newTitle ? tt('Box what a new title should follow') : tt('Box what the {0} should follow', edit.maskId ? tt('mask') : tt('clip'))}</span>
-        <button type="button" disabled={busy} onClick={() => void run('backward')} className={cn(btn, 'text-fg-2 hover:bg-white/[0.08] hover:text-fg')} title={tt('Track back from the playhead')}>
+        <button type="button" disabled={busy} onClick={() => void run('backward')} className={cn(btn, 'text-fg-2 hover:bg-ink/[0.08] hover:text-fg')} title={tt('Track back from the playhead')}>
           <ArrowLeft className="size-3.5" />{' '}{tt('Back')}
         </button>
-        <button type="button" disabled={busy} onClick={() => void run('both')} className={cn(btn, 'text-fg-2 hover:bg-white/[0.08] hover:text-fg')} title={tt('Track both ways from the playhead')}>
+        <button type="button" disabled={busy} onClick={() => void run('both')} className={cn(btn, 'text-fg-2 hover:bg-ink/[0.08] hover:text-fg')} title={tt('Track both ways from the playhead')}>
           <ArrowLeftRight className="size-3.5" />{' '}{tt('Both')}
         </button>
         <button type="button" disabled={busy} onClick={() => void run('forward')} className={cn(btn, 'bg-accent text-accent-fg hover:bg-accent-2')} title={tt('Track forward from the playhead')}>
           {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <ArrowRight className="size-3.5" />}{' '}{tt('Track')}
         </button>
-        <button type="button" disabled={busy} onClick={() => useUI.getState().setTrackEdit(null)} className={cn(btn, 'text-fg-3 hover:bg-white/[0.08] hover:text-fg')}>
+        <button type="button" disabled={busy} onClick={() => useUI.getState().setTrackEdit(null)} className={cn(btn, 'text-fg-3 hover:bg-ink/[0.08] hover:text-fg')}>
           {tt('Cancel')}
         </button>
       </div>
@@ -627,13 +627,13 @@ function Gizmo({ scale }: { scale: number }) {
             transform: `rotate(${b.rotation}deg)`,
           }}
         >
-          <div className="pointer-events-none absolute inset-0 rounded-[2px] shadow-[0_0_0_1.5px_var(--color-accent),0_0_0_4px_rgb(214_238_0/0.18)]" />
+          <div className="pointer-events-none absolute inset-0 rounded-[2px] shadow-[0_0_0_1.5px_var(--color-accent),0_0_0_4px_rgb(from_var(--color-accent)_r_g_b/0.18)]" />
           {(['nw', 'ne', 'sw', 'se'] as const).map((h) => (
             <span
               key={h}
               onPointerDown={(e) => startDrag(e, h)}
               className={cn(
-                'absolute size-2.5 rounded-[3px] border-[1.5px] border-accent bg-white shadow-[0_1px_4px_rgb(0_0_0/0.5)]',
+                'absolute size-2.5 rounded-[3px] border-[1.5px] border-accent bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.5)]',
                 h === 'nw' && '-top-[5px] -left-[5px] cursor-nwse-resize',
                 h === 'ne' && '-top-[5px] -right-[5px] cursor-nesw-resize',
                 h === 'sw' && '-bottom-[5px] -left-[5px] cursor-nesw-resize',
@@ -644,7 +644,7 @@ function Gizmo({ scale }: { scale: number }) {
           <span className="pointer-events-none absolute -top-6 left-1/2 h-6 w-px -translate-x-1/2 bg-accent/70" />
           <span
             onPointerDown={(e) => startDrag(e, 'rotate')}
-            className="absolute -top-[30px] left-1/2 size-3 -translate-x-1/2 cursor-grab rounded-full border-[1.5px] border-accent bg-white shadow-[0_1px_4px_rgb(0_0_0/0.5)]"
+            className="absolute -top-[30px] left-1/2 size-3 -translate-x-1/2 cursor-grab rounded-full border-[1.5px] border-accent bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.5)]"
           />
         </div>
       )}

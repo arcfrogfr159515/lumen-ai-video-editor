@@ -97,8 +97,8 @@ function RailButton({ active, onClick, label, hint, ai, children }: { active: bo
             className={cn(
               'absolute inset-0 rounded-card',
               ai
-                ? 'bg-[linear-gradient(120deg,rgb(214_238_0/0.18),rgb(94_242_166/0.14),rgb(54_214_242/0.12))] shadow-[inset_0_0_0_1px_rgb(94_242_166/0.25)]'
-                : 'bg-white/[0.07] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]',
+                ? 'bg-[linear-gradient(120deg,rgb(from_var(--color-accent)_r_g_b/0.18),rgb(from_var(--color-ai-2)_r_g_b/0.14),rgb(from_var(--color-ai-3)_r_g_b/0.12))] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ai-2)_r_g_b/0.25)]'
+                : 'bg-ink/[0.07] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]',
             )}
             transition={{ type: 'spring', stiffness: 500, damping: 38 }}
           />

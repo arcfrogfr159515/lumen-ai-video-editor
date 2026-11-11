@@ -42,6 +42,15 @@
   --text-2xl: 26px;
   --text-2xl--line-height: 32px;
 
+  /* What is drawn over the surfaces — hairlines, the wash of a hovered or selected control, the brightest
+     controls themselves — is ink at some strength, and what darkens is shade. Written this way (never as white or
+     black) a theme only has to say what its ink is. on-media is for text and icons over pictures and footage,
+     which are what they are in any theme. */
+  --color-ink: #ffffff;
+  --color-ink-fg: #000000;
+  --color-shade: #000000;
+  --color-on-media: #ffffff;
+
   /* Surfaces — near-black graphite with a hair of olive, so the lime sits in it */
   --color-canvas: #080807;
   --color-surface: #10110f;
@@ -50,9 +59,9 @@
   --color-surface-4: #252622;
   --color-surface-5: #2e2f2a;
 
-  --color-line: rgb(255 255 255 / 0.06);
-  --color-line-2: rgb(255 255 255 / 0.1);
-  --color-line-3: rgb(255 255 255 / 0.16);
+  --color-line: rgb(from var(--color-ink) r g b / 0.06);
+  --color-line-2: rgb(from var(--color-ink) r g b / 0.1);
+  --color-line-3: rgb(from var(--color-ink) r g b / 0.16);
 
   /* Text, from what matters most to least. Every step reads at 4.5:1 or better on the surfaces text sits on
      (canvas to surface-4); what was fg-4 before, too faint to read, is fg-disabled: for controls that are off
@@ -95,12 +104,12 @@
   --radius-control: 8px;
 
   --shadow-panel:
-    0 0 0 1px rgb(255 255 255 / 0.045), inset 0 1px 0 0 rgb(255 255 255 / 0.035),
-    0 18px 40px -24px rgb(0 0 0 / 0.8);
+    0 0 0 1px rgb(from var(--color-ink) r g b / 0.045), inset 0 1px 0 0 rgb(from var(--color-ink) r g b / 0.035),
+    0 18px 40px -24px rgb(from var(--color-shade) r g b / 0.8);
   --shadow-pop:
-    0 0 0 1px rgb(255 255 255 / 0.08), inset 0 1px 0 0 rgb(255 255 255 / 0.05),
-    0 24px 60px -16px rgb(0 0 0 / 0.85), 0 6px 16px -6px rgb(0 0 0 / 0.6);
-  --shadow-control: inset 0 1px 0 0 rgb(255 255 255 / 0.05), 0 0 0 1px rgb(255 255 255 / 0.07);
+    0 0 0 1px rgb(from var(--color-ink) r g b / 0.08), inset 0 1px 0 0 rgb(from var(--color-ink) r g b / 0.05),
+    0 24px 60px -16px rgb(from var(--color-shade) r g b / 0.85), 0 6px 16px -6px rgb(from var(--color-shade) r g b / 0.6);
+  --shadow-control: inset 0 1px 0 0 rgb(from var(--color-ink) r g b / 0.05), 0 0 0 1px rgb(from var(--color-ink) r g b / 0.07);
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -216,13 +225,13 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgb(255 255 255 / 0.08);
+    background: rgb(from var(--color-ink) r g b / 0.08);
     border: 3px solid transparent;
     border-radius: 999px;
     background-clip: padding-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(255 255 255 / 0.16);
+    background-color: rgb(from var(--color-ink) r g b / 0.16);
   }
   ::-webkit-scrollbar-corner {
     background: transparent;
@@ -253,7 +262,7 @@
 
 @utility panel {
   background:
-    linear-gradient(180deg, rgb(255 255 255 / 0.018), transparent 120px),
+    linear-gradient(180deg, rgb(from var(--color-ink) r g b / 0.018), transparent 120px),
     var(--color-surface);
   border-radius: var(--radius-panel);
   box-shadow: var(--shadow-panel);
@@ -430,9 +439,9 @@
   background-image: linear-gradient(
     100deg,
     transparent 30%,
-    rgb(255 255 255 / 0.28) 45%,
+    rgb(from var(--color-ink) r g b / 0.28) 45%,
     color-mix(in oklab, var(--color-ai-2) 45%, transparent) 50%,
-    rgb(255 255 255 / 0.28) 55%,
+    rgb(from var(--color-ink) r g b / 0.28) 55%,
     transparent 70%
   );
   background-size: 250% 100%;

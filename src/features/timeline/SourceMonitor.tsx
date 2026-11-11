@@ -195,7 +195,7 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
       onPointerDownCapture={(e) => {
         if (!(e.target as HTMLElement).closest('button,input,select,[role="combobox"]')) rootRef.current?.focus()
       }}
-      className="popover fixed z-[70] flex w-[520px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl outline-none focus-within:shadow-[0_0_0_1px_rgb(214_238_0/0.35),0_24px_60px_-12px_rgb(0_0_0/0.85)]"
+      className="popover fixed z-[70] flex w-[520px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl outline-none focus-within:shadow-[0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.35),0_24px_60px_-12px_rgb(from_var(--color-shade)_r_g_b/0.85)]"
       style={{ left: pos.x, top: pos.y }}
     >
       <div onPointerDown={drag} className="flex h-10 shrink-0 cursor-grab items-center gap-2 border-b border-line pr-1.5 pl-3 active:cursor-grabbing">
@@ -206,7 +206,7 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
         </IconButton>
       </div>
 
-      <div className="relative grid aspect-video place-items-center bg-black">
+      <div className="relative grid aspect-video place-items-center bg-shade">
         {asset.kind === 'video' && file && (
           <video
             ref={mediaRef}
@@ -247,7 +247,7 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
         )}
         {still && (thumb ? <img src={thumb} alt="" className="h-full w-full object-contain" /> : <span className="text-sm text-fg-4">{file ? tt('A still: it plays as long as the edit needs') : tt('This media can’t be played here')}</span>)}
         {playable && !playing && asset.kind === 'video' && (
-          <span className="pointer-events-none absolute grid size-12 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+          <span className="pointer-events-none absolute grid size-12 place-items-center rounded-full bg-shade/55 text-on-media backdrop-blur-sm">
             <Play className="size-5 translate-x-px" />
           </span>
         )}
@@ -320,17 +320,17 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
 
 function Mark({ label, shortcut, value, tc, onSet, onClear, onGo, icon }: { label: string; shortcut: string; value: number | undefined; tc: (sec: number) => string; onSet: () => void; onClear: () => void; onGo: () => void; icon: ReactNode }) {
   return (
-    <span className={cn('flex h-7 items-center rounded-lg text-2xs', value !== undefined ? 'bg-accent/12 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]' : 'bg-white/[0.05] text-fg-3')}>
-      <button type="button" onClick={onSet} title={tt('Mark {0} here ({1})', label.toLowerCase(), shortcut.toUpperCase())} className="flex h-full items-center gap-1 rounded-l-lg pr-1 pl-1.5 font-medium outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60 [&_svg]:size-3.5">
+    <span className={cn('flex h-7 items-center rounded-lg text-2xs', value !== undefined ? 'bg-accent/12 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.3)]' : 'bg-ink/[0.05] text-fg-3')}>
+      <button type="button" onClick={onSet} title={tt('Mark {0} here ({1})', label.toLowerCase(), shortcut.toUpperCase())} className="flex h-full items-center gap-1 rounded-l-lg pr-1 pl-1.5 font-medium outline-none hover:bg-ink/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60 [&_svg]:size-3.5">
         {icon}
         {label}
       </button>
       {value !== undefined && (
         <>
-          <button type="button" onClick={onGo} title={tt('Go to the {0} point (Shift+{1})', label.toLowerCase(), shortcut.toUpperCase())} className="h-full px-1 font-mono tabular outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60">
+          <button type="button" onClick={onGo} title={tt('Go to the {0} point (Shift+{1})', label.toLowerCase(), shortcut.toUpperCase())} className="h-full px-1 font-mono tabular outline-none hover:bg-ink/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60">
             {tc(value)}
           </button>
-          <button type="button" onClick={onClear} aria-label={tt('Clear the {0} point', label.toLowerCase())} className="grid h-full w-5 place-items-center rounded-r-lg outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60">
+          <button type="button" onClick={onClear} aria-label={tt('Clear the {0} point', label.toLowerCase())} className="grid h-full w-5 place-items-center rounded-r-lg outline-none hover:bg-ink/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60">
             <X className="size-3" />
           </button>
         </>
@@ -365,11 +365,11 @@ function Scrubber({ time, duration, marks, onSeek, onMark }: { time: number; dur
   return (
     <div className="px-3 pt-2.5 pb-2">
       <div ref={ref} data-source-scrubber onPointerDown={(e) => drag(e, 'seek')} className="relative h-5 cursor-pointer touch-none">
-        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-white/[0.09]" />
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-ink/[0.09]" />
         {(marks?.in !== undefined || marks?.out !== undefined) && <div className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-accent/60" style={{ left: pct(a), width: `calc(${pct(b)} - ${pct(a)})` }} />}
         {marks?.in !== undefined && <span data-mark="in" onPointerDown={(e) => drag(e, 'in')} className="absolute top-0 h-5 w-2 -translate-x-full cursor-ew-resize rounded-l-[3px] border-y-2 border-l-2 border-accent" style={{ left: pct(a) }} aria-label={tt('In point')} />}
         {marks?.out !== undefined && <span data-mark="out" onPointerDown={(e) => drag(e, 'out')} className="absolute top-0 h-5 w-2 cursor-ew-resize rounded-r-[3px] border-y-2 border-r-2 border-accent" style={{ left: pct(b) }} aria-label={tt('Out point')} />}
-        <span className="pointer-events-none absolute top-0 h-5 w-[2px] -translate-x-1/2 rounded-full bg-white shadow-[0_0_6px_rgb(255_255_255/0.6)]" style={{ left: pct(time) }} />
+        <span className="pointer-events-none absolute top-0 h-5 w-[2px] -translate-x-1/2 rounded-full bg-ink shadow-[0_0_6px_rgb(from_var(--color-ink)_r_g_b/0.6)]" style={{ left: pct(time) }} />
       </div>
     </div>
   )

@@ -66,14 +66,14 @@ export function KeyParams({ clip, fx }: { clip: Clip; fx: Effect }) {
               type="button"
               title={s.label}
               onClick={() => set({ color: s.color })}
-              className={cn('size-5 rounded-full ring-1 ring-white/20 transition-transform hover:scale-110', color.toLowerCase() === s.color && 'ring-2 ring-white')}
+              className={cn('size-5 rounded-full ring-1 ring-ink/20 transition-transform hover:scale-110', color.toLowerCase() === s.color && 'ring-2 ring-ink')}
               style={{ background: s.color }}
             />
           ))}
           <label className="relative size-5 cursor-pointer overflow-hidden rounded-full ring-2 ring-accent/60" title={tt('Custom colour')} style={{ background: color }}>
             <input type="color" value={color} onChange={(e) => set({ color: e.target.value }, 'c')} className="absolute inset-0 cursor-pointer opacity-0" />
           </label>
-          <button type="button" onClick={() => void pick()} className="ml-auto flex h-6 items-center gap-1 rounded-md bg-white/[0.06] px-2 text-2xs font-medium text-fg-2 hover:bg-white/[0.1] hover:text-fg">
+          <button type="button" onClick={() => void pick()} className="ml-auto flex h-6 items-center gap-1 rounded-md bg-ink/[0.06] px-2 text-2xs font-medium text-fg-2 hover:bg-ink/[0.1] hover:text-fg">
             <Pipette className="size-3" />{' '}{tt('Pick')}
           </button>
         </div>

@@ -41,7 +41,7 @@ export function TrackLane({ track, width }: { track: Track; width: number }) {
       data-lane={track.id}
       className={cn(
         'group/lane relative shrink-0 border-b border-line/70',
-        track.role === 'main' && 'bg-white/[0.016]',
+        track.role === 'main' && 'bg-ink/[0.016]',
         (track.hidden || track.muted) && 'opacity-45',
       )}
       style={{ width, height: track.height }}
@@ -54,7 +54,7 @@ export function TrackLane({ track, width }: { track: Track; width: number }) {
       {track.kind === 'audio' && !track.locked && <CrossfadeHandles trackId={track.id} />}
       {ghost && (
         <div
-          className="pointer-events-none absolute top-[3px] bottom-[3px] z-20 flex items-center overflow-hidden rounded-[7px] border-2 border-dashed px-2 text-xs/[inherit] font-medium text-white/90"
+          className="pointer-events-none absolute top-[3px] bottom-[3px] z-20 flex items-center overflow-hidden rounded-[7px] border-2 border-dashed px-2 text-xs/[inherit] font-medium text-on-media/90"
           style={{
             left: (ghost.start / fps) * pps,
             width: Math.max(8, (ghost.duration / fps) * pps),
@@ -135,7 +135,7 @@ function CrossfadeHandle({ clipId }: { clipId: string }) {
       type="button"
       title={tt('Add a crossfade')}
       onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: { kind: 'dissolve', duration: Math.max(2, Math.min(clip.duration, Math.round(fps / 2))) } }, { label: tt('Add crossfade') })}
-      className="absolute top-1/2 z-[12] grid size-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-surface-5 text-fg-2 opacity-0 shadow-[0_0_0_1px_rgb(255_255_255/0.18),0_4px_10px_rgb(0_0_0/0.5)] outline-none transition-[opacity,transform] group-hover/lane:opacity-100 hover:scale-110 hover:text-fg focus-visible:opacity-100"
+      className="absolute top-1/2 z-[12] grid size-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-surface-5 text-fg-2 opacity-0 shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_4px_10px_rgb(from_var(--color-shade)_r_g_b/0.5)] outline-none transition-[opacity,transform] group-hover/lane:opacity-100 hover:scale-110 hover:text-fg focus-visible:opacity-100"
       style={{ left: (clip.start / fps) * pps }}
     >
       <Plus className="size-2.5" />
@@ -163,9 +163,9 @@ function TransitionBadge({ clipId }: { clipId: string }) {
       <div
         className={cn(
           'pointer-events-none absolute top-[3px] bottom-[3px] z-[11]',
-          align === 'after' && 'rounded-l-[7px] bg-[linear-gradient(90deg,rgb(255_255_255/0.26),rgb(255_255_255/0.04))]',
-          align === 'before' && 'rounded-r-[7px] bg-[linear-gradient(90deg,rgb(255_255_255/0.04),rgb(255_255_255/0.26))]',
-          align === 'center' && 'bg-[linear-gradient(90deg,rgb(255_255_255/0.04),rgb(255_255_255/0.26),rgb(255_255_255/0.04))]',
+          align === 'after' && 'rounded-l-[7px] bg-[linear-gradient(90deg,rgb(from_var(--color-ink)_r_g_b/0.26),rgb(from_var(--color-ink)_r_g_b/0.04))]',
+          align === 'before' && 'rounded-r-[7px] bg-[linear-gradient(90deg,rgb(from_var(--color-ink)_r_g_b/0.04),rgb(from_var(--color-ink)_r_g_b/0.26))]',
+          align === 'center' && 'bg-[linear-gradient(90deg,rgb(from_var(--color-ink)_r_g_b/0.04),rgb(from_var(--color-ink)_r_g_b/0.26),rgb(from_var(--color-ink)_r_g_b/0.04))]',
         )}
         style={{ left: from, width: w }}
       />
@@ -174,7 +174,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
           <button
             type="button"
             title={`${name} · ${formatDuration(tr.duration, fps)}`}
-            className="absolute bottom-[6px] z-[12] grid size-4 -translate-x-1/2 place-items-center rounded-[5px] bg-surface-5 text-fg shadow-[0_0_0_1px_rgb(255_255_255/0.18),0_4px_10px_rgb(0_0_0/0.5)] outline-none transition-transform hover:scale-110 data-[state=open]:bg-accent data-[state=open]:text-accent-fg"
+            className="absolute bottom-[6px] z-[12] grid size-4 -translate-x-1/2 place-items-center rounded-[5px] bg-surface-5 text-fg shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_4px_10px_rgb(from_var(--color-shade)_r_g_b/0.5)] outline-none transition-transform hover:scale-110 data-[state=open]:bg-accent data-[state=open]:text-accent-fg"
             style={{ left: x }}
           >
             <Blend className="size-2.5" />
@@ -190,7 +190,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
                 type="button"
                 onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: { ...tr, kind: t.kind as TransitionKind } })}
                 className={cn(
-                  'h-7 rounded-md px-2 text-left text-xs text-fg-2 transition-colors hover:bg-white/[0.06]',
+                  'h-7 rounded-md px-2 text-left text-xs text-fg-2 transition-colors hover:bg-ink/[0.06]',
                   t.kind === tr.kind && 'bg-accent/15 text-accent-2',
                 )}
               >
@@ -200,14 +200,14 @@ function TransitionBadge({ clipId }: { clipId: string }) {
           </div>
           <div className="mt-3 flex items-center gap-3">
             <span className="w-14 text-xs text-fg-3">{tt('Position')}</span>
-            <div className="grid flex-1 grid-cols-3 gap-0.5 rounded-lg bg-white/[0.05] p-0.5">
+            <div className="grid flex-1 grid-cols-3 gap-0.5 rounded-lg bg-ink/[0.05] p-0.5">
               {ALIGNS.map((a) => (
                 <button
                   key={a.id}
                   type="button"
                   title={a.hint}
                   onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: { ...tr, align: a.id } }, { label: tt('Move transition') })}
-                  className={cn('h-6 rounded-md text-2xs font-medium text-fg-3 transition-colors hover:text-fg', a.id === align && 'bg-white/[0.12] text-fg')}
+                  className={cn('h-6 rounded-md text-2xs font-medium text-fg-3 transition-colors hover:text-fg', a.id === align && 'bg-ink/[0.12] text-fg')}
                 >
                   {a.label}
                 </button>

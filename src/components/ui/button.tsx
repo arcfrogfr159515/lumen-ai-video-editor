@@ -10,13 +10,13 @@ const base =
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-accent text-accent-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_1px_2px_rgb(0_0_0/0.4),0_6px_20px_-8px_rgb(214_238_0/0.45)] hover:bg-accent-2 disabled:bg-white/[0.07] disabled:text-fg-4 disabled:shadow-none disabled:opacity-100',
+    'bg-accent text-accent-fg shadow-[inset_0_1px_0_rgb(from_var(--color-ink)_r_g_b/0.35),0_1px_2px_rgb(from_var(--color-shade)_r_g_b/0.4),0_6px_20px_-8px_rgb(from_var(--color-accent)_r_g_b/0.45)] hover:bg-accent-2 disabled:bg-ink/[0.07] disabled:text-fg-4 disabled:shadow-none disabled:opacity-100',
   secondary: 'bg-surface-3 text-fg shadow-control hover:bg-surface-4',
-  ghost: 'text-fg-2 hover:bg-white/[0.06] hover:text-fg',
-  outline: 'text-fg-2 ring-1 ring-inset ring-line-2 hover:bg-white/[0.04] hover:text-fg',
-  ai: 'bg-ai text-accent-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_8px_24px_-10px_rgb(94_242_166/0.55)] hover:brightness-110 disabled:bg-none disabled:bg-white/[0.07] disabled:text-fg-4 disabled:shadow-none disabled:opacity-100',
+  ghost: 'text-fg-2 hover:bg-ink/[0.06] hover:text-fg',
+  outline: 'text-fg-2 ring-1 ring-inset ring-line-2 hover:bg-ink/[0.04] hover:text-fg',
+  ai: 'bg-ai text-accent-fg shadow-[inset_0_1px_0_rgb(from_var(--color-ink)_r_g_b/0.35),0_8px_24px_-10px_rgb(from_var(--color-ai-2)_r_g_b/0.55)] hover:brightness-110 disabled:bg-none disabled:bg-ink/[0.07] disabled:text-fg-4 disabled:shadow-none disabled:opacity-100',
   danger: 'bg-danger/12 text-danger hover:bg-danger/20',
-  white: 'bg-white text-black shadow-[0_1px_2px_rgb(0_0_0/0.3)] hover:bg-white/90',
+  white: 'bg-ink text-ink-fg shadow-[0_1px_2px_rgb(from_var(--color-shade)_r_g_b/0.3)] hover:bg-ink/90',
 }
 
 const sizes: Record<Size, string> = {
@@ -70,7 +70,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
         className={cn(
           base,
           iconSizes[size],
-          active ? 'bg-accent/16 text-accent-2 hover:bg-accent/22' : 'text-fg-3 hover:bg-white/[0.06] hover:text-fg',
+          active ? 'bg-accent/16 text-accent-2 hover:bg-accent/22' : 'text-fg-3 hover:bg-ink/[0.06] hover:text-fg',
           className,
         )}
         {...props}

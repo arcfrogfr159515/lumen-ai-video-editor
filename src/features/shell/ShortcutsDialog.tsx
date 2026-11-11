@@ -17,7 +17,7 @@ export function ShortcutsDialog() {
             <h3 className="mb-2 text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt(group)}</h3>
             <div className="space-y-0.5">
               {SHORTCUTS.filter((s) => s.group === group).map((s) => (
-                <div key={s.id} className="flex h-7 items-center justify-between gap-4 rounded-md px-2 text-sm text-fg-2 hover:bg-white/[0.03]">
+                <div key={s.id} className="flex h-7 items-center justify-between gap-4 rounded-md px-2 text-sm text-fg-2 hover:bg-ink/[0.03]">
                   <span className="truncate">{s.label}</span>
                   <Kbd combo={s.keys[0]} />
                 </div>

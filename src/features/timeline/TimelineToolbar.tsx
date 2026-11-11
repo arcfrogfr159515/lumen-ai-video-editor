@@ -42,7 +42,7 @@ export function TimelineToolbar() {
         <LayoutGrid />
       </IconButton>
       <div className="mx-1 h-4 w-px bg-line-2" />
-      <div className="flex items-center gap-0.5 rounded-[9px] bg-black/25 p-[3px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+      <div className="flex items-center gap-0.5 rounded-[9px] bg-shade/25 p-[3px] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
         <IconButton size="xs" label={tt('Select')} shortcut="v" active={tool === 'select'} onClick={() => setTool('select')}>
           <MousePointer2 />
         </IconButton>
@@ -118,11 +118,11 @@ function RangeChip() {
   const fps = useEditor((s) => s.project.settings.fps)
   if (!range) return null
   return (
-    <div className="ml-1 flex h-6 shrink-0 items-center gap-1 rounded-full bg-accent/10 pr-0.5 pl-2 text-2xs font-medium text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.25)]">
+    <div className="ml-1 flex h-6 shrink-0 items-center gap-1 rounded-full bg-accent/10 pr-0.5 pl-2 text-2xs font-medium text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.25)]">
       <button type="button" onClick={actions.goToIn} className="font-mono tabular hover:text-fg" title={tt('In to out — click to go to the in point (Shift+I)')}>
         {ttx('In–Out {0}', formatDuration(range.out - range.in, fps))}
       </button>
-      <button type="button" aria-label={tt('Clear in and out')} onClick={actions.clearInOut} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
+      <button type="button" aria-label={tt('Clear in and out')} onClick={actions.clearInOut} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-ink/[0.08] hover:text-fg">
         <X className="size-3" />
       </button>
     </div>
@@ -137,7 +137,7 @@ function TrimChip() {
   if (!cut) return null
   const sides = trimSides(cut, { tracks })
   return (
-    <div data-trim-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-accent/10 pr-0.5 pl-2.5 text-2xs font-medium text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]">
+    <div data-trim-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-accent/10 pr-0.5 pl-2.5 text-2xs font-medium text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.3)]">
       <span className="font-semibold">{tt('Trim')}</span>
       <div className="flex items-center gap-0.5">
         {TRIM_SIDES.filter((s) => sides.includes(s.id)).map((s) => (
@@ -147,7 +147,7 @@ function TrimChip() {
             title={s.hint}
             aria-pressed={side === s.id}
             onClick={() => setTrimSide(s.id)}
-            className={cn('h-5 rounded-full px-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60', side === s.id ? 'bg-accent text-accent-fg' : 'text-accent-2/80 hover:bg-white/[0.08] hover:text-fg')}
+            className={cn('h-5 rounded-full px-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60', side === s.id ? 'bg-accent text-accent-fg' : 'text-accent-2/80 hover:bg-ink/[0.08] hover:text-fg')}
           >
             {s.label}
           </button>
@@ -160,7 +160,7 @@ function TrimChip() {
         <Kbd combo="left" className="ml-1" />
         <Kbd combo="right" />{' '}{tt('nudge')}
       </span>
-      <button type="button" aria-label={tt('Leave trim mode')} title={tt('Leave trim mode (Esc)')} onClick={exitTrim} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
+      <button type="button" aria-label={tt('Leave trim mode')} title={tt('Leave trim mode (Esc)')} onClick={exitTrim} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-ink/[0.08] hover:text-fg">
         <X className="size-3" />
       </button>
     </div>
@@ -173,16 +173,16 @@ function RecordingChip() {
   const name = useEditor((s) => (recording ? s.project.clips[recording.clipId]?.name : undefined))
   if (!recording) return null
   return (
-    <div data-recording-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-danger/12 pr-0.5 pl-2.5 text-2xs font-medium text-danger shadow-[inset_0_0_0_1px_rgb(255_93_93/0.35)]">
+    <div data-recording-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-danger/12 pr-0.5 pl-2.5 text-2xs font-medium text-danger shadow-[inset_0_0_0_1px_rgb(from_var(--color-danger)_r_g_b/0.35)]">
       <span className="size-2 animate-pulse rounded-full bg-danger" />
       <span className="max-w-[220px] truncate" title={recording.skipped.length ? tt('Left out:\n{0}', recording.skipped.join('\n')) : undefined}>
         {ttx('Recording{0} · {1} step{2}', name ? (' ' + tt('on “{0}”', name)) : '', recording.steps.length, recording.steps.length === 1 ? '' : 's')}
         {recording.skipped.length > 0 && <span className="text-fg-3">{' '}{ttx('· {0} left out', recording.skipped.length)}</span>}
       </span>
-      <button type="button" onClick={() => void timelineActions.toggleRecording()} title={tt('Stop and keep the macro (Alt+R)')} className="h-5 rounded-full bg-danger px-2 font-semibold text-black outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-accent/60">
+      <button type="button" onClick={() => void timelineActions.toggleRecording()} title={tt('Stop and keep the macro (Alt+R)')} className="h-5 rounded-full bg-danger px-2 font-semibold text-ink-fg outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-accent/60">
         {tt('Stop')}
       </button>
-      <button type="button" aria-label={tt('Discard the recording')} title={tt('Discard the recording')} onClick={cancelRecording} className="grid size-5 place-items-center rounded-full text-danger/80 hover:bg-white/[0.08] hover:text-fg">
+      <button type="button" aria-label={tt('Discard the recording')} title={tt('Discard the recording')} onClick={cancelRecording} className="grid size-5 place-items-center rounded-full text-danger/80 hover:bg-ink/[0.08] hover:text-fg">
         <X className="size-3" />
       </button>
     </div>
@@ -229,7 +229,7 @@ function CopilotHint() {
           exit={{ opacity: 0, y: -4, scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 420, damping: 32 }}
           data-busy={running || undefined}
-          className="ring-ai flex h-7 min-w-0 items-center gap-2 rounded-full bg-white/[0.035] pr-1 pl-2.5 text-xs"
+          className="ring-ai flex h-7 min-w-0 items-center gap-2 rounded-full bg-ink/[0.035] pr-1 pl-2.5 text-xs"
         >
           <AiSparkle className="size-3.5 shrink-0" />
           <span className="truncate text-fg-2">{suggestion.text}</span>
@@ -237,7 +237,7 @@ function CopilotHint() {
             type="button"
             disabled={running}
             onClick={() => void act()}
-            className="shrink-0 rounded-full bg-white/[0.09] px-2.5 py-1 font-medium text-fg transition-colors hover:bg-white/[0.16]"
+            className="shrink-0 rounded-full bg-ink/[0.09] px-2.5 py-1 font-medium text-fg transition-colors hover:bg-ink/[0.16]"
           >
             {suggestion.action}
           </button>
@@ -245,7 +245,7 @@ function CopilotHint() {
             type="button"
             aria-label={tt('Dismiss suggestion')}
             onClick={() => setDismissed((d) => [...d, suggestion.id])}
-            className="grid size-5 shrink-0 place-items-center rounded-full text-fg-4 hover:bg-white/[0.08] hover:text-fg-2"
+            className="grid size-5 shrink-0 place-items-center rounded-full text-fg-4 hover:bg-ink/[0.08] hover:text-fg-2"
           >
             <X className="size-3" />
           </button>

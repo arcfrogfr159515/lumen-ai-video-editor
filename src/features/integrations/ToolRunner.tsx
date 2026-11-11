@@ -30,7 +30,7 @@ export function ToolList({ server, onPick }: { server: McpServerState; onPick: (
             key={tool.name}
             type="button"
             onClick={() => onPick(tool)}
-            className="group/tool flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left outline-none transition-colors hover:bg-white/[0.045] focus-visible:ring-2 focus-visible:ring-accent/60"
+            className="group/tool flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left outline-none transition-colors hover:bg-ink/[0.045] focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             <Wrench className="mt-0.5 size-3.5 shrink-0 text-fg-4 group-hover/tool:text-accent-2" />
             <div className="min-w-0 flex-1">

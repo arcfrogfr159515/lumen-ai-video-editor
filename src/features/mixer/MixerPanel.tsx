@@ -106,8 +106,8 @@ function Strip({
     <div
       onPointerDown={onSelect}
       className={cn(
-        'flex w-[68px] shrink-0 flex-col items-stretch gap-1.5 rounded-xl bg-white/[0.03] p-1.5 pt-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] transition-[background-color,box-shadow]',
-        selected && 'bg-white/[0.06] shadow-[inset_0_0_0_1.5px_rgb(214_238_0/0.55)]',
+        'flex w-[68px] shrink-0 flex-col items-stretch gap-1.5 rounded-xl bg-ink/[0.03] p-1.5 pt-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] transition-[background-color,box-shadow]',
+        selected && 'bg-ink/[0.06] shadow-[inset_0_0_0_1.5px_rgb(from_var(--color-accent)_r_g_b/0.55)]',
         master && 'w-[76px]',
       )}
     >
@@ -124,7 +124,7 @@ function Strip({
             key={f.label}
             className={cn(
               'grid h-4 flex-1 place-items-center rounded-[4px] text-2xs/[inherit] font-bold tracking-wide',
-              f.on ? 'bg-accent/20 text-accent-2' : f.present ? 'bg-white/[0.06] text-fg-4 line-through' : 'bg-white/[0.035] text-fg-4/60',
+              f.on ? 'bg-accent/20 text-accent-2' : f.present ? 'bg-ink/[0.06] text-fg-4 line-through' : 'bg-ink/[0.035] text-fg-4/60',
             )}
           >
             {f.label}
@@ -146,7 +146,7 @@ function Strip({
             type="button"
             title={track.muted ? tt('Unmute') : tt('Mute')}
             onClick={() => dispatch('track.update', { id: track.id, patch: { muted: !track.muted } })}
-            className={cn('grid h-6 flex-1 place-items-center rounded-md text-2xs font-bold transition-colors', track.muted ? 'bg-warn/25 text-warn' : 'bg-white/[0.05] text-fg-3 hover:bg-white/[0.09]')}
+            className={cn('grid h-6 flex-1 place-items-center rounded-md text-2xs font-bold transition-colors', track.muted ? 'bg-warn/25 text-warn' : 'bg-ink/[0.05] text-fg-3 hover:bg-ink/[0.09]')}
           >
             {track.muted ? <VolumeX className="size-3" /> : 'M'}
           </button>
@@ -154,7 +154,7 @@ function Strip({
             type="button"
             title={track.solo ? tt('Unsolo') : tt('Solo')}
             onClick={() => dispatch('track.update', { id: track.id, patch: { solo: !track.solo } })}
-            className={cn('grid h-6 flex-1 place-items-center rounded-md text-2xs font-bold transition-colors', track.solo ? 'bg-accent/25 text-accent-2' : 'bg-white/[0.05] text-fg-3 hover:bg-white/[0.09]')}
+            className={cn('grid h-6 flex-1 place-items-center rounded-md text-2xs font-bold transition-colors', track.solo ? 'bg-accent/25 text-accent-2' : 'bg-ink/[0.05] text-fg-3 hover:bg-ink/[0.09]')}
           >
             {track.solo ? <Headphones className="size-3" /> : 'S'}
           </button>
@@ -216,16 +216,16 @@ function Fader({ value, name, onChange }: { value: number; name: string; onChang
       }}
       className="group/fader relative w-5 cursor-ns-resize rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
-      <div className="absolute inset-y-1 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-black/50 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]" />
+      <div className="absolute inset-y-1 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-shade/50 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" />
       {FADER_MARKS.map((m) => (
-        <span key={m} className={cn('pointer-events-none absolute right-0 left-0 h-px', m === 0 ? 'bg-white/35' : 'bg-white/10')} style={{ bottom: `calc(${faderPos(m) * 100}% * 0.94 + 3%)` }} />
+        <span key={m} className={cn('pointer-events-none absolute right-0 left-0 h-px', m === 0 ? 'bg-ink/35' : 'bg-ink/10')} style={{ bottom: `calc(${faderPos(m) * 100}% * 0.94 + 3%)` }} />
       ))}
       <span
         data-thumb
-        className="absolute left-1/2 h-3 w-5 -translate-x-1/2 translate-y-1/2 cursor-grab rounded-[4px] bg-[linear-gradient(180deg,#f4f4f5,#b9b9bf)] shadow-[0_2px_6px_rgb(0_0_0/0.6),inset_0_-1px_0_rgb(0_0_0/0.25)] active:cursor-grabbing"
+        className="absolute left-1/2 h-3 w-5 -translate-x-1/2 translate-y-1/2 cursor-grab rounded-[4px] bg-[linear-gradient(180deg,#f4f4f5,#b9b9bf)] shadow-[0_2px_6px_rgb(from_var(--color-shade)_r_g_b/0.6),inset_0_-1px_0_rgb(from_var(--color-shade)_r_g_b/0.25)] active:cursor-grabbing"
         style={{ bottom: `calc(${faderPos(value) * 100}% * 0.94 + 3%)` }}
       >
-        <span className="pointer-events-none absolute top-1/2 right-1 left-1 h-px -translate-y-1/2 bg-black/50" />
+        <span className="pointer-events-none absolute top-1/2 right-1 left-1 h-px -translate-y-1/2 bg-shade/50" />
       </span>
     </div>
   )
@@ -274,13 +274,13 @@ function Meter({ target }: { target: Target }) {
         title={tt('Clipped — click to reset')}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => delete e.currentTarget.dataset.on}
-        className="h-1.5 w-full rounded-[2px] bg-white/[0.07] data-[on=true]:bg-danger data-[on=true]:shadow-[0_0_6px_var(--color-danger)]"
+        className="h-1.5 w-full rounded-[2px] bg-ink/[0.07] data-[on=true]:bg-danger data-[on=true]:shadow-[0_0_6px_var(--color-danger)]"
       />
       <div className="flex min-h-0 flex-1 gap-[3px]">
         {[0, 1].map((i) => (
-          <div key={i} className="relative w-[7px] overflow-hidden rounded-[2px] bg-black/55 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+          <div key={i} className="relative w-[7px] overflow-hidden rounded-[2px] bg-shade/55 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
             <div ref={i ? barR : barL} className="absolute inset-0 bg-[linear-gradient(to_top,#2fcf7e_0%,#2fcf7e_62%,#e6e238_76%,#f5a524_88%,#ef4444_96%)]" style={{ clipPath: 'inset(100% 0 0 0)' }} />
-            <div ref={i ? holdR : holdL} className="absolute inset-x-0 h-[2px] bg-white/85 opacity-0" />
+            <div ref={i ? holdR : holdL} className="absolute inset-x-0 h-[2px] bg-ink/85 opacity-0" />
           </div>
         ))}
       </div>

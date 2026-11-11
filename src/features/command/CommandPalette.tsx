@@ -106,7 +106,7 @@ export function CommandPalette() {
       }}
       label={tt('Command palette')}
       loop
-      overlayClassName="fixed inset-0 z-[90] bg-black/45 backdrop-blur-[2px] data-[state=open]:animate-fade-in"
+      overlayClassName="fixed inset-0 z-[90] bg-shade/45 backdrop-blur-[2px] data-[state=open]:animate-fade-in"
       contentClassName="popover fixed top-[13%] left-1/2 z-[95] w-[min(640px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-2xl data-[state=open]:animate-pop-in"
     >
       <div className="flex items-center gap-3 border-b border-line px-4">
@@ -437,7 +437,7 @@ function Item({
       keywords={keywords}
       forceMount={forceMount}
       onSelect={onSelect}
-      className="flex h-10 cursor-default items-center gap-3 rounded-[9px] px-2.5 text-sm text-fg-2 select-none data-[selected=true]:bg-white/[0.07] data-[selected=true]:text-fg [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3"
+      className="flex h-10 cursor-default items-center gap-3 rounded-[9px] px-2.5 text-sm text-fg-2 select-none data-[selected=true]:bg-ink/[0.07] data-[selected=true]:text-fg [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3"
     >
       {icon}
       <span className="min-w-0 flex-1 truncate">{children}</span>

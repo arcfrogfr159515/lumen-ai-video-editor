@@ -79,7 +79,7 @@ function Body({ onClose }: { onClose: () => void }) {
   if (!targets)
     return (
       <div className="px-5 pb-6">
-        <div className="rounded-xl bg-white/[0.03] p-5 text-center">
+        <div className="rounded-xl bg-ink/[0.03] p-5 text-center">
           <Clapperboard className="mx-auto size-6 text-fg-3" />
           <p className="mt-2 text-sm font-medium text-fg">{tt('No multicam clip here')}</p>
           <p className="mx-auto mt-1 max-w-[420px] text-xs leading-relaxed text-fg-3">
@@ -155,7 +155,7 @@ function Body({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-3 py-2">
+      <div className="flex items-center gap-2 rounded-lg bg-ink/[0.03] px-3 py-2">
         <Eye className="size-4 shrink-0 text-fg-3" />
         <span className="min-w-0 flex-1 text-xs leading-relaxed text-fg-3">
           {motion ? tt('The picture was watched: where a camera’s picture moves counts towards cutting to it.') : tt('Also watch the picture: movement tips the balance between cameras, and stands in for sound where a camera has none. It reads every frame, so it takes a while.')}
@@ -201,14 +201,14 @@ function PlanStrip({ plan }: { plan: AutoDirectPlan }) {
   const seconds = Math.max(plan.seconds, 1e-6)
   return (
     <div data-director-plan>
-      <div className="relative h-7 overflow-hidden rounded-md bg-black/30 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+      <div className="relative h-7 overflow-hidden rounded-md bg-shade/30 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
         {plan.cuts.map((c, i) => {
           const end = plan.cuts[i + 1]?.at ?? seconds
           return (
             <span
               key={`${c.at}:${c.angle}`}
               title={tt('{0} — {1}, for {2} s', plan.angles[c.angle], WHY[c.why], (end - c.at).toFixed(1))}
-              className="absolute inset-y-0 border-r border-black/50"
+              className="absolute inset-y-0 border-r border-shade/50"
               style={{ left: `${(c.at / seconds) * 100}%`, width: `${((end - c.at) / seconds) * 100}%`, background: ANGLE_COLORS[c.angle % ANGLE_COLORS.length], opacity: c.why === 'reaction' ? 0.65 : 0.9 }}
             />
           )

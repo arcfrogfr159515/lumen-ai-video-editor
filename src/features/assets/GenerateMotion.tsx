@@ -24,16 +24,16 @@ const tech = { fontFamily: '"Space Grotesk Variable", sans-serif' }
 /** Tiny static mock-ups of each template, so the picker reads at a glance. */
 const PREVIEWS: Record<Template, ReactNode> = {
   'lower-third': (
-    <div className="absolute bottom-[16%] left-[9%] text-white">
+    <div className="absolute bottom-[16%] left-[9%] text-on-media">
       <span className="block text-base leading-none" style={serif}>
         {tt('Ada Lovelace')}
       </span>
       <span className="my-[4px] block h-px w-5 bg-accent" />
-      <span className="block text-[5px] font-semibold tracking-[0.22em] text-white/70 uppercase">{tt('Mathematician')}</span>
+      <span className="block text-[5px] font-semibold tracking-[0.22em] text-on-media/70 uppercase">{tt('Mathematician')}</span>
     </div>
   ),
   'title-card': (
-    <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-on-media">
       <span className="text-lg leading-none font-light" style={serif}>
         {tt('The')}{' '}<em className="text-accent">{tt('quiet')}</em>{' '}{tt('hour')}
       </span>
@@ -53,13 +53,13 @@ const PREVIEWS: Record<Template, ReactNode> = {
         <circle r="16" cx="20" cy="20" fill="none" stroke="rgb(255 255 255 / 0.16)" strokeWidth="0.75" />
         <circle r="16" cx="20" cy="20" fill="none" stroke="#d6ee00" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="100.5" strokeDashoffset="18" />
       </svg>
-      <span className="absolute text-2xs/[inherit] font-semibold text-white tabular" style={tech}>
+      <span className="absolute text-2xs/[inherit] font-semibold text-on-media tabular" style={tech}>
         87%
       </span>
     </div>
   ),
   quote: (
-    <div className="absolute inset-0 flex flex-col justify-center px-[14%] text-white">
+    <div className="absolute inset-0 flex flex-col justify-center px-[14%] text-on-media">
       <span className="text-lg leading-[0.6] text-accent" style={serif}>
         “
       </span>
@@ -69,9 +69,9 @@ const PREVIEWS: Record<Template, ReactNode> = {
     </div>
   ),
   chapter: (
-    <div className="absolute bottom-[16%] left-[9%] text-white">
+    <div className="absolute bottom-[16%] left-[9%] text-on-media">
       <span className="block font-mono text-[5px] tracking-[0.2em] text-accent">02</span>
-      <span className="my-[3px] block h-px w-8 bg-white/80" />
+      <span className="my-[3px] block h-px w-8 bg-ink/80" />
       <span className="block text-xs leading-none font-semibold tracking-tight" style={art}>
         {tt('The Build')}
       </span>
@@ -177,7 +177,7 @@ export function GenerateMotion() {
               <div
                 className={cn(
                   'relative aspect-[16/9] overflow-hidden rounded-[10px] bg-[radial-gradient(120%_100%_at_30%_0%,#22261a,#0f100d)] transition-shadow',
-                  template === t.id ? 'shadow-[0_0_0_2px_var(--color-accent)]' : 'shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] group-hover/tpl:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.16)]',
+                  template === t.id ? 'shadow-[0_0_0_2px_var(--color-accent)]' : 'shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] group-hover/tpl:shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16)]',
                 )}
               >
                 {PREVIEWS[t.id]}

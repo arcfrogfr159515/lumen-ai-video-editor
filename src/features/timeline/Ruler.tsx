@@ -161,7 +161,7 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
               <ContextMenu.Item
                 key={c}
                 onSelect={() => dispatch('marker.update', { id: marker.id, patch: { color: c } })}
-                className="size-4 cursor-default rounded-full outline-none ring-offset-2 ring-offset-surface-2 data-[highlighted]:ring-2 data-[highlighted]:ring-white/60"
+                className="size-4 cursor-default rounded-full outline-none ring-offset-2 ring-offset-surface-2 data-[highlighted]:ring-2 data-[highlighted]:ring-ink/60"
                 style={{ background: MARKER_COLORS[c] }}
               />
             ))}
@@ -171,7 +171,7 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
             <ContextMenu.Item
               key={k.id}
               onSelect={() => patch({ kind: k.id === 'plain' ? null : k.id })}
-              className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg"
+              className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
             >
               <svg width="9" height="12" viewBox="0 0 9 12" aria-hidden className="shrink-0">
                 <path d={MARKER_SHAPE[k.id]} fill={kind === k.id ? color : 'currentColor'} opacity={kind === k.id ? 1 : 0.5} />
@@ -183,21 +183,21 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
           {marker.kind === 'todo' && (
             <ContextMenu.Item
               onSelect={() => patch({ done: !marker.done })}
-              className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg"
+              className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
             >
               <Check className="size-4" /> {marker.done ? tt('Reopen') : tt('Tick off')}
             </ContextMenu.Item>
           )}
           <ContextMenu.Item
             onSelect={() => useUI.getState().setLeftTab('notes')}
-            className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg"
+            className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
           >
             <PencilLine className="size-4" />{' '}{tt('Rename or add a note…')}
           </ContextMenu.Item>
           <div className="mx-1 my-1 h-px bg-line" />
           <ContextMenu.Item
             onSelect={() => dispatch('marker.remove', { id: marker.id })}
-            className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-danger outline-none data-[highlighted]:bg-white/[0.07]"
+            className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-danger outline-none data-[highlighted]:bg-ink/[0.07]"
           >
             <Trash className="size-4" />{' '}{tt('Remove marker')}
           </ContextMenu.Item>
@@ -276,7 +276,7 @@ function PlayheadHandle() {
       <svg width="13" height="18" viewBox="0 0 13 18" className="drop-shadow-[0_2px_4px_rgb(0_0_0/0.6)]" aria-hidden>
         <path d="M2 1.5h9a1.5 1.5 0 0 1 1.5 1.5v8.2a1.5 1.5 0 0 1-.52 1.14L7.1 16.5a1 1 0 0 1-1.2 0l-4.88-4.16A1.5 1.5 0 0 1 .5 11.2V3A1.5 1.5 0 0 1 2 1.5Z" fill="#fff" />
       </svg>
-      <div className="absolute top-[16px] left-1/2 h-[14px] w-[1.5px] -translate-x-1/2 bg-white" />
+      <div className="absolute top-[16px] left-1/2 h-[14px] w-[1.5px] -translate-x-1/2 bg-ink" />
     </div>
   )
 }
@@ -317,13 +317,13 @@ export function TimecodeCell() {
             if (e.key === 'Enter') commit()
             if (e.key === 'Escape') setEditing(false)
           }}
-          className="h-6 w-full rounded bg-white/[0.07] px-1.5 font-mono text-sm text-fg tabular outline-none ring-1 ring-accent/60"
+          className="h-6 w-full rounded bg-ink/[0.07] px-1.5 font-mono text-sm text-fg tabular outline-none ring-1 ring-accent/60"
         />
       ) : (
         <button
           type="button"
           onClick={() => (setDraft(formatTimecode(usePlayback.getState().frame, fps)), setEditing(true))}
-          className="flex items-baseline gap-2 rounded px-1 font-mono text-base/[inherit] font-medium tracking-tight text-fg tabular hover:bg-white/[0.05]"
+          className="flex items-baseline gap-2 rounded px-1 font-mono text-base/[inherit] font-medium tracking-tight text-fg tabular hover:bg-ink/[0.05]"
           title={tt('Click to jump to a timecode')}
         >
           <span ref={readout} />

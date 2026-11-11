@@ -17,8 +17,8 @@ import { tt } from '@/lib/i18n'
 
 export function StatusDot({ status, className }: { status: McpStatus | 'ready' | 'missing'; className?: string }) {
   const color = {
-    connected: 'bg-ok shadow-[0_0_8px_rgb(60_207_145/0.6)]',
-    ready: 'bg-ok shadow-[0_0_8px_rgb(60_207_145/0.6)]',
+    connected: 'bg-ok shadow-[0_0_8px_rgb(from_var(--color-ok)_r_g_b/0.6)]',
+    ready: 'bg-ok shadow-[0_0_8px_rgb(from_var(--color-ok)_r_g_b/0.6)]',
     connecting: 'bg-warn animate-pulse',
     'needs-auth': 'bg-warn animate-pulse',
     error: 'bg-danger',
@@ -41,19 +41,19 @@ export function IconTile({ children, tone, size = 'md' }: { children: ReactNode;
   const bg = {
     blender: 'bg-[linear-gradient(135deg,#ff9b3d,#e8590c)] shadow-[0_8px_24px_-10px_rgb(232_89_12/0.8)]',
     hyperframes: 'bg-[linear-gradient(135deg,#22d3ee,#3b82f6)] shadow-[0_8px_24px_-10px_rgb(59_130_246/0.8)]',
-    mcp: 'bg-[linear-gradient(135deg,#3f403a,#1f201c)] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]',
-    lumen: 'bg-ai text-accent-fg shadow-[0_8px_24px_-10px_rgb(94_242_166/0.6)]',
-    higgsfield: 'bg-[linear-gradient(135deg,#d4ff3f,#44d17a)] text-black shadow-[0_8px_24px_-10px_rgb(120_220_90/0.7)]',
+    mcp: 'bg-[linear-gradient(135deg,#3f403a,#1f201c)] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)]',
+    lumen: 'bg-ai text-accent-fg shadow-[0_8px_24px_-10px_rgb(from_var(--color-ai-2)_r_g_b/0.6)]',
+    higgsfield: 'bg-[linear-gradient(135deg,#d4ff3f,#44d17a)] text-ink-fg shadow-[0_8px_24px_-10px_rgb(120_220_90/0.7)]',
   }[tone]
   return (
-    <span className={cn('grid shrink-0 place-items-center text-white', size === 'md' ? 'size-11 rounded-[13px] [&_svg]:size-5' : 'size-7 rounded-[8px] [&_svg]:size-3.5', bg)}>
+    <span className={cn('grid shrink-0 place-items-center text-on-media', size === 'md' ? 'size-11 rounded-[13px] [&_svg]:size-5' : 'size-7 rounded-[8px] [&_svg]:size-3.5', bg)}>
       {children}
     </span>
   )
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('rounded-xl bg-white/[0.03] p-4 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]', className)}>{children}</div>
+  return <div className={cn('rounded-xl bg-ink/[0.03] p-4 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]', className)}>{children}</div>
 }
 
 /** Progress for a running job: determinate bar, or a shimmer when the length is unknown. */
@@ -61,7 +61,7 @@ export function JobProgress({ job, compact }: { job: Job; compact?: boolean }) {
   const pct = job.progress >= 0 ? job.progress * 100 : null
   return (
     <div className={cn(compact ? 'space-y-1' : 'space-y-1.5')}>
-      <div className="h-1 overflow-hidden rounded-full bg-white/10">
+      <div className="h-1 overflow-hidden rounded-full bg-ink/10">
         {pct === null ? (
           <div className="h-full w-1/3 animate-indeterminate rounded-full bg-ai" />
         ) : (
@@ -94,7 +94,7 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
             onDragEnd={dnd.end}
             className="group/gen min-w-0 cursor-grab active:cursor-grabbing"
           >
-            <div className="checker relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+            <div className="checker relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
               {thumb ? (
                 <img src={thumb} alt="" draggable={false} className="h-full w-full object-contain" />
               ) : (
@@ -103,7 +103,7 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
                 </div>
               )}
               {asset.duration !== undefined && (
-                <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-white">{formatSeconds(asset.duration)}</span>
+                <span className="absolute right-1.5 bottom-1.5 rounded-md bg-shade/60 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-on-media">{formatSeconds(asset.duration)}</span>
               )}
               <button
                 type="button"
@@ -112,7 +112,7 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
                   const id = placeAsset(asset.id, usePlayback.getState().frame)
                   if (id) useUI.getState().select([id])
                 }}
-                className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-white text-black opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/gen:scale-100 group-hover/gen:opacity-100"
+                className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-ink text-ink-fg opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/gen:scale-100 group-hover/gen:opacity-100"
               >
                 <Plus className="size-3.5" strokeWidth={2.5} />
               </button>
@@ -143,13 +143,13 @@ export function LinkRow({ link, provenance }: { link: McpLink; provenance: Gener
     }
   }
   return (
-    <div className="flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+    <div className="flex items-center gap-2.5 rounded-lg bg-ink/[0.03] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
       <Link2 className="size-3.5 shrink-0 text-fg-4" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-xs text-fg-2">{link.name ?? file}</div>
         <div className="truncate text-2xs text-fg-4">{url.hostname}</div>
       </div>
-      <a href={link.url} target="_blank" rel="noreferrer" className="grid size-6 place-items-center rounded-md text-fg-4 hover:bg-white/[0.06] hover:text-fg-2" aria-label={tt('Open in browser')}>
+      <a href={link.url} target="_blank" rel="noreferrer" className="grid size-6 place-items-center rounded-md text-fg-4 hover:bg-ink/[0.06] hover:text-fg-2" aria-label={tt('Open in browser')}>
         <ExternalLink className="size-3.5" />
       </a>
       <Button size="xs" variant={state === 'done' ? 'ghost' : 'secondary'} disabled={state !== 'idle'} onClick={importIt}>
@@ -176,7 +176,7 @@ export function JobOutcome({ job }: { job: Job }) {
         </div>
       )}
       {job.status === 'error' && (
-        <div className="flex gap-2 rounded-lg bg-danger/10 px-3 py-2.5 text-xs text-danger shadow-[inset_0_0_0_1px_rgb(255_93_93/0.2)]">
+        <div className="flex gap-2 rounded-lg bg-danger/10 px-3 py-2.5 text-xs text-danger shadow-[inset_0_0_0_1px_rgb(from_var(--color-danger)_r_g_b/0.2)]">
           <CircleAlert className="mt-px size-3.5 shrink-0" />
           <span className="min-w-0 break-words whitespace-pre-wrap">{job.error}</span>
         </div>
@@ -187,7 +187,7 @@ export function JobOutcome({ job }: { job: Job }) {
         <LinkRow key={link.url} link={link} provenance={{ integration: job.integration, tool: job.title }} />
       ))}
       {!!result?.text.length && (
-        <pre className="max-h-56 overflow-auto rounded-lg bg-black/30 px-3 py-2.5 font-mono text-2xs leading-relaxed whitespace-pre-wrap text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+        <pre className="max-h-56 overflow-auto rounded-lg bg-shade/30 px-3 py-2.5 font-mono text-2xs leading-relaxed whitespace-pre-wrap text-fg-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
           {result.text.join('\n\n')}
         </pre>
       )}
@@ -221,7 +221,7 @@ export function RenderCard({ job }: { job: Job }) {
       initial={{ opacity: 0, y: 6, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-      className={cn('rounded-xl p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]', running ? 'ring-ai bg-white/[0.035]' : 'bg-white/[0.025]')}
+      className={cn('rounded-xl p-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]', running ? 'ring-ai bg-ink/[0.035]' : 'bg-ink/[0.025]')}
     >
       <div className="mb-2 flex items-center gap-2">
         {running ? (
@@ -235,7 +235,7 @@ export function RenderCard({ job }: { job: Job }) {
         )}
         <span className="min-w-0 flex-1 truncate text-xs font-medium text-fg-2">{job.title}</span>
         {running ? (
-          <button type="button" aria-label={tt('Cancel')} onClick={() => void cancelJob(job.id)} className="grid size-5 place-items-center rounded-md text-fg-4 hover:bg-white/[0.08] hover:text-fg-2">
+          <button type="button" aria-label={tt('Cancel')} onClick={() => void cancelJob(job.id)} className="grid size-5 place-items-center rounded-md text-fg-4 hover:bg-ink/[0.08] hover:text-fg-2">
             <X className="size-3" />
           </button>
         ) : (
@@ -276,10 +276,10 @@ export function CopyField({ label, value, secret }: { label: string; value: stri
   return (
     <div>
       <div className="mb-1.5 text-xs font-medium text-fg-2">{label}</div>
-      <div className="flex items-center gap-1 rounded-lg bg-black/30 py-1 pr-1 pl-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+      <div className="flex items-center gap-1 rounded-lg bg-shade/30 py-1 pr-1 pl-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
         <code className="min-w-0 flex-1 truncate font-mono text-xs text-fg-2">{shown ? value : '•'.repeat(Math.min(32, value.length))}</code>
         {secret && (
-          <button type="button" aria-label={shown ? tt('Hide') : tt('Show')} onClick={() => setShown(!shown)} className="grid size-7 place-items-center rounded-md text-fg-4 hover:bg-white/[0.06] hover:text-fg-2">
+          <button type="button" aria-label={shown ? tt('Hide') : tt('Show')} onClick={() => setShown(!shown)} className="grid size-7 place-items-center rounded-md text-fg-4 hover:bg-ink/[0.06] hover:text-fg-2">
             {shown ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
           </button>
         )}
@@ -291,7 +291,7 @@ export function CopyField({ label, value, secret }: { label: string; value: stri
             setCopied(true)
             setTimeout(() => setCopied(false), 1400)
           }}
-          className="grid size-7 place-items-center rounded-md text-fg-4 hover:bg-white/[0.06] hover:text-fg-2"
+          className="grid size-7 place-items-center rounded-md text-fg-4 hover:bg-ink/[0.06] hover:text-fg-2"
         >
           {copied ? <Check className="size-3.5 text-ok" /> : <Copy className="size-3.5" />}
         </button>

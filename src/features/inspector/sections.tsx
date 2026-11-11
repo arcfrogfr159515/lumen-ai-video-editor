@@ -200,7 +200,7 @@ export function EffectsSection({ clip }: { clip: Clip }) {
           {clip.effects.map((fx) => {
             const meta = EFFECTS.find((e) => e.kind === fx.kind)!
             return (
-              <div key={fx.id} className={cn('rounded-lg bg-white/[0.035] p-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]', !fx.enabled && 'opacity-55')}>
+              <div key={fx.id} className={cn('rounded-lg bg-ink/[0.035] p-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]', !fx.enabled && 'opacity-55')}>
                 <div className="flex items-center gap-2">
                   <EffectPreview kind={fx.kind} src={preview.a} className="h-7 w-12 shrink-0 rounded-md" />
                   <span className="min-w-0 flex-1 truncate text-xs font-medium text-fg">{meta.name}</span>
@@ -324,7 +324,7 @@ export function AudioSection({ clip, fps }: { clip: Clip; fps: number }) {
 
 function Note({ icon, text, action }: { icon: ReactNode; text: string; action?: ReactNode }) {
   return (
-    <div className="m-4 flex gap-3 rounded-xl bg-white/[0.035] p-3.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+    <div className="m-4 flex gap-3 rounded-xl bg-ink/[0.035] p-3.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
       <span className="mt-0.5 text-fg-3 [&_svg]:size-4">{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-xs leading-relaxed text-fg-3">{text}</p>
@@ -369,7 +369,7 @@ export function SpeedSection({ clips, fps }: { clips: Clip[]; fps: number }) {
               onClick={() => update(ids, { speed: s })}
               className={cn(
                 'h-7 rounded-md text-xs font-medium tabular transition-colors',
-                clip.speed === s && !ramped ? 'bg-accent/18 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.4)]' : 'bg-white/[0.04] text-fg-3 hover:bg-white/[0.07] hover:text-fg',
+                clip.speed === s && !ramped ? 'bg-accent/18 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.4)]' : 'bg-ink/[0.04] text-fg-3 hover:bg-ink/[0.07] hover:text-fg',
               )}
             >
               {s}×
@@ -417,7 +417,7 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
               onClick={() => update([clip.id], { animation: { [dir]: { preset: a.preset as AnimPreset } } })}
               className={cn(
                 'h-7 rounded-md text-xs font-medium transition-colors',
-                spec.preset === a.preset ? 'bg-accent/18 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.4)]' : 'bg-white/[0.04] text-fg-3 hover:bg-white/[0.07] hover:text-fg',
+                spec.preset === a.preset ? 'bg-accent/18 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.4)]' : 'bg-ink/[0.04] text-fg-3 hover:bg-ink/[0.07] hover:text-fg',
               )}
             >
               {a.name}
@@ -465,7 +465,7 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
                       <span className="w-14 shrink-0 truncate text-fg-4 tabular">{Math.round(k.value * 100) / 100}</span>
                       {i < all.length - 1 ? (
                         <EasingMenu value={k.easing} onChange={(e) => e && dispatch('keyframe.set', { clipId: clip.id, prop: p, frame: k.frame, value: k.value, easing: e })}>
-                          <button type="button" className="flex h-6 min-w-0 flex-1 items-center gap-1.5 rounded-md px-1.5 text-fg-3 hover:bg-white/[0.06] hover:text-fg" title={tt('The curve to the next keyframe')}>
+                          <button type="button" className="flex h-6 min-w-0 flex-1 items-center gap-1.5 rounded-md px-1.5 text-fg-3 hover:bg-ink/[0.06] hover:text-fg" title={tt('The curve to the next keyframe')}>
                             <CurveIcon easing={k.easing} className="size-4" />
                             <span className="truncate">{easingLabel(k.easing)}</span>
                           </button>
@@ -520,7 +520,7 @@ export function TextSection({ clip }: { clip: Clip }) {
             onChange={(e) => set({ content: e.target.value }, `text:${clip.id}`)}
             onKeyDown={(e) => e.stopPropagation()}
             rows={Math.min(5, t.content.split('\n').length + 1)}
-            className="w-full resize-none rounded-lg bg-white/[0.045] px-2.5 py-2 text-sm leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none focus:shadow-[inset_0_0_0_1px_rgb(214_238_0/0.5),0_0_0_3px_rgb(214_238_0/0.12)]"
+            className="w-full resize-none rounded-lg bg-ink/[0.045] px-2.5 py-2 text-sm leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none focus:shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.5),0_0_0_3px_rgb(from_var(--color-accent)_r_g_b/0.12)]"
             style={{ fontFamily: fontCss(t.font, projectFonts) }}
           />
           <Row label={tt('Font')}>
@@ -579,10 +579,10 @@ export function TextSection({ clip }: { clip: Clip }) {
                   onClick={() => set({ material: m.id, extrude: t.extrude || 0.3 })}
                   className={cn(
                     'flex flex-col items-center gap-1 rounded-md py-1.5 text-2xs font-medium transition-colors',
-                    t.material === m.id && t.extrude > 0 ? 'bg-accent/15 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.45)]' : 'bg-white/[0.035] text-fg-3 hover:bg-white/[0.06] hover:text-fg-2',
+                    t.material === m.id && t.extrude > 0 ? 'bg-accent/15 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.45)]' : 'bg-ink/[0.035] text-fg-3 hover:bg-ink/[0.06] hover:text-fg-2',
                   )}
                 >
-                  <span className="size-4 rounded-full shadow-[inset_0_1px_0_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.5)]" style={{ background: m.swatch }} />
+                  <span className="size-4 rounded-full shadow-[inset_0_1px_0_rgb(from_var(--color-ink)_r_g_b/0.5),0_1px_2px_rgb(from_var(--color-shade)_r_g_b/0.5)]" style={{ background: m.swatch }} />
                   {m.label}
                 </button>
               ))}

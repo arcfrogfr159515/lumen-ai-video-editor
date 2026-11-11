@@ -184,7 +184,7 @@ function Processor({
             <Switch aria-label={tt('{0} on', title)} checked={enabled} onChange={onToggle} />
           </>
         ) : (
-          <button type="button" onClick={onAdd} className="flex h-6 items-center gap-1 rounded-md bg-white/[0.05] px-2 text-xs font-medium text-fg-2 transition-colors hover:bg-white/[0.09] hover:text-fg">
+          <button type="button" onClick={onAdd} className="flex h-6 items-center gap-1 rounded-md bg-ink/[0.05] px-2 text-xs font-medium text-fg-2 transition-colors hover:bg-ink/[0.09] hover:text-fg">
             <Plus className="size-3" />{' '}{tt('Add')}
           </button>
         )}
@@ -210,7 +210,7 @@ function Reduction({ target, which }: { target: Target; which: 'compressor' | 'l
   )
   return (
     <span className="flex items-center gap-1.5" title={tt('Gain reduction')}>
-      <span className="relative h-1.5 w-16 overflow-hidden rounded-full bg-black/50">
+      <span className="relative h-1.5 w-16 overflow-hidden rounded-full bg-shade/50">
         <span ref={bar} className="absolute inset-y-0 right-0 w-0 rounded-full bg-warn" />
       </span>
       <span ref={label} className="w-12 font-mono text-2xs/[inherit] text-warn tabular" />
@@ -272,7 +272,7 @@ function EqEditor({ target, eq }: { target: Target; eq: EqSettings }) {
 
   return (
     <div className="space-y-2.5">
-      <div className="relative overflow-hidden rounded-lg bg-black/35 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
+      <div className="relative overflow-hidden rounded-lg bg-shade/35 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
         <svg ref={svg} viewBox={`0 0 ${W} ${H}`} className="block h-[120px] w-full touch-none select-none" preserveAspectRatio="none">
           {[100, 1000, 10000].map((f) => (
             <line key={f} x1={X(f)} x2={X(f)} y1={0} y2={H} stroke="white" strokeOpacity={0.07} vectorEffect="non-scaling-stroke" />
@@ -290,7 +290,7 @@ function EqEditor({ target, eq }: { target: Target; eq: EqSettings }) {
             onPointerDown={(e) => drag(e, h.band)}
             onWheel={h.band === 'mid' ? (e) => set({ midQ: clamp(Math.round((eq.midQ * (e.deltaY < 0 ? 1.12 : 1 / 1.12)) * 100) / 100, 0.1, 12) }, 'q') : undefined}
             className={cn(
-              'absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 bg-surface shadow-[0_1px_4px_rgb(0_0_0/0.6)] transition-transform hover:scale-125 active:cursor-grabbing',
+              'absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 bg-surface shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.6)] transition-transform hover:scale-125 active:cursor-grabbing',
               h.band === 'lowCut' ? 'border-sky-300' : h.band === 'low' ? 'border-emerald-300' : h.band === 'mid' ? 'border-accent' : 'border-pink-300',
               h.band === 'lowCut' && !eq.lowCut && 'opacity-50',
               active === h.band && 'scale-125',

@@ -9,7 +9,7 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
       ref={ref}
       spellCheck={false}
       className={cn(
-        'h-8 w-full min-w-0 rounded-control bg-white/[0.045] px-2.5 text-sm text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none transition-[background-color,box-shadow] placeholder:text-fg-4 hover:bg-white/[0.06] focus:bg-white/[0.07] focus:shadow-[inset_0_0_0_1px_rgb(214_238_0/0.5),0_0_0_3px_rgb(214_238_0/0.12)]',
+        'h-8 w-full min-w-0 rounded-control bg-ink/[0.045] px-2.5 text-sm text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none transition-[background-color,box-shadow] placeholder:text-fg-4 hover:bg-ink/[0.06] focus:bg-ink/[0.07] focus:shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.5),0_0_0_3px_rgb(from_var(--color-accent)_r_g_b/0.12)]',
         className,
       )}
       {...props}
@@ -32,7 +32,7 @@ export function SearchInput({ value, onChange, className, ...props }: SearchInpu
           type="button"
           aria-label={tt('Clear search')}
           onClick={() => onChange('')}
-          className="absolute top-1/2 right-1.5 grid size-5 -translate-y-1/2 place-items-center rounded-md text-fg-4 hover:bg-white/[0.08] hover:text-fg-2"
+          className="absolute top-1/2 right-1.5 grid size-5 -translate-y-1/2 place-items-center rounded-md text-fg-4 hover:bg-ink/[0.08] hover:text-fg-2"
         >
           <X className="size-3" />
         </button>

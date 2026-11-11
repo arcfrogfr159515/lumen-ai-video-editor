@@ -117,14 +117,14 @@ function ColorWheel({ value, onChange }: { value: Wheel; onChange: (w: Partial<W
       ref={ref}
       onPointerDown={drag}
       onDoubleClick={() => onChange({ x: 0, y: 0 }, 'reset')}
-      className="relative aspect-square w-full max-w-[96px] cursor-crosshair rounded-full shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12),0_4px_14px_-6px_rgb(0_0_0/0.8)]"
+      className="relative aspect-square w-full max-w-[96px] cursor-crosshair rounded-full shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.12),0_4px_14px_-6px_rgb(from_var(--color-shade)_r_g_b/0.8)]"
       style={{ background: 'radial-gradient(circle, rgb(40 40 44) 0%, rgb(40 40 44 / 0.2) 55%, transparent 72%), conic-gradient(from 90deg, #ff3b3b, #ff3bff, #3b5bff, #3bffff, #3bff5b, #ffff3b, #ff3b3b)' }}
     >
-      <span className="pointer-events-none absolute top-1/2 left-1/2 h-px w-full -translate-x-1/2 bg-white/10" />
-      <span className="pointer-events-none absolute top-1/2 left-1/2 h-full w-px -translate-x-1/2 -translate-y-1/2 bg-white/10" />
+      <span className="pointer-events-none absolute top-1/2 left-1/2 h-px w-full -translate-x-1/2 bg-ink/10" />
+      <span className="pointer-events-none absolute top-1/2 left-1/2 h-full w-px -translate-x-1/2 -translate-y-1/2 bg-ink/10" />
       <span
         data-puck
-        className="absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-white bg-black/40 shadow-[0_1px_4px_rgb(0_0_0/0.7)] active:cursor-grabbing"
+        className="absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-ink bg-shade/40 shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.7)] active:cursor-grabbing"
         style={{ left: `${50 + value.x * 50}%`, top: `${50 - value.y * 50}%` }}
       />
     </div>
@@ -223,7 +223,7 @@ export function CurvesSection({ clips }: { clips: Clip[] }) {
       <div className="space-y-2">
         <Segmented stretch value={channel} onChange={setChannel} options={CHANNELS.map((c) => ({ value: c.value, label: c.label }))} />
         <div className="relative">
-          <svg ref={svg} viewBox={`0 0 ${S} ${S}`} className="block aspect-square w-full touch-none rounded-lg bg-black/35 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]" onPointerDown={addPoint}>
+          <svg ref={svg} viewBox={`0 0 ${S} ${S}`} className="block aspect-square w-full touch-none rounded-lg bg-shade/35 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" onPointerDown={addPoint}>
             {[0.25, 0.5, 0.75].map((f) => (
               <g key={f} stroke="white" strokeOpacity={0.07}>
                 <line x1={f * S} x2={f * S} y1={0} y2={S} />
@@ -241,7 +241,7 @@ export function CurvesSection({ clips }: { clips: Clip[] }) {
               key={i}
               onPointerDown={(e) => drag(i, e, pts)}
               onDoubleClick={() => i > 0 && i < pts.length - 1 && setPts(pts.filter((_, j) => j !== i))}
-              className={cn('absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 bg-surface shadow-[0_1px_4px_rgb(0_0_0/0.6)]', dragging === i && 'scale-125')}
+              className={cn('absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 bg-surface shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.6)]', dragging === i && 'scale-125')}
               style={{ left: `${p[0] * 100}%`, top: `${(1 - p[1]) * 100}%`, borderColor: color }}
             />
           ))}
@@ -285,9 +285,9 @@ export function HslSection({ clips }: { clips: Clip[] }) {
                 type="button"
                 title={b.label}
                 onClick={() => setBand(b.band)}
-                className={cn('relative grid size-7 place-items-center rounded-full transition-transform hover:scale-110', band === b.band && 'ring-2 ring-white ring-offset-2 ring-offset-surface')}
+                className={cn('relative grid size-7 place-items-center rounded-full transition-transform hover:scale-110', band === b.band && 'ring-2 ring-ink ring-offset-2 ring-offset-surface')}
               >
-                <span className="size-5 rounded-full shadow-[inset_0_1px_0_rgb(255_255_255/0.4)]" style={{ background: b.swatch }} />
+                <span className="size-5 rounded-full shadow-[inset_0_1px_0_rgb(from_var(--color-ink)_r_g_b/0.4)]" style={{ background: b.swatch }} />
                 {adjusted && <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-accent" />}
               </button>
             )

@@ -31,7 +31,7 @@ export function EffortPicker() {
         <button
           type="button"
           title={tt('Effort — how hard the model thinks')}
-          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.07] data-[state=open]:text-fg"
+          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 outline-none transition-colors hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.07] data-[state=open]:text-fg"
         >
           <Gauge className={cn('size-3', current && 'text-accent-2')} />
           {current ? EFFORT_INFO[current].label : tt('Default')}
@@ -57,7 +57,7 @@ function Option({ title, hint, selected, onSelect }: { title: string; hint: stri
     <button
       type="button"
       onClick={onSelect}
-      className={cn('flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-white/[0.06] focus-visible:bg-white/[0.06]', selected && 'bg-white/[0.04]')}
+      className={cn('flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-ink/[0.06] focus-visible:bg-ink/[0.06]', selected && 'bg-ink/[0.04]')}
     >
       <span className="min-w-0 flex-1">
         <span className="block text-base/[inherit] text-fg">{title}</span>

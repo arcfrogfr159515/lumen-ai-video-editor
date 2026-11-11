@@ -114,7 +114,7 @@ function Body() {
   if (!others.length)
     return (
       <div className="px-5 pb-6">
-        <div className="rounded-xl bg-white/[0.03] p-5 text-center">
+        <div className="rounded-xl bg-ink/[0.03] p-5 text-center">
           <GitBranch className="mx-auto size-6 text-fg-3" />
           <p className="mt-2 text-sm font-medium text-fg">{tt('There is only one version of this timeline')}</p>
           <p className="mx-auto mt-1 max-w-[440px] text-xs leading-relaxed text-fg-3">{tt('A branch is a full copy to try another cut on. Edit the branch freely; then compare the two here and take back the stretches that work better.')}</p>
@@ -182,7 +182,7 @@ function Body() {
                 const here = h.a[1] > h.a[0] ? `${formatTimecode(h.a[0], fps)} · ${formatDuration(h.a[1] - h.a[0], fps)}` : tt('nothing at {0}', formatTimecode(h.a[0], fps))
                 const thereText = h.b[1] > h.b[0] ? `${formatTimecode(h.b[0], fps)} · ${formatDuration(h.b[1] - h.b[0], fps)}` : tt('nothing at {0}', formatTimecode(h.b[0], fps))
                 return (
-                  <li key={`${h.a[0]}:${h.b[0]}:${h.kind}`} className={cn('flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]', inHunk === h && 'bg-white/[0.07]')}>
+                  <li key={`${h.a[0]}:${h.b[0]}:${h.kind}`} className={cn('flex items-center gap-2.5 rounded-lg bg-ink/[0.03] px-2.5 py-1.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]', inHunk === h && 'bg-ink/[0.07]')}>
                     <span className="h-6 w-1 shrink-0 rounded-full" style={{ background: HUNK_COLOR[h.kind] }} />
                     <button type="button" onClick={() => (setPlaying(false), setPos(h.a[0]))} title={tt('Show this stretch')} className="min-w-0 flex-1 rounded text-left outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60">
                       <span className="block truncate text-sm text-fg-2">
@@ -251,13 +251,13 @@ function Viewer({ label, sub, project, frame, fps, marked }: { label: string; su
   return (
     <div>
       <div
-        className={cn('relative overflow-hidden rounded-lg bg-black shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] transition-shadow')}
+        className={cn('relative overflow-hidden rounded-lg bg-shade shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)] transition-shadow')}
         style={marked ? { boxShadow: `0 0 0 2px ${HUNK_COLOR[marked]}` } : undefined}
         data-compare-viewer={marked ?? 'same'}
       >
         <canvas ref={canvasRef} width={w} height={h} className="block h-auto w-full" />
         {marked && (
-          <span className="absolute top-1.5 left-1.5 rounded-md px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-black" style={{ background: HUNK_COLOR[marked] }}>
+          <span className="absolute top-1.5 left-1.5 rounded-md px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-ink-fg" style={{ background: HUNK_COLOR[marked] }}>
             {HUNK_WORD[marked]}
           </span>
         )}
@@ -300,7 +300,7 @@ function Strips({ mine, other, diff, at, there, onSeek }: { mine: Version; other
   }
 
   const strip = (version: Version, side: 0 | 1, playhead: number) => (
-    <div data-compare-strip={side === 0 ? 'a' : 'b'} onPointerDown={(e) => seek(e, side === 0 ? 'a' : 'b')} className="relative cursor-pointer touch-none overflow-hidden rounded-md bg-black/30 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]" style={{ height: STRIP_H }}>
+    <div data-compare-strip={side === 0 ? 'a' : 'b'} onPointerDown={(e) => seek(e, side === 0 ? 'a' : 'b')} className="relative cursor-pointer touch-none overflow-hidden rounded-md bg-shade/30 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" style={{ height: STRIP_H }}>
       {pairs.map((pair, row) => {
         const track = pair[side]
         if (!track) return null
@@ -319,7 +319,7 @@ function Strips({ mine, other, diff, at, there, onSeek }: { mine: Version; other
         const [from, to] = side === 0 ? h.a : h.b
         return <span key={`${h.a[0]}:${h.b[0]}`} className="pointer-events-none absolute inset-y-0" style={{ left: pct(from), width: to > from ? pct(to - from) : 2, background: HUNK_COLOR[h.kind], opacity: to > from ? 0.28 : 0.9 }} />
       })}
-      <span className="pointer-events-none absolute inset-y-0 w-[2px] -translate-x-1/2 bg-white shadow-[0_0_6px_rgb(255_255_255/0.6)]" style={{ left: pct(playhead) }} />
+      <span className="pointer-events-none absolute inset-y-0 w-[2px] -translate-x-1/2 bg-ink shadow-[0_0_6px_rgb(from_var(--color-ink)_r_g_b/0.6)]" style={{ left: pct(playhead) }} />
     </div>
   )
 

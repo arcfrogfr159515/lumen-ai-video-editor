@@ -68,7 +68,7 @@ export function IngestPane() {
         <Card>
           <div className="text-sm font-medium text-fg-2">{tt('Saved to')}</div>
           <div className="mt-2 flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-lg bg-black/30 px-3 py-2 font-mono text-xs text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]" title={state.folder}>
+            <code className="min-w-0 flex-1 truncate rounded-lg bg-shade/30 px-3 py-2 font-mono text-xs text-fg-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" title={state.folder}>
               {state.folder}
             </code>
             <Button size="sm" variant="secondary" onClick={() => void pickIngestFolder()}>
@@ -128,7 +128,7 @@ function ClipRow({ clip }: { clip: IngestClip }) {
         <span className="shrink-0 font-mono text-2xs text-fg-4">{new Date(clip.createdAt).toLocaleTimeString()}</span>
       </div>
       {active && total > 0 && (
-        <div className="mt-1.5 ml-[18px] h-1 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="mt-1.5 ml-[18px] h-1 overflow-hidden rounded-full bg-ink/[0.06]">
           <div className="h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${Math.min(100, (clip.encoded / total) * 100)}%` }} />
         </div>
       )}

@@ -64,7 +64,7 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
           onDragStart={onDragStart}
           onDragEnd={dnd.end}
           onDoubleClick={() => openTimeline(seq.id)}
-          className={cn('group/tl flex h-11 items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-white/[0.04]', nestable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}
+          className={cn('group/tl flex h-11 items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-ink/[0.04]', nestable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}
           title={open ? tt('The timeline you’re editing') : tt('Double-click to open — drag onto the timeline to nest it')}
         >
           <span className={cn('grid size-8 shrink-0 place-items-center rounded-lg', open ? 'bg-accent/15 text-accent-2' : 'bg-clip-nest/15 text-clip-nest')}>
@@ -74,7 +74,7 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
             <div className="flex items-center gap-1.5">
               <span className="truncate text-xs font-medium text-fg-2 group-hover/tl:text-fg">{seq.name}</span>
               {open && <span className="shrink-0 rounded bg-accent/15 px-1 text-2xs/[inherit] font-bold text-accent-2">{tt('OPEN')}</span>}
-              {seq.multicam && <span className="shrink-0 rounded bg-white/[0.07] px-1 text-2xs/[inherit] font-bold text-fg-3">{tt('MULTICAM')}</span>}
+              {seq.multicam && <span className="shrink-0 rounded bg-ink/[0.07] px-1 text-2xs/[inherit] font-bold text-fg-3">{tt('MULTICAM')}</span>}
             </div>
             <div className="text-2xs text-fg-4 tabular">
               {ttx('{0}×{1} · {2} fps · {3}', seq.settings.width, seq.settings.height, seq.settings.fps, formatDuration(clipsLength(seq.clips), seq.settings.fps))}
@@ -85,7 +85,7 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
               type="button"
               aria-label={tt('Add {0} at the playhead', seq.name)}
               onClick={add}
-              className="grid size-6 shrink-0 place-items-center rounded-full text-fg-3 opacity-0 transition-opacity group-hover/tl:opacity-100 hover:bg-white/[0.1] hover:text-fg"
+              className="grid size-6 shrink-0 place-items-center rounded-full text-fg-3 opacity-0 transition-opacity group-hover/tl:opacity-100 hover:bg-ink/[0.1] hover:text-fg"
             >
               <Plus className="size-3.5" />
             </button>

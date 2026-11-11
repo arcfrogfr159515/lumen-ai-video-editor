@@ -23,7 +23,7 @@ import { ttx } from '@/lib/i18n-react'
 type Ops = Omit<CommandInput<'clip.batch'>, 'ids'>
 type Result = { changed: number; skipped: { id: string; name: string; why: string }[] }
 
-const chip = 'h-7 rounded-md bg-white/[0.04] px-2 text-xs font-medium text-fg-3 tabular transition-colors hover:bg-white/[0.08] hover:text-fg disabled:pointer-events-none disabled:opacity-40'
+const chip = 'h-7 rounded-md bg-ink/[0.04] px-2 text-xs font-medium text-fg-3 tabular transition-colors hover:bg-ink/[0.08] hover:text-fg disabled:pointer-events-none disabled:opacity-40'
 
 export function BatchSection({ clips }: { clips: Clip[] }) {
   const fps = useEditor((s) => s.project.settings.fps)
@@ -55,7 +55,7 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
       actions={
         <Menu>
           <MenuTrigger asChild>
-            <button type="button" className="flex h-6 items-center gap-1 rounded-md px-1.5 text-2xs text-fg-3 outline-none hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60" title={tt('Add the clips that belong with these to the selection')}>
+            <button type="button" className="flex h-6 items-center gap-1 rounded-md px-1.5 text-2xs text-fg-3 outline-none hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60" title={tt('Add the clips that belong with these to the selection')}>
               <ListFilter className="size-3.5" />{' '}{tt('Select more')}{' '}<ChevronDown className="size-3" />
             </button>
           </MenuTrigger>
@@ -150,7 +150,7 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
               if (e.key === 'Enter' && pattern.trim()) run({ rename: pattern.trim() }, tt('Rename {0} clips', clips.length))
             }}
             title={RENAME_TOKENS.map((t) => `${t.token} — ${t.means}`).join('\n')}
-            className="h-7 min-w-0 flex-1 rounded-md bg-white/[0.05] px-2 text-sm text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
+            className="h-7 min-w-0 flex-1 rounded-md bg-ink/[0.05] px-2 text-sm text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
           />
           <Button size="xs" variant="secondary" disabled={!pattern.trim()} onClick={() => run({ rename: pattern.trim() }, tt('Rename {0} clips', clips.length))}>
             {tt('Rename')}

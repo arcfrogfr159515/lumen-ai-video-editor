@@ -100,7 +100,7 @@ function Clean({ children }: { children: ReactNode }) {
 
 function Row({ icon, title, detail, trailing, onClick }: { icon: ReactNode; title: ReactNode; detail?: ReactNode; trailing?: ReactNode; onClick?: () => void }) {
   return (
-    <li className="flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+    <li className="flex items-center gap-2.5 rounded-lg bg-ink/[0.03] px-2.5 py-1.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
       <span className="shrink-0 text-fg-3 [&_svg]:size-4">{icon}</span>
       <button type="button" disabled={!onClick} onClick={onClick} title={onClick ? tt('Go there') : undefined} className="min-w-0 flex-1 rounded text-left outline-none enabled:hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60">
         <div className="truncate text-sm text-fg-2">{title}</div>
@@ -259,10 +259,10 @@ function ReusePane({ project }: { project: Project }) {
           spans.map((span) => {
             const asset = project.assets[span.assetId]
             return (
-              <section key={`${span.assetId}:${span.stream}:${span.from}`} className="rounded-xl bg-white/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+              <section key={`${span.assetId}:${span.stream}:${span.from}`} className="rounded-xl bg-ink/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
                 <div className="flex items-baseline gap-2">
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{asset?.name ?? tt('Missing media')}</span>
-                  <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-px text-2xs text-fg-3">{span.stream === 'sound' ? tt('Sound') : tt('Picture')}</span>
+                  <span className="shrink-0 rounded bg-ink/[0.06] px-1.5 py-px text-2xs text-fg-3">{span.stream === 'sound' ? tt('Sound') : tt('Picture')}</span>
                 </div>
                 <div className="mt-0.5 text-2xs text-fg-4">
                   {ttx('{0} of it, from {1} in the file, plays {2} times:', formatDuration(span.to - span.from, fps), formatTimecode(span.from, fps), span.uses.length)}
@@ -277,7 +277,7 @@ function ReusePane({ project }: { project: Project }) {
                           type="button"
                           title={tt('Go to this use')}
                           onClick={() => goTo(clip.start + u.start, clip.id)}
-                          className="flex h-6 items-center gap-1.5 rounded-full bg-white/[0.05] px-2 text-2xs text-fg-2 outline-none hover:bg-white/[0.1] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
+                          className="flex h-6 items-center gap-1.5 rounded-full bg-ink/[0.05] px-2 text-2xs text-fg-2 outline-none hover:bg-ink/[0.1] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
                         >
                           <span className="font-mono tabular">{formatTimecode(clip.start + u.start, fps)}</span>
                           <span className="text-fg-4">{project.tracks.find((t) => t.id === clip.trackId)?.name}</span>
@@ -368,7 +368,7 @@ function RateRow({ asset, fps, progress }: { asset: Asset; fps: number; progress
       trailing={
         busy ? (
           <div className="flex shrink-0 items-center gap-2">
-            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-white/[0.08]">
+            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-ink/[0.08]">
               <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
             </div>
             <span className="w-8 text-right text-2xs text-fg-3 tabular">{Math.round(progress * 100)}%</span>

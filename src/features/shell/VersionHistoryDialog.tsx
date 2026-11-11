@@ -12,7 +12,7 @@ import { ttx } from '@/lib/i18n-react'
 
 const KIND: Record<ProjectVersion['kind'], { label: string; className: string }> = {
   save: { label: tt('Saved'), className: 'bg-accent/15 text-accent-2' },
-  auto: { label: tt('Auto'), className: 'bg-white/[0.07] text-fg-3' },
+  auto: { label: tt('Auto'), className: 'bg-ink/[0.07] text-fg-3' },
   restore: { label: tt('Before restore'), className: 'bg-warn/15 text-warn' },
 }
 
@@ -76,7 +76,7 @@ export function VersionHistoryDialog() {
             <div className="sticky top-0 z-10 bg-surface-2/95 py-1.5 text-2xs font-semibold tracking-wider text-fg-4 uppercase backdrop-blur">{g.day}</div>
             <div className="space-y-1">
               {g.items.map((v, i) => (
-                <div key={v.id} className="group/v flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-white/[0.04]">
+                <div key={v.id} className="group/v flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-ink/[0.04]">
                   <span className="w-[4.5rem] shrink-0 font-mono text-sm whitespace-nowrap text-fg tabular">{time(v.savedAt)}</span>
                   <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-2xs/[inherit] font-semibold', KIND[v.kind].className)}>{KIND[v.kind].label}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-fg-3">

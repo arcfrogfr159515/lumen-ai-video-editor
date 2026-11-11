@@ -17,7 +17,7 @@ export function Kbd({ combo, className }: { combo: string; className?: string })
       {formatShortcut(combo).map((key, i) => (
         <kbd
           key={i}
-          className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-[5px] bg-white/[0.07] px-1 font-sans text-2xs font-medium text-fg-3 shadow-[inset_0_-1px_0_rgb(255_255_255/0.06)]"
+          className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-[5px] bg-ink/[0.07] px-1 font-sans text-2xs font-medium text-fg-3 shadow-[inset_0_-1px_0_rgb(from_var(--color-ink)_r_g_b/0.06)]"
         >
           {ICONS[key] ?? key}
         </kbd>

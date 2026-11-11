@@ -16,7 +16,7 @@ import { tt } from '@/lib/i18n'
 /** The same grade pipeline the compositor uses, expressed as CSS. */
 export function GradedImage({ src, grade, className }: { src?: string; grade: ColorGrade; className?: string }) {
   return (
-    <div className={cn('relative overflow-hidden bg-black', className)}>
+    <div className={cn('relative overflow-hidden bg-shade', className)}>
       {src && <img src={src} alt="" draggable={false} className="h-full w-full object-cover" style={{ filter: gradeFilter(grade) }} />}
       {gradeOverlays(grade).map((o, i) => (
         <div key={i} className="absolute inset-0 mix-blend-soft-light" style={{ background: o.color, opacity: o.alpha }} />
@@ -69,8 +69,8 @@ function LookCard({ look, src, active }: { look: Look; src?: string; active: boo
     >
       <div
         className={cn(
-          'relative overflow-hidden rounded-[10px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] transition-shadow duration-200 group-hover/look:shadow-[0_0_0_1px_rgb(255_255_255/0.18),0_10px_24px_-10px_rgb(0_0_0/0.9)]',
-          active && 'shadow-[0_0_0_2px_var(--color-accent),0_0_0_5px_rgb(214_238_0/0.2)]',
+          'relative overflow-hidden rounded-[10px] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/look:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
+          active && 'shadow-[0_0_0_2px_var(--color-accent),0_0_0_5px_rgb(from_var(--color-accent)_r_g_b/0.2)]',
         )}
       >
         <GradedImage src={src} grade={look.grade} className="aspect-video transition-transform duration-500 group-hover/look:scale-[1.03]" />

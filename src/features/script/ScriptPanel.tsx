@@ -163,7 +163,7 @@ export function ScriptPanel() {
       </div>
 
       {pending.length > 0 && (
-        <div className="mx-3 mb-2 flex shrink-0 items-center gap-2 rounded-lg bg-white/[0.04] px-2.5 py-2 text-xs text-fg-3">
+        <div className="mx-3 mb-2 flex shrink-0 items-center gap-2 rounded-lg bg-ink/[0.04] px-2.5 py-2 text-xs text-fg-3">
           <span className="min-w-0 flex-1">
             {ttx('{0} no transcript yet.', pending.length === 1 ? tt('One clip with speech has') : tt('{0} clips with speech have', pending.length))}
           </span>
@@ -175,7 +175,7 @@ export function ScriptPanel() {
 
       {words.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-          <span className="grid size-10 place-items-center rounded-xl bg-white/[0.04] text-fg-3">
+          <span className="grid size-10 place-items-center rounded-xl bg-ink/[0.04] text-fg-3">
             <ScrollText className="size-5" />
           </span>
           <div className="text-sm font-medium text-fg-2">{tt('No words on the timeline yet')}</div>
@@ -248,7 +248,7 @@ function Word({ word, selected, matched }: { word: ScriptWord; selected: boolean
       <span
         data-word={word.index}
         className={cn(
-          'cursor-pointer rounded-[4px] px-[1.5px] py-[1px] transition-colors hover:bg-white/[0.08] data-[now]:text-fg data-[now]:underline data-[now]:decoration-accent data-[now]:decoration-2 data-[now]:underline-offset-4',
+          'cursor-pointer rounded-[4px] px-[1.5px] py-[1px] transition-colors hover:bg-ink/[0.08] data-[now]:text-fg data-[now]:underline data-[now]:decoration-accent data-[now]:decoration-2 data-[now]:underline-offset-4',
           matched && 'bg-snap/25 text-fg',
           selected && 'bg-accent/30 text-fg',
         )}

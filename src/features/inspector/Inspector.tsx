@@ -78,7 +78,7 @@ function ClipInspector({ clip }: { clip: Clip }) {
   return (
     <div>
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-        <div className="relative grid h-11 w-[72px] shrink-0 place-items-center overflow-hidden rounded-lg bg-white/[0.05] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]">
+        <div className="relative grid h-11 w-[72px] shrink-0 place-items-center overflow-hidden rounded-lg bg-ink/[0.05] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)]">
           {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : <Icon className="size-4 text-fg-3" />}
         </div>
         <div className="min-w-0 flex-1">
@@ -90,10 +90,10 @@ function ClipInspector({ clip }: { clip: Clip }) {
               e.stopPropagation()
               if (e.key === 'Enter') e.currentTarget.blur()
             }}
-            className="-ml-1 w-full truncate rounded-md bg-transparent px-1 py-0.5 text-md font-semibold text-fg outline-none hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-accent/60"
+            className="-ml-1 w-full truncate rounded-md bg-transparent px-1 py-0.5 text-md font-semibold text-fg outline-none hover:bg-ink/[0.04] focus:bg-ink/[0.06] focus:ring-1 focus:ring-accent/60"
           />
           <div className="mt-0.5 flex items-center gap-1.5 text-2xs text-fg-4">
-            <span className="rounded bg-white/[0.06] px-1 py-px font-medium text-fg-3">{KIND_LABEL[clip.kind]}</span>
+            <span className="rounded bg-ink/[0.06] px-1 py-px font-medium text-fg-3">{KIND_LABEL[clip.kind]}</span>
             <span className="font-mono tabular">
               {formatTimecode(clip.start, fps)} → {formatTimecode(clipEnd(clip), fps)}
             </span>
@@ -229,7 +229,7 @@ function ProjectInspector() {
                 onClick={() => dispatch('project.update', { settings: { width: c.w, height: c.h } })}
                 className={cn(
                   'flex flex-col items-center gap-1.5 rounded-lg py-2 text-2xs font-medium transition-colors',
-                  active ? 'bg-accent/15 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.45)]' : 'bg-white/[0.035] text-fg-3 hover:bg-white/[0.06] hover:text-fg-2',
+                  active ? 'bg-accent/15 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.45)]' : 'bg-ink/[0.035] text-fg-3 hover:bg-ink/[0.06] hover:text-fg-2',
                 )}
               >
                 <span className="grid h-7 place-items-center">
@@ -263,7 +263,7 @@ function ProjectInspector() {
                   type="button"
                   aria-label={c}
                   onClick={() => dispatch('project.update', { settings: { background: c } })}
-                  className={cn('size-5 rounded-full ring-1 ring-white/15 transition-transform hover:scale-110', settings.background === c && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
+                  className={cn('size-5 rounded-full ring-1 ring-ink/15 transition-transform hover:scale-110', settings.background === c && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
                   style={{ background: c }}
                 />
               ))}
@@ -282,7 +282,7 @@ function ProjectInspector() {
       </Section>
 
       <div className="p-4">
-        <div className="ring-ai rounded-xl bg-white/[0.03] p-3.5">
+        <div className="ring-ai rounded-xl bg-ink/[0.03] p-3.5">
           <div className="flex items-center gap-2 text-sm font-medium text-fg">
             <AiSparkle />
             {tt('Not sure where to start?')}
@@ -305,7 +305,7 @@ function ProjectInspector() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white/[0.035] px-3 py-2.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+    <div className="rounded-lg bg-ink/[0.035] px-3 py-2.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
       <div className="text-2xs text-fg-4">{label}</div>
       <div className="mt-0.5 text-lg font-semibold tracking-tight text-fg tabular">{value}</div>
     </div>

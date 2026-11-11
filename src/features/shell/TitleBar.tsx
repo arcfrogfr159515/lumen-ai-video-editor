@@ -88,7 +88,7 @@ export function TitleBar() {
       <button
         type="button"
         onClick={() => setPaletteOpen(true)}
-        className="no-drag group absolute left-1/2 flex h-7 w-[min(380px,28vw)] -translate-x-1/2 items-center gap-2 rounded-lg bg-white/[0.04] px-2.5 text-sm text-fg-4 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none transition-colors hover:bg-white/[0.07] hover:text-fg-3 focus-visible:ring-2 focus-visible:ring-accent/60"
+        className="no-drag group absolute left-1/2 flex h-7 w-[min(380px,28vw)] -translate-x-1/2 items-center gap-2 rounded-lg bg-ink/[0.04] px-2.5 text-sm text-fg-4 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none transition-colors hover:bg-ink/[0.07] hover:text-fg-3 focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         <AiSparkle className="size-3.5 opacity-80 transition-opacity group-hover:opacity-100" />
         <span className="truncate">{tt('Search, or ask Copilot to edit…')}</span>
@@ -112,7 +112,7 @@ export function TitleBar() {
           variant="ghost"
           size="sm"
           onClick={actions.toggleCopilot}
-          className={cn('gap-1.5', rightTab === 'copilot' && 'bg-white/[0.07] text-fg')}
+          className={cn('gap-1.5', rightTab === 'copilot' && 'bg-ink/[0.07] text-fg')}
         >
           <AiSparkle />
           {tt('Copilot')}
@@ -168,9 +168,9 @@ function AppMenu() {
       <MenuTrigger asChild>
         <button
           type="button"
-          className="no-drag group flex h-8 items-center gap-2 rounded-lg pr-1.5 pl-1 outline-none transition-colors hover:bg-white/[0.05] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.07]"
+          className="no-drag group flex h-8 items-center gap-2 rounded-lg pr-1.5 pl-1 outline-none transition-colors hover:bg-ink/[0.05] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.07]"
         >
-          <LogoMark className="size-[22px] drop-shadow-[0_2px_10px_rgb(214_238_0/0.3)]" />
+          <LogoMark className="size-[22px] drop-shadow-[0_2px_10px_rgb(from_var(--color-accent)_r_g_b/0.3)]" />
           <span className="text-sm font-semibold tracking-tight text-fg">{APP_NAME}</span>
           <ChevronDown className="size-3 text-fg-4 transition-transform group-data-[state=open]:rotate-180" />
         </button>
@@ -293,7 +293,7 @@ function UpdatePill() {
         <button
           type="button"
           onClick={() => setAboutOpen(true)}
-          className="mr-1 flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs text-fg-3 tabular-nums outline-none transition-colors hover:bg-white/[0.05] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
+          className="mr-1 flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs text-fg-3 tabular-nums outline-none transition-colors hover:bg-ink/[0.05] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           <ArrowDownToLine className="size-3.5" />
           {Math.round((progress ?? 0) * 100)}%
@@ -330,7 +330,7 @@ function ProjectName() {
           if (e.key === 'Enter') commit()
           if (e.key === 'Escape') setEditing(false)
         }}
-        className="no-drag h-7 w-48 rounded-md bg-white/[0.06] px-2 text-sm font-medium text-fg shadow-[inset_0_0_0_1px_rgb(214_238_0/0.6)] outline-none"
+        className="no-drag h-7 w-48 rounded-md bg-ink/[0.06] px-2 text-sm font-medium text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.6)] outline-none"
       />
     )
   }
@@ -344,7 +344,7 @@ function ProjectName() {
             setDraft(name)
             setEditing(true)
           }}
-          className="no-drag group flex h-7 max-w-[220px] items-center gap-1.5 rounded-md px-2 text-sm font-medium text-fg-2 outline-none transition-colors hover:bg-white/[0.05] hover:text-fg data-[state=open]:bg-white/[0.07] data-[state=open]:text-fg"
+          className="no-drag group flex h-7 max-w-[220px] items-center gap-1.5 rounded-md px-2 text-sm font-medium text-fg-2 outline-none transition-colors hover:bg-ink/[0.05] hover:text-fg data-[state=open]:bg-ink/[0.07] data-[state=open]:text-fg"
         >
           <span className="truncate">{name}</span>
           <ChevronDown className="size-3 shrink-0 text-fg-4" />
@@ -401,7 +401,7 @@ function SaveBadge() {
       <button
         type="button"
         onClick={() => void actions.save()}
-        className="no-drag flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs text-fg-3 transition-colors hover:bg-white/[0.06] hover:text-fg"
+        className="no-drag flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs text-fg-3 transition-colors hover:bg-ink/[0.06] hover:text-fg"
       >
         <span className="size-1.5 rounded-full bg-accent" />
         {path ? tt('Unsaved changes') : tt('Not saved')}

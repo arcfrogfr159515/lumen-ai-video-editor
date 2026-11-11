@@ -64,10 +64,10 @@ export function TakesSection({ clip }: { clip: Clip }) {
                   onClick={() => show(take.id)}
                   className={cn(
                     'flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-50',
-                    showing ? 'bg-accent/12 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.4)]' : 'bg-white/[0.035] hover:bg-white/[0.07]',
+                    showing ? 'bg-accent/12 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.4)]' : 'bg-ink/[0.035] hover:bg-ink/[0.07]',
                   )}
                 >
-                  <span className={cn('grid size-5 shrink-0 place-items-center rounded-md text-2xs font-bold tabular', showing ? 'bg-accent text-accent-fg' : 'bg-white/[0.08] text-fg-3')}>{i + 1}</span>
+                  <span className={cn('grid size-5 shrink-0 place-items-center rounded-md text-2xs font-bold tabular', showing ? 'bg-accent text-accent-fg' : 'bg-ink/[0.08] text-fg-3')}>{i + 1}</span>
                   <span className="min-w-0 flex-1">
                     <span className={cn('block truncate text-sm', showing ? 'font-medium text-fg' : 'text-fg-2')}>{take.name}</span>
                     <span className="block truncate text-2xs text-fg-4">
@@ -86,7 +86,7 @@ export function TakesSection({ clip }: { clip: Clip }) {
                   type="button"
                   aria-label={tt('Remove take {0}', i + 1)}
                   onClick={() => dispatch('take.remove', { clipId: clip.id, takeId: take.id })}
-                  className="grid size-6 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 outline-none hover:bg-white/[0.08] hover:text-fg-2 group-hover/take:opacity-100 focus-visible:opacity-100"
+                  className="grid size-6 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 outline-none hover:bg-ink/[0.08] hover:text-fg-2 group-hover/take:opacity-100 focus-visible:opacity-100"
                 >
                   <X className="size-3.5" />
                 </button>

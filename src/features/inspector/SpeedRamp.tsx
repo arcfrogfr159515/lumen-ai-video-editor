@@ -145,7 +145,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
             onClick={() => (setSelected(null), change(r.points.map((p) => ({ ...p, easing: 'ease' as const }))))}
             className={cn(
               'h-7 truncate rounded-md px-1 text-2xs font-medium transition-colors',
-              activePreset?.id === r.id ? 'bg-accent/18 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.4)]' : 'bg-white/[0.04] text-fg-3 hover:bg-white/[0.07] hover:text-fg',
+              activePreset?.id === r.id ? 'bg-accent/18 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.4)]' : 'bg-ink/[0.04] text-fg-3 hover:bg-ink/[0.07] hover:text-fg',
             )}
           >
             {r.name}
@@ -155,13 +155,13 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
           type="button"
           disabled={!ramped}
           onClick={() => (setSelected(null), dispatch('clip.setSpeedRamp', { id: clip.id, points: null }))}
-          className="h-7 rounded-md bg-white/[0.04] px-1 text-2xs font-medium text-fg-3 transition-colors hover:bg-white/[0.07] hover:text-fg disabled:opacity-40"
+          className="h-7 rounded-md bg-ink/[0.04] px-1 text-2xs font-medium text-fg-3 transition-colors hover:bg-ink/[0.07] hover:text-fg disabled:opacity-40"
         >
           {tt('No ramp')}
         </button>
       </div>
 
-      <div data-speed-curve className="relative overflow-hidden rounded-lg bg-black/30 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]" onPointerDown={() => setSelected(null)}>
+      <div data-speed-curve className="relative overflow-hidden rounded-lg bg-shade/30 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" onPointerDown={() => setSelected(null)}>
         <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="block w-full touch-none select-none" style={{ aspectRatio: `${W} / ${H}` }} preserveAspectRatio="none" onDoubleClick={addAt}>
           {GRID.map((s) => (
             <line key={s} x1={PAD} x2={W - PAD} y1={toY(s)} y2={toY(s)} stroke="white" strokeOpacity={s === 1 ? 0.18 : 0.06} strokeDasharray={s === 1 ? undefined : '2 3'} vectorEffect="non-scaling-stroke" />
@@ -190,7 +190,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
             data-curve-handle={`${h.segment}:${h.which}`}
             onPointerDown={(e) => dragHandleOf(e, h.segment, h.which)}
             title={tt('Drag to shape the curve')}
-            className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-[3px] bg-white shadow-[0_1px_4px_rgb(0_0_0/0.6)] transition-transform hover:scale-125 active:cursor-grabbing"
+            className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-[3px] bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.6)] transition-transform hover:scale-125 active:cursor-grabbing"
             style={{ left: pct(toX(h.pos.at), W), top: pct(toY(h.pos.speed), H) }}
           />
         ))}
@@ -202,7 +202,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
             onDoubleClick={(e) => (e.stopPropagation(), remove(i))}
             title={`${round(p.speed)}×`}
             className={cn(
-              'absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-accent bg-surface shadow-[0_1px_4px_rgb(0_0_0/0.6)] transition-transform hover:scale-125 active:cursor-grabbing',
+              'absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-accent bg-surface shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.6)] transition-transform hover:scale-125 active:cursor-grabbing',
               sel === i && 'scale-125 bg-accent',
             )}
             style={{ left: pct(toX(p.at), W), top: pct(toY(p.speed), H) }}
@@ -213,7 +213,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
           <span>{ttx('{0}× min', round(Math.min(...points.map((p) => p.speed))))}</span>
         </div>
         {/* Time remapping: how much of the footage has played by each moment. */}
-        <svg viewBox={`0 0 ${W} ${FOOT_H}`} className="block w-full border-t border-white/[0.06]" style={{ aspectRatio: `${W} / ${FOOT_H}` }} preserveAspectRatio="none" aria-label={tt('How much of the footage has played over the clip')}>
+        <svg viewBox={`0 0 ${W} ${FOOT_H}`} className="block w-full border-t border-ink/[0.06]" style={{ aspectRatio: `${W} / ${FOOT_H}` }} preserveAspectRatio="none" aria-label={tt('How much of the footage has played over the clip')}>
           <line x1={toX(0)} y1={FOOT_H - 3} x2={toX(1)} y2={3} stroke="white" strokeOpacity={0.12} strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
           <path d={footLine} fill="none" stroke="var(--color-snap)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
         </svg>
@@ -221,7 +221,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
       </div>
 
       {sel !== null && (
-        <div className="space-y-2 rounded-lg bg-white/[0.03] p-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+        <div className="space-y-2 rounded-lg bg-ink/[0.03] p-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
           <div className="flex items-center gap-2">
             <span className="w-12 shrink-0 text-2xs text-fg-4">{ttx('Point {0}', sel + 1)}</span>
             <ScrubInput aria-label={tt('Speed at this point')} value={points[sel].speed} min={MIN_SPEED} max={MAX_SPEED} step={0.05} precision={2} unit="×" className="w-[72px]" onChange={(v) => change(movePoint(points, sel, points[sel].at, v), `ramp-speed:${clip.id}:${sel}`)} />
@@ -238,7 +238,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
               onChange={(v) => change(movePoint(points, sel, v / 100, points[sel].speed), `ramp-at:${clip.id}:${sel}`)}
             />
             {sel > 0 && sel < points.length - 1 && (
-              <button type="button" onClick={() => remove(sel)} className="ml-auto h-6 rounded-md px-2 text-2xs text-fg-3 hover:bg-white/[0.07] hover:text-fg">
+              <button type="button" onClick={() => remove(sel)} className="ml-auto h-6 rounded-md px-2 text-2xs text-fg-3 hover:bg-ink/[0.07] hover:text-fg">
                 {tt('Remove')}
               </button>
             )}
@@ -253,7 +253,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
                   title={s.hint}
                   aria-pressed={shapeOf === s.id}
                   onClick={() => change(shapeSegment(points, sel, s.id))}
-                  className={cn('h-6 flex-1 rounded-md text-2xs font-medium transition-colors', shapeOf === s.id ? 'bg-white/[0.12] text-fg' : 'bg-white/[0.04] text-fg-3 hover:bg-white/[0.07] hover:text-fg')}
+                  className={cn('h-6 flex-1 rounded-md text-2xs font-medium transition-colors', shapeOf === s.id ? 'bg-ink/[0.12] text-fg' : 'bg-ink/[0.04] text-fg-3 hover:bg-ink/[0.07] hover:text-fg')}
                 >
                   {s.label}
                 </button>

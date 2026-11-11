@@ -80,7 +80,7 @@ function Sidebar({ selected, onSelect }: { selected: Selection; onSelect: (s: Se
   const skillsOn = skillEntries({ disk: skillDisk, off: skillsOff, on: claudeOn }).filter((k) => k.enabled).length
 
   return (
-    <nav className="flex w-[244px] shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-line bg-black/15 px-2.5 py-5">
+    <nav className="flex w-[244px] shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-line bg-shade/15 px-2.5 py-5">
       <div className="mb-4 px-2.5">
         <div className="flex items-center gap-2 text-md font-semibold tracking-tight text-fg">
           <Plug className="size-4 text-accent-2" />{' '}{tt('Integrations')}
@@ -163,7 +163,7 @@ function NavItem({ active, onClick, icon, label, hint, status, muted }: { active
       onClick={onClick}
       className={cn(
         'flex items-center gap-2.5 rounded-[10px] px-2 py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60',
-        active ? 'bg-white/[0.07] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]' : 'hover:bg-white/[0.04]',
+        active ? 'bg-ink/[0.07] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]' : 'hover:bg-ink/[0.04]',
         muted && !active && 'opacity-70',
       )}
     >
@@ -242,7 +242,7 @@ function DesktopOnly() {
 
 function Feature({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-xl bg-white/[0.025] p-3.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+    <div className="rounded-xl bg-ink/[0.025] p-3.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
       <div className="text-sm font-medium text-fg-2">{title}</div>
       <p className="mt-1 text-xs leading-relaxed text-fg-4">{children}</p>
     </div>
@@ -415,7 +415,7 @@ function ServerPane({ server, onRemoved }: { server: McpServerState; onRemoved: 
           </div>
         }
       />
-      <div className="mb-3 rounded-lg bg-black/25 px-3 py-2 font-mono text-2xs break-all text-fg-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+      <div className="mb-3 rounded-lg bg-shade/25 px-3 py-2 font-mono text-2xs break-all text-fg-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
         {config.transport === 'http' ? config.url : [config.command, ...(config.args ?? [])].join(' ')}
       </div>
       <label className="mb-5 flex cursor-pointer items-center gap-3 rounded-lg px-1 py-1.5">
@@ -433,7 +433,7 @@ function ServerPane({ server, onRemoved }: { server: McpServerState; onRemoved: 
         </Card>
       )}
       {status === 'error' && server.error && (
-        <div className="mb-5 rounded-lg bg-danger/10 px-3 py-2.5 font-mono text-2xs leading-relaxed break-words whitespace-pre-wrap text-danger shadow-[inset_0_0_0_1px_rgb(255_93_93/0.2)]">{server.error}</div>
+        <div className="mb-5 rounded-lg bg-danger/10 px-3 py-2.5 font-mono text-2xs leading-relaxed break-words whitespace-pre-wrap text-danger shadow-[inset_0_0_0_1px_rgb(from_var(--color-danger)_r_g_b/0.2)]">{server.error}</div>
       )}
 
       {status === 'connected' ? (
@@ -656,7 +656,7 @@ function AddServerPane({ onAdded }: { onAdded: (id: string) => void }) {
             onChange={(e) => setExtra(e.target.value)}
             rows={3}
             placeholder={kind === 'http' ? tt('Authorization: Bearer …') : tt('API_KEY=…')}
-            className="w-full resize-y rounded-control bg-white/[0.045] px-2.5 py-2 font-mono text-xs leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none placeholder:text-fg-4 focus:bg-white/[0.07]"
+            className="w-full resize-y rounded-control bg-ink/[0.045] px-2.5 py-2 font-mono text-xs leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none placeholder:text-fg-4 focus:bg-ink/[0.07]"
           />
           <span className="mt-1 block text-2xs text-fg-4">{kind === 'http' ? tt('Servers that support OAuth open a sign-in page instead — no keys needed.') : tt('Stored in Lumen’s settings on this computer.')}</span>
         </label>

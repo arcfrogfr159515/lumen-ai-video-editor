@@ -273,7 +273,7 @@ function EmptyDrop() {
       onClick={actions.importMedia}
       className="mt-2 flex w-full flex-col items-center gap-2 rounded-xl border border-dashed border-line-3 px-4 py-10 text-center transition-colors hover:border-accent/60 hover:bg-accent/5"
     >
-      <span className="grid size-10 place-items-center rounded-full bg-white/[0.06]">
+      <span className="grid size-10 place-items-center rounded-full bg-ink/[0.06]">
         <Upload className="size-4 text-fg-2" />
       </span>
       <span className="text-sm font-medium text-fg">{tt('Import your media')}</span>
@@ -412,7 +412,7 @@ function ProxyBadge({ asset }: { asset: Asset }) {
   const making = useProxyJobs((s) => s.jobs[asset.id])
   if (making !== undefined)
     return (
-      <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-md bg-black/65 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-white/85 backdrop-blur-sm" title={tt('Making a proxy')}>
+      <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-md bg-shade/65 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-on-media/85 backdrop-blur-sm" title={tt('Making a proxy')}>
         <svg viewBox="0 0 16 16" className="size-2.5 -rotate-90">
           <circle cx="8" cy="8" r="6" fill="none" stroke="rgb(255 255 255 / 0.25)" strokeWidth="3" />
           <circle cx="8" cy="8" r="6" fill="none" stroke="var(--color-accent)" strokeWidth="3" strokeDasharray={`${making * 37.7} 37.7`} />
@@ -422,7 +422,7 @@ function ProxyBadge({ asset }: { asset: Asset }) {
     )
   if (!asset.proxy) return null
   return (
-    <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-accent-2 backdrop-blur-sm" title={tt('Plays a {0}p proxy in the preview; exports use the original', asset.proxy.height)}>
+    <span className="absolute bottom-1.5 left-1.5 rounded-md bg-shade/60 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-accent-2 backdrop-blur-sm" title={tt('Plays a {0}p proxy in the preview; exports use the original', asset.proxy.height)}>
       {tt('PROXY')}
     </span>
   )
@@ -435,19 +435,19 @@ function RateBadge({ asset }: { asset: Asset }) {
   const place = cn('absolute left-1.5 rounded-md px-1.5 py-0.5 text-2xs/[inherit] font-semibold backdrop-blur-sm', asset.proxy || asset.alpha ? 'bottom-6' : 'bottom-1.5')
   if (making !== undefined)
     return (
-      <span className={cn(place, 'bg-black/65 text-white/85')} title={tt('Making a constant-frame-rate copy')}>
+      <span className={cn(place, 'bg-shade/65 text-on-media/85')} title={tt('Making a constant-frame-rate copy')}>
         {ttx('CFR {0}%', Math.round(making * 100))}
       </span>
     )
   if (asset.conformedFrom)
     return (
-      <button type="button" onClick={open} className={cn(place, 'bg-black/60 text-ok')} title={tt('Plays a constant-frame-rate copy (was: {0})', describeTiming(asset.conformedFrom.frameTiming).toLowerCase())}>
+      <button type="button" onClick={open} className={cn(place, 'bg-shade/60 text-ok')} title={tt('Plays a constant-frame-rate copy (was: {0})', describeTiming(asset.conformedFrom.frameTiming).toLowerCase())}>
         {tt('CFR')}
       </button>
     )
   if (!isUneven(asset.frameTiming)) return null
   return (
-    <button type="button" onClick={open} className={cn(place, 'bg-warn text-black')} title={tt('{0} — click to make a constant-frame-rate copy', describeTiming(asset.frameTiming))}>
+    <button type="button" onClick={open} className={cn(place, 'bg-warn text-ink-fg')} title={tt('{0} — click to make a constant-frame-rate copy', describeTiming(asset.frameTiming))}>
       {tt('VFR')}
     </button>
   )
@@ -490,8 +490,8 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
           onPointerMove={onMove}
           onPointerLeave={() => setSkim(null)}
           className={cn(
-            'relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] transition-[box-shadow,transform] duration-200 group-hover/card:shadow-[0_0_0_1px_rgb(255_255_255/0.16),0_10px_24px_-10px_rgb(0_0_0/0.9)]',
-            selected && 'shadow-[0_0_0_2px_var(--color-accent)] group-hover/card:shadow-[0_0_0_2px_var(--color-accent),0_10px_24px_-10px_rgb(0_0_0/0.9)]',
+            'relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-[box-shadow,transform] duration-200 group-hover/card:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
+            selected && 'shadow-[0_0_0_2px_var(--color-accent)] group-hover/card:shadow-[0_0_0_2px_var(--color-accent),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
           )}
         >
           {src ? (
@@ -510,7 +510,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
             <button
               type="button"
               onClick={() => void relinkAsset(asset.id)}
-              className="absolute inset-0 grid place-items-center bg-black/40 text-center text-2xs font-medium text-warn"
+              className="absolute inset-0 grid place-items-center bg-shade/40 text-center text-2xs font-medium text-warn"
             >
               <span className="flex flex-col items-center gap-1">
                 <TriangleAlert className="size-4" />
@@ -518,37 +518,37 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
               </span>
             </button>
           )}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-shade/55 via-transparent to-transparent" />
           {skim !== null && canSkim && (
-            <div className="absolute inset-x-0 bottom-0 h-[2px] bg-white/20">
-              <div className="h-full bg-white" style={{ width: `${(skim / (asset.duration ?? 1)) * 100}%` }} />
+            <div className="absolute inset-x-0 bottom-0 h-[2px] bg-ink/20">
+              <div className="h-full bg-ink" style={{ width: `${(skim / (asset.duration ?? 1)) * 100}%` }} />
             </div>
           )}
-          {asset.alpha && <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-white/80 backdrop-blur-sm">{tt('ALPHA')}</span>}
+          {asset.alpha && <span className="absolute bottom-1.5 left-1.5 rounded-md bg-shade/60 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-on-media/80 backdrop-blur-sm">{tt('ALPHA')}</span>}
           <ProxyBadge asset={asset} />
           <RateBadge asset={asset} />
           {asset.kind === 'image' && (
-            <span className="absolute top-1.5 left-1.5 grid size-5 place-items-center rounded-md bg-black/50 text-white backdrop-blur-sm">
+            <span className="absolute top-1.5 left-1.5 grid size-5 place-items-center rounded-md bg-shade/50 text-on-media backdrop-blur-sm">
               <ImageIcon className="size-3" />
             </span>
           )}
           {asset.generated && <span className="absolute top-1.5 left-1.5 rounded-md bg-ai px-1.5 py-0.5 text-2xs/[inherit] font-bold text-accent-fg shadow">{tt('AI')}</span>}
           {selected && (
-            <span className="absolute top-1.5 left-1.5 grid size-5 place-items-center rounded-full bg-accent text-accent-fg shadow-[0_0_0_2px_rgb(0_0_0/0.35)]">
+            <span className="absolute top-1.5 left-1.5 grid size-5 place-items-center rounded-full bg-accent text-accent-fg shadow-[0_0_0_2px_rgb(from_var(--color-shade)_r_g_b/0.35)]">
               <Check className="size-3" strokeWidth={3} />
             </span>
           )}
           {asset.duration !== undefined && (
-            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-white tabular backdrop-blur-sm">
+            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-shade/60 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-on-media tabular backdrop-blur-sm">
               {skim !== null && canSkim ? formatSeconds(skim) : formatSeconds(asset.duration)}
             </span>
           )}
-          {used && <span className="absolute top-2 right-2 size-1.5 rounded-full bg-ok shadow-[0_0_0_2px_rgb(0_0_0/0.4)]" title={tt('Used in timeline')} />}
+          {used && <span className="absolute top-2 right-2 size-1.5 rounded-full bg-ok shadow-[0_0_0_2px_rgb(from_var(--color-shade)_r_g_b/0.4)]" title={tt('Used in timeline')} />}
           <button
             type="button"
             aria-label={tt('Add {0} at playhead', asset.name)}
             onClick={add}
-            className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-white text-black opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/card:scale-100 group-hover/card:opacity-100 hover:bg-accent-2 hover:text-accent-fg"
+            className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-ink text-ink-fg opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/card:scale-100 group-hover/card:opacity-100 hover:bg-accent-2 hover:text-accent-fg"
           >
             <Plus className="size-3.5" strokeWidth={2.5} />
           </button>
@@ -611,8 +611,8 @@ function AudioRow({ asset, used, order }: { asset: Asset; used: boolean; order: 
         onDoubleClick={add}
         aria-selected={selected}
         className={cn(
-          'group/row flex h-12 cursor-grab items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-white/[0.04] active:cursor-grabbing',
-          selected && 'bg-accent/[0.08] shadow-[inset_0_0_0_1px_rgb(214_238_0/0.45)] hover:bg-accent/[0.11]',
+          'group/row flex h-12 cursor-grab items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-ink/[0.04] active:cursor-grabbing',
+          selected && 'bg-accent/[0.08] shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.45)] hover:bg-accent/[0.11]',
         )}
       >
         <button
@@ -650,7 +650,7 @@ function AudioRow({ asset, used, order }: { asset: Asset; used: boolean; order: 
           type="button"
           aria-label={tt('Add {0} at playhead', asset.name)}
           onClick={add}
-          className="grid size-6 shrink-0 place-items-center rounded-full text-fg-3 opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-white/[0.1] hover:text-fg"
+          className="grid size-6 shrink-0 place-items-center rounded-full text-fg-3 opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-ink/[0.1] hover:text-fg"
         >
           <Plus className="size-3.5" />
         </button>

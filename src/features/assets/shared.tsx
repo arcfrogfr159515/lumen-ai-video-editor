@@ -28,7 +28,7 @@ export function Chip({ active, onClick, children, count }: { active?: boolean; o
       onClick={onClick}
       className={cn(
         'inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60',
-        active ? 'bg-white/[0.12] text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]' : 'text-fg-3 hover:bg-white/[0.05] hover:text-fg-2',
+        active ? 'bg-ink/[0.12] text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)]' : 'text-fg-3 hover:bg-ink/[0.05] hover:text-fg-2',
       )}
     >
       {children}

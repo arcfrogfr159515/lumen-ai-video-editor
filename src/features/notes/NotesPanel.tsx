@@ -67,7 +67,7 @@ function Counted({ label, count, title }: { label: string; count: number; title:
 function Empty({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-      <span className="grid size-10 place-items-center rounded-xl bg-white/[0.04] text-fg-3 [&_svg]:size-5">{icon}</span>
+      <span className="grid size-10 place-items-center rounded-xl bg-ink/[0.04] text-fg-3 [&_svg]:size-5">{icon}</span>
       <div className="text-sm font-medium text-fg-2">{title}</div>
       <p className="text-xs leading-relaxed text-fg-4">{children}</p>
     </div>
@@ -109,7 +109,7 @@ function MarkerList() {
                 onClick={() => toggleKind(k.id)}
                 className={cn(
                   'flex h-6 items-center gap-1 rounded-full px-2 text-2xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60',
-                  kinds.includes(k.id) ? 'bg-white/[0.12] text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.16)]' : on ? 'bg-white/[0.04] text-fg-2 hover:bg-white/[0.08]' : 'bg-white/[0.02] text-fg-4 hover:text-fg-3',
+                  kinds.includes(k.id) ? 'bg-ink/[0.12] text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16)]' : on ? 'bg-ink/[0.04] text-fg-2 hover:bg-ink/[0.08]' : 'bg-ink/[0.02] text-fg-4 hover:text-fg-3',
                 )}
               >
                 <Icon className="size-3" style={{ color: on ? MARKER_COLORS[k.color] : undefined }} />
@@ -179,7 +179,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
   const done = marker.kind === 'todo' && marker.done
 
   return (
-    <li className={cn('group/row rounded-lg bg-white/[0.03] px-2 py-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)] transition-colors hover:bg-white/[0.05]', done && 'opacity-60')}>
+    <li className={cn('group/row rounded-lg bg-ink/[0.03] px-2 py-1.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)] transition-colors hover:bg-ink/[0.05]', done && 'opacity-60')}>
       <div className="flex items-center gap-2">
         {marker.kind === 'todo' ? (
           <button
@@ -188,7 +188,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
             aria-checked={Boolean(marker.done)}
             aria-label={marker.done ? tt('Reopen') : tt('Tick off')}
             onClick={() => patch({ done: !marker.done })}
-            className={cn('grid size-4 shrink-0 place-items-center rounded-[5px] outline-none ring-1 ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-accent/60', marker.done ? 'bg-ok text-black ring-ok' : 'ring-warn/70 hover:bg-warn/15')}
+            className={cn('grid size-4 shrink-0 place-items-center rounded-[5px] outline-none ring-1 ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-accent/60', marker.done ? 'bg-ok text-ink-fg ring-ok' : 'ring-warn/70 hover:bg-warn/15')}
           >
             {marker.done && <Check className="size-3" strokeWidth={3} />}
           </button>
@@ -199,7 +199,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
           type="button"
           title={tt('Go to this marker')}
           onClick={() => (playback.pause(), playback.seek(marker.frame))}
-          className="shrink-0 rounded px-1 font-mono text-2xs text-fg-3 tabular outline-none hover:bg-white/[0.07] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
+          className="shrink-0 rounded px-1 font-mono text-2xs text-fg-3 tabular outline-none hover:bg-ink/[0.07] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           {formatTimecode(marker.frame, fps)}
         </button>
@@ -213,7 +213,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
             if (e.key === 'Enter') e.currentTarget.blur()
             if (e.key === 'Escape') (setLabel(marker.label), e.currentTarget.blur())
           }}
-          className={cn('min-w-0 flex-1 truncate rounded bg-transparent px-1 py-0.5 text-sm text-fg outline-none hover:bg-white/[0.04] focus:bg-white/[0.07] focus:ring-1 focus:ring-accent/60', done && 'line-through')}
+          className={cn('min-w-0 flex-1 truncate rounded bg-transparent px-1 py-0.5 text-sm text-fg outline-none hover:bg-ink/[0.04] focus:bg-ink/[0.07] focus:ring-1 focus:ring-accent/60', done && 'line-through')}
         />
         <Menu>
           <MenuTrigger asChild>
@@ -257,7 +257,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
             e.stopPropagation()
             if (e.key === 'Escape') (setNote(marker.note ?? ''), e.currentTarget.blur())
           }}
-          className="mt-1 ml-6 block w-[calc(100%-1.5rem)] resize-none rounded bg-transparent px-1 py-0.5 text-xs leading-relaxed text-fg-3 outline-none placeholder:text-fg-4 hover:bg-white/[0.04] focus:bg-white/[0.07] focus:text-fg-2 focus:ring-1 focus:ring-accent/60"
+          className="mt-1 ml-6 block w-[calc(100%-1.5rem)] resize-none rounded bg-transparent px-1 py-0.5 text-xs leading-relaxed text-fg-3 outline-none placeholder:text-fg-4 hover:bg-ink/[0.04] focus:bg-ink/[0.07] focus:text-fg-2 focus:ring-1 focus:ring-accent/60"
         />
       )}
     </li>
@@ -374,8 +374,8 @@ function ClipNoteList() {
             <li
               key={row.clipId}
               className={cn(
-                'rounded-lg bg-white/[0.03] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)] transition-colors hover:bg-white/[0.05]',
-                selection.includes(row.clipId) && 'shadow-[inset_0_0_0_1px_rgb(214_238_0/0.45)]',
+                'rounded-lg bg-ink/[0.03] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)] transition-colors hover:bg-ink/[0.05]',
+                selection.includes(row.clipId) && 'shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.45)]',
               )}
             >
               <button type="button" onClick={() => go(row.clipId, row.start)} title={tt('Select this clip and go to it')} className="flex w-full min-w-0 items-baseline gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-accent/60">

@@ -41,7 +41,7 @@ function ResolutionMenu() {
         <MenuTrigger asChild>
           <button
             type="button"
-            className="mr-1 flex h-7 items-center gap-1.5 rounded-lg bg-white/[0.045] px-2 text-xs font-medium text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none transition-colors hover:bg-white/[0.08] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.08]"
+            className="mr-1 flex h-7 items-center gap-1.5 rounded-lg bg-ink/[0.045] px-2 text-xs font-medium text-fg-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] outline-none transition-colors hover:bg-ink/[0.08] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.08]"
           >
             <MonitorPlay className="size-3.5 text-fg-3" />
             <span className="tabular">{label}</span>
@@ -124,7 +124,7 @@ export function PreviewPanel() {
             useUI.getState().clearSelection()
             useUI.getState().setRightTab('inspector')
           }}
-          className="rounded-md bg-white/[0.05] px-1.5 py-0.5 font-mono text-2xs text-fg-3 tabular transition-colors hover:bg-white/[0.08] hover:text-fg-2"
+          className="rounded-md bg-ink/[0.05] px-1.5 py-0.5 font-mono text-2xs text-fg-3 tabular transition-colors hover:bg-ink/[0.08] hover:text-fg-2"
         >
           {ttx('{0}×{1} · {2} fps', settings.width, settings.height, settings.fps)}
         </button>
@@ -204,7 +204,7 @@ function Transport() {
               type="button"
               aria-label={playing ? tt('Pause') : tt('Play')}
               onClick={() => playback.toggle()}
-              className="relative mx-1.5 grid size-10 place-items-center rounded-full bg-white text-black shadow-[0_4px_18px_-4px_rgb(255_255_255/0.45),inset_0_-2px_0_rgb(0_0_0/0.12)] outline-none transition-transform duration-150 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-accent/70"
+              className="relative mx-1.5 grid size-10 place-items-center rounded-full bg-ink text-ink-fg shadow-[0_4px_18px_-4px_rgb(from_var(--color-ink)_r_g_b/0.45),inset_0_-2px_0_rgb(from_var(--color-shade)_r_g_b/0.12)] outline-none transition-transform duration-150 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-accent/70"
             >
               {playing ? <Pause className="size-4" fill="currentColor" /> : <Play className="ml-0.5 size-4" fill="currentColor" />}
               {playing && rate !== 1 && (
@@ -250,9 +250,9 @@ function MasterMeter() {
   }, [])
   return (
     <Tip content={tt('Master level — open the mixer')}>
-      <button type="button" aria-label={tt('Open the mixer')} onClick={() => useUI.getState().setRightTab('mixer')} className="mr-1 flex w-16 flex-col gap-[3px] rounded-md px-1 py-1.5 outline-none hover:bg-white/[0.05] focus-visible:ring-2 focus-visible:ring-accent/60">
+      <button type="button" aria-label={tt('Open the mixer')} onClick={() => useUI.getState().setRightTab('mixer')} className="mr-1 flex w-16 flex-col gap-[3px] rounded-md px-1 py-1.5 outline-none hover:bg-ink/[0.05] focus-visible:ring-2 focus-visible:ring-accent/60">
         {[left, right].map((ref, i) => (
-          <span key={i} className="relative h-[4px] w-full overflow-hidden rounded-full bg-white/[0.07]">
+          <span key={i} className="relative h-[4px] w-full overflow-hidden rounded-full bg-ink/[0.07]">
             <span ref={ref} className="absolute inset-0 bg-[linear-gradient(to_right,#2fcf7e_0%,#2fcf7e_62%,#e6e238_76%,#f5a524_88%,#ef4444_96%)]" style={{ clipPath: 'inset(0 100% 0 0)' }} />
           </span>
         ))}
@@ -299,7 +299,7 @@ function ScrubBar() {
       }}
       onPointerLeave={() => setHover(null)}
     >
-      <div className="relative h-[3px] w-full overflow-hidden rounded-full bg-white/[0.08] transition-[height] duration-150 group-hover/scrub:h-[5px]">
+      <div className="relative h-[3px] w-full overflow-hidden rounded-full bg-ink/[0.08] transition-[height] duration-150 group-hover/scrub:h-[5px]">
         <div ref={fill} className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-accent to-ai-2" />
       </div>
       {markers.map((m) => (
@@ -307,7 +307,7 @@ function ScrubBar() {
       ))}
       <span
         ref={knob}
-        className={cn('pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_1px_4px_rgb(0_0_0/0.5)] transition-transform duration-150', 'scale-0 group-hover/scrub:scale-100')}
+        className={cn('pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.5)] transition-transform duration-150', 'scale-0 group-hover/scrub:scale-100')}
       />
       {hover !== null && (
         <span

@@ -96,7 +96,7 @@ export function MotionPresetsSection({ clip }: { clip: Clip }) {
                   type="button"
                   title={p.description}
                   onClick={() => apply(p.id, g.id)}
-                  className="h-7 truncate rounded-md bg-white/[0.04] px-1.5 text-xs font-medium text-fg-3 transition-colors hover:bg-white/[0.08] hover:text-fg"
+                  className="h-7 truncate rounded-md bg-ink/[0.04] px-1.5 text-xs font-medium text-fg-3 transition-colors hover:bg-ink/[0.08] hover:text-fg"
                 >
                   {p.name}
                 </button>
@@ -110,7 +110,7 @@ export function MotionPresetsSection({ clip }: { clip: Clip }) {
         </Row>
         <Row label={tt('Curve')}>
           <EasingMenu value={easing} onChange={setEasing} allowPreset>
-            <button type="button" className="flex h-7 flex-1 items-center gap-2 rounded-md bg-white/[0.04] px-2 text-xs text-fg-2 hover:bg-white/[0.07]">
+            <button type="button" className="flex h-7 flex-1 items-center gap-2 rounded-md bg-ink/[0.04] px-2 text-xs text-fg-2 hover:bg-ink/[0.07]">
               {easing ? <CurveIcon easing={easing} /> : <Clapperboard className="size-3.5 text-fg-4" />}
               <span className="truncate">{easing ? easingLabel(easing) : tt('Each preset’s own')}</span>
             </button>

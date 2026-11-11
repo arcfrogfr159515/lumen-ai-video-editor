@@ -35,7 +35,7 @@ function PresetShape({ preset, active }: { preset: CanvasPreset; active: boolean
   return (
     <span className="grid size-10 shrink-0 place-items-center">
       <span
-        className={cn('rounded-[4px] transition-colors', active ? 'bg-accent/20 shadow-[inset_0_0_0_1.5px_var(--color-accent)]' : 'bg-white/[0.04] shadow-[inset_0_0_0_1.5px_rgb(255_255_255/0.25)]')}
+        className={cn('rounded-[4px] transition-colors', active ? 'bg-accent/20 shadow-[inset_0_0_0_1.5px_var(--color-accent)]' : 'bg-ink/[0.04] shadow-[inset_0_0_0_1.5px_rgb(from_var(--color-ink)_r_g_b/0.25)]')}
         style={{ width: w, height: h }}
       />
     </span>
@@ -88,7 +88,7 @@ export function HomeScreen() {
           className="flex w-[min(560px,48%)] shrink-0 flex-col overflow-y-auto border-r border-line px-10 py-10"
         >
           <div className="flex items-center gap-3">
-            <LogoMark className="size-11 drop-shadow-[0_6px_24px_rgb(214_238_0/0.28)]" />
+            <LogoMark className="size-11 drop-shadow-[0_6px_24px_rgb(from_var(--color-accent)_r_g_b/0.28)]" />
             <div>
               <h1 className="font-display text-2xl leading-none font-semibold tracking-tight text-fg">{tt('Lumen')}</h1>
               <p className="mt-1 text-xs text-fg-4">{ttx('AI-native video editor · v{0}', APP_VERSION)}</p>
@@ -99,7 +99,7 @@ export function HomeScreen() {
             <button
               type="button"
               onClick={() => showHome(false)}
-              className="mt-8 flex items-center gap-2 self-start rounded-lg px-2 py-1.5 text-sm text-fg-3 transition-colors hover:bg-white/[0.05] hover:text-fg"
+              className="mt-8 flex items-center gap-2 self-start rounded-lg px-2 py-1.5 text-sm text-fg-3 transition-colors hover:bg-ink/[0.05] hover:text-fg"
             >
               <ArrowLeft className="size-4" />{' '}{ttx('Back to {0}', currentName)}
             </button>
@@ -118,7 +118,7 @@ export function HomeScreen() {
                   onDoubleClick={() => create(p)}
                   className={cn(
                     'flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left outline-none transition-[background-color,box-shadow] focus-visible:ring-2 focus-visible:ring-accent/60',
-                    active ? 'bg-accent/[0.08] shadow-[inset_0_0_0_1px_rgb(214_238_0/0.45)]' : 'bg-white/[0.025] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] hover:bg-white/[0.05]',
+                    active ? 'bg-accent/[0.08] shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.45)]' : 'bg-ink/[0.025] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] hover:bg-ink/[0.05]',
                   )}
                 >
                   <PresetShape preset={p} active={active} />
@@ -157,7 +157,7 @@ export function HomeScreen() {
           className="flex min-w-0 flex-1 flex-col overflow-y-auto px-10 py-10"
         >
           {recovery && (
-            <div className="mb-8 flex items-start gap-3 rounded-xl bg-warn/[0.07] p-4 shadow-[inset_0_0_0_1px_rgb(245_183_59/0.25)]">
+            <div className="mb-8 flex items-start gap-3 rounded-xl bg-warn/[0.07] p-4 shadow-[inset_0_0_0_1px_rgb(from_var(--color-warn)_r_g_b/0.25)]">
               <History className="mt-0.5 size-5 shrink-0 text-warn" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-fg">{ttx('Unsaved changes to “{0}”', recovery.name)}</div>
@@ -200,7 +200,7 @@ export function HomeScreen() {
                     onKeyDown={(e) => e.key === 'Enter' && r.exists && void openProject(r.path)}
                     className={cn(
                       'group flex items-center gap-3 rounded-xl px-3 py-2.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60',
-                      r.exists ? 'cursor-default bg-white/[0.025] hover:bg-white/[0.06]' : 'bg-white/[0.015] opacity-60',
+                      r.exists ? 'cursor-default bg-ink/[0.025] hover:bg-ink/[0.06]' : 'bg-ink/[0.015] opacity-60',
                     )}
                   >
                     <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent-2">
@@ -219,7 +219,7 @@ export function HomeScreen() {
                           e.stopPropagation()
                           void forgetRecent(r.path)
                         }}
-                        className="grid size-7 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white/[0.08] hover:text-fg-2 focus-visible:opacity-100"
+                        className="grid size-7 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-ink/[0.08] hover:text-fg-2 focus-visible:opacity-100"
                       >
                         {r.exists ? <X className="size-3.5" /> : <Trash2 className="size-3.5" />}
                       </button>

@@ -12,7 +12,7 @@ import { ttx } from '@/lib/i18n-react'
 
 function Feature({ title, children }: { title: string; children: string }) {
   return (
-    <div className="rounded-xl bg-white/[0.025] p-3.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+    <div className="rounded-xl bg-ink/[0.025] p-3.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
       <div className="text-sm font-medium text-fg-2">{title}</div>
       <p className="mt-1 text-xs leading-relaxed text-fg-4">{children}</p>
     </div>

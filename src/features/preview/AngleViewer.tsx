@@ -79,7 +79,7 @@ export function AngleViewer() {
     if (useUI.getState().selection.includes(shown.clipId)) useUI.getState().select([res.result as string])
   }
   return (
-    <div className="shrink-0 border-t border-line bg-black/20 px-3 py-2">
+    <div className="shrink-0 border-t border-line bg-shade/20 px-3 py-2">
       <div className="scrollbar-none flex gap-2 overflow-x-auto">
         {shown.angles.map((a, i) => {
           const active = a.id === shown.active
@@ -90,8 +90,8 @@ export function AngleViewer() {
               onClick={() => cut(i)}
               title={tt('Cut to {0} at the playhead', a.name)}
               className={cn(
-                'group/angle relative shrink-0 overflow-hidden rounded-lg bg-black outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-accent/60',
-                active ? 'shadow-[0_0_0_2px_var(--color-accent),0_0_16px_-2px_rgb(214_238_0/0.5)]' : 'shadow-[0_0_0_1px_rgb(255_255_255/0.1)] hover:shadow-[0_0_0_1.5px_rgb(255_255_255/0.5)]',
+                'group/angle relative shrink-0 overflow-hidden rounded-lg bg-shade outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-accent/60',
+                active ? 'shadow-[0_0_0_2px_var(--color-accent),0_0_16px_-2px_rgb(from_var(--color-accent)_r_g_b/0.5)]' : 'shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.1)] hover:shadow-[0_0_0_1.5px_rgb(from_var(--color-ink)_r_g_b/0.5)]',
               )}
               style={{ width: tileW, height: tileH }}
             >
@@ -104,9 +104,9 @@ export function AngleViewer() {
                 height={Math.round(tileH * dpr)}
                 className="block h-full w-full"
               />
-              <span className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/80 to-transparent px-1.5 pt-3 pb-1 text-left">
+              <span className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-shade/80 to-transparent px-1.5 pt-3 pb-1 text-left">
                 {i < 9 && <Kbd combo={String(i + 1)} />}
-                <span className={cn('truncate text-xs/[inherit] font-medium', active ? 'text-accent-2' : 'text-white/85')}>{a.name}</span>
+                <span className={cn('truncate text-xs/[inherit] font-medium', active ? 'text-accent-2' : 'text-on-media/85')}>{a.name}</span>
               </span>
               {active && <span className="absolute top-1.5 left-1.5 rounded bg-accent px-1 text-2xs/[inherit] font-bold text-accent-fg">{tt('LIVE')}</span>}
             </button>

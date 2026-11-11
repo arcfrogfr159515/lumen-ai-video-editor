@@ -249,7 +249,7 @@ function SectionHeading({ section, fps, canDrag, dragging, onPointerDown }: { se
       <span
         onPointerDown={canDrag ? onPointerDown : undefined}
         title={canDrag ? tt('Drag to move the whole section') : undefined}
-        className={cn('grid size-5 place-items-center rounded text-fg-4 [&_svg]:size-3.5', canDrag ? 'cursor-grab hover:bg-white/[0.06] hover:text-fg-2 active:cursor-grabbing' : 'opacity-40')}
+        className={cn('grid size-5 place-items-center rounded text-fg-4 [&_svg]:size-3.5', canDrag ? 'cursor-grab hover:bg-ink/[0.06] hover:text-fg-2 active:cursor-grabbing' : 'opacity-40')}
       >
         <GripVertical />
       </span>
@@ -267,7 +267,7 @@ function SectionHeading({ section, fps, canDrag, dragging, onPointerDown }: { se
           }}
           // As wide as its text, so the count that follows sits beside the title.
           style={{ width: `${Math.max(6, title.length + 2)}ch` }}
-          className="h-6 max-w-[60%] rounded bg-transparent px-1 text-sm font-semibold text-fg outline-none hover:bg-white/[0.04] focus:bg-white/[0.07] focus:ring-1 focus:ring-accent/60"
+          className="h-6 max-w-[60%] rounded bg-transparent px-1 text-sm font-semibold text-fg outline-none hover:bg-ink/[0.04] focus:bg-ink/[0.07] focus:ring-1 focus:ring-accent/60"
         />
       ) : (
         <span className="px-1 text-sm font-semibold text-fg-3">{section.title}</span>
@@ -328,23 +328,23 @@ function Card({
           {dropAfter && <span className="pointer-events-none absolute inset-y-0 -right-[6px] w-[3px] rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />}
           <div
             className={cn(
-              'relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] transition-shadow',
+              'relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow',
               selected && 'shadow-[0_0_0_2px_var(--color-accent)]',
-              playing && !selected && 'shadow-[0_0_0_1.5px_rgb(255_255_255/0.6)]',
+              playing && !selected && 'shadow-[0_0_0_1.5px_rgb(from_var(--color-ink)_r_g_b/0.6)]',
             )}
           >
             {frame ? <FrameCanvas frame={frame} className="absolute inset-0" /> : poster ? <img src={poster} alt="" draggable={false} className="h-full w-full object-cover" /> : <span className="grid h-full place-items-center text-fg-4"><Icon className="size-5" /></span>}
             <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: color }} />
-            <span className="absolute top-1.5 left-1.5 rounded-md bg-black/65 px-1.5 py-0.5 font-mono text-2xs/[inherit] font-semibold text-white tabular backdrop-blur-sm">{card.number}</span>
-            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/65 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-white tabular backdrop-blur-sm">{formatDuration(card.end - card.start, fps)}</span>
+            <span className="absolute top-1.5 left-1.5 rounded-md bg-shade/65 px-1.5 py-0.5 font-mono text-2xs/[inherit] font-semibold text-on-media tabular backdrop-blur-sm">{card.number}</span>
+            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-shade/65 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-on-media tabular backdrop-blur-sm">{formatDuration(card.end - card.start, fps)}</span>
             <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1">
               {clip.takes && clip.takes.length > 1 && (
-                <span className="flex items-center gap-0.5 rounded bg-black/65 px-1 py-0.5 text-2xs/[inherit] font-semibold text-white tabular">
+                <span className="flex items-center gap-0.5 rounded bg-shade/65 px-1 py-0.5 text-2xs/[inherit] font-semibold text-on-media tabular">
                   <Layers2 className="size-2.5" /> {clip.takes.length}
                 </span>
               )}
               {(clip.note || clip.tasks?.length) && (
-                <span className={cn('flex items-center gap-0.5 rounded px-1 py-0.5 text-2xs/[inherit] font-bold tabular', open ? 'bg-warn text-black' : 'bg-white/85 text-black')}>
+                <span className={cn('flex items-center gap-0.5 rounded px-1 py-0.5 text-2xs/[inherit] font-bold tabular', open ? 'bg-warn text-ink-fg' : 'bg-ink/85 text-ink-fg')}>
                   <StickyNote className="size-2.5" /> {open > 0 && open}
                 </span>
               )}

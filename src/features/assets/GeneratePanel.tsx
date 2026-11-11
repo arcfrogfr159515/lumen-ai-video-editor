@@ -197,14 +197,14 @@ function MediaGenerator() {
         {generators.length > 0 ? (
           <Select aria-label={tt('Generator')} value={gen?.id ?? ''} onChange={pick} size="md" className="w-full" options={generators.map((g) => ({ value: g.id, label: g.label }))} />
         ) : loading ? (
-          <div className="rounded-xl bg-white/[0.025] px-3 py-3 text-xs text-fg-4">{tt('Looking up the models your keys can use…')}</div>
+          <div className="rounded-xl bg-ink/[0.025] px-3 py-3 text-xs text-fg-4">{tt('Looking up the models your keys can use…')}</div>
         ) : (
           <ConnectCards mode={mode} />
         )}
         {errors.length > 0 && <p className="px-1 text-2xs leading-relaxed text-danger/80">{errors.join(' · ')}</p>}
 
         {gen?.type === 'mcp' && (
-          <div className="max-h-[46vh] overflow-y-auto rounded-xl bg-white/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
+          <div className="max-h-[46vh] overflow-y-auto rounded-xl bg-ink/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
             {gen.tool.description && <p className="mb-3 line-clamp-3 text-2xs leading-relaxed text-fg-4">{gen.tool.description}</p>}
             <SchemaForm schema={schema} values={args} onChange={setArgs} />
           </div>
@@ -212,7 +212,7 @@ function MediaGenerator() {
 
         {gen && gen.type !== 'mcp' && (
           <>
-            <div className="ring-ai rounded-xl bg-white/[0.035] p-2.5">
+            <div className="ring-ai rounded-xl bg-ink/[0.035] p-2.5">
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -373,7 +373,7 @@ function ConnectCards({ mode }: { mode: Mode }) {
           key={c.title}
           type="button"
           onClick={() => openIntegrations(c.focus)}
-          className="flex w-full items-center gap-2.5 rounded-xl bg-white/[0.025] px-3 py-2.5 text-left shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] transition-colors hover:bg-white/[0.05] [&_svg]:size-4"
+          className="flex w-full items-center gap-2.5 rounded-xl bg-ink/[0.025] px-3 py-2.5 text-left shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] transition-colors hover:bg-ink/[0.05] [&_svg]:size-4"
         >
           <span className="shrink-0 text-accent-2">{c.icon}</span>
           <span className="min-w-0 text-2xs leading-snug text-fg-3">

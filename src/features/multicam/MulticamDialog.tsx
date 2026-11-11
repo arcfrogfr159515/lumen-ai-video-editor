@@ -79,7 +79,7 @@ export function MulticamDialog() {
             <span className="text-xs font-medium text-fg-2">{tt('Cameras')}</span>
             <span className="text-2xs text-fg-4">{ttx('{0} chosen · at least 2', angles.length)}</span>
           </div>
-          <div className="max-h-[260px] space-y-1 overflow-y-auto rounded-xl bg-black/20 p-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+          <div className="max-h-[260px] space-y-1 overflow-y-auto rounded-xl bg-shade/20 p-1.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
             {!videos.length && <p className="py-6 text-center text-xs text-fg-4">{tt('Import the camera recordings first.')}</p>}
             {videos.map((v) => {
               const on = chosen.includes(v.id)
@@ -91,9 +91,9 @@ export function MulticamDialog() {
                   type="button"
                   disabled={busy !== null}
                   onClick={() => toggle(v.id)}
-                  className={cn('flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors', on ? 'bg-accent/10 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]' : 'hover:bg-white/[0.04]')}
+                  className={cn('flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors', on ? 'bg-accent/10 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.3)]' : 'hover:bg-ink/[0.04]')}
                 >
-                  <span className={cn('grid size-5 shrink-0 place-items-center rounded-md text-2xs/[inherit] font-bold', on ? 'bg-accent text-accent-fg' : 'bg-white/[0.06] text-transparent')}>{on ? videos.filter((x) => chosen.includes(x.id)).findIndex((x) => x.id === v.id) + 1 : <Check className="size-3" />}</span>
+                  <span className={cn('grid size-5 shrink-0 place-items-center rounded-md text-2xs/[inherit] font-bold', on ? 'bg-accent text-accent-fg' : 'bg-ink/[0.06] text-transparent')}>{on ? videos.filter((x) => chosen.includes(x.id)).findIndex((x) => x.id === v.id) + 1 : <Check className="size-3" />}</span>
                   <span className="relative aspect-video w-16 shrink-0 overflow-hidden rounded-md bg-surface-3">{thumb && <img src={thumb} alt="" className="h-full w-full object-cover" />}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium text-fg">{v.name}</span>
@@ -144,10 +144,10 @@ export function MulticamDialog() {
             : tt('Every file starts at the same moment — for recorders started together or with matching timecode.')}
         </p>
       </div>
-      <div className="flex items-center gap-3 border-t border-line bg-black/15 px-5 py-3.5">
+      <div className="flex items-center gap-3 border-t border-line bg-shade/15 px-5 py-3.5">
         {busy !== null ? (
           <div className="min-w-0 flex-1">
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+            <div className="h-1.5 overflow-hidden rounded-full bg-ink/[0.08]">
               <div className="h-full rounded-full bg-gradient-to-r from-accent to-ai-2 transition-[width] duration-150" style={{ width: `${Math.max(4, busy * 100)}%` }} />
             </div>
             <div className="mt-1.5 flex items-center gap-1.5 text-2xs text-fg-4">

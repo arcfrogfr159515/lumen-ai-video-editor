@@ -58,7 +58,7 @@ export function BrainPicker() {
         <button
           type="button"
           title={`${label.title} · ${label.subtitle}`}
-          className="-ml-1.5 flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 outline-none transition-colors hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.07]"
+          className="-ml-1.5 flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 outline-none transition-colors hover:bg-ink/[0.06] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.07]"
         >
           <span className="relative flex size-1.5 shrink-0">
             {ready && <span className="absolute inset-0 animate-ping rounded-full bg-ok/60" />}
@@ -121,7 +121,7 @@ export function BrainPicker() {
               setOpen(false)
               openIntegrations('ai-models')
             }}
-            className="flex items-center gap-2 border-t border-line px-3.5 py-2.5 text-xs text-fg-3 transition-colors hover:bg-white/[0.04] hover:text-fg"
+            className="flex items-center gap-2 border-t border-line px-3.5 py-2.5 text-xs text-fg-3 transition-colors hover:bg-ink/[0.04] hover:text-fg"
           >
             <Settings2 className="size-3.5" />
             {configured.length ? tt('Add or manage models…') : tt('Add a model — Claude, GPT, Gemini, OpenRouter…')}
@@ -161,7 +161,7 @@ function AgentRows({
         onSelect={() => (agent?.found ? onSignIn() : openIntegrations('local-agents'))}
         action={
           agent?.found ? (
-            <span className="flex items-center gap-1 rounded-md bg-white/[0.08] px-1.5 py-0.5 text-2xs/[inherit] font-medium text-fg-2">
+            <span className="flex items-center gap-1 rounded-md bg-ink/[0.08] px-1.5 py-0.5 text-2xs/[inherit] font-medium text-fg-2">
               {signingIn ? <LoaderCircle className="size-3 animate-spin" /> : null}
               {tt('Sign in')}
             </span>
@@ -213,11 +213,11 @@ function Row({
       value={value}
       onSelect={onSelect}
       className={cn(
-        'flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm outline-none data-[selected=true]:bg-white/[0.06]',
+        'flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm outline-none data-[selected=true]:bg-ink/[0.06]',
         disabled && 'opacity-50',
       )}
     >
-      {icon && <span className="grid size-6 shrink-0 place-items-center rounded-md bg-white/[0.05] text-fg-3">{icon}</span>}
+      {icon && <span className="grid size-6 shrink-0 place-items-center rounded-md bg-ink/[0.05] text-fg-3">{icon}</span>}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-base/[inherit] text-fg">{title}</span>
         {hint && <span className="block truncate text-2xs/[inherit] text-fg-4">{hint}</span>}

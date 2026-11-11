@@ -90,7 +90,7 @@ function Meter({ level, className }: { level: number; className?: string }) {
   const db = level > 0 ? 20 * Math.log10(level) : -90
   const fill = Math.min(1, Math.max(0, (db + 60) / 60))
   return (
-    <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-white/[0.07]', className)} role="meter" aria-valuenow={Math.round(db)} aria-valuemin={-60} aria-valuemax={0}>
+    <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-ink/[0.07]', className)} role="meter" aria-valuenow={Math.round(db)} aria-valuemin={-60} aria-valuemax={0}>
       <div className={cn('h-full rounded-full transition-[width] duration-75', db > -1 ? 'bg-danger' : db > -9 ? 'bg-warn' : 'bg-ok')} style={{ width: `${fill * 100}%` }} />
     </div>
   )
@@ -149,7 +149,7 @@ function RegionOverlay({ width, height, region, drawing, onChange }: { width: nu
     >
       {shown && shown.width > 0 && shown.height > 0 && (
         <div
-          className="pointer-events-none absolute rounded-[3px] shadow-[0_0_0_9999px_rgb(0_0_0/0.58)] ring-2 ring-accent"
+          className="pointer-events-none absolute rounded-[3px] shadow-[0_0_0_9999px_rgb(from_var(--color-shade)_r_g_b/0.58)] ring-2 ring-accent"
           style={{ left: fit.left + shown.x * fit.k, top: fit.top + shown.y * fit.k, width: shown.width * fit.k, height: shown.height * fit.k }}
         >
           <span className="absolute -top-5 left-0 rounded bg-accent px-1 text-2xs font-semibold text-accent-fg tabular">
@@ -168,11 +168,11 @@ function SourceCard({ source, selected, onPick }: { source: CaptureSource; selec
       onClick={onPick}
       aria-pressed={selected}
       title={source.name}
-      className={cn('group min-w-0 rounded-lg p-1 text-left transition-colors', selected ? 'bg-accent/12 ring-1 ring-accent/60' : 'hover:bg-white/[0.05]')}
+      className={cn('group min-w-0 rounded-lg p-1 text-left transition-colors', selected ? 'bg-accent/12 ring-1 ring-accent/60' : 'hover:bg-ink/[0.05]')}
     >
-      <div className="relative aspect-video overflow-hidden rounded-md bg-black/50">
+      <div className="relative aspect-video overflow-hidden rounded-md bg-shade/50">
         {source.thumbnail ? <img src={source.thumbnail} alt="" className="h-full w-full object-contain" draggable={false} /> : <div className="grid h-full place-items-center text-fg-4">{source.kind === 'screen' ? <Monitor className="size-5" /> : <AppWindow className="size-5" />}</div>}
-        {source.minimized && <span className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-center text-2xs text-fg-2">{tt('Minimized')}</span>}
+        {source.minimized && <span className="absolute inset-x-0 bottom-0 bg-shade/70 px-1 py-0.5 text-center text-2xs text-fg-2">{tt('Minimized')}</span>}
       </div>
       <div className="mt-1 flex items-center gap-1 px-0.5">
         {source.icon && <img src={source.icon} alt="" className="size-3.5 shrink-0" draggable={false} />}
@@ -300,7 +300,7 @@ export function RecordDialog() {
       <div className="grid max-h-[calc(100vh-150px)] grid-cols-[1.32fr_1fr] gap-5 overflow-hidden px-5 pt-1 pb-4">
         {/* The picture and what to record */}
         <div className="flex min-h-0 flex-col">
-          <div className="relative aspect-video shrink-0 overflow-hidden rounded-xl bg-black shadow-[0_0_0_1px_rgb(255_255_255/0.08),0_16px_40px_-16px_rgb(0_0_0/0.9)]">
+          <div className="relative aspect-video shrink-0 overflow-hidden rounded-xl bg-shade shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08),0_16px_40px_-16px_rgb(from_var(--color-shade)_r_g_b/0.9)]">
             <video
               ref={videoRef}
               autoPlay
@@ -324,18 +324,18 @@ export function RecordDialog() {
             )}
             <AnimatePresence>
               {phase === 'countdown' && (
-                <motion.div key={countdown} initial={{ opacity: 0, scale: 1.6 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 grid place-items-center bg-black/45 text-8xl font-semibold text-white tabular">
+                <motion.div key={countdown} initial={{ opacity: 0, scale: 1.6 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 grid place-items-center bg-shade/45 text-8xl font-semibold text-on-media tabular">
                   {countdown}
                 </motion.div>
               )}
             </AnimatePresence>
             {rolling && (
-              <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-black/70 py-1 pr-2.5 pl-2 text-xs font-medium text-white tabular">
+              <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-shade/70 py-1 pr-2.5 pl-2 text-xs font-medium text-on-media tabular">
                 <span className={cn('size-2 rounded-full bg-danger', phase === 'recording' && 'animate-pulse-soft')} />
                 {phase === 'paused' ? tt('Paused') : tt('Recording')} · {fmtClock(stats.seconds)}
               </div>
             )}
-            {drawing && idle && <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs text-white/85">{tt('Drag over the part to record · click once to clear')}</div>}
+            {drawing && idle && <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs text-on-media/85">{tt('Drag over the part to record · click once to clear')}</div>}
           </div>
 
           <div className="mt-3 flex items-center gap-2">
@@ -598,8 +598,8 @@ export function RecordDialog() {
               {error && stream && <div className="truncate text-danger" title={error}>{error}</div>}
             </div>
             {phase === 'idle' ? (
-              <Button variant="danger" size="lg" onClick={start} disabled={!source || !stream} className="bg-danger text-white hover:bg-danger/90">
-                <span className="size-2.5 rounded-full bg-white" />{' '}{tt('Record')}
+              <Button variant="danger" size="lg" onClick={start} disabled={!source || !stream} className="bg-danger text-on-media hover:bg-danger/90">
+                <span className="size-2.5 rounded-full bg-ink" />{' '}{tt('Record')}
               </Button>
             ) : (
               <Button variant="secondary" size="lg" onClick={() => void stopRecording().catch(() => {})}>

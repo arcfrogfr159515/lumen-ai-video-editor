@@ -65,11 +65,11 @@ export const ClipView = memo(function ClipView({ clipId, locked }: { clipId: str
       onDoubleClick={clip.sequenceId ? () => openTimeline(clip.sequenceId!, true) : undefined}
       className={cn(
         'group/clip absolute overflow-hidden rounded-[7px] transition-[box-shadow,filter] duration-150',
-        'shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] hover:brightness-110',
+        'shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)] hover:brightness-110',
         selected && 'z-10 shadow-[inset_0_0_0_2px_#fff,0_0_0_1px_var(--clip),0_10px_28px_-8px_var(--clip)]',
-        lifted && 'z-[25] cursor-grabbing opacity-95 shadow-[inset_0_0_0_2px_#fff,0_18px_40px_-12px_rgb(0_0_0/0.9)]',
+        lifted && 'z-[25] cursor-grabbing opacity-95 shadow-[inset_0_0_0_2px_#fff,0_18px_40px_-12px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
         gliding && 'transition-[left,width,box-shadow,filter] duration-200 ease-[var(--ease-out-quart)]',
-        isDropTarget && 'z-10 shadow-[inset_0_0_0_2px_var(--color-accent),0_0_0_3px_rgb(214_238_0/0.35)]',
+        isDropTarget && 'z-10 shadow-[inset_0_0_0_2px_var(--color-accent),0_0_0_3px_rgb(from_var(--color-accent)_r_g_b/0.35)]',
         locked && 'pointer-events-none opacity-50 saturate-50',
       )}
       style={{
@@ -102,10 +102,10 @@ export const ClipView = memo(function ClipView({ clipId, locked }: { clipId: str
       {!locked && width > 14 && (
         <>
           <div data-handle="start" className="absolute inset-y-0 left-0 z-10 w-2 cursor-col-resize">
-            <span className={cn('absolute top-1/2 left-[3px] h-[42%] max-h-7 w-[3px] -translate-y-1/2 rounded-full bg-white/90 opacity-0 shadow-[0_0_0_1px_rgb(0_0_0/0.3)] transition-opacity group-hover/clip:opacity-100', selected && 'opacity-100')} />
+            <span className={cn('absolute top-1/2 left-[3px] h-[42%] max-h-7 w-[3px] -translate-y-1/2 rounded-full bg-ink/90 opacity-0 shadow-[0_0_0_1px_rgb(from_var(--color-shade)_r_g_b/0.3)] transition-opacity group-hover/clip:opacity-100', selected && 'opacity-100')} />
           </div>
           <div data-handle="end" className="absolute inset-y-0 right-0 z-10 w-2 cursor-col-resize">
-            <span className={cn('absolute top-1/2 right-[3px] h-[42%] max-h-7 w-[3px] -translate-y-1/2 rounded-full bg-white/90 opacity-0 shadow-[0_0_0_1px_rgb(0_0_0/0.3)] transition-opacity group-hover/clip:opacity-100', selected && 'opacity-100')} />
+            <span className={cn('absolute top-1/2 right-[3px] h-[42%] max-h-7 w-[3px] -translate-y-1/2 rounded-full bg-ink/90 opacity-0 shadow-[0_0_0_1px_rgb(from_var(--color-shade)_r_g_b/0.3)] transition-opacity group-hover/clip:opacity-100', selected && 'opacity-100')} />
           </div>
         </>
       )}
@@ -151,11 +151,11 @@ function ClipBody({ clip, asset, inPoint, duration, left, width, height, tone, t
       return (
         <>
           {asset && x1 > x0 && <FilmCanvas asset={asset} timing={timing} x0={x0} x1={x1} height={height - strip} />}
-          <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black/60 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-shade/60 to-transparent" />
           {/* A colour that says something (a label, a rule) gets a wider band than the colour of the kind. */}
           <div className={cn('absolute inset-x-0 top-0 opacity-90', tinted ? 'h-[4px]' : 'h-[2px]')} style={{ background: 'var(--clip)' }} />
           {strip > 0 && asset && (
-            <div className="absolute inset-x-0 bottom-0 border-t border-black/40 bg-[color-mix(in_oklab,var(--clip)_22%,#10110e)]" style={{ height: strip }}>
+            <div className="absolute inset-x-0 bottom-0 border-t border-shade/40 bg-[color-mix(in_oklab,var(--clip)_22%,#10110e)]" style={{ height: strip }}>
               {x1 > x0 && <WaveCanvas asset={asset} timing={timing} x0={x0} x1={x1} height={strip - 1} gain={dbToGain(clip.audio.volume)} color={`color-mix(in oklab, ${tone} 70%, white)`} />}
             </div>
           )}
@@ -211,7 +211,7 @@ function CueLane({ cues, fps, pps, x0, x1, width, bottom }: { cues: ClipCue[]; f
     shown.push({ x, room: width - x, item })
   }
   return (
-    <div className="pointer-events-none absolute inset-x-0 h-[14px] bg-gradient-to-t from-black/80 to-black/45" style={{ bottom }}>
+    <div className="pointer-events-none absolute inset-x-0 h-[14px] bg-gradient-to-t from-shade/80 to-shade/45" style={{ bottom }}>
       {shown
         .filter((s) => s.x + s.room >= x0 && s.x <= x1)
         .map(({ x, room, item }) => (
@@ -222,7 +222,7 @@ function CueLane({ cues, fps, pps, x0, x1, width, bottom }: { cues: ClipCue[]; f
             style={{ left: x, width: Math.max(3, room - 1) }}
           >
             <span className="h-full w-[2px] shrink-0" style={{ background: CUE_COLOR[cueTone(item.cue.kind)] }} />
-            {room >= 40 && <span className="min-w-0 truncate pr-1 pl-1 text-2xs leading-none font-medium text-white/90">{cueText(item.cue)}</span>}
+            {room >= 40 && <span className="min-w-0 truncate pr-1 pl-1 text-2xs leading-none font-medium text-on-media/90">{cueText(item.cue)}</span>}
           </span>
         ))}
     </div>
@@ -235,10 +235,10 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
   const angles = nested?.multicam ? angleTracks(nested) : []
   const angle = angles.findIndex((t) => t.id === clip.angle)
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[18px] min-w-0 items-center gap-1 px-1.5 pt-px text-xs leading-none font-medium text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.7)]">
+    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[18px] min-w-0 items-center gap-1 px-1.5 pt-px text-xs leading-none font-medium text-on-media [text-shadow:0_1px_2px_rgb(from_var(--color-shade)_r_g_b/0.7)]">
       <Icon className="size-3 shrink-0 opacity-80" />
       {angles.length > 0 && (
-        <span className="shrink-0 rounded bg-white px-1 py-px text-2xs/[inherit] font-bold text-black tabular [text-shadow:none]" title={angles[Math.max(0, angle)]?.name}>
+        <span className="shrink-0 rounded bg-ink px-1 py-px text-2xs/[inherit] font-bold text-ink-fg tabular [text-shadow:none]" title={angles[Math.max(0, angle)]?.name}>
           {Math.max(0, angle) + 1}
         </span>
       )}
@@ -247,27 +247,27 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
       {(clip.follow || clip.masks?.some((m) => m.follow)) && <Crosshair className="size-3 shrink-0 opacity-80" aria-label={tt('Tracked')} />}
       {clip.stabilize && <Move className="size-3 shrink-0 opacity-80" aria-label={tt('Stabilized')} />}
       {clip.freeze ? (
-        <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-2xs/[inherit] font-semibold">
+        <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-shade/40 px-1 py-px text-2xs/[inherit] font-semibold">
           <Snowflake className="size-2.5" />
           {tt('Freeze')}
         </span>
       ) : (
         (clip.speed !== 1 || isRamped(clip)) && (
-          <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-2xs/[inherit] font-semibold tabular">
+          <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-shade/40 px-1 py-px text-2xs/[inherit] font-semibold tabular">
             <Gauge className="size-2.5" />
             {isRamped(clip) ? tt('Ramp') : `${clip.speed}×`}
           </span>
         )
       )}
       {clip.effects.length > 0 && (
-        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-2xs/[inherit] font-semibold">
+        <span className="flex shrink-0 items-center gap-0.5 rounded bg-shade/40 px-1 py-px text-2xs/[inherit] font-semibold">
           <Sparkles className="size-2.5" />
           {clip.effects.length}
         </span>
       )}
       {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-2xs/[inherit] font-bold text-accent-fg [text-shadow:none]">{tt('AI')}</span>}
       {clip.takes && clip.takes.length > 1 && (
-        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-2xs/[inherit] font-semibold tabular" aria-label={tt('Take {0} of {1}', takeIndex(clip) + 1, clip.takes.length)}>
+        <span className="flex shrink-0 items-center gap-0.5 rounded bg-shade/40 px-1 py-px text-2xs/[inherit] font-semibold tabular" aria-label={tt('Take {0} of {1}', takeIndex(clip) + 1, clip.takes.length)}>
           <Layers2 className="size-2.5" />
           {takeIndex(clip) + 1}/{clip.takes.length}
         </span>
@@ -308,11 +308,11 @@ function GuideTicks({ clip, width }: { clip: Clip; width: number }) {
           title={GUIDE_TITLE[g.kind]}
           className={cn(
             'pointer-events-none absolute bottom-0 z-[8] w-0 border-l',
-            g.kind === 'cut' ? 'top-[3px] border-dashed border-white/75' : 'top-[18px] border-dotted border-snap/80',
+            g.kind === 'cut' ? 'top-[3px] border-dashed border-ink/75' : 'top-[18px] border-dotted border-snap/80',
           )}
           style={{ left: `${(g.local / clip.duration) * 100}%` }}
         >
-          {g.kind === 'cut' && <span className="absolute -top-px -left-[3.5px] size-0 border-x-[3px] border-t-[4px] border-x-transparent border-t-white/85" />}
+          {g.kind === 'cut' && <span className="absolute -top-px -left-[3.5px] size-0 border-x-[3px] border-t-[4px] border-x-transparent border-t-ink/85" />}
         </span>
       ))}
     </>
@@ -330,7 +330,7 @@ function ReuseStripes({ clipId, duration }: { clipId: string; duration: number }
         <span
           key={a}
           title={tt('This footage plays somewhere else on the timeline too')}
-          className="absolute bottom-0 z-[9] h-[5px] bg-[repeating-linear-gradient(135deg,var(--color-warn)_0_3px,rgb(0_0_0/0.55)_3px_6px)] shadow-[0_-1px_0_rgb(0_0_0/0.5)]"
+          className="absolute bottom-0 z-[9] h-[5px] bg-[repeating-linear-gradient(135deg,var(--color-warn)_0_3px,rgb(from_var(--color-shade)_r_g_b/0.55)_3px_6px)] shadow-[0_-1px_0_rgb(from_var(--color-shade)_r_g_b/0.5)]"
           style={{ left: `${(a / duration) * 100}%`, width: `${((b - a) / duration) * 100}%` }}
         />
       ))}
@@ -347,7 +347,7 @@ function NoteBadge({ clip }: { clip: Clip }) {
   return (
     <span
       aria-label={open ? tt('{0} open task{1}', open, open === 1 ? '' : 's') : done ? tt('Tasks done') : tt('Has a note')}
-      className={cn('flex shrink-0 items-center gap-0.5 rounded px-1 py-px text-2xs/[inherit] font-bold tabular [text-shadow:none]', open ? 'bg-warn text-black' : done ? 'bg-ok text-black' : 'bg-white/85 text-black')}
+      className={cn('flex shrink-0 items-center gap-0.5 rounded px-1 py-px text-2xs/[inherit] font-bold tabular [text-shadow:none]', open ? 'bg-warn text-ink-fg' : done ? 'bg-ok text-ink-fg' : 'bg-ink/85 text-ink-fg')}
     >
       <StickyNote className="size-2.5" />
       {open > 0 && open}
@@ -505,15 +505,15 @@ function Fades({ clip, width, height }: { clip: Clip; width: number; height: num
   return (
     <>
       <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {fin > 1 && <polygon points={`0,0 ${fin},0 0,${height}`} className="fill-black/35" />}
-        {fin > 1 && <line x1="0" y1={height} x2={fin} y2="0" className="stroke-white/50" strokeWidth={1} />}
-        {fout > 1 && <polygon points={`${width - fout},0 ${width},0 ${width},${height}`} className="fill-black/35" />}
-        {fout > 1 && <line x1={width - fout} y1="0" x2={width} y2={height} className="stroke-white/50" strokeWidth={1} />}
+        {fin > 1 && <polygon points={`0,0 ${fin},0 0,${height}`} className="fill-shade/35" />}
+        {fin > 1 && <line x1="0" y1={height} x2={fin} y2="0" className="stroke-ink/50" strokeWidth={1} />}
+        {fout > 1 && <polygon points={`${width - fout},0 ${width},0 ${width},${height}`} className="fill-shade/35" />}
+        {fout > 1 && <line x1={width - fout} y1="0" x2={width} y2={height} className="stroke-ink/50" strokeWidth={1} />}
       </svg>
       {width > 40 && (
         <>
-          <div data-handle="fade-in" className="absolute top-[3px] z-20 size-2.5 -translate-x-1/2 cursor-ew-resize rounded-full bg-white opacity-0 shadow-[0_0_0_1.5px_rgb(0_0_0/0.35)] transition-opacity group-hover/clip:opacity-100" style={{ left: Math.max(7, fin) }} />
-          <div data-handle="fade-out" className="absolute top-[3px] z-20 size-2.5 translate-x-1/2 cursor-ew-resize rounded-full bg-white opacity-0 shadow-[0_0_0_1.5px_rgb(0_0_0/0.35)] transition-opacity group-hover/clip:opacity-100" style={{ right: Math.max(7, fout) }} />
+          <div data-handle="fade-in" className="absolute top-[3px] z-20 size-2.5 -translate-x-1/2 cursor-ew-resize rounded-full bg-ink opacity-0 shadow-[0_0_0_1.5px_rgb(from_var(--color-shade)_r_g_b/0.35)] transition-opacity group-hover/clip:opacity-100" style={{ left: Math.max(7, fin) }} />
+          <div data-handle="fade-out" className="absolute top-[3px] z-20 size-2.5 translate-x-1/2 cursor-ew-resize rounded-full bg-ink opacity-0 shadow-[0_0_0_1.5px_rgb(from_var(--color-shade)_r_g_b/0.35)] transition-opacity group-hover/clip:opacity-100" style={{ right: Math.max(7, fout) }} />
         </>
       )}
     </>
@@ -540,11 +540,11 @@ function KeyframeDiamonds({ clip, duration, width }: { clip: Clip; duration: num
           )}
           style={{ left: x(f) }}
         >
-          <span className="size-[7px] rotate-45 bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.45)] transition-transform hover:scale-125" />
+          <span className="size-[7px] rotate-45 bg-ink shadow-[0_0_0_1px_rgb(from_var(--color-shade)_r_g_b/0.45)] transition-transform hover:scale-125" />
         </span>
       ))}
       {drag && drag.to !== drag.from && (
-        <span className="pointer-events-none absolute bottom-[4px] z-[14] size-[8px] -translate-x-1/2 rotate-45 bg-accent shadow-[0_0_0_1px_rgb(0_0_0/0.5)]" style={{ left: x(drag.to) }} />
+        <span className="pointer-events-none absolute bottom-[4px] z-[14] size-[8px] -translate-x-1/2 rotate-45 bg-accent shadow-[0_0_0_1px_rgb(from_var(--color-shade)_r_g_b/0.5)]" style={{ left: x(drag.to) }} />
       )}
     </>
   )

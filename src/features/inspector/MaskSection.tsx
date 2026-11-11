@@ -61,7 +61,7 @@ export function MaskSection({ clip }: { clip: Clip }) {
       }
     >
       {clip.matte && (
-        <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-white/[0.035] p-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
+        <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-ink/[0.035] p-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
           <UserRound className="size-3.5 text-fg-3" />
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-fg">
             {clip.matte.invert ? (tt('Everything but the') + ' ') : (tt('Only the') + ' ')}
@@ -89,7 +89,7 @@ export function MaskSection({ clip }: { clip: Clip }) {
           {masks.map((m, i) => {
             const on = editing === m.id
             return (
-              <div key={m.id} className={cn('rounded-lg bg-white/[0.035] p-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]', on && 'shadow-[inset_0_0_0_1.5px_rgb(214_238_0/0.5)]')}>
+              <div key={m.id} className={cn('rounded-lg bg-ink/[0.035] p-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]', on && 'shadow-[inset_0_0_0_1.5px_rgb(from_var(--color-accent)_r_g_b/0.5)]')}>
                 <div className="flex items-center gap-1.5">
                   {m.shape === 'ellipse' ? <Circle className="size-3.5 text-fg-3" /> : <Square className="size-3.5 text-fg-3" />}
                   <span className="min-w-0 flex-1 truncate text-xs font-medium text-fg">

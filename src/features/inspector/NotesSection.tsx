@@ -25,7 +25,7 @@ export function LabelSwatches({ value, hint, onChange }: { value: LabelColor | u
         aria-label={tt('No label')}
         title={tt('No label — coloured by the project’s rules')}
         onClick={() => onChange(null)}
-        className={cn('grid size-5 place-items-center rounded-full text-fg-4 ring-1 ring-white/15 transition-transform hover:scale-110 hover:text-fg-2', !value && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
+        className={cn('grid size-5 place-items-center rounded-full text-fg-4 ring-1 ring-ink/15 transition-transform hover:scale-110 hover:text-fg-2', !value && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
       >
         <X className="size-3" />
       </button>
@@ -37,10 +37,10 @@ export function LabelSwatches({ value, hint, onChange }: { value: LabelColor | u
           aria-pressed={value === c.id}
           title={hint === c.id && value !== c.id ? tt('{0} — what the colour rules give it now', c.name) : c.name}
           onClick={() => onChange(value === c.id ? null : c.id)}
-          className={cn('relative size-5 rounded-full ring-1 ring-white/15 transition-transform hover:scale-110', value === c.id && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
+          className={cn('relative size-5 rounded-full ring-1 ring-ink/15 transition-transform hover:scale-110', value === c.id && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
           style={{ background: c.css }}
         >
-          {hint === c.id && value !== c.id && <span className="absolute inset-0 m-auto size-1.5 rounded-full bg-black/60" />}
+          {hint === c.id && value !== c.id && <span className="absolute inset-0 m-auto size-1.5 rounded-full bg-shade/60" />}
         </button>
       ))}
     </div>
@@ -89,7 +89,7 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
               e.stopPropagation()
               if (e.key === 'Enter') e.currentTarget.blur()
             }}
-            className="h-7 w-full rounded-md bg-white/[0.05] px-2 text-sm text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
+            className="h-7 w-full rounded-md bg-ink/[0.05] px-2 text-sm text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
           />
         </Row>
         {single ? (
@@ -102,7 +102,7 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
               onChange={(e) => setNote(e.target.value)}
               onBlur={() => note.trim() !== (clip.note ?? '') && update({ note: note.trim() || null }, note.trim() ? tt('Edit note') : tt('Remove note'))}
               onKeyDown={(e) => e.stopPropagation()}
-              className="block w-full resize-none rounded-md bg-white/[0.05] px-2 py-1.5 text-sm leading-relaxed text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
+              className="block w-full resize-none rounded-md bg-ink/[0.05] px-2 py-1.5 text-sm leading-relaxed text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
             />
             <ul className="space-y-1">
               {tasks.map((t) => (
@@ -131,7 +131,7 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
                 aria-label={tt('New task')}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
-                className="h-7 min-w-0 flex-1 rounded-md bg-transparent px-1.5 text-sm text-fg outline-none placeholder:text-fg-4 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-accent/60"
+                className="h-7 min-w-0 flex-1 rounded-md bg-transparent px-1.5 text-sm text-fg outline-none placeholder:text-fg-4 hover:bg-ink/[0.04] focus:bg-ink/[0.06] focus:ring-1 focus:ring-accent/60"
               />
             </form>
           </>
@@ -159,9 +159,9 @@ function TaskRow({ task, onToggle, onRename, onRemove }: { task: ClipTask; onTog
           if (e.key === 'Enter') e.currentTarget.blur()
           if (e.key === 'Escape') (setText(task.text), e.currentTarget.blur())
         }}
-        className={cn('h-6 min-w-0 flex-1 rounded bg-transparent px-1 text-sm text-fg-2 outline-none hover:bg-white/[0.04] focus:bg-white/[0.07] focus:text-fg focus:ring-1 focus:ring-accent/60', task.done && 'text-fg-4 line-through')}
+        className={cn('h-6 min-w-0 flex-1 rounded bg-transparent px-1 text-sm text-fg-2 outline-none hover:bg-ink/[0.04] focus:bg-ink/[0.07] focus:text-fg focus:ring-1 focus:ring-accent/60', task.done && 'text-fg-4 line-through')}
       />
-      <button type="button" aria-label={tt('Remove task')} onClick={onRemove} className="grid size-5 shrink-0 place-items-center rounded text-fg-4 opacity-0 outline-none hover:bg-white/[0.08] hover:text-fg-2 group-hover/task:opacity-100 focus-visible:opacity-100">
+      <button type="button" aria-label={tt('Remove task')} onClick={onRemove} className="grid size-5 shrink-0 place-items-center rounded text-fg-4 opacity-0 outline-none hover:bg-ink/[0.08] hover:text-fg-2 group-hover/task:opacity-100 focus-visible:opacity-100">
         <X className="size-3" />
       </button>
     </li>

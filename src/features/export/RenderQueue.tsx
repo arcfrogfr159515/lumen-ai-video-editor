@@ -12,11 +12,11 @@ const fmtBytes = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : n >= 
 const fmtTime = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${Math.max(1, Math.round(s))}s`)
 
 const STATUS: Record<QueueJob['status'], { label: string; className: string }> = {
-  queued: { label: tt('Waiting'), className: 'bg-white/[0.07] text-fg-3' },
+  queued: { label: tt('Waiting'), className: 'bg-ink/[0.07] text-fg-3' },
   running: { label: tt('Rendering'), className: 'bg-ai/15 text-ai-2' },
   done: { label: tt('Done'), className: 'bg-ok/15 text-ok' },
   failed: { label: tt('Failed'), className: 'bg-danger/15 text-danger' },
-  cancelled: { label: tt('Cancelled'), className: 'bg-white/[0.07] text-fg-4' },
+  cancelled: { label: tt('Cancelled'), className: 'bg-ink/[0.07] text-fg-4' },
 }
 
 /** Every queued export: start them, watch them render one after another, open what's done. */
@@ -40,7 +40,7 @@ export function RenderQueueDialog() {
           <JobRow key={job.id} job={job} />
         ))}
       </div>
-      <div className="flex items-center gap-2 border-t border-line bg-black/15 px-5 py-3.5">
+      <div className="flex items-center gap-2 border-t border-line bg-shade/15 px-5 py-3.5">
         <div className="flex-1 text-xs text-fg-4">
           {counts.running ? tt('Rendering · {0} waiting', counts.queued) : counts.queued ? tt('{0} waiting', counts.queued) : jobs.length ? tt('{0} done{1}', counts.done, counts.failed ? (' ' + tt('· {0} failed', counts.failed)) : '') : ''}
         </div>
@@ -67,8 +67,8 @@ function JobRow({ job }: { job: QueueJob }) {
   const s = STATUS[job.status]
   const path = job.result?.path ?? job.target.path
   return (
-    <div className={cn('flex gap-3 rounded-xl bg-white/[0.035] p-2.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]', job.status === 'running' && 'shadow-[inset_0_0_0_1px_rgb(94_242_166/0.25)]')}>
-      <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-black [background-image:repeating-conic-gradient(#1a1a1a_0_25%,#101010_0_50%)] [background-size:10px_10px]">
+    <div className={cn('flex gap-3 rounded-xl bg-ink/[0.035] p-2.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]', job.status === 'running' && 'shadow-[inset_0_0_0_1px_rgb(from_var(--color-ai-2)_r_g_b/0.25)]')}>
+      <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-shade [background-image:repeating-conic-gradient(#1a1a1a_0_25%,#101010_0_50%)] [background-size:10px_10px]">
         {job.preview && <img src={job.preview} alt="" className="h-full w-full object-contain" />}
       </div>
       <div className="min-w-0 flex-1">
@@ -82,7 +82,7 @@ function JobRow({ job }: { job: QueueJob }) {
         </div>
         {job.status === 'running' && (
           <div className="mt-1.5 flex items-center gap-2">
-            <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/[0.08]">
+            <div className="h-1 flex-1 overflow-hidden rounded-full bg-ink/[0.08]">
               <div className="h-full rounded-full bg-gradient-to-r from-accent to-ai-2 transition-[width] duration-150" style={{ width: `${job.progress * 100}%` }} />
             </div>
             <span className="text-2xs text-fg-4 tabular">{job.message ?? `${Math.round(job.progress * 100)}%`}</span>
@@ -157,7 +157,7 @@ export function QueueIndicator() {
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={() => useUI.getState().setQueueOpen(true)}
           title={tt('Render queue')}
-          className="no-drag flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-fg-3 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
+          className="no-drag flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-fg-3 outline-none transition-colors hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           {running ? <LoaderCircle className="size-3.5 animate-spin text-ai-2" /> : <ListVideo className="size-3.5" />}
           <span className="tabular">{running ? `${index}/${total} · ${Math.round(running.progress * 100)}%` : counts.queued ? tt('Queue · {0}', counts.queued) : tt('Queue · {0} done', counts.done)}</span>

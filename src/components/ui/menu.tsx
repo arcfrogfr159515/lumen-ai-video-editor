@@ -9,7 +9,7 @@ const contentClass =
   'popover z-[100] min-w-[220px] overflow-hidden p-1 data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out'
 
 const itemClass =
-  'group/item relative flex h-8 cursor-default items-center gap-2.5 rounded-[7px] px-2 text-sm text-fg-2 outline-none select-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-40 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3 data-[highlighted]:[&_svg]:text-fg-2'
+  'group/item relative flex h-8 cursor-default items-center gap-2.5 rounded-[7px] px-2 text-sm text-fg-2 outline-none select-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-40 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3 data-[highlighted]:[&_svg]:text-fg-2'
 
 interface ItemProps {
   icon?: ReactNode
@@ -67,7 +67,7 @@ export function MenuLabel({ children }: { children: ReactNode }) {
 export function MenuSub({ icon, label, children }: { icon?: ReactNode; label: ReactNode; children: ReactNode }) {
   return (
     <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger className={cn(itemClass, 'data-[state=open]:bg-white/[0.07]')}>
+      <DropdownMenu.SubTrigger className={cn(itemClass, 'data-[state=open]:bg-ink/[0.07]')}>
         {icon}
         <span className="flex-1">{label}</span>
         <ChevronRight className="!size-3.5" />
@@ -114,7 +114,7 @@ export function ContextSeparator() {
 export function ContextSub({ icon, label, children }: { icon?: ReactNode; label: ReactNode; children: ReactNode }) {
   return (
     <ContextMenu.Sub>
-      <ContextMenu.SubTrigger className={cn(itemClass, 'data-[state=open]:bg-white/[0.07]')}>
+      <ContextMenu.SubTrigger className={cn(itemClass, 'data-[state=open]:bg-ink/[0.07]')}>
         {icon}
         <span className="flex-1">{label}</span>
         <ChevronRight className="!size-3.5" />

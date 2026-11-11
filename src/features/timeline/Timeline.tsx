@@ -422,7 +422,7 @@ export function Timeline() {
                 </div>
 
                 {/* Past-the-end shading */}
-                <div className="pointer-events-none absolute bottom-0 z-[1] bg-black/[0.18]" style={{ left: endX, right: 0, top: RULER_H }} />
+                <div className="pointer-events-none absolute bottom-0 z-[1] bg-shade/[0.18]" style={{ left: endX, right: 0, top: RULER_H }} />
                 <Overlays />
               </div>
             </div>
@@ -439,7 +439,7 @@ function AddTrackButton({ kind }: { kind: 'video' | 'audio' }) {
     <button
       type="button"
       onClick={() => dispatch('track.add', { kind })}
-      className="flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md text-xs font-medium text-fg-4 outline-none transition-colors hover:bg-white/[0.05] hover:text-fg-2 focus-visible:ring-2 focus-visible:ring-accent/60"
+      className="flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md text-xs font-medium text-fg-4 outline-none transition-colors hover:bg-ink/[0.05] hover:text-fg-2 focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       <Plus className="size-3" />
       {kind === 'video' ? <Film className="size-3" /> : <AudioLines className="size-3" />}
@@ -460,7 +460,7 @@ function PlayheadLine() {
       }),
     [pps, fps],
   )
-  return <div ref={ref} className="pointer-events-none absolute bottom-0 left-0 z-20 -ml-[0.75px] w-[1.5px] bg-white shadow-[0_0_10px_rgb(255_255_255/0.45)] will-change-transform" style={{ top: RULER_H }} />
+  return <div ref={ref} className="pointer-events-none absolute bottom-0 left-0 z-20 -ml-[0.75px] w-[1.5px] bg-ink shadow-[0_0_10px_rgb(from_var(--color-ink)_r_g_b/0.45)] will-change-transform" style={{ top: RULER_H }} />
 }
 
 function Overlays() {
@@ -491,7 +491,7 @@ function Overlays() {
         </div>
       )}
       {bladeFrame !== null && (
-        <div className="pointer-events-none absolute bottom-0 z-[22] w-0 -translate-x-1/2 border-l border-dashed border-white/80" style={{ left: x(bladeFrame), top: RULER_H }} />
+        <div className="pointer-events-none absolute bottom-0 z-[22] w-0 -translate-x-1/2 border-l border-dashed border-ink/80" style={{ left: x(bladeFrame), top: RULER_H }} />
       )}
       {trackDropY !== null && (
         <div className="pointer-events-none absolute right-0 left-0 z-[35] h-[2px] -translate-y-1/2 bg-accent shadow-[0_0_8px_var(--color-accent)]" style={{ top: trackDropY }} />

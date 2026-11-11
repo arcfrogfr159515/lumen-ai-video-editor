@@ -27,7 +27,7 @@ const ANIM: Partial<Record<TransitionKind, string>> = {
 }
 
 const cardClass =
-  'relative aspect-video overflow-hidden rounded-[10px] bg-black shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] transition-shadow duration-200 group-hover/tr:shadow-[0_0_0_1px_rgb(255_255_255/0.18),0_10px_24px_-10px_rgb(0_0_0/0.9)]'
+  'relative aspect-video overflow-hidden rounded-[10px] bg-shade shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/tr:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]'
 
 function TransitionPreview2D({ kind, a, b }: { kind: TransitionKind; a: string; b: string }) {
   // At rest each card is frozen at a telling moment of its transition.
@@ -53,7 +53,7 @@ function TransitionPreview3D({ kind, active }: { kind: TransitionKind; active: b
           drawTransitionPreview(canvas, kind, p)
         }}
       />
-      <span className="absolute top-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-2xs/[inherit] font-bold tracking-wide text-white backdrop-blur-sm">3D</span>
+      <span className="absolute top-1.5 left-1.5 rounded-md bg-shade/55 px-1.5 py-0.5 text-2xs/[inherit] font-bold tracking-wide text-on-media backdrop-blur-sm">3D</span>
     </div>
   )
 }
