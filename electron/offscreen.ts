@@ -40,7 +40,9 @@ export function exactOffscreenWindow(width: number, height: number, options: Bro
     height: Math.ceil(height / k),
     useContentSize: true,
     paintWhenInitiallyHidden: true,
-    webPreferences: { ...webPreferences, offscreen: { deviceScaleFactor: k }, zoomFactor: 1 / k },
+    // Nobody is looking at this window: a page's alert() or confirm() would put a box on the user's screen from a
+    // page they never saw, and hold the page (and whatever is waiting on it) until somebody clicked it away.
+    webPreferences: { ...webPreferences, disableDialogs: true, offscreen: { deviceScaleFactor: k }, zoomFactor: 1 / k },
   })
   return { win, k, resize: (w: number, h: number) => win.setContentSize(Math.ceil(w / k), Math.ceil(h / k)) }
 }
