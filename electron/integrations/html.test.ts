@@ -162,9 +162,11 @@ describe('reading a page once through', () => {
       const t0 = performance.now()
       run(page)
       const ms = performance.now() - t0
-      // Each of these used to take minutes to hours at this size; a couple of seconds leaves room for a slow machine.
-      if (ms > 2500) slow.push(`${label}: ${Math.round(ms)} ms`)
+      // Each of these used to take from twelve minutes to over an hour at this size (measured at 256 KB, where they
+      // took 3 to 17 s, and growing with the square). Now they take under a second; the limit is set far from both,
+      // so that a machine busy with the rest of the tests doesn't trip it (2.7 s was seen once) and the old way would.
+      if (ms > 20000) slow.push(`${label}: ${Math.round(ms)} ms`)
     }
     expect(slow).toEqual([])
-  }, 120000)
+  }, 400000)
 })
