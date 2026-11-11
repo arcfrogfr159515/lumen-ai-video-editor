@@ -3,9 +3,10 @@ import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { BrowserWindow, dialog, net, protocol, shell } from 'electron'
+import { BrowserWindow, dialog, protocol, shell } from 'electron'
 import type { MediaFileInfo, MediaFolder } from '../shared/app'
 import { serveIngest } from './ingest'
+import { steadyFetch } from './integrations/deadline'
 import { allowPath, ensureDir, fileUrl, isInside, MEDIA_SCHEME, mediaPath, mediaRoot, mediaUrl, userDir } from './integrations/paths'
 
 /**
@@ -78,6 +79,8 @@ const CORS = {
 // a copy in userData/models, so models download once and then work offline.
 
 const MODEL_HOST = 'huggingface.co'
+/** How long Hugging Face has to start answering, and how long a download may go quiet. */
+export const MODEL_LIMITS = { answerMs: 30_000, stallMs: 60_000 }
 const modelsRoot = () => path.join(userDir(), 'models')
 
 async function serveModel(req: Request): Promise<Response> {
@@ -105,12 +108,13 @@ async function serveModel(req: Request): Promise<Response> {
   }
   if (range) {
     // Existence / size checks: ask upstream for just those bytes, don't download the file.
-    const probe = await net.fetch(`https://${MODEL_HOST}/${rel}`, { headers: { Range: req.headers.get('range')! } })
+    const probe = await steadyFetch(`https://${MODEL_HOST}/${rel}`, { headers: { Range: req.headers.get('range')! } }, MODEL_LIMITS)
     const h = new Headers({ ...CORS, 'Content-Type': probe.headers.get('content-type') ?? mimeOf(file) })
     for (const k of ['content-range', 'content-length']) if (probe.headers.get(k)) h.set(k, probe.headers.get(k)!)
     return new Response(probe.body, { status: probe.status, headers: h })
   }
-  const upstream = await net.fetch(`https://${MODEL_HOST}/${rel}`, { method: req.method === 'HEAD' ? 'HEAD' : 'GET' })
+  // A model is hundreds of megabytes: it may take as long as it takes, but not hang on a server that went quiet.
+  const upstream = await steadyFetch(`https://${MODEL_HOST}/${rel}`, { method: req.method === 'HEAD' ? 'HEAD' : 'GET' }, MODEL_LIMITS)
   if (!upstream.ok || !upstream.body) return new Response(upstream.statusText || 'Download failed', { status: upstream.status || 502, headers: CORS })
   const length = upstream.headers.get('content-length')
   if (length) headers.set('Content-Length', length)
