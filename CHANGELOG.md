@@ -4,6 +4,10 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-11-11
+
+Lumen in Simplified Chinese and a light theme, with a run of leaks and edge cases closed.
+
 ### Added
 
 - **Lumen in Simplified Chinese.** The whole interface — menus, panels, dialogs, messages, the names edits get in the history, the built-in looks, transitions, effects, titles and sounds — and the system dialogs around it. It follows the computer's language; File → Language picks English, 简体中文 or the computer's, and takes effect at the next start. What is written for the model stays in English.
@@ -42,6 +46,9 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 - **Two chats answered by Claude Code at once could read each other's instructions.** Each turn has its own instructions file.
 - **The sign-in callback page showed the service's error text as markup.**
 - **Every start of the desktop app logged an unhandled error** from the Copilot opening the first project's chats before one of its stores existed.
+- **The 3D engine kept a scene in video memory for every frame size it had rendered.** A 3D layer or transition builds a whole scene — geometry, materials and textures — for each project size, and none were ever let go; changing the resolution during a session left the old ones behind. Only the sizes in use are kept now.
+- **A constant-frame-rate copy made in a browser tab stayed in memory for the whole session.** Its bytes are freed when the copy is never adopted — the asset was removed mid-conversion, or the change was refused — and when the project that held it is closed or another is opened.
+- **A system audio object was left open when capturing one application's sound failed to start.**
 
 ## [1.6.2] — 2026-10-16
 
@@ -383,7 +390,8 @@ First release.
 - **Integrations** — Blender renders (3D titles, backgrounds, agent-written scenes), HyperFrames motion graphics, MCP host (Higgsfield, Runway, Replicate, fal.ai or any server) and Lumen's own MCP server for external agents.
 - Windows installer (NSIS, per-user or all-users).
 
-[Unreleased]: https://github.com/Mas-inx/lumen-ai-video-editor/compare/v1.6.2...HEAD
+[Unreleased]: https://github.com/Mas-inx/lumen-ai-video-editor/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/Mas-inx/lumen-ai-video-editor/releases/tag/v1.7.0
 [1.6.2]: https://github.com/Mas-inx/lumen-ai-video-editor/releases/tag/v1.6.2
 [1.6.1]: https://github.com/Mas-inx/lumen-ai-video-editor/releases/tag/v1.6.1
 [1.6.0]: https://github.com/Mas-inx/lumen-ai-video-editor/releases/tag/v1.6.0
