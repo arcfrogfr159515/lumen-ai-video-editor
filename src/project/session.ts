@@ -49,13 +49,28 @@ function serialize(project: Project) {
   return JSON.stringify(project)
 }
 
-function markSaved(path: string | null) {
-  useSession.setState({ path, savedVersion: useEditor.getState().version })
+/** Counts the projects loaded. A save that ends after another one was opened has nothing to say about that one. */
+let loads = 0
+
+/** The project as text, with the edit it is a picture of: writing it takes a moment, and editing goes on meanwhile. */
+function snapshot() {
+  return { text: serialize(getProject()), version: useEditor.getState().version, loads }
+}
+
+/**
+ * The file at `path` now holds the project as it was at `version`. An edit
+ * made while it was being written isn't in it: the project stays unsaved, and
+ * its recovery copy stays (and is written again) rather than being thrown away.
+ */
+function markSaved(path: string | null, version: number) {
+  useSession.setState({ path, savedVersion: version })
   syncWindow()
-  void desktop?.project.autosave(null)
+  if (useEditor.getState().version === version) void desktop?.project.autosave(null)
+  else scheduleAutosave()
 }
 
 function load(project: Project, path: string | null) {
+  loads++
   playback.pause()
   useUI.getState().clearSelection()
   useEditor.getState().loadProject(migrateProject(project))
@@ -112,8 +127,10 @@ export async function saveProject(): Promise<boolean> {
   if (!path) return saveProjectAs()
   if (!desktop) return false
   try {
-    const res = await desktop.project.save(path, serialize(getProject()))
-    markSaved(res.path)
+    const snap = snapshot()
+    const res = await desktop.project.save(path, snap.text)
+    // Another project opened meanwhile: the file is written, but it isn't the open project's.
+    if (snap.loads === loads) markSaved(res.path, snap.version)
     void refreshRecent()
     return true
   } catch (err) {
@@ -125,10 +142,18 @@ export async function saveProject(): Promise<boolean> {
 export async function saveProjectAs(): Promise<boolean> {
   if (!desktop) return false
   try {
-    const res = await desktop.project.saveAs(getProject().name, serialize(getProject()))
+    let snap = snapshot()
+    const res = await desktop.project.saveAs(getProject().name, snap.text)
     if (!res) return false
-    markSaved(res.path)
+    // The Save dialog can stay open a long while, and the Copilot or an agent may have gone on editing: the new
+    // file gets the project as it is now, not as it was when the dialog opened.
+    if (snap.loads === loads && useEditor.getState().version !== snap.version) {
+      snap = snapshot()
+      await desktop.project.save(res.path, snap.text)
+    }
     void refreshRecent()
+    if (snap.loads !== loads) return true
+    markSaved(res.path, snap.version)
     toast.success('Project saved', { description: res.path })
     return true
   } catch (err) {
@@ -284,7 +309,10 @@ export async function startSession() {
   setInterval(maybeSnapshot, 60_000)
   desktop.project.onOpenRequest((path) => void openProject(path))
   desktop.project.onSaveBeforeClose(async () => {
-    if (await saveProject()) desktop!.project.closeWindow()
+    // Closing follows a save that got everything: an edit that arrived while the file was being written is saved too.
+    for (let tries = 0; tries < 3 && isDirty(); tries++) if (!(await saveProject())) return
+    if (!isDirty()) desktop!.project.closeWindow()
+    else toast.info('Not closed yet', { description: 'The project kept changing while it was being saved. Close again once the edits are done.' })
   })
   syncWindow()
   const [startup, recovery] = await Promise.all([desktop.project.startupFile(), desktop.project.recovery()])
