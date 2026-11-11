@@ -6,6 +6,7 @@ import { safeStorage, shell } from 'electron'
 import type { OAuthClientProvider, OAuthDiscoveryState } from '@modelcontextprotocol/sdk/client/auth.js'
 import type { OAuthClientInformationMixed, OAuthClientMetadata, OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js'
 import { ensureDir, userDir, writeFileAtomic } from '../paths'
+import { decryptStored } from '../secrets'
 
 /**
  * OAuth for hosted MCP servers (Higgsfield and friends): the sign-in page
@@ -30,7 +31,8 @@ const file = (serverId: string) => path.join(ensureDir(path.join(userDir(), 'mcp
 function read(serverId: string): Stored {
   try {
     const buf = fs.readFileSync(file(serverId))
-    const json = safeStorage.isEncryptionAvailable() ? safeStorage.decryptString(buf) : buf.toString('utf8')
+    // A sign-in file cut short reads as "not signed in" (handing it to the keychain as it is would end the app).
+    const json = safeStorage.isEncryptionAvailable() ? decryptStored(buf) : buf.toString('utf8')
     return JSON.parse(json) as Stored
   } catch {
     return {}

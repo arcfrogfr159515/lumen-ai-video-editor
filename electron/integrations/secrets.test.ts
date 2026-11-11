@@ -4,7 +4,7 @@ import path from 'node:path'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // The keychain is a stand-in: it can be there or not, and what it encrypts only it can read back.
-const env = vi.hoisted(() => ({ root: '', keychain: true as boolean, account: 'me', told: [] as { message: string; detail: string }[] }))
+const env = vi.hoisted(() => ({ root: '', keychain: true as boolean, account: 'me', told: [] as { message: string; detail: string }[], crashed: 0 }))
 vi.mock('electron', () => ({
   app: { getPath: (name: string) => `${env.root}/${name}`, isReady: () => true, whenReady: async () => {} },
   dialog: {
@@ -15,10 +15,14 @@ vi.mock('electron', () => ({
   },
   safeStorage: {
     isEncryptionAvailable: () => env.keychain,
-    encryptString: (text: string) => Buffer.from(`v10:${env.account}:${Buffer.from(text, 'utf8').toString('base64')}`),
+    // Like the real one, it knows when what it is given back isn't all of what it wrote.
+    encryptString: (text: string) => Buffer.from(`v10:${env.account}:${Buffer.from(text, 'utf8').toString('base64')}:end`),
     decryptString: (buf: Buffer) => {
-      const [tag, account, body] = buf.toString('utf8').split(':')
-      if (tag !== 'v10' || account !== env.account || !body) throw new Error('Error while decrypting the ciphertext provided to safeStorage.decryptString.')
+      // The real one, given under fifteen bytes that begin with its version tag, doesn't throw: it ends the process
+      // (seen in Electron 44 on Windows: 'out_of_range was thrown in -fno-exceptions mode'). Nothing may get that far.
+      if (buf.length < 15 && buf.subarray(0, 3).toString('latin1') === 'v10') env.crashed++
+      const [tag, account, body, end] = buf.toString('utf8').split(':')
+      if (tag !== 'v10' || account !== env.account || !body || end !== 'end') throw new Error('Error while decrypting the ciphertext provided to safeStorage.decryptString.')
       return Buffer.from(body, 'base64').toString('utf8')
     },
   },
@@ -41,9 +45,14 @@ beforeEach(() => {
   env.keychain = true
   env.account = 'me'
   env.told.length = 0
+  env.crashed = 0
   vi.spyOn(console, 'warn').mockImplementation(() => {})
 })
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  // Whatever a test did to the file, the keychain was never handed something that takes the app down.
+  expect(env.crashed).toBe(0)
+})
 
 describe('saved keys', () => {
   it('are kept encrypted and read again after a restart', async () => {
@@ -153,6 +162,27 @@ describe('saved keys', () => {
     expect(secrets.getSecret('ai.anthropic')).toBe('sk-ant-123456')
     expect(secrets.getSecret('ai.openai')).toBe('sk-second')
     expect(env.told).toEqual([])
+  })
+
+  it('cut short at any length never take the app down, and are kept', async () => {
+    let secrets = await launch()
+    secrets.setSecret('ai.anthropic', 'sk-ant-123456')
+    const saved = fs.readFileSync(file)
+    // Every way a write can have stopped part-way — the short ones are what crashed Electron at every start.
+    for (let length = 1; length < saved.length; length++) {
+      fs.rmSync(`${file}.unreadable`, { force: true })
+      fs.writeFileSync(file, saved.subarray(0, length))
+      secrets = await launch()
+      expect(secrets.getSecret('ai.anthropic'), `cut at ${length}`).toBeUndefined()
+      expect(env.crashed, `cut at ${length}`).toBe(0)
+      expect(fs.readFileSync(`${file}.unreadable`).length).toBe(length)
+    }
+    expect(() => secrets.decryptStored(Buffer.from('v10'))).toThrow(/too short/)
+    expect(() => secrets.decryptStored(Buffer.alloc(0))).toThrow(/too short/)
+    // Whole again, it reads.
+    fs.writeFileSync(file, saved)
+    secrets = await launch()
+    expect(secrets.getSecret('ai.anthropic')).toBe('sk-ant-123456')
   })
 
   it('treat a file that isn’t a list of keys as unreadable', async () => {

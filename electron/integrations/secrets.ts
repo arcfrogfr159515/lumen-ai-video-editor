@@ -12,6 +12,26 @@ import { keepUnreadable, userDir, writeFileAtomic } from './paths'
 const FILE = 'secrets.bin'
 let cache: Record<string, string> | null = null
 
+/**
+ * The shortest thing the keychain can have written: a three-byte version tag,
+ * then on Windows a nonce and an authentication tag (12 + 16 bytes), elsewhere
+ * one cipher block (16).
+ */
+const SHORTEST = process.platform === 'win32' ? 31 : 19
+
+/**
+ * What the keychain encrypted, as text. Throws when it can't be decrypted.
+ *
+ * A file cut short must never reach the keychain: handed a few bytes that
+ * begin with its version tag, Electron's safeStorage doesn't throw — it takes
+ * the whole app down (a C++ out_of_range in a build without exceptions), and
+ * since the file is read as Lumen starts, Lumen would never start again.
+ */
+export function decryptStored(buf: Buffer): string {
+  if (buf.length < SHORTEST) throw new Error('The file is too short to be something the keychain wrote.')
+  return safeStorage.decryptString(buf)
+}
+
 /** The secrets in the file, or null when it can't be made sense of. */
 function decode(buf: Buffer): Record<string, string> | null {
   const parse = (text: string) => {
@@ -20,7 +40,7 @@ function decode(buf: Buffer): Record<string, string> | null {
   }
   if (safeStorage.isEncryptionAvailable()) {
     try {
-      return parse(safeStorage.decryptString(buf))
+      return parse(decryptStored(buf))
     } catch {
       // Not encrypted, perhaps: it was written while the keychain couldn't be reached.
     }
