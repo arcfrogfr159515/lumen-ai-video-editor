@@ -32,6 +32,41 @@ export function decryptStored(buf: Buffer): string {
   return safeStorage.decryptString(buf)
 }
 
+let settled = false
+
+/** Chromium's own settings file holds the key the keychain encrypts with (Windows only). */
+function keyOnDisk(): boolean {
+  try {
+    const state = JSON.parse(fs.readFileSync(path.join(userDir(), 'Local State'), 'utf8')) as { os_crypt?: { encrypted_key?: unknown } }
+    return typeof state.os_crypt?.encrypted_key === 'string' && state.os_crypt.encrypted_key.length > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Resolves once what the keychain encrypts can still be decrypted after Lumen is started again — to be waited for
+ * before a secret is saved and the user told so.
+ *
+ * On Windows the key it encrypts with is made the first time Lumen runs, and kept in Chromium's `Local State` file,
+ * which Chromium writes in its own time: some ten seconds later. A secret saved before then is encrypted under a key
+ * that is only in memory, and if Lumen is ended without a goodbye in those seconds (a crash, a power cut, Task
+ * Manager), nothing can ever read it. Seen for real: a key saved 3 and 5 seconds into a first run, then the process
+ * killed, was unreadable the next time; saved from 12 seconds on, it was kept.
+ *
+ * Resolves false if the file doesn't come in time (the secret is then saved as before: readable unless Lumen is
+ * killed first), and true at once everywhere it doesn't apply.
+ */
+export async function keychainSettled(limitMs = 15_000, platform: string = process.platform): Promise<boolean> {
+  if (settled || platform !== 'win32' || !safeStorage.isEncryptionAvailable()) return true
+  const until = Date.now() + limitMs
+  for (;;) {
+    if (keyOnDisk()) return (settled = true)
+    if (Date.now() >= until) return false
+    await new Promise((resolve) => setTimeout(resolve, 200))
+  }
+}
+
 /** The secrets in the file, or null when it can't be made sense of. */
 function decode(buf: Buffer): Record<string, string> | null {
   const parse = (text: string) => {

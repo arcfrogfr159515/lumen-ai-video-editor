@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import http from 'node:http'
 import { shell } from 'electron'
 import type { ProviderState } from '../../../shared/ai'
+import { keychainSettled } from '../secrets'
 import { setProvider } from './providers'
 
 /**
@@ -68,6 +69,7 @@ async function run(): Promise<ProviderState> {
     if (!res.ok) throw new Error(`OpenRouter refused the sign-in (${res.status}).`)
     const { key } = (await res.json()) as { key?: string }
     if (!key) throw new Error('OpenRouter didn’t return a key.')
+    await keychainSettled()
     return setProvider('openrouter', { key, via: 'oauth' })
   } finally {
     server.close()

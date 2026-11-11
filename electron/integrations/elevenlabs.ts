@@ -4,7 +4,7 @@ import path from 'node:path'
 import type { GeneratedAsset, Job, TranscriptSegment } from '../../shared/integrations'
 import { createJob, failJob, finishJob, setCanceller, updateJob } from './jobs'
 import { ensureDir, mediaRoot, mediaUrl } from './paths'
-import { getSecret, secretHint, setSecret } from './secrets'
+import { getSecret, keychainSettled, secretHint, setSecret } from './secrets'
 
 /**
  * ElevenLabs, natively: voiceovers with character timings (so captions come
@@ -73,6 +73,7 @@ export async function setElevenLabsKey(value: string | null) {
   // Check it before keeping it.
   const res = await fetch(`${API}/v2/voices?page_size=1`, { headers: { 'xi-api-key': value.trim() }, signal: AbortSignal.timeout(15_000) })
   if (!res.ok) throw await failure(res)
+  await keychainSettled()
   setSecret(KEY, value.trim())
   return elevenLabsState()
 }

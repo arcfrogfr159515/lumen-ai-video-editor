@@ -192,3 +192,56 @@ describe('saved keys', () => {
     expect(listed()).toEqual(['secrets.bin', 'secrets.bin.unreadable'])
   })
 })
+
+describe('before a secret is saved', () => {
+  const localState = path.join(user, 'Local State')
+  const withKey = JSON.stringify({ os_crypt: { audit_enabled: true, encrypted_key: 'RFBBUEkBAAAA0Iyd3wEV0RGMegDAT8KX6wEAAAA=' } })
+
+  it('nothing is waited for where the key isn’t kept in a file of Chromium’s', async () => {
+    const secrets = await launch()
+    const t0 = Date.now()
+    expect(await secrets.keychainSettled(5000, 'darwin')).toBe(true)
+    expect(await secrets.keychainSettled(5000, 'linux')).toBe(true)
+    env.keychain = false
+    expect(await secrets.keychainSettled(5000, 'win32')).toBe(true)
+    expect(Date.now() - t0).toBeLessThan(150)
+  })
+
+  it('on Windows, the key the keychain encrypts with is waited for until it is on disk', async () => {
+    const secrets = await launch()
+    let answered: boolean | null = null
+    const waiting = secrets.keychainSettled(5000, 'win32').then((ok) => (answered = ok))
+    await new Promise((r) => setTimeout(r, 450))
+    expect(answered).toBeNull()
+    // The file is there, but the key isn't in it yet.
+    fs.writeFileSync(localState, JSON.stringify({ os_crypt: { audit_enabled: true } }))
+    await new Promise((r) => setTimeout(r, 450))
+    expect(answered).toBeNull()
+    fs.writeFileSync(localState, withKey)
+    await waiting
+    expect(answered).toBe(true)
+    // Once there it stays: it isn't looked for again.
+    fs.rmSync(localState)
+    const t0 = Date.now()
+    expect(await secrets.keychainSettled(5000, 'win32')).toBe(true)
+    expect(Date.now() - t0).toBeLessThan(100)
+  })
+
+  it('a profile that has been used before answers at once', async () => {
+    fs.writeFileSync(localState, withKey)
+    const secrets = await launch()
+    const t0 = Date.now()
+    expect(await secrets.keychainSettled(5000, 'win32')).toBe(true)
+    expect(Date.now() - t0).toBeLessThan(100)
+  })
+
+  it('saving goes ahead as before if the key never comes', async () => {
+    fs.writeFileSync(localState, '{ not json')
+    const secrets = await launch()
+    const t0 = Date.now()
+    expect(await secrets.keychainSettled(600, 'win32')).toBe(false)
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(590)
+    secrets.setSecret('ai.openai', 'sk-kept')
+    expect((await launch()).getSecret('ai.openai')).toBe('sk-kept')
+  })
+})

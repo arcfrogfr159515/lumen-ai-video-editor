@@ -8,7 +8,7 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { IPC, isPrivateHost, type Job, type McpAgentResult, type McpLink, type McpServerConfig, type McpServerState, type McpTool } from '../../../shared/integrations'
 import { broadcast, createJob, failJob, finishJob, getJob, isCancelled, setCanceller, updateJob } from '../jobs'
 import { readJson, writeJson } from '../paths'
-import { getSecret, setSecret } from '../secrets'
+import { getSecret, keychainSettled, setSecret } from '../secrets'
 import { clearAuth, hasTokens, LumenOAuthProvider } from './oauth'
 import { convertResult } from './results'
 
@@ -95,6 +95,8 @@ export function listServers(): McpServerState[] {
 }
 
 export async function saveServer(config: McpServerConfig): Promise<McpServerState[]> {
+  // Headers are secrets: they are saved once they will still be readable after a restart.
+  if (config?.headers && Object.keys(config.headers).length) await keychainSettled()
   load()
   validate(config)
   if (config.headers) {

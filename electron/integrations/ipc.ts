@@ -3,6 +3,7 @@ import { IPC, type BlenderRenderRequest, type ImageGenRequest, type McpServerCon
 import { detectBlender, renderBlender, runLive, setBlenderPath } from './blender'
 import { renderMotion } from './hyperframes'
 import { cancelJob, listJobs } from './jobs'
+import { keychainSettled } from './secrets'
 import { callToolForAgent, connectServer, disconnectServer, listServers, removeServer, saveServer, signOut, startToolCall } from './mcp'
 import { elevenLabsState, listVoices, music, setElevenLabsKey, soundEffect, speak, transcribe } from './elevenlabs'
 import { importUrl, reveal } from './media'
@@ -64,9 +65,12 @@ export function registerIntegrationIpc(isTrustedUrl: (url: string) => boolean) {
     return id as LocalAgentId
   }
   handle(IPC.aiProviders, () => providerStates())
-  handle(IPC.aiSetProvider, (id: string, patch: { key?: string | null; baseURL?: string | null }) =>
-    setProvider(provider(id), { key: typeof patch?.key === 'string' || patch?.key === null ? patch.key : undefined, baseURL: typeof patch?.baseURL === 'string' || patch?.baseURL === null ? patch.baseURL : undefined }),
-  )
+  handle(IPC.aiSetProvider, async (id: string, patch: { key?: string | null; baseURL?: string | null }) => {
+    const which = provider(id)
+    // "Saved" is answered once the key will still be readable after a restart, not before.
+    if (typeof patch?.key === 'string' && patch.key.trim()) await keychainSettled()
+    return setProvider(which, { key: typeof patch?.key === 'string' || patch?.key === null ? patch.key : undefined, baseURL: typeof patch?.baseURL === 'string' || patch?.baseURL === null ? patch.baseURL : undefined })
+  })
   handle(IPC.aiModels, (id: string, refresh?: boolean) => listModels(provider(id), Boolean(refresh)))
   handle(IPC.aiSignInOpenRouter, () => signInOpenRouter())
   handle(IPC.aiLocalAgents, (refresh?: boolean) => localAgentStates(Boolean(refresh)))
