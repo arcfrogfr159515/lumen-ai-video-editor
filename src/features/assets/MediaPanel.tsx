@@ -260,7 +260,7 @@ function useSelectable(asset: Asset, order: string[]) {
   const onDragStart = (e: DragEvent) => {
     const ids = useMediaSelection.getState().ids
     const group = ids.includes(asset.id) && ids.length > 1 ? order.filter((id) => ids.includes(id)) : [asset.id]
-    dnd.start(e, { type: 'asset', assetId: asset.id, assetIds: group }, group.length > 1 ? `${group.length} items` : asset.name)
+    dnd.start(e, { type: 'asset', assetId: asset.id, assetIds: group }, group.length > 1 ? tt('{0} items', group.length) : asset.name)
   }
   return { selected, onClick, onContextMenu, onDragStart }
 }
@@ -554,7 +554,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
         </div>
         <div className="mt-1.5 px-0.5">
           <div className="truncate text-xs font-medium text-fg-2 group-hover/card:text-fg">{asset.name}</div>
-          <div className="text-2xs text-fg-4">{[asset.kind === 'image' ? 'Photo' : res, asset.fps ? `${asset.fps} fps` : null].filter(Boolean).join(' · ') || tt('Media')}</div>
+          <div className="text-2xs text-fg-4">{[asset.kind === 'image' ? tt('Photo') : res, asset.fps ? `${asset.fps} fps` : null].filter(Boolean).join(' · ') || tt('Media')}</div>
         </div>
       </div>
     </AssetMenu>

@@ -105,7 +105,7 @@ function MarkerList() {
                 key={k.id}
                 type="button"
                 aria-pressed={kinds.includes(k.id)}
-                title={`${k.hint}${kinds.includes(k.id) ? ' — showing only the kinds picked' : ''}`}
+                title={tt('{0}{1}', k.hint, kinds.includes(k.id) ? (' ' + tt('— showing only the kinds picked')) : '')}
                 onClick={() => toggleKind(k.id)}
                 className={cn(
                   'flex h-6 items-center gap-1 rounded-full px-2 text-2xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60',
@@ -282,7 +282,7 @@ function ExportMenu() {
     try {
       await saveTextFile(
         { name: `${getProject().name} ${format === 'youtube' ? 'chapters' : 'markers'}`, extension: info.extension, filterName: info.label, mime: info.mime, text: out.text },
-        `Saved ${out.count} ${format === 'youtube' ? 'chapter' : 'marker'}${out.count === 1 ? '' : 's'}`,
+        tt('Saved {0} {1}{2}', out.count, format === 'youtube' ? tt('chapter') : tt('marker'), out.count === 1 ? '' : 's'),
       )
       if (out.warnings.length) toast(out.warnings.join(' '))
     } catch (err) {
@@ -292,7 +292,7 @@ function ExportMenu() {
   const copyChapters = async () => {
     const out = build('youtube')
     if (!out) return
-    if (await copyText(out.text, `Copied ${out.count} chapters`)) if (out.warnings.length) toast(out.warnings.join(' '))
+    if (await copyText(out.text, tt('Copied {0} chapters', out.count))) if (out.warnings.length) toast(out.warnings.join(' '))
   }
   return (
     <Menu>
@@ -339,7 +339,7 @@ function ClipNoteList() {
   }
   const save = async () => {
     try {
-      await saveTextFile({ name: `${getProject().name} clip notes`, extension: 'md', filterName: 'Markdown', mime: 'text/markdown', text: notesMarkdown(getProject()) }, 'Saved the clip notes')
+      await saveTextFile({ name: tt('{0} clip notes', getProject().name), extension: 'md', filterName: 'Markdown', mime: 'text/markdown', text: notesMarkdown(getProject()) }, tt('Saved the clip notes'))
     } catch (err) {
       toast.error(tt('Couldn’t save the file'), { description: err instanceof Error ? err.message : String(err) })
     }

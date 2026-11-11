@@ -40,7 +40,7 @@ export function MixerPanel() {
           {!trackIds.length && <p className="self-center px-2 text-xs text-fg-4">{tt('Tracks with sound show up here.')}</p>}
         </div>
         <div className="mx-0.5 w-px shrink-0 self-stretch bg-line-2" />
-        <Strip target="master" name="Master" color="var(--color-accent)" icon={<Music />} mix={undefined} master selected={target === 'master'} onSelect={() => setSelected('master')} />
+        <Strip target="master" name={tt('Master')} color="var(--color-accent)" icon={<Music />} mix={undefined} master selected={target === 'master'} onSelect={() => setSelected('master')} />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto border-t border-line">
         <ChannelEditor target={target} />

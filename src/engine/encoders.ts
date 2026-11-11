@@ -11,6 +11,7 @@
  * on the next one.
  */
 import { codecString } from './codec-strings'
+import { tt } from '@/lib/i18n'
 
 export type ExportVideoCodec = 'avc' | 'hevc' | 'av1' | 'vp9'
 export type VideoContainer = 'mp4' | 'mov' | 'webm'
@@ -67,7 +68,7 @@ export interface EncoderRequest {
   lockCodec?: boolean
 }
 
-export const describeEncoder = (p: Pick<EncoderPlan, 'codec' | 'acceleration'>) => `${CODEC_NAME[p.codec]} on the ${p.acceleration === 'prefer-hardware' ? 'graphics card' : 'processor'}`
+export const describeEncoder = (p: Pick<EncoderPlan, 'codec' | 'acceleration'>) => tt('{0} on the {1}', CODEC_NAME[p.codec], p.acceleration === 'prefer-hardware' ? tt('graphics card') : tt('processor'))
 
 /**
  * Encoders to try, in order: the codec asked for (on the graphics card first if
@@ -126,13 +127,13 @@ function tryEncoder(plan: EncoderPlan, width: number, height: number, fps: numbe
  */
 export async function tryEncoderConfig(config: VideoEncoderConfig, fps: number): Promise<TestResult> {
   const fail = (error: string): TestResult => ({ ok: false, error, at: Date.now() })
-  if (typeof VideoEncoder === 'undefined') return fail('This build has no video encoder.')
+  if (typeof VideoEncoder === 'undefined') return fail(tt('This build has no video encoder.'))
   const { width, height } = config
   const support = await VideoEncoder.isConfigSupported(config).catch(() => null)
-  if (!support?.supported) return fail(config.hardwareAcceleration === 'prefer-hardware' ? 'No graphics-card encoder takes these settings.' : 'Not available at this size.')
+  if (!support?.supported) return fail(config.hardwareAcceleration === 'prefer-hardware' ? tt('No graphics-card encoder takes these settings.') : tt('Not available at this size.'))
   let chunks = 0
   let error: string | null = null
-  const encoder = new VideoEncoder({ output: () => void chunks++, error: (e) => void (error ??= e.message || 'The encoder failed.') })
+  const encoder = new VideoEncoder({ output: () => void chunks++, error: (e) => void (error ??= e.message || tt('The encoder failed.')) })
   try {
     encoder.configure(config)
     const canvas = new OffscreenCanvas(width, height)
@@ -155,7 +156,7 @@ export async function tryEncoderConfig(config: VideoEncoderConfig, fps: number):
     }
     // An encoder that never answers is as useless as one that fails.
     const flushed = await Promise.race([encoder.flush().then(() => true), new Promise<false>((resolve) => setTimeout(() => resolve(false), 15_000))])
-    if (!flushed) error ??= 'The encoder never finished a frame.'
+    if (!flushed) error ??= tt('The encoder never finished a frame.')
   } catch (err) {
     error ??= err instanceof Error ? err.message : String(err)
   } finally {
@@ -166,7 +167,7 @@ export async function tryEncoderConfig(config: VideoEncoderConfig, fps: number):
     }
   }
   if (error) return fail(error)
-  if (!chunks) return fail('The encoder produced nothing.')
+  if (!chunks) return fail(tt('The encoder produced nothing.'))
   return { ok: true, at: Date.now() }
 }
 
@@ -238,9 +239,9 @@ export async function chooseEncoder(req: EncoderRequest): Promise<EncoderChoice>
 
 /** Why the encoder that was asked for isn't the one being used, in a sentence — or undefined when it is. */
 export function fallbackNote(req: Pick<EncoderRequest, 'codec' | 'hardware'>, plan: EncoderPlan): string | undefined {
-  if (plan.codec !== req.codec) return `${CODEC_NAME[req.codec]} couldn’t be encoded on this computer at this size, so this is ${describeEncoder(plan)}.`
-  if (req.hardware && plan.acceleration === 'prefer-software') return `The graphics card couldn’t encode this, so the processor did (${CODEC_NAME[plan.codec]}).`
-  if (!req.hardware && plan.acceleration === 'prefer-hardware') return `${CODEC_NAME[plan.codec]} is only encoded by graphics cards, so the graphics card did it.`
+  if (plan.codec !== req.codec) return tt('{0} couldn’t be encoded on this computer at this size, so this is {1}.', CODEC_NAME[req.codec], describeEncoder(plan))
+  if (req.hardware && plan.acceleration === 'prefer-software') return tt('The graphics card couldn’t encode this, so the processor did ({0}).', CODEC_NAME[plan.codec])
+  if (!req.hardware && plan.acceleration === 'prefer-hardware') return tt('{0} is only encoded by graphics cards, so the graphics card did it.', CODEC_NAME[plan.codec])
   return undefined
 }
 

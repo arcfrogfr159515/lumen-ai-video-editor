@@ -12,13 +12,14 @@ import { speechWav } from '@/engine/wav'
 import { useAi } from '@/integrations/ai'
 import { api, transcribeAsset as elevenJob, useIntegrations } from '@/integrations/store'
 import { transcribeLocally } from './whisper'
+import { tt } from '@/lib/i18n'
 
 export type Transcriber = 'elevenlabs' | 'openai' | 'local'
 
 export const TRANSCRIBER_NAMES: Record<Transcriber, string> = {
-  elevenlabs: 'ElevenLabs Scribe',
-  openai: 'OpenAI Whisper',
-  local: 'Whisper on this computer',
+  elevenlabs: tt('ElevenLabs Scribe'),
+  openai: tt('OpenAI Whisper'),
+  local: tt('Whisper on this computer'),
 }
 
 /** Services that can transcribe right now, best first. */
@@ -37,7 +38,7 @@ const inFlight = new Map<string, Promise<TranscriptSegment[]>>()
 
 /** OpenAI takes ≤25 MB per request: send ~10-minute pieces and stitch the timings back together. */
 async function withOpenAI(buffer: AudioBuffer, language?: string) {
-  if (!api) throw new Error('Needs the desktop app.')
+  if (!api) throw new Error(tt('Needs the desktop app.'))
   const piece = 600
   const out: TranscriptSegment[] = []
   for (let from = 0; from < buffer.duration; from += piece) {
@@ -57,7 +58,7 @@ async function withElevenLabs(asset: Asset, language?: string): Promise<Transcri
       if (!j || j.status === 'running') return false
       unsub()
       if (j.status === 'done' && j.transcript) resolve(j.transcript)
-      else reject(new Error(j.error ?? 'Transcription didn’t finish.'))
+      else reject(new Error(j.error ?? tt('Transcription didn’t finish.')))
       return true
     }
     const unsub = useIntegrations.subscribe(() => void check())
@@ -74,15 +75,15 @@ export function transcribeMedia(assetId: string, opts: { using?: Transcriber; la
   if (running) return running
   const task = (async () => {
     const asset = getProject().assets[assetId]
-    if (!canTranscribe(asset)) throw new Error('Only audio and video with sound can be transcribed.')
+    if (!canTranscribe(asset)) throw new Error(tt('Only audio and video with sound can be transcribed.'))
     const using = opts.using ?? transcribers()[0]
     if (using === 'elevenlabs') return await withElevenLabs(asset, opts.language)
     // Long recordings arrive already mixed down to 16 kHz mono, streamed a minute at a time.
     const buffer = await speechAudio(asset)
-    if (!buffer) throw new Error('This media has no sound to transcribe.')
+    if (!buffer) throw new Error(tt('This media has no sound to transcribe.'))
     const segments = using === 'openai' ? await withOpenAI(buffer, opts.language) : await transcribeLocally(buffer, { language: opts.language, onProgress: opts.onProgress })
     if (getProject().assets[assetId]) {
-      dispatch('asset.update', { id: assetId, patch: { transcript: segments } }, { source: 'ai', label: 'Add transcript' })
+      dispatch('asset.update', { id: assetId, patch: { transcript: segments } }, { source: 'ai', label: tt('Add transcript') })
     }
     return segments
   })().finally(() => inFlight.delete(assetId))
@@ -95,15 +96,15 @@ export async function ensureTranscripts(assetIds: string[]) {
   const todo = assetIds.filter((id) => !getProject().assets[id]?.transcript?.length && canTranscribe(getProject().assets[id]))
   if (!todo.length) return true
   const using = transcribers()[0]
-  const id = toast.loading(`Transcribing ${todo.length === 1 ? getProject().assets[todo[0]].name : `${todo.length} clips`}…`, { description: TRANSCRIBER_NAMES[using] })
+  const id = toast.loading(tt('Transcribing {0}…', todo.length === 1 ? getProject().assets[todo[0]].name : tt('{0} clips', todo.length)), { description: TRANSCRIBER_NAMES[using] })
   try {
     for (const [i, assetId] of todo.entries()) {
       await transcribeMedia(assetId, {
         using,
-        onProgress: (p) => toast.loading(`Transcribing… ${Math.round(((i + p) / todo.length) * 100)}%`, { id, description: TRANSCRIBER_NAMES[using] }),
+        onProgress: (p) => toast.loading(tt('Transcribing… {0}%', Math.round(((i + p) / todo.length) * 100)), { id, description: TRANSCRIBER_NAMES[using] }),
       })
     }
-    toast.success('Transcribed', { id, description: TRANSCRIBER_NAMES[using] })
+    toast.success(tt('Transcribed'), { id, description: TRANSCRIBER_NAMES[using] })
     return true
   } catch (err) {
     toast.error('Transcription failed', { id, description: err instanceof Error ? err.message : String(err) })

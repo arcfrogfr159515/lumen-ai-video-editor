@@ -17,6 +17,7 @@ import type {
   Transform,
   Wheels,
 } from './types'
+import { tt } from '@/lib/i18n'
 
 export const PEAKS_PER_SECOND = 50
 
@@ -68,7 +69,7 @@ export const DEFAULT_ANIMATION: ClipAnimation = {
 }
 
 export const DEFAULT_TEXT: TextStyle = {
-  content: 'Your title',
+  content: tt('Your title'),
   font: 'sans',
   size: 96,
   weight: 600,
@@ -87,25 +88,25 @@ export const DEFAULT_TEXT: TextStyle = {
 }
 
 export const FONTS: Record<FontId, { label: string; css: string }> = {
-  sans: { label: 'Geist', css: '"Geist Variable", system-ui, sans-serif' },
-  display: { label: 'Bricolage Grotesque', css: '"Bricolage Grotesque Variable", system-ui, sans-serif' },
-  serif: { label: 'Instrument Serif', css: '"Instrument Serif", Georgia, serif' },
-  mono: { label: 'Geist Mono', css: '"Geist Mono Variable", ui-monospace, monospace' },
-  hand: { label: 'Caveat', css: '"Caveat Variable", cursive' },
-  fraunces: { label: 'Fraunces', css: '"Fraunces Variable", Georgia, serif' },
-  archivo: { label: 'Archivo', css: '"Archivo Variable", system-ui, sans-serif' },
-  syne: { label: 'Syne', css: '"Syne Variable", system-ui, sans-serif' },
-  'space-grotesk': { label: 'Space Grotesk', css: '"Space Grotesk Variable", system-ui, sans-serif' },
+  sans: { label: tt('Geist'), css: '"Geist Variable", system-ui, sans-serif' },
+  display: { label: tt('Bricolage Grotesque'), css: '"Bricolage Grotesque Variable", system-ui, sans-serif' },
+  serif: { label: tt('Instrument Serif'), css: '"Instrument Serif", Georgia, serif' },
+  mono: { label: tt('Geist Mono'), css: '"Geist Mono Variable", ui-monospace, monospace' },
+  hand: { label: tt('Caveat'), css: '"Caveat Variable", cursive' },
+  fraunces: { label: tt('Fraunces'), css: '"Fraunces Variable", Georgia, serif' },
+  archivo: { label: tt('Archivo'), css: '"Archivo Variable", system-ui, sans-serif' },
+  syne: { label: tt('Syne'), css: '"Syne Variable", system-ui, sans-serif' },
+  'space-grotesk': { label: tt('Space Grotesk'), css: '"Space Grotesk Variable", system-ui, sans-serif' },
 }
 
 export const TRACK_HEIGHTS = { titles: 44, video: 56, main: 72, audio: 52, sfx: 44 } as const
 
 const CLIP_NAMES: Record<ClipKind, string> = {
-  video: 'Video',
-  image: 'Image',
-  audio: 'Audio',
-  text: 'Title',
-  adjustment: 'Adjustment layer',
+  video: tt('Video'),
+  image: tt('Image'),
+  audio: tt('Audio'),
+  text: tt('Title'),
+  adjustment: tt('Adjustment layer'),
 }
 
 type ClipInit = Partial<Omit<Clip, 'transform' | 'color' | 'audio' | 'animation' | 'text'>> &
@@ -151,7 +152,7 @@ export function createTrack(kind: TrackKind, init: Partial<Track> = {}): Track {
   return {
     id: uid('track'),
     kind,
-    name: kind === 'video' ? 'Video' : 'Audio',
+    name: kind === 'video' ? tt('Video') : tt('Audio'),
     hidden: false,
     muted: false,
     locked: false,

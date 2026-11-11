@@ -25,6 +25,7 @@ import { speechWav } from '@/engine/wav'
 import { probeMedia } from '@/engine/decode'
 import { analyzeAssets } from '@/project/media-import'
 import { uid } from '@/lib/id'
+import { tt } from '@/lib/i18n'
 
 export const api = typeof window !== 'undefined' ? window.lumen?.integrations : undefined
 
@@ -133,7 +134,7 @@ export async function addGeneratedAsset(g: GeneratedAsset): Promise<string> {
     addedAt: Date.now(),
   }
   if (g.kind === 'image') delete asset.duration
-  const res = dispatch('asset.add', { asset }, { source: 'ai', label: `Add ${asset.name}` })
+  const res = dispatch('asset.add', { asset }, { source: 'ai', label: tt('Add {0}', asset.name) })
   if (!res.ok) throw new Error(res.error)
   void analyzeAssets([asset.id])
   return asset.id
@@ -154,7 +155,7 @@ async function importJob(job: Job) {
 
 /** Downloads a URL a tool returned and adds it to the project. `byUser`: the user picked this link themselves (it may then be on this computer or the local network). */
 export async function importLink(url: string, name?: string, provenance?: Provenance, byUser = false) {
-  if (!api) throw new Error('Importing needs the desktop app.')
+  if (!api) throw new Error(tt('Importing needs the desktop app.'))
   const g = await api.media.importUrl(url, name, provenance, { local: byUser })
   return addGeneratedAsset(g)
 }
@@ -185,14 +186,14 @@ export function projectFrame() {
 }
 
 export async function renderBlender(req: Omit<BlenderRenderRequest, 'width' | 'height' | 'fps'> & Partial<Pick<BlenderRenderRequest, 'width' | 'height' | 'fps'>>) {
-  if (!api) throw new Error('Blender renders need the desktop app.')
+  if (!api) throw new Error(tt('Blender renders need the desktop app.'))
   const job = await api.blender.render({ ...projectFrame(), ...req })
   onJob(job)
   return job
 }
 
 export async function renderMotion(req: Omit<MotionRenderRequest, 'width' | 'height' | 'fps'> & Partial<Pick<MotionRenderRequest, 'width' | 'height' | 'fps'>>) {
-  if (!api) throw new Error('Motion graphics need the desktop app.')
+  if (!api) throw new Error(tt('Motion graphics need the desktop app.'))
   const job = await api.motion.render({ ...projectFrame(), ...req })
   onJob(job)
   return job
@@ -228,7 +229,7 @@ export async function signOutServer(id: string) {
 }
 
 export async function callTool(serverId: string, tool: string, args: Record<string, unknown>) {
-  if (!api) throw new Error('MCP tools need the desktop app.')
+  if (!api) throw new Error(tt('MCP tools need the desktop app.'))
   const job = await api.mcp.call(serverId, tool, args)
   onJob(job)
   return job
@@ -282,17 +283,17 @@ const track = (job: Job) => {
 }
 
 export async function elevenSpeak(req: { text: string; voiceId: string; voiceName?: string; modelId?: string }) {
-  if (!api) throw new Error('Needs the desktop app.')
+  if (!api) throw new Error(tt('Needs the desktop app.'))
   return track(await api.elevenlabs.speak(req))
 }
 
 export async function elevenSfx(req: { prompt: string; durationSeconds?: number; loop?: boolean }) {
-  if (!api) throw new Error('Needs the desktop app.')
+  if (!api) throw new Error(tt('Needs the desktop app.'))
   return track(await api.elevenlabs.soundEffect(req))
 }
 
 export async function elevenMusic(req: { prompt: string; lengthSeconds: number; instrumental?: boolean }) {
-  if (!api) throw new Error('Needs the desktop app.')
+  if (!api) throw new Error(tt('Needs the desktop app.'))
   return track(await api.elevenlabs.music(req))
 }
 
@@ -323,12 +324,12 @@ export async function loadGenModels(provider: GenProvider, refresh = false) {
 }
 
 export async function generateImage(req: ImageGenRequest) {
-  if (!api) throw new Error('Needs the desktop app.')
+  if (!api) throw new Error(tt('Needs the desktop app.'))
   return track(await api.ai.generateImage(req))
 }
 
 export async function generateVideo(req: VideoGenRequest) {
-  if (!api) throw new Error('Needs the desktop app.')
+  if (!api) throw new Error(tt('Needs the desktop app.'))
   return track(await api.ai.generateVideo(req))
 }
 
@@ -339,19 +340,19 @@ function attachTranscript(jobId: string, transcript: TranscriptSegment[]) {
   const assetId = transcribing.get(jobId)
   transcribing.delete(jobId)
   if (!assetId || !getProject().assets[assetId]) return
-  dispatch('asset.update', { id: assetId, patch: { transcript } }, { source: 'ai', label: 'Add transcript' })
-  toast.success('Transcript added', { description: `${transcript.length} phrases — captions and pause removal now use it.` })
+  dispatch('asset.update', { id: assetId, patch: { transcript } }, { source: 'ai', label: tt('Add transcript') })
+  toast.success(tt('Transcript added'), { description: tt('{0} phrases — captions and pause removal now use it.', transcript.length) })
 }
 
 export const canTranscribe = (asset: Asset | undefined) => Boolean(asset && asset.source.type === 'file' && (asset.kind === 'audio' || asset.kind === 'video'))
 
 /** Starts an ElevenLabs Scribe job for an asset; the transcript attaches itself when the job finishes. */
 export async function transcribeAsset(assetId: string, languageCode?: string) {
-  if (!api) throw new Error('Needs the desktop app.')
+  if (!api) throw new Error(tt('Needs the desktop app.'))
   const asset = getProject().assets[assetId]
-  if (!asset || asset.source.type !== 'file') throw new Error('Only imported audio and video can be transcribed.')
+  if (!asset || asset.source.type !== 'file') throw new Error(tt('Only imported audio and video can be transcribed.'))
   const buffer = await speechAudio(asset)
-  if (!buffer) throw new Error('This media has no sound to transcribe.')
+  if (!buffer) throw new Error(tt('This media has no sound to transcribe.'))
   const wav = await speechWav(buffer)
   const job = await api.elevenlabs.transcribe(wav.buffer, asset.name, languageCode)
   transcribing.set(job.id, assetId)

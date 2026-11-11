@@ -4,6 +4,8 @@
  * fastest — the layout a WebGL 3D texture takes directly.
  */
 
+import { tt } from '@/lib/i18n'
+
 export interface ParsedLut {
   title: string | null
   size: number
@@ -41,15 +43,15 @@ export function parseCube(text: string): ParsedLut {
   const norm = (v: number, c: number) => (v - min[c]) / (max[c] - min[c] || 1)
 
   if (size3) {
-    if (size3 < 2 || size3 > 65) throw new Error(`A ${size3}-point 3D LUT isn’t supported (2–65)`)
+    if (size3 < 2 || size3 > 65) throw new Error(tt('A {0}-point 3D LUT isn’t supported (2–65)', size3))
     const n = size3 ** 3
-    if (values.length < n * 3) throw new Error(`The LUT has ${values.length / 3} entries; a ${size3}-point LUT needs ${n}`)
+    if (values.length < n * 3) throw new Error(tt('The LUT has {0} entries; a {1}-point LUT needs {2}', values.length / 3, size3, n))
     const data = new Uint8Array(n * 3)
     for (let i = 0; i < n * 3; i++) data[i] = to8(norm(values[i], i % 3))
     return { title, size: size3, data }
   }
   if (size1) {
-    if (values.length < size1 * 3) throw new Error(`The LUT has ${values.length / 3} entries; it says ${size1}`)
+    if (values.length < size1 * 3) throw new Error(tt('The LUT has {0} entries; it says {1}', values.length / 3, size1))
     // A 1D LUT curves each channel on its own; sample it into a 33-point cube.
     const size = 33
     const lookup = (v: number, c: number) => {
@@ -70,5 +72,5 @@ export function parseCube(text: string): ParsedLut {
         }
     return { title, size, data }
   }
-  throw new Error('That isn’t a .cube LUT (no LUT_3D_SIZE or LUT_1D_SIZE)')
+  throw new Error(tt('That isn’t a .cube LUT (no LUT_3D_SIZE or LUT_1D_SIZE)'))
 }

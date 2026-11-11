@@ -13,15 +13,15 @@ import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 const LABEL: Record<Attribute, { name: string; detail: string }> = {
-  transform: { name: 'Transform', detail: 'Position, scale, rotation, opacity, 3D — with keyframes' },
-  crop: { name: 'Crop', detail: 'Edges and rounded corners' },
-  color: { name: 'Color', detail: tt('Grade and look') },
-  effects: { name: 'Effects', detail: tt('Every effect and its amount') },
-  audio: { name: 'Audio', detail: tt('Volume (with keyframes), fades, voice clean-up') },
-  speed: { name: 'Speed', detail: tt('Speed, ramp and reverse') },
-  animation: { name: 'Animation', detail: tt('In and out animations') },
-  text: { name: 'Text style', detail: 'Font, size, color, shadow — not the words' },
-  blend: { name: 'Blend mode', detail: tt('How the clip mixes with what’s below') },
+  transform: { name: tt('Transform'), detail: 'Position, scale, rotation, opacity, 3D — with keyframes' },
+  crop: { name: tt('Crop'), detail: 'Edges and rounded corners' },
+  color: { name: tt('Color'), detail: tt('Grade and look') },
+  effects: { name: tt('Effects'), detail: tt('Every effect and its amount') },
+  audio: { name: tt('Audio'), detail: tt('Volume (with keyframes), fades, voice clean-up') },
+  speed: { name: tt('Speed'), detail: tt('Speed, ramp and reverse') },
+  animation: { name: tt('Animation'), detail: tt('In and out animations') },
+  text: { name: tt('Text style'), detail: 'Font, size, color, shadow — not the words' },
+  blend: { name: tt('Blend mode'), detail: tt('How the clip mixes with what’s below') },
 }
 
 /** The attributes a clip actually has worth copying, so the list only offers real choices. */

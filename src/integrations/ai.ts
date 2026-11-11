@@ -16,6 +16,7 @@ import {
   type ProviderState,
 } from '@shared/ai'
 import { api } from './store'
+import { tt } from '@/lib/i18n'
 
 const TARGET_KEY = 'lumen.copilot.target'
 
@@ -153,10 +154,10 @@ export const LOCAL_AGENT_NAMES: Record<LocalAgentId, string> = { 'claude-code': 
 export function targetLabel(t: CopilotTarget | null): { title: string; subtitle: string } {
   if (!t) {
     const auto = autoTarget()
-    return auto ? { title: targetLabel(auto).title, subtitle: 'automatic' } : { title: 'No AI connected', subtitle: 'set one up' }
+    return auto ? { title: targetLabel(auto).title, subtitle: 'automatic' } : { title: tt('No AI connected'), subtitle: tt('set one up') }
   }
   if (t.kind === 'local') {
-    if (!t.model) return { title: LOCAL_AGENT_NAMES[t.agent], subtitle: 'your account' }
+    if (!t.model) return { title: LOCAL_AGENT_NAMES[t.agent], subtitle: tt('your account') }
     return { title: targetModel(t)?.name || t.model, subtitle: LOCAL_AGENT_NAMES[t.agent] }
   }
   const spec = PROVIDERS.find((p) => p.id === t.provider)

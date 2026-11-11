@@ -14,6 +14,7 @@ import { uid } from '@/lib/id'
 import { formatTimecode } from '@/lib/time'
 import { importDropped } from '@/project/media-import'
 import { applyEvent, finish, fromLegacy, type Activity, type LocalEvent, type Part, type ToolPart } from './transcript'
+import { tt } from '@/lib/i18n'
 
 export type { Activity, Part, ToolPart }
 
@@ -123,7 +124,7 @@ useCopilot.subscribe((s, prev) => {
 export function chatTitle(chat: Pick<Chat, 'title' | 'messages'>) {
   if (chat.title) return chat.title
   const first = chat.messages.find((m) => m.role === 'user')?.text.trim().replace(/\s+/g, ' ')
-  if (!first) return 'New chat'
+  if (!first) return tt('New chat')
   return first.length > 52 ? `${first.slice(0, 50).trimEnd()}…` : first
 }
 
@@ -298,7 +299,7 @@ export function stopCopilot(opts: { keepQueue?: boolean } = {}) {
   abortCalls(run.runId, run.local ? run.startedAt : undefined)
   void api?.ai.stop(run.runId)
   if (opts.keepQueue === false) useCopilot.setState({ queue: [] })
-  finishLive(run.messageId, { message: 'Stopped.', code: 'cancelled' })
+  finishLive(run.messageId, { message: tt('Stopped.'), code: 'cancelled' })
 }
 
 // ─── Attachments ─────────────────────────────────────────────────────────
@@ -373,11 +374,11 @@ export async function attachFiles(files: File[]) {
       .slice(0, 12)
       .map(async (file) => {
         const id = uid('file')
-        const name = file.name || (file.type.startsWith('image/') ? `pasted-${new Date().toTimeString().slice(0, 8).replace(/:/g, '')}.${file.type.slice(6).replace('jpeg', 'jpg')}` : 'pasted.txt')
+        const name = file.name || (file.type.startsWith('image/') ? tt('pasted-{0}.{1}', new Date().toTimeString().slice(0, 8).replace(/:/g, ''), file.type.slice(6).replace('jpeg', 'jpg')) : 'pasted.txt')
         useAttachments.setState((s) => ({ items: [...s.items, { id, name, kind: 'file', status: 'reading' }] }))
         const conversationId = useCopilot.getState().conversationId
         try {
-          if (!api) throw new Error('Attaching files needs Lumen’s desktop app.')
+          if (!api) throw new Error(tt('Attaching files needs Lumen’s desktop app.'))
           const kept = await api.ai.attach(conversationId, { name, mime: file.type || undefined, data: new Uint8Array(await file.arrayBuffer()) })
           const thumb = kept.kind === 'image' ? await thumbnail(file) : undefined
           // Removed, or the chat changed, while it was being read: let it go.
@@ -406,7 +407,7 @@ export async function sendPrompt(text: string) {
   const items = useAttachments.getState().items
   if (!prompt && !items.length) return
   // A file still being read isn't ready to send.
-  if (items.some((i) => i.kind === 'file' && i.status !== 'ready')) return void toast('Still reading the attached file — one moment.')
+  if (items.some((i) => i.kind === 'file' && i.status !== 'ready')) return void toast(tt('Still reading the attached file — one moment.'))
   useUI.getState().setRightTab('copilot')
 
   const project = getProject()
@@ -419,7 +420,7 @@ export async function sendPrompt(text: string) {
   const assets = items.filter((a): a is AssetAttachment => a.kind === 'asset' && Boolean(project.assets[a.id]))
   const files = items.filter((a): a is FileAttachment => a.kind === 'file' && Boolean(a.file))
   useAttachments.setState({ items: [] })
-  const request: Queued = { id: uid('q'), text: prompt || (files.length ? 'Look at what I attached.' : ''), context, assets, files }
+  const request: Queued = { id: uid('q'), text: prompt || (files.length ? tt('Look at what I attached.') : ''), context, assets, files }
 
   if (useCopilot.getState().busy) {
     useCopilot.setState((s) => ({ draft: '', queue: [...s.queue, request] }))
@@ -446,12 +447,12 @@ function start(request: Queued) {
         context: [...request.context, ...request.assets.map((a) => ({ id: a.id, name: a.name }))],
         files: request.files.map((f) => ({ id: f.file!.id, name: f.name, kind: f.file!.kind, size: f.file!.size, thumb: f.thumb })),
       },
-      { id: aid, role: 'assistant', text: '', parts: [], phase: 'working', createdAt: now, startedAt: now, lastEventAt: now, activity: { kind: 'starting', label: 'Starting…', since: now }, agent: target ? targetLabel(target).title : undefined },
+      { id: aid, role: 'assistant', text: '', parts: [], phase: 'working', createdAt: now, startedAt: now, lastEventAt: now, activity: { kind: 'starting', label: tt('Starting…'), since: now }, agent: target ? targetLabel(target).title : undefined },
     ],
   }))
 
   if (!target) {
-    finishLive(aid, { message: 'Copilot needs an AI to think with. Use your own Claude Code or Codex, or add a model with an API key.', code: 'no-brain' })
+    finishLive(aid, { message: tt('Copilot needs an AI to think with. Use your own Claude Code or Codex, or add a model with an API key.'), code: 'no-brain' })
     return
   }
   return runLive(aid, target, request)
@@ -499,15 +500,15 @@ function sendNext() {
 function turnContext(context: { id: string; name: string }[], assets: AssetAttachment[]) {
   const fps = getProject().settings.fps
   const frame = usePlayback.getState().frame
-  const lines = [`[Lumen] Playhead at frame ${frame} (${formatTimecode(frame, fps)}).`]
-  if (context.length) lines.push(`Selected clips: ${context.map((c) => `${c.name} (${c.id})`).join(', ')}.`)
-  if (assets.length) lines.push(`Media the user attached (asset ids): ${assets.map((a) => `${a.name} (${a.id})`).join(', ')}.`)
+  const lines = [tt('[Lumen] Playhead at frame {0} ({1}).', frame, formatTimecode(frame, fps))]
+  if (context.length) lines.push(tt('Selected clips: {0}.', context.map((c) => `${c.name} (${c.id})`).join(', ')))
+  if (assets.length) lines.push(tt('Media the user attached (asset ids): {0}.', assets.map((a) => `${a.name} (${a.id})`).join(', ')))
   return lines.join(' ')
 }
 
 async function runLive(messageId: string, target: CopilotTarget, request: Queued) {
   if (!api) {
-    finishLive(messageId, { message: 'Live models need Lumen’s desktop app.', code: 'failed' })
+    finishLive(messageId, { message: tt('Live models need Lumen’s desktop app.'), code: 'failed' })
     return
   }
   const runId = uid('run')
@@ -580,6 +581,6 @@ export function askCopilotAbout(clipId: string) {
   useUI.getState().select([clipId])
   useUI.getState().setRightTab('copilot')
   const draft =
-    clip.kind === 'audio' ? 'Remove the long pauses from this' : clip.kind === 'text' ? 'Make this title neon' : 'Make this clip look cinematic'
+    clip.kind === 'audio' ? tt('Remove the long pauses from this') : clip.kind === 'text' ? tt('Make this title neon') : tt('Make this clip look cinematic')
   useCopilot.getState().setDraft(draft)
 }

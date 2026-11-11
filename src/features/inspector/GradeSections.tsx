@@ -38,7 +38,7 @@ export function WheelsSection({ clips }: { clips: Clip[] }) {
   const ids = clips.map((c) => c.id)
   const wheels = clips[0].color.wheels ?? NEUTRAL_WHEELS
   const active = WHEELS.some((w) => !isNeutralWheel(wheels[w.key]))
-  const set = (key: keyof Wheels, w: Partial<Wheel>, coalesce: string) => update(ids, { wheels: { [key]: { ...wheels[key], ...w } } }, `wheel:${ids.join()}:${key}:${coalesce}`, 'Colour wheels')
+  const set = (key: keyof Wheels, w: Partial<Wheel>, coalesce: string) => update(ids, { wheels: { [key]: { ...wheels[key], ...w } } }, `wheel:${ids.join()}:${key}:${coalesce}`, tt('Colour wheels'))
   return (
     <Section
       title={tt('Colour wheels')}
@@ -46,7 +46,7 @@ export function WheelsSection({ clips }: { clips: Clip[] }) {
       defaultOpen={active}
       actions={
         active && (
-          <IconButton size="xs" label={tt('Reset wheels')} onClick={() => update(ids, { wheels: null }, undefined, 'Reset colour wheels')}>
+          <IconButton size="xs" label={tt('Reset wheels')} onClick={() => update(ids, { wheels: null }, undefined, tt('Reset colour wheels'))}>
             <RotateCcw />
           </IconButton>
         )
@@ -214,7 +214,7 @@ export function CurvesSection({ clips }: { clips: Clip[] }) {
       defaultOpen={active}
       actions={
         active && (
-          <IconButton size="xs" label={tt('Reset curves')} onClick={() => update(ids, { curves: null }, undefined, 'Reset curves')}>
+          <IconButton size="xs" label={tt('Reset curves')} onClick={() => update(ids, { curves: null }, undefined, tt('Reset curves'))}>
             <RotateCcw />
           </IconButton>
         )
@@ -269,7 +269,7 @@ export function HslSection({ clips }: { clips: Clip[] }) {
       defaultOpen={active}
       actions={
         active && (
-          <IconButton size="xs" label={tt('Reset HSL')} onClick={() => update(ids, { hsl: null }, undefined, 'Reset HSL')}>
+          <IconButton size="xs" label={tt('Reset HSL')} onClick={() => update(ids, { hsl: null }, undefined, tt('Reset HSL'))}>
             <RotateCcw />
           </IconButton>
         )
@@ -356,7 +356,7 @@ export function LutSection({ clips }: { clips: Clip[] }) {
           onChange={(e) => {
             const f = e.target.files?.[0]
             e.target.value = ''
-            if (f) void importLutFile(f).then((lutId) => lutId && update(ids, { lut: { id: lutId, amount: 1 } }, undefined, 'Apply LUT'))
+            if (f) void importLutFile(f).then((lutId) => lutId && update(ids, { lut: { id: lutId, amount: 1 } }, undefined, tt('Apply LUT')))
           }}
         />
         {list.length ? (
@@ -365,7 +365,7 @@ export function LutSection({ clips }: { clips: Clip[] }) {
               <Select
                 aria-label={tt('LUT')}
                 value={lut?.id ?? ''}
-                onChange={(v) => update(ids, { lut: v ? { id: v, amount: lut?.amount ?? 1 } : null }, undefined, v ? 'Apply LUT' : 'Remove LUT')}
+                onChange={(v) => update(ids, { lut: v ? { id: v, amount: lut?.amount ?? 1 } : null }, undefined, v ? tt('Apply LUT') : tt('Remove LUT'))}
                 options={[{ value: '', label: tt('None') }, ...list.map((l) => ({ value: l.id, label: `${l.name} · ${l.size}³` }))]}
                 className="w-full"
               />

@@ -40,10 +40,10 @@ export function TextPanel() {
 
 /** Samples of each caption style, with the words a viewer would see at that moment. */
 const CAPTION_SAMPLES: Record<CaptionStyle, { text: string; accent?: number }> = {
-  clean: { text: 'and that’s where it all began' },
-  bold: { text: 'This changes' },
-  word: { text: 'Secret', accent: 0 },
-  boxed: { text: 'Here’s the plan' },
+  clean: { text: tt('and that’s where it all began') },
+  bold: { text: tt('This changes') },
+  word: { text: tt('Secret'), accent: 0 },
+  boxed: { text: tt('Here’s the plan') },
 }
 
 function CaptionStyles() {

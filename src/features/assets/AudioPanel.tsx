@@ -16,10 +16,10 @@ import { formatSeconds } from '@/lib/time'
 import { auditionSfx, cancelRecording, finishRecording, inputLevel, sfxAsset, startRecording, stopAudition, type Recording } from '@/project/audio-library'
 import { useGenerate } from './generate-store'
 import { PanelHeader, scrollArea, SectionLabel } from './shared'
-import { tt } from '@/lib/i18n'
+import { tm, tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
-const CATEGORIES: SfxDef['category'][] = ['Transitions', 'Impacts', 'UI & accents', 'Atmosphere']
+const CATEGORIES: SfxDef['category'][] = [tm('Transitions'), tm('Impacts'), tm('UI & accents'), tm('Atmosphere')]
 
 export function AudioPanel() {
   const [query, setQuery] = useState('')
@@ -37,7 +37,7 @@ export function AudioPanel() {
           if (!list.length) return null
           return (
             <div key={cat}>
-              <div className="mt-3 mb-1 px-0.5 text-2xs font-medium text-fg-4">{cat}</div>
+              <div className="mt-3 mb-1 px-0.5 text-2xs font-medium text-fg-4">{tt(cat)}</div>
               <div className="space-y-0.5">
                 {list.map((s) => (
                   <SfxRow key={s.id} sfx={s} />
@@ -206,7 +206,7 @@ function RecordCard() {
     setSaving(true)
     const stamp = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     try {
-      const asset = await finishRecording(rec, `Voiceover ${stamp}`)
+      const asset = await finishRecording(rec, tt('Voiceover {0}', stamp))
       if (asset) {
         const id = placeAsset(asset.id, startFrame.current, { trackId: voiceTrack() })
         if (id) useUI.getState().select([id])

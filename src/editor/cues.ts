@@ -6,6 +6,7 @@
  */
 import { localForSource } from './timing'
 import type { Asset, AssetCue, Clip } from './types'
+import { tt } from '@/lib/i18n'
 
 /** The most cues kept on one media item. */
 export const MAX_CUES = 2000
@@ -60,7 +61,7 @@ export function cueText(cue: AssetCue) {
     case 'line':
       return cue.who && cue.who !== cue.label ? `${cue.who}: ${cue.label}` : cue.label
     case 'cut':
-      return `Cut: ${cue.label}`
+      return tt('Cut: {0}', cue.label)
     case 'walk':
       return `${cue.who ? `${cue.who} walks` : 'Footsteps'}${cue.label !== cue.who && cue.label !== 'walk' ? ` (${cue.label})` : ''}`
     case 'marker':

@@ -17,13 +17,14 @@ import { AnalysisCancelled } from '@/engine/analysis'
 import { detectScenes } from '@/engine/scenes'
 import { syncByAudio, type SyncResult } from '@/engine/sync'
 import { measureShake, trackBox, type TrackBox, type TrackSample } from '@/engine/tracker'
+import { tt } from '@/lib/i18n'
 
 export { AnalysisCancelled }
 
 /** Runs a long analysis with a progress toast that has a Cancel button. */
 export async function withProgress<T>(label: string, run: (onProgress: (p: number) => void, signal: AbortSignal) => Promise<T>): Promise<T> {
   const controller = new AbortController()
-  const action = { label: 'Cancel', onClick: () => controller.abort() }
+  const action = { label: tt('Cancel'), onClick: () => controller.abort() }
   const id = toast.loading(`${label}…`, { action, duration: Infinity })
   let last = 0
   try {
@@ -44,10 +45,10 @@ export async function withProgress<T>(label: string, run: (onProgress: (p: numbe
 function mediaClip(clipId: string): { clip: Clip; asset: Asset } {
   const p = getProject()
   const clip = p.clips[clipId]
-  if (!clip) throw new Error(`No clip with id “${clipId}”.`)
+  if (!clip) throw new Error(tt('No clip with id “{0}”.', clipId))
   const asset = clip.assetId ? p.assets[clip.assetId] : undefined
-  if (!asset || asset.kind !== 'video' || asset.source.type !== 'file') throw new Error(`“${clip.name}” isn’t a video clip — this reads the pictures of a video file.`)
-  if (clip.freeze) throw new Error(`“${clip.name}” is a freeze frame — there’s no motion in it.`)
+  if (!asset || asset.kind !== 'video' || asset.source.type !== 'file') throw new Error(tt('“{0}” isn’t a video clip — this reads the pictures of a video file.', clip.name))
+  if (clip.freeze) throw new Error(tt('“{0}” is a freeze frame — there’s no motion in it.', clip.name))
   return { clip, asset }
 }
 
@@ -74,7 +75,7 @@ export async function scenesInClip(clipId: string, opts: { sensitivity?: number;
   const [a, b] = sourceRange(clip, fps)
   const report = await detectScenes(asset, a, b, { sensitivity: opts.sensitivity }, onProgress, signal)
   const now = getProject().clips[clipId]
-  if (!now) throw new Error('The clip was removed while it was being analysed.')
+  if (!now) throw new Error(tt('The clip was removed while it was being analysed.'))
   // Kept on the media, so the timeline can show the shot changes and snap to them wherever this footage plays.
   if (getProject().assets[asset.id]) dispatch('asset.update', { id: asset.id, patch: { sceneCuts: mergeSceneCuts(getProject().assets[asset.id].sceneCuts, report.cuts, a, b) } }, { history: false })
   const cuts = [
@@ -90,11 +91,11 @@ export async function scenesInClip(clipId: string, opts: { sensitivity?: number;
   if (!cuts.length || action === 'none') return { cuts, applied: 'none' }
   const source = opts.source ?? 'user'
   const ids = [clipId]
-  useEditor.getState().transaction(action === 'split' ? `Split at ${cuts.length} scene cut${cuts.length === 1 ? '' : 's'}` : 'Mark scene cuts', source, () => {
+  useEditor.getState().transaction(action === 'split' ? tt('Split at {0} scene cut{1}', cuts.length, cuts.length === 1 ? '' : 's') : tt('Mark scene cuts'), source, () => {
     let target = clipId
     cuts.forEach((frame, i) => {
       if (action === 'markers') {
-        dispatch('marker.add', { frame, label: `Scene ${i + 2}`, color: 'sky' }, { source })
+        dispatch('marker.add', { frame, label: tt('Scene {0}', i + 2), color: 'sky' }, { source })
         return
       }
       const res = dispatch('clip.split', { frame, ids: [target] }, { source })
@@ -115,8 +116,8 @@ export async function multicamFromAssets(assetIds: string[], opts: { name?: stri
   const p = getProject()
   const assets = assetIds.map((id) => {
     const a = p.assets[id]
-    if (!a) throw new Error(`No media with id “${id}”.`)
-    if (a.kind !== 'video') throw new Error(`“${a.name}” isn’t video — every angle needs pictures.`)
+    if (!a) throw new Error(tt('No media with id “{0}”.', id))
+    if (a.kind !== 'video') throw new Error(tt('“{0}” isn’t video — every angle needs pictures.', a.name))
     return a
   })
   // The recording with sound that runs longest is the reference.
@@ -149,7 +150,7 @@ export async function stabilizeClip(clipId: string, opts: { smooth?: number; rot
   const rotation = opts.rotation ?? true
   const aspect = (asset.width ?? 16) / (asset.height ?? 9)
   const zoom = autoZoom({ path: shake.path, rate: shake.rate, smooth, rotation }, aspect)
-  const res = dispatch('clip.update', { ids: [clipId], patch: { stabilize: { ...shake, smooth, zoom, rotation } } }, { source: opts.source ?? 'user', label: 'Stabilize' })
+  const res = dispatch('clip.update', { ids: [clipId], patch: { stabilize: { ...shake, smooth, zoom, rotation } } }, { source: opts.source ?? 'user', label: tt('Stabilize') })
   if (!res.ok) throw new Error(res.error)
   return { zoom, frames: shake.path.length / 3 }
 }
@@ -275,15 +276,15 @@ function sampleAt(samples: TrackSample[], t: number): [number, number] | null {
 export async function trackMotion(req: TrackRequest, onProgress?: (p: number) => void, signal?: AbortSignal) {
   const p = getProject()
   const target = p.clips[req.targetId]
-  if (!target) throw new Error(`No clip with id “${req.targetId}”.`)
-  if (req.maskId && !target.masks?.some((m) => m.id === req.maskId)) throw new Error(`“${target.name}” has no mask ${req.maskId}.`)
-  if (!req.maskId && target.kind === 'adjustment') throw new Error('An adjustment layer doesn’t move — track one of its masks instead.')
+  if (!target) throw new Error(tt('No clip with id “{0}”.', req.targetId))
+  if (req.maskId && !target.masks?.some((m) => m.id === req.maskId)) throw new Error(tt('“{0}” has no mask {1}.', target.name, req.maskId))
+  if (!req.maskId && target.kind === 'adjustment') throw new Error(tt('An adjustment layer doesn’t move — track one of its masks instead.'))
   const frame = Math.round(req.frame ?? usePlayback.getState().frame)
-  if (frame < target.start || frame >= clipEnd(target)) throw new Error(`Put the playhead over “${target.name}” — on a frame where what it should follow is visible.`)
+  if (frame < target.start || frame >= clipEnd(target)) throw new Error(tt('Put the playhead over “{0}” — on a frame where what it should follow is visible.', target.name))
   const src = req.newTitle ? target : req.sourceId ? p.clips[req.sourceId] : trackingSource(p, target, frame, Boolean(req.maskId))
   if (!src) throw new Error(NOTHING_TO_FOLLOW)
   const { asset } = mediaClip(src.id)
-  if (frame < src.start || frame >= clipEnd(src)) throw new Error('Put the playhead over the footage to follow.')
+  if (frame < src.start || frame >= clipEnd(src)) throw new Error(tt('Put the playhead over the footage to follow.'))
   const fps = p.settings.fps
   // The box in the footage's own coordinates.
   const local = frame - src.start
@@ -293,7 +294,7 @@ export async function trackMotion(req: TrackRequest, onProgress?: (p: number) =>
   ].map(([x, y]) => projectToMedia(p, src, asset, local, x, y))
   const [cu, cv] = projectToMedia(p, src, asset, local, req.box.x, req.box.y)
   const box: TrackBox = { x: cu, y: cv, w: Math.abs(corners[1][0] - corners[0][0]), h: Math.abs(corners[1][1] - corners[0][1]) }
-  if (cu < 0 || cu > 1 || cv < 0 || cv > 1) throw new Error('The box has to sit on the footage.')
+  if (cu < 0 || cu > 1 || cv < 0 || cv > 1) throw new Error(tt('The box has to sit on the footage.'))
   // Tracking runs over the frames the target and the footage share — forwards
   // on the timeline may be backwards in the file (a reversed clip).
   const start = Math.max(src.start, target.start)
@@ -309,13 +310,13 @@ export async function trackMotion(req: TrackRequest, onProgress?: (p: number) =>
   if (back) samples = samples.concat(await trackBox(asset, box, t0, past(tAt(start)), (x) => onProgress?.(both ? 0.5 + x / 2 : x), signal))
   samples.sort((x, y) => x.t - y.t)
   samples = samples.filter((x, i) => i === 0 || x.t - samples[i - 1].t > 1e-6)
-  if (samples.length < 2) throw new Error('Couldn’t follow that — try a box over something with more detail.')
+  if (samples.length < 2) throw new Error(tt('Couldn’t follow that — try a box over something with more detail.'))
 
   // Positions on the target's frames, in the space that follows.
   const now = getProject()
   const tgt = now.clips[req.targetId]
   const s = now.clips[src.id]
-  if (!tgt || !s) throw new Error('The clip was removed while tracking.')
+  if (!tgt || !s) throw new Error(tt('The clip was removed while tracking.'))
   const points: number[] = []
   let first = -1
   let ref = 0
@@ -333,10 +334,10 @@ export async function trackMotion(req: TrackRequest, onProgress?: (p: number) =>
       points.push(Math.round(mx * 1e5) / 1e5, Math.round(my * 1e5) / 1e5)
     } else points.push(Math.round(px * 100) / 100, Math.round(py * 100) / 100)
   }
-  if (first < 0 || points.length < 4) throw new Error('Couldn’t follow that — try a box over something with more detail.')
+  if (first < 0 || points.length < 4) throw new Error(tt('Couldn’t follow that — try a box over something with more detail.'))
   if (frame < first) ref = 0
   const path: TrackPath = { start: first - tgt.start, ref: Math.min(ref, points.length / 2 - 1), points }
-  const how = { source: req.source ?? ('user' as const), label: 'Track motion' }
+  const how = { source: req.source ?? ('user' as const), label: tt('Track motion') }
   const tracked = { frames: points.length / 2, from: first, to: first + points.length / 2, lost: samples.length > 1 && samples[samples.length - 1].score < 0.6 }
   if (req.newTitle) return { ...tracked, clipId: pinnedTitle(now, first, path, req.box.height, how.source) }
   const res = req.maskId ? dispatch('mask.update', { clipId: tgt.id, maskId: req.maskId, patch: { follow: path } }, how) : dispatch('clip.update', { ids: [tgt.id], patch: { follow: path } }, how)
@@ -344,7 +345,7 @@ export async function trackMotion(req: TrackRequest, onProgress?: (p: number) =>
   return tracked
 }
 
-export const NOTHING_TO_FOLLOW = 'There’s no video under this clip at the playhead. Put the clip on a track above the video it should follow, with the playhead over both.'
+export const NOTHING_TO_FOLLOW = tt('There’s no video under this clip at the playhead. Put the clip on a track above the video it should follow, with the playhead over both.')
 
 /** A new title sitting just above a tracked point and moving with it (one undo step). Returns its id. */
 function pinnedTitle(project: Project, start: number, path: TrackPath, boxHeight: number, source: 'user' | 'ai'): string {
@@ -353,18 +354,18 @@ function pinnedTitle(project: Project, start: number, path: TrackPath, boxHeight
   const size = Math.round(PH * 0.06)
   let id = ''
   let failed = ''
-  useEditor.getState().transaction('Track motion', source, () => {
+  useEditor.getState().transaction(tt('Track motion'), source, () => {
     const p = getProject()
     const how = { source }
     let trackId = (p.tracks.find((t) => t.role === 'titles' && !t.locked) ?? p.tracks.find((t) => t.kind === 'video' && t.role !== 'main' && t.role !== 'captions' && !t.locked))?.id
     if (!trackId) {
-      const made = dispatch('track.add', { kind: 'video', name: 'Titles', index: 0, role: 'titles' }, how)
+      const made = dispatch('track.add', { kind: 'video', name: tt('Titles'), index: 0, role: 'titles' }, how)
       if (!made.ok) return void (failed = made.error)
       trackId = made.result as string
     }
     const x = path.points[path.ref * 2]
     const y = path.points[path.ref * 2 + 1] - boxHeight / 2 - size
-    const added = dispatch('clip.add', { trackId, kind: 'text', start, duration: frames, name: 'Tracked title', patch: { text: { content: 'Title', size }, transform: { x: Math.round(x), y: Math.round(y) } } }, how)
+    const added = dispatch('clip.add', { trackId, kind: 'text', start, duration: frames, name: tt('Tracked title'), patch: { text: { content: tt('Title'), size }, transform: { x: Math.round(x), y: Math.round(y) } } }, how)
     if (!added.ok) return void (failed = added.error)
     id = added.result as string
     // Where it landed (a busy track moves it to the nearest free spot) decides where its path starts.
@@ -372,7 +373,7 @@ function pinnedTitle(project: Project, start: number, path: TrackPath, boxHeight
     const pinned = dispatch('clip.update', { ids: [id], patch: { follow: { ...path, start: start - clip.start } } }, how)
     if (!pinned.ok) failed = pinned.error
   })
-  if (failed || !id) throw new Error(failed || 'Couldn’t add the title.')
+  if (failed || !id) throw new Error(failed || tt('Couldn’t add the title.'))
   return id
 }
 

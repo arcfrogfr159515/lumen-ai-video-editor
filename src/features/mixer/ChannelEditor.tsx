@@ -35,7 +35,7 @@ const update = (target: Target, patch: Patch, key?: string, label?: string) => d
 const PRESETS: { id: string; name: string; description: string; patch: Patch }[] = [
   {
     id: 'voice',
-    name: 'Clear voice',
+    name: tt('Clear voice'),
     description: tt('Cuts rumble and mud, adds presence, evens out the level'),
     patch: {
       eq: { enabled: true, lowCut: 80, lowFreq: 220, lowGain: -2.5, midFreq: 3200, midGain: 2.5, midQ: 1, highFreq: 10000, highGain: 2 },
@@ -45,7 +45,7 @@ const PRESETS: { id: string; name: string; description: string; patch: Patch }[]
   },
   {
     id: 'music',
-    name: 'Music under voice',
+    name: tt('Music under voice'),
     description: tt('Scoops the speech range so words sit on top, glues the bed'),
     patch: {
       eq: { enabled: true, lowCut: 30, lowFreq: 120, lowGain: 0, midFreq: 2500, midGain: -4, midQ: 0.9, highFreq: 9000, highGain: 0 },
@@ -55,16 +55,16 @@ const PRESETS: { id: string; name: string; description: string; patch: Patch }[]
   },
   {
     id: 'master',
-    name: 'Finished master',
+    name: tt('Finished master'),
     description: tt('Gentle glue compression and a −1 dB ceiling'),
     patch: { compressor: { enabled: true, threshold: -14, ratio: 2, attack: 30, release: 250, makeup: 1 }, limiter: { enabled: true, ceiling: -1 } },
   },
-  { id: 'flat', name: 'Flat', description: tt('No processing'), patch: { eq: null, compressor: null, limiter: null } },
+  { id: 'flat', name: tt('Flat'), description: tt('No processing'), patch: { eq: null, compressor: null, limiter: null } },
 ]
 
 export function ChannelEditor({ target }: { target: Target }) {
   const mix = useEditor((s) => (target === 'master' ? s.project.master : s.project.tracks.find((t) => t.id === target)?.mix)) ?? DEFAULT_BUS
-  const name = useEditor((s) => (target === 'master' ? 'Master' : (s.project.tracks.find((t) => t.id === target)?.name ?? 'Track')))
+  const name = useEditor((s) => (target === 'master' ? tt('Master') : (s.project.tracks.find((t) => t.id === target)?.name ?? tt('Track'))))
 
   return (
     <div className="pb-4">
@@ -96,9 +96,9 @@ export function ChannelEditor({ target }: { target: Target }) {
         title={tt('EQ')}
         present={Boolean(mix.eq)}
         enabled={Boolean(mix.eq?.enabled)}
-        onAdd={() => update(target, { eq: { ...DEFAULT_EQ } }, undefined, `Add EQ · ${name}`)}
+        onAdd={() => update(target, { eq: { ...DEFAULT_EQ } }, undefined, tt('Add EQ · {0}', name))}
         onToggle={(v) => update(target, { eq: { enabled: v } })}
-        onRemove={() => update(target, { eq: null }, undefined, `Remove EQ · ${name}`)}
+        onRemove={() => update(target, { eq: null }, undefined, tt('Remove EQ · {0}', name))}
       >
         {mix.eq && <EqEditor target={target} eq={mix.eq} />}
       </Processor>
@@ -107,9 +107,9 @@ export function ChannelEditor({ target }: { target: Target }) {
         title={tt('Compressor')}
         present={Boolean(mix.compressor)}
         enabled={Boolean(mix.compressor?.enabled)}
-        onAdd={() => update(target, { compressor: { ...DEFAULT_COMPRESSOR } }, undefined, `Add compressor · ${name}`)}
+        onAdd={() => update(target, { compressor: { ...DEFAULT_COMPRESSOR } }, undefined, tt('Add compressor · {0}', name))}
         onToggle={(v) => update(target, { compressor: { enabled: v } })}
-        onRemove={() => update(target, { compressor: null }, undefined, `Remove compressor · ${name}`)}
+        onRemove={() => update(target, { compressor: null }, undefined, tt('Remove compressor · {0}', name))}
         meter={<Reduction target={target} which="compressor" />}
       >
         {mix.compressor && (
@@ -127,9 +127,9 @@ export function ChannelEditor({ target }: { target: Target }) {
         title={tt('Limiter')}
         present={Boolean(mix.limiter)}
         enabled={Boolean(mix.limiter?.enabled)}
-        onAdd={() => update(target, { limiter: { ...DEFAULT_LIMITER } }, undefined, `Add limiter · ${name}`)}
+        onAdd={() => update(target, { limiter: { ...DEFAULT_LIMITER } }, undefined, tt('Add limiter · {0}', name))}
         onToggle={(v) => update(target, { limiter: { enabled: v } })}
-        onRemove={() => update(target, { limiter: null }, undefined, `Remove limiter · ${name}`)}
+        onRemove={() => update(target, { limiter: null }, undefined, tt('Remove limiter · {0}', name))}
         meter={<Reduction target={target} which="limiter" />}
       >
         {mix.limiter && (

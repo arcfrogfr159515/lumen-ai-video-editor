@@ -6,6 +6,8 @@
  * shapes the stretch from it to the next keyframe.
  */
 
+import { tt, ttc } from '@/lib/i18n'
+
 export const EASING_NAMES = [
   'linear',
   'ease',
@@ -169,60 +171,61 @@ export const easeAt = (e: Easing | string | undefined, t: number) => easingFn(e)
 /** Curves grouped for pickers, with a word on when each suits. */
 export const EASING_GROUPS: { label: string; hint: string; items: { value: Easing; label: string }[] }[] = [
   {
-    label: 'Smooth',
-    hint: 'Most moves: starts and ends gently',
+    label: tt('Smooth'),
+    hint: tt('Most moves: starts and ends gently'),
     items: [
-      { value: 'ease', label: 'Ease' },
-      { value: 'sine-in-out', label: 'Sine' },
-      { value: 'quart-in-out', label: 'Quart' },
-      { value: 'expo-in-out', label: 'Expo' },
+      { value: 'ease', label: tt('Ease') },
+      { value: 'sine-in-out', label: tt('Sine') },
+      { value: 'quart-in-out', label: tt('Quart') },
+      { value: 'expo-in-out', label: tt('Expo') },
     ],
   },
   {
-    label: 'Arrive',
-    hint: 'Entrances: fast, then settles',
+    label: tt('Arrive'),
+    hint: tt('Entrances: fast, then settles'),
     items: [
-      { value: 'ease-out', label: 'Cubic' },
-      { value: 'quart-out', label: 'Quart' },
-      { value: 'expo-out', label: 'Expo' },
-      { value: 'circ-out', label: 'Circ' },
+      { value: 'ease-out', label: tt('Cubic') },
+      { value: 'quart-out', label: tt('Quart') },
+      { value: 'expo-out', label: tt('Expo') },
+      { value: 'circ-out', label: tt('Circ') },
     ],
   },
   {
-    label: 'Leave',
-    hint: 'Exits: gentle, then accelerates',
+    label: tt('Leave'),
+    hint: tt('Exits: gentle, then accelerates'),
     items: [
-      { value: 'ease-in', label: 'Cubic' },
-      { value: 'quart-in', label: 'Quart' },
-      { value: 'expo-in', label: 'Expo' },
-      { value: 'circ-in', label: 'Circ' },
+      { value: 'ease-in', label: tt('Cubic') },
+      { value: 'quart-in', label: tt('Quart') },
+      { value: 'expo-in', label: tt('Expo') },
+      { value: 'circ-in', label: tt('Circ') },
     ],
   },
   {
-    label: 'Character',
-    hint: 'Overshoot and springs — use sparingly',
+    label: tt('Character'),
+    hint: tt('Overshoot and springs — use sparingly'),
     items: [
-      { value: 'back-out', label: 'Overshoot' },
-      { value: 'back-in-out', label: 'Anticipate' },
-      { value: 'elastic-out', label: 'Elastic' },
-      { value: 'bounce-out', label: 'Bounce' },
+      { value: 'back-out', label: tt('Overshoot') },
+      { value: 'back-in-out', label: tt('Anticipate') },
+      { value: 'elastic-out', label: tt('Elastic') },
+      { value: 'bounce-out', label: tt('Bounce') },
     ],
   },
   {
-    label: 'Other',
-    hint: 'Constant speed, or jump at the next key',
+    label: tt('Other'),
+    hint: tt('Constant speed, or jump at the next key'),
     items: [
-      { value: 'linear', label: 'Linear' },
-      { value: 'hold', label: 'Hold' },
+      { value: 'linear', label: tt('Linear') },
+      { value: 'hold', label: tt('Hold') },
     ],
   },
 ]
 
 export function easingLabel(e: Easing | string | undefined) {
-  if (!e) return 'Ease'
+  if (!e) return tt('Ease')
   for (const g of EASING_GROUPS) {
     const item = g.items.find((i) => i.value === e)
-    if (item) return g.label === 'Other' || g.label === 'Smooth' ? item.label : `${item.label} ${g.label.toLowerCase()}`
+    // "Cubic arrive": the curve, then what it is for — in whatever order the language puts them.
+    if (item) return g.label === tt('Other') || g.label === tt('Smooth') ? item.label : ttc('easing', '{0} {1}', item.label, g.label.toLowerCase())
   }
-  return e.startsWith('cubic-bezier') ? 'Custom curve' : e
+  return e.startsWith('cubic-bezier') ? tt('Custom curve') : e
 }

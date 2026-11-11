@@ -6,6 +6,7 @@ import { clipEnd, clipsOnTrack } from './ops'
 import { TITLE_PRESETS } from './presets'
 import { dispatch, getProject, useEditor } from './store'
 import type { AnimPreset, Project, TextStyle } from './types'
+import { tt } from '@/lib/i18n'
 
 /** A subtitle cue, in seconds. */
 export interface Cue {
@@ -72,7 +73,7 @@ export function formatSrt(cues: Cue[]) {
 }
 
 export function formatVtt(cues: Cue[]) {
-  return `WEBVTT\n\n${cues.map((c) => `${stamp(c.start, '.')} --> ${stamp(c.end, '.')}\n${c.text}\n`).join('\n')}`
+  return tt('WEBVTT\n\n{0}', cues.map((c) => `${stamp(c.start, '.')} --> ${stamp(c.end, '.')}\n${c.text}\n`).join('\n'))
 }
 
 export type SubtitleFormat = 'srt' | 'vtt'
@@ -137,8 +138,8 @@ export interface CaptionStyleSpec {
 export const CAPTION_STYLES: CaptionStyleSpec[] = [
   {
     id: 'clean',
-    name: 'Clean',
-    description: 'Classic subtitles: a soft box, a gentle fade',
+    name: tt('Clean'),
+    description: tt('Classic subtitles: a soft box, a gentle fade'),
     words: 6,
     size: 0.045,
     y: 0.36,
@@ -147,7 +148,7 @@ export const CAPTION_STYLES: CaptionStyleSpec[] = [
   },
   {
     id: 'bold',
-    name: 'Bold',
+    name: tt('Bold'),
     description: 'Big outlined caps, a few words at a time',
     words: 3,
     size: 0.075,
@@ -157,8 +158,8 @@ export const CAPTION_STYLES: CaptionStyleSpec[] = [
   },
   {
     id: 'word',
-    name: 'Word by word',
-    description: 'One big word at a time, key words in colour',
+    name: tt('Word by word'),
+    description: tt('One big word at a time, key words in colour'),
     words: 1,
     size: 0.095,
     y: 0.2,
@@ -167,8 +168,8 @@ export const CAPTION_STYLES: CaptionStyleSpec[] = [
   },
   {
     id: 'boxed',
-    name: 'Boxed',
-    description: 'Solid boxes that rise in',
+    name: tt('Boxed'),
+    description: tt('Solid boxes that rise in'),
     words: 5,
     size: 0.05,
     y: 0.33,
@@ -208,7 +209,7 @@ export function layCaptions(
       const existing = clipsOnTrack(getProject(), trackId).map((c) => c.id)
       if (existing.length) dispatch('clip.delete', { ids: existing }, how)
     } else {
-      const res = dispatch('track.add', { kind: 'video', name: opts.newTrack ?? 'Captions', index: 0, role: 'captions' }, how)
+      const res = dispatch('track.add', { kind: 'video', name: opts.newTrack ?? tt('Captions'), index: 0, role: 'captions' }, how)
       trackId = res.ok ? (res.result as string) : null
     }
     if (!trackId) return
@@ -252,15 +253,15 @@ export function layCaptions(
  */
 export function importSubtitles(text: string, opts: { name?: string; offset?: number; replace?: boolean; source?: 'user' | 'ai' } = {}) {
   const cues = parseSubtitles(text)
-  if (!cues.length) throw new Error('No subtitles found — is it an .srt or .vtt file?')
+  if (!cues.length) throw new Error(tt('No subtitles found — is it an .srt or .vtt file?'))
   const fps = getProject().settings.fps
   const offset = opts.offset ?? 0
   const hasCaptions = getProject().tracks.some((t) => t.role === 'captions' && clipsOnTrack(getProject(), t.id).length)
   const lines = cues.map((c) => ({ start: Math.round((c.start + offset) * fps), end: Math.round((c.end + offset) * fps), text: c.text }))
   const res = layCaptions(lines, {
-    label: `Import subtitles${opts.name ? ` · ${opts.name}` : ''}`,
+    label: tt('Import subtitles{0}', opts.name ? ` · ${opts.name}` : ''),
     source: opts.source ?? 'user',
-    newTrack: hasCaptions && !opts.replace ? (opts.name ? `Captions · ${opts.name}` : 'Captions 2') : undefined,
+    newTrack: hasCaptions && !opts.replace ? (opts.name ? tt('Captions · {0}', opts.name) : tt('Captions 2')) : undefined,
   })
   return { added: res.ids.length, trackId: res.trackId, cues: cues.length }
 }

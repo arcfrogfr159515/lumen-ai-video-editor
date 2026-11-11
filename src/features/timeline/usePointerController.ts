@@ -41,6 +41,7 @@ import { clamp } from '@/lib/math'
 import { formatDuration, formatTimecode } from '@/lib/time'
 import type { TimelineLayout } from './layout'
 import { HEADER_W, SNAP_PX, resetDrag, useDrag, type ClipPreview, type DropGhost } from './model'
+import { tt } from '@/lib/i18n'
 
 interface Env {
   scrollRef: RefObject<HTMLDivElement | null>
@@ -242,7 +243,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
           const length = order.reduce((sum, m) => sum + m.duration, 0)
           dropGhost = { trackId: target, start: first, duration: length, label: '', kind: clip.kind }
           snapFrame = null
-          text = `Insert at ${formatTimecode(starts[clip.id], L().fps)}`
+          text = tt('Insert at {0}', formatTimecode(starts[clip.id], L().fps))
         } else if (mode !== 'free') {
           // Land exactly where dropped: insert pushes what's there later, overwrite covers it.
           for (const m of moving) {
@@ -269,7 +270,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
             plan[m.id] = { start: m.start + fix, trackId: m.trackId }
           }
           const moveBy = previews[clip.id].start - clip.start
-          text = `${formatTimecode(previews[clip.id].start, L().fps)}   ${moveBy >= 0 ? '+' : '−'}${formatDuration(Math.abs(moveBy), L().fps)}   · Ctrl insert · Shift overwrite`
+          text = tt('{0}   {1}{2}   · Ctrl insert · Shift overwrite', formatTimecode(previews[clip.id].start, L().fps), moveBy >= 0 ? '+' : '−', formatDuration(Math.abs(moveBy), L().fps))
         }
         // Clips leaving a magnetic track: the ones left behind close the gap.
         for (const trackId of new Set(ids.map((id) => originals[id].trackId))) {
@@ -364,7 +365,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
     const right = Math.abs(at - clip.start) <= Math.abs(at - clipEnd(clip)) ? clip : adjacentAfter(project, clip)
     const left = right && adjacentBefore(project, right)
     if (!right || !left) {
-      toast('Roll moves a cut between two clips that touch — grab one next to its neighbour')
+      toast(tt('Roll moves a cut between two clips that touch — grab one next to its neighbour'))
       return
     }
     useUI.getState().select([left.id, right.id])
@@ -394,7 +395,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
           dragIds: [left.id, right.id],
           previews: { [left.id]: trimmed(left, 'end', target), [right.id]: trimmed(right, 'start', target) },
           snapFrame,
-          readout: { x: p.x, y: p.y, text: `Roll ${moveBy >= 0 ? '+' : '−'}${formatDuration(Math.abs(moveBy), L().fps)}  ·  cut at ${formatTimecode(target, L().fps)}` },
+          readout: { x: p.x, y: p.y, text: tt('Roll {0}{1}  ·  cut at {2}', moveBy >= 0 ? '+' : '−', formatDuration(Math.abs(moveBy), L().fps), formatTimecode(target, L().fps)) },
         })
       },
       () => {
@@ -413,7 +414,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
     useUI.getState().select([clip.id])
     const [lo, hi] = slipBounds(project, clip)
     if (!lo && !hi) {
-      toast(clip.freeze ? 'A freeze frame holds one frame — there’s nothing to slip' : 'Slip needs a video or audio clip with footage to spare')
+      toast(clip.freeze ? tt('A freeze frame holds one frame — there’s nothing to slip') : tt('Slip needs a video or audio clip with footage to spare'))
       return
     }
     const start = toContent(e.clientX, e.clientY).x
@@ -432,7 +433,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
           mode: 'trim',
           dragIds: [clip.id],
           previews: { [clip.id]: { ...still(clip), inPoint } },
-          readout: { x: p.x, y: p.y, text: `Slip ${slipBy >= 0 ? '+' : '−'}${formatDuration(Math.abs(slipBy), fps)}  ·  ${formatTimecode(inPoint, fps)} → ${formatTimecode(Math.round(inPoint + consumed(clip)), fps)}` },
+          readout: { x: p.x, y: p.y, text: tt('Slip {0}{1}  ·  {2} → {3}', slipBy >= 0 ? '+' : '−', formatDuration(Math.abs(slipBy), fps), formatTimecode(inPoint, fps), formatTimecode(Math.round(inPoint + consumed(clip)), fps)) },
         })
       },
       () => {
@@ -479,7 +480,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
           dragIds: [clip.id],
           previews,
           snapFrame,
-          readout: { x: p.x, y: p.y, text: `Slide ${slideBy >= 0 ? '+' : '−'}${formatDuration(Math.abs(slideBy), L().fps)}  ·  ${formatTimecode(clip.start + slideBy, L().fps)}` },
+          readout: { x: p.x, y: p.y, text: tt('Slide {0}{1}  ·  {2}', slideBy >= 0 ? '+' : '−', formatDuration(Math.abs(slideBy), L().fps), formatTimecode(clip.start + slideBy, L().fps)) },
         })
       },
       () => {
@@ -503,7 +504,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
         const p = toContent(ev.clientX, ev.clientY)
         const df = Math.round(((p.x - start) / L().pps) * L().fps)
         const value = clamp(origin + (which === 'fadeIn' ? df : -df), 0, max)
-        dispatch('clip.update', { ids: [clip.id], patch: { audio: { [which]: value } } }, { coalesce: `fade:${clip.id}:${which}`, label: which === 'fadeIn' ? 'Fade in' : 'Fade out' })
+        dispatch('clip.update', { ids: [clip.id], patch: { audio: { [which]: value } } }, { coalesce: `fade:${clip.id}:${which}`, label: which === 'fadeIn' ? tt('Fade in') : tt('Fade out') })
         useDrag.setState({ mode: 'fade', readout: { x: p.x, y: p.y, text: `${which === 'fadeIn' ? 'Fade in' : 'Fade out'}  ${formatDuration(value, L().fps)}` } })
       },
       () => resetDrag(),
@@ -526,7 +527,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
         const playhead = usePlayback.getState().frame - clip.start
         if (useUI.getState().snapping && Math.abs(playhead - f) <= snapThreshold() && playhead >= 0 && playhead < clip.duration) f = playhead
         to = f
-        useDrag.setState({ mode: 'keyframe', keyDrag: { clipId: clip.id, from, to }, readout: { x: p.x, y: p.y, text: `Keyframe  ${formatDuration(f, L().fps)}` } })
+        useDrag.setState({ mode: 'keyframe', keyDrag: { clipId: clip.id, from, to }, readout: { x: p.x, y: p.y, text: tt('Keyframe  {0}', formatDuration(f, L().fps)) } })
       },
       () => {
         resetDrag()

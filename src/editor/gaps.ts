@@ -6,6 +6,7 @@
  */
 import { clipEnd, clipsOnTrack, dropLoneGroups, isMagnetic, isRippleLocked, mediaEdgeLimits, overlaps, packTrack, removeRange, setClipEnd, setClipStart } from './ops'
 import type { Clip, Frame, Project, Track } from './types'
+import { counted, tt } from '@/lib/i18n'
 
 /** Empty space or a clip this short is a flash: a mistake nobody means to make. */
 export const FLASH_FRAMES = 3
@@ -234,15 +235,15 @@ export function closeGaps(p: Project, opts: CloseGapsOptions = {}): CloseGapsRes
 /** What a clean-up did, in a sentence. */
 export function describeCleanup(r: CloseGapsResult, fps: number) {
   const parts: string[] = []
-  const n = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`
-  if (r.holesClosed) parts.push(`closed ${n(r.holesClosed, 'hole', 'holes')}`)
-  if (r.flashGapsFilled) parts.push(`filled ${n(r.flashGapsFilled, 'sliver', 'slivers')}`)
-  if (r.flashClipsRemoved) parts.push(`removed ${n(r.flashClipsRemoved, 'flash frame', 'flash frames')}`)
-  if (r.trackGapsClosed) parts.push(`closed ${n(r.trackGapsClosed, 'gap', 'gaps')} on the chosen tracks`)
-  if (!parts.length) return r.left ? `Nothing could be closed: ${n(r.left, 'sliver has', 'slivers have')} no footage either side to cover ${r.left === 1 ? 'it' : 'them'}.` : 'Nothing to clean up.'
+  const n = counted
+  if (r.holesClosed) parts.push(tt('closed {0}', n(r.holesClosed, 'hole', 'holes')))
+  if (r.flashGapsFilled) parts.push(tt('filled {0}', n(r.flashGapsFilled, 'sliver', 'slivers')))
+  if (r.flashClipsRemoved) parts.push(tt('removed {0}', n(r.flashClipsRemoved, 'flash frame', 'flash frames')))
+  if (r.trackGapsClosed) parts.push(tt('closed {0} on the chosen tracks', n(r.trackGapsClosed, 'gap', 'gaps')))
+  if (!parts.length) return r.left ? tt('Nothing could be closed: {0} no footage either side to cover {1}.', n(r.left, 'sliver has', 'slivers have'), r.left === 1 ? tt('it') : tt('them')) : tt('Nothing to clean up.')
   const text = parts.join(', ')
-  const shorter = r.framesRemoved ? ` The timeline is ${(r.framesRemoved / fps).toFixed(r.framesRemoved < fps ? 2 : 1)} s shorter.` : ''
-  const left = r.left ? ` ${n(r.left, 'sliver was', 'slivers were')} left: no footage either side to cover ${r.left === 1 ? 'it' : 'them'}.` : ''
+  const shorter = r.framesRemoved ? (' ' + tt('The timeline is {0} s shorter.', (r.framesRemoved / fps).toFixed(r.framesRemoved < fps ? 2 : 1))) : ''
+  const left = r.left ? (' ' + tt('{0} left: no footage either side to cover {1}.', n(r.left, 'sliver was', 'slivers were'), r.left === 1 ? tt('it') : tt('them'))) : ''
   return `${text[0].toUpperCase()}${text.slice(1)}.${shorter}${left}`
 }
 

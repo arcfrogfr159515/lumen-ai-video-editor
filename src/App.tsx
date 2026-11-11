@@ -40,6 +40,7 @@ import { startIngestClient } from '@/project/ingest'
 import { offerRecovery } from '@/capture/recorder'
 import { RecordDialog } from '@/features/record/RecordDialog'
 import { startUpdates } from '@/lib/updates'
+import { tt } from '@/lib/i18n'
 
 export function App() {
   useGlobalShortcuts()
@@ -67,7 +68,7 @@ export function App() {
         <TitleBar />
 
         {home ? (
-          <ErrorBoundary name="The start screen">
+          <ErrorBoundary name={tt('The start screen')}>
             <HomeScreen />
           </ErrorBoundary>
         ) : (
@@ -102,25 +103,25 @@ export function App() {
 }
 
 const DIALOGS: [name: string, component: () => React.ReactNode][] = [
-  ['The command palette', CommandPalette],
-  ['The export dialog', ExportDialog],
-  ['The record dialog', RecordDialog],
-  ['The shortcuts list', ShortcutsDialog],
-  ['The About dialog', AboutDialog],
-  ['The graphics dialog', GraphicsDialog],
-  ['Paste attributes', PasteAttributesDialog],
-  ['Clip colours', ClipColorsDialog],
-  ['The clean-up dialog', CleanupDialog],
-  ['The compare view', CompareDialog],
-  ['The macros dialog', MacrosDialog],
-  ['The source monitor', SourceMonitor],
-  ['The version history', VersionHistoryDialog],
-  ['The rename dialog', RenameTimelineDialog],
-  ['The render queue', RenderQueueDialog],
-  ['The multicam dialog', MulticamDialog],
-  ['The auto-director', DirectorDialog],
-  ['Integrations', IntegrationsHub],
-  ['The approval prompt', AgentApprovals],
+  [tt('The command palette'), CommandPalette],
+  [tt('The export dialog'), ExportDialog],
+  [tt('The record dialog'), RecordDialog],
+  [tt('The shortcuts list'), ShortcutsDialog],
+  [tt('The About dialog'), AboutDialog],
+  [tt('The graphics dialog'), GraphicsDialog],
+  [tt('Paste attributes'), PasteAttributesDialog],
+  [tt('Clip colours'), ClipColorsDialog],
+  [tt('The clean-up dialog'), CleanupDialog],
+  [tt('The compare view'), CompareDialog],
+  [tt('The macros dialog'), MacrosDialog],
+  [tt('The source monitor'), SourceMonitor],
+  [tt('The version history'), VersionHistoryDialog],
+  [tt('The rename dialog'), RenameTimelineDialog],
+  [tt('The render queue'), RenderQueueDialog],
+  [tt('The multicam dialog'), MulticamDialog],
+  [tt('The auto-director'), DirectorDialog],
+  [tt('Integrations'), IntegrationsHub],
+  [tt('The approval prompt'), AgentApprovals],
 ]
 
 function Editor() {
@@ -132,19 +133,19 @@ function Editor() {
         <Panel id="stage" defaultSize="58%" minSize="260px">
           <Group orientation="horizontal" id="lumen-layout-h" defaultLayout={horizontal.defaultLayout} onLayoutChanged={horizontal.onLayoutChanged}>
             <Panel id="assets" defaultSize="24%" minSize="300px" maxSize="40%">
-              <ErrorBoundary name="The media panel">
+              <ErrorBoundary name={tt('The media panel')}>
                 <AssetsPanel />
               </ErrorBoundary>
             </Panel>
             <ResizeHandle />
             <Panel id="viewer" minSize="380px">
-              <ErrorBoundary name="The preview">
+              <ErrorBoundary name={tt('The preview')}>
                 <PreviewPanel />
               </ErrorBoundary>
             </Panel>
             <ResizeHandle />
             <Panel id="side" defaultSize="25%" minSize="300px" maxSize="38%">
-              <ErrorBoundary name="The side panel">
+              <ErrorBoundary name={tt('The side panel')}>
                 <SidePanel />
               </ErrorBoundary>
             </Panel>
@@ -152,7 +153,7 @@ function Editor() {
         </Panel>
         <ResizeHandle vertical />
         <Panel id="timeline" defaultSize="42%" minSize="200px">
-          <ErrorBoundary name="The timeline">
+          <ErrorBoundary name={tt('The timeline')}>
             <Timeline />
           </ErrorBoundary>
         </Panel>

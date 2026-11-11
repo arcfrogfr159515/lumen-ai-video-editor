@@ -156,7 +156,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
   const longest = Math.max(3, Math.min(maxTransition(getProject(), clip, align), fps * 3))
   // On audio, every transition is a crossfade.
   const audio = clip.kind === 'audio'
-  const name = audio ? 'Crossfade' : (TRANSITIONS.find((t) => t.kind === tr.kind)?.name ?? 'Transition')
+  const name = audio ? tt('Crossfade') : (TRANSITIONS.find((t) => t.kind === tr.kind)?.name ?? tt('Transition'))
 
   return (
     <>

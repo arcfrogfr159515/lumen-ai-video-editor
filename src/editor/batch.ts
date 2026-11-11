@@ -6,6 +6,7 @@
  */
 import { formatTimecode } from '@/lib/time'
 import type { Clip, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 /** What a batch can change, as the batch command and its panel name them. */
 export type BatchField = 'speed' | 'volume' | 'fades' | 'opacity' | 'scale' | 'reverse' | 'blend' | 'effects' | 'label' | 'rename'
@@ -17,27 +18,27 @@ export function batchSkip(project: Pick<Project, 'assets'>, clip: Clip, field: B
   switch (field) {
     case 'speed':
     case 'reverse':
-      if (!media) return 'no speed to change'
-      if (clip.freeze) return 'a freeze frame'
+      if (!media) return tt('no speed to change')
+      if (clip.freeze) return tt('a freeze frame')
       return null
     case 'volume':
     case 'fades': {
-      if (!media) return 'no sound'
+      if (!media) return tt('no sound')
       if (clip.kind === 'video') {
-        if (clip.audio.detached) return 'its sound is on its own clip'
+        if (clip.audio.detached) return tt('its sound is on its own clip')
         const asset = clip.assetId ? project.assets[clip.assetId] : undefined
-        if (!clip.sequenceId && asset?.hasAudio === false) return 'no sound'
+        if (!clip.sequenceId && asset?.hasAudio === false) return tt('no sound')
       }
       return null
     }
     case 'opacity':
     case 'scale':
     case 'blend':
-      if (!visual) return 'no picture'
-      if (field !== 'opacity' && clip.kind === 'adjustment') return 'an adjustment layer'
+      if (!visual) return tt('no picture')
+      if (field !== 'opacity' && clip.kind === 'adjustment') return tt('an adjustment layer')
       return null
     case 'effects':
-      return visual ? null : 'no picture'
+      return visual ? null : tt('no picture')
     case 'label':
     case 'rename':
       return null
@@ -48,12 +49,12 @@ export function batchSkip(project: Pick<Project, 'assets'>, clip: Clip, field: B
 
 /** What a rename pattern can hold. */
 export const RENAME_TOKENS: { token: string; means: string }[] = [
-  { token: '{n}', means: 'its number among the clips, in timeline order' },
+  { token: '{n}', means: tt('its number among the clips, in timeline order') },
   { token: '{nn}', means: 'the same, with a leading zero' },
-  { token: '{name}', means: 'the name it has now' },
-  { token: '{source}', means: 'the name of its media' },
-  { token: '{track}', means: 'the track it is on' },
-  { token: '{tc}', means: 'the timecode it starts at' },
+  { token: '{name}', means: tt('the name it has now') },
+  { token: '{source}', means: tt('the name of its media') },
+  { token: '{track}', means: tt('the track it is on') },
+  { token: '{tc}', means: tt('the timecode it starts at') },
 ]
 
 /**
@@ -90,11 +91,11 @@ export function batchNames(project: Pick<Project, 'clips' | 'tracks' | 'assets' 
 export type SimilarBy = 'track' | 'source' | 'kind' | 'label' | 'speaker'
 
 export const SIMILAR: { id: SimilarBy; label: string }[] = [
-  { id: 'track', label: 'On the same tracks' },
-  { id: 'source', label: 'From the same media' },
-  { id: 'kind', label: 'Of the same kind' },
-  { id: 'label', label: 'With the same label' },
-  { id: 'speaker', label: 'With the same speaker' },
+  { id: 'track', label: tt('On the same tracks') },
+  { id: 'source', label: tt('From the same media') },
+  { id: 'kind', label: tt('Of the same kind') },
+  { id: 'label', label: tt('With the same label') },
+  { id: 'speaker', label: tt('With the same speaker') },
 ]
 
 /** Every clip (on unlocked tracks) that shares something with the clips given: the same track, media, kind, label or speaker. */
@@ -126,10 +127,10 @@ export function similarClips(project: Pick<Project, 'clips' | 'tracks'>, ids: re
 /** What a batch did, for a toast: how many clips changed, and why the rest were left. */
 export function describeBatch(result: { changed: number; skipped: { name: string; why: string }[] }): { title: string; description?: string } {
   const n = result.changed
-  const title = n ? `Changed ${n} clip${n === 1 ? '' : 's'}` : 'Nothing changed'
+  const title = n ? tt('Changed {0} clip{1}', n, n === 1 ? '' : 's') : tt('Nothing changed')
   if (!result.skipped.length) return { title }
   const reasons = new Map<string, number>()
   for (const s of result.skipped) reasons.set(s.why, (reasons.get(s.why) ?? 0) + 1)
   const parts = [...reasons].map(([why, count]) => `${count === 1 ? `“${result.skipped.find((s) => s.why === why)!.name}”` : `${count} clips`} (${why})`)
-  return { title, description: `Left alone: ${parts.join(', ')}.` }
+  return { title, description: tt('Left alone: {0}.', parts.join(', ')) }
 }

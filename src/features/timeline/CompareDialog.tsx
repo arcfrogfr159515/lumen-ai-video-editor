@@ -29,7 +29,7 @@ import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 const HUNK_COLOR: Record<Hunk['kind'], string> = { changed: 'var(--color-warn)', added: 'var(--color-ok)', removed: 'var(--color-danger)' }
-const HUNK_WORD: Record<Hunk['kind'], string> = { changed: 'Different', added: 'Only there', removed: 'Only here' }
+const HUNK_WORD: Record<Hunk['kind'], string> = { changed: tt('Different'), added: tt('Only there'), removed: tt('Only here') }
 
 export function CompareDialog() {
   const open = useTimelineView((s) => s.compareOpen)
@@ -95,7 +95,7 @@ function Body() {
     if (!other) return
     let failed: string | undefined
     // Last first, so the earlier ones are still where they were found.
-    useEditor.getState().transaction(hunks.length === 1 ? `Take a stretch from ${other.name}` : `Take ${hunks.length} stretches from ${other.name}`, 'user', () => {
+    useEditor.getState().transaction(hunks.length === 1 ? tt('Take a stretch from {0}', other.name) : tt('Take {0} stretches from {1}', hunks.length, other.name), 'user', () => {
       for (const h of [...hunks].sort((x, y) => y.a[0] - x.a[0])) {
         const res = dispatch('timeline.mergeFrom', { sequenceId: other.id, a: { start: h.a[0], end: h.a[1] }, b: { start: h.b[0], end: h.b[1] } })
         if (!res.ok) failed = res.error
@@ -179,8 +179,8 @@ function Body() {
           {diff.hunks.length > 0 && (
             <ul className="space-y-1">
               {diff.hunks.map((h) => {
-                const here = h.a[1] > h.a[0] ? `${formatTimecode(h.a[0], fps)} · ${formatDuration(h.a[1] - h.a[0], fps)}` : `nothing at ${formatTimecode(h.a[0], fps)}`
-                const thereText = h.b[1] > h.b[0] ? `${formatTimecode(h.b[0], fps)} · ${formatDuration(h.b[1] - h.b[0], fps)}` : `nothing at ${formatTimecode(h.b[0], fps)}`
+                const here = h.a[1] > h.a[0] ? `${formatTimecode(h.a[0], fps)} · ${formatDuration(h.a[1] - h.a[0], fps)}` : tt('nothing at {0}', formatTimecode(h.a[0], fps))
+                const thereText = h.b[1] > h.b[0] ? `${formatTimecode(h.b[0], fps)} · ${formatDuration(h.b[1] - h.b[0], fps)}` : tt('nothing at {0}', formatTimecode(h.b[0], fps))
                 return (
                   <li key={`${h.a[0]}:${h.b[0]}:${h.kind}`} className={cn('flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]', inHunk === h && 'bg-white/[0.07]')}>
                     <span className="h-6 w-1 shrink-0 rounded-full" style={{ background: HUNK_COLOR[h.kind] }} />

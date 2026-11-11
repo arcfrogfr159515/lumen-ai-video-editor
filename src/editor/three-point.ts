@@ -8,6 +8,7 @@
 import { clamp } from '@/lib/math'
 import { MAX_SPEED, MIN_SPEED } from './timing'
 import type { Frame } from './types'
+import { tt } from '@/lib/i18n'
 
 export interface EditPoints {
   /** Marks in the source, in project frames (out is exclusive). */
@@ -130,11 +131,11 @@ export function resolveEdit(pts: EditPoints, fps: number, mode: FourPointMode = 
 /** What an edit will do, in a line. */
 export function describeEdit(edit: ResolvedEdit, fps: number, timecode: (frame: Frame) => string): string {
   const secs = (f: number) => `${(f / fps).toFixed(f % fps === 0 ? 0 : 2)} s`
-  const kind = edit.points >= 4 ? 'Four-point' : edit.points === 3 ? 'Three-point' : edit.points === 0 ? 'At the playhead' : `${edit.points}-point`
+  const kind = edit.points >= 4 ? tt('Four-point') : edit.points === 3 ? tt('Three-point') : edit.points === 0 ? tt('At the playhead') : `${edit.points}-point`
   const parts = [`${kind}: ${secs(edit.duration)} at ${timecode(edit.start)}`]
-  if (edit.speed !== 1) parts.push(`fitted at ${edit.speed}×`)
-  if (edit.backtimed) parts.push('backtimed from the out point')
-  if (edit.short) parts.push(`${secs(edit.short)} short — the source runs out`)
-  if (edit.headLost) parts.push(`the first ${secs(edit.headLost)} fall before the start of the timeline`)
+  if (edit.speed !== 1) parts.push(tt('fitted at {0}×', edit.speed))
+  if (edit.backtimed) parts.push(tt('backtimed from the out point'))
+  if (edit.short) parts.push(tt('{0} short — the source runs out', secs(edit.short)))
+  if (edit.headLost) parts.push(tt('the first {0} fall before the start of the timeline', secs(edit.headLost)))
   return parts.join(' · ')
 }

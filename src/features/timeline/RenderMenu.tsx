@@ -35,7 +35,7 @@ export function RenderMenu() {
     if (!open) return
     void api.renders
       .usage()
-      .then((u) => setUsage(`${formatBytes(u.bytes)} of ${formatBytes(u.cap)} used by renders`))
+      .then((u) => setUsage(tt('{0} of {1} used by renders', formatBytes(u.bytes), formatBytes(u.cap))))
       .catch(() => setUsage(null))
   }
 

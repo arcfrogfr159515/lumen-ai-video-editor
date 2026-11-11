@@ -12,6 +12,7 @@ import type { CommandName } from './commands'
 import { generalize, instantiate, MacroError, madeBy, recordable, touches, wellFormed, type Macro, type MacroStep } from './macros'
 import { beginTransaction, dispatch, endTransaction, getProject, onDispatch, rollbackTo, savepoint, useEditor, type DispatchEvent } from './store'
 import type { Project } from './types'
+import { tt } from '@/lib/i18n'
 
 interface RecordedStep extends MacroStep {
   /** What the command answered with, for later steps that work on what it made. */
@@ -109,7 +110,7 @@ export function stopRecording(name?: string): Macro | null {
     return null
   }
   const taken = new Set(macros.map((m) => m.name.toLowerCase()))
-  let label = name?.trim() || 'Macro'
+  let label = name?.trim() || tt('Macro')
   for (let n = 2; taken.has(label.toLowerCase()); n++) label = `${name?.trim() || 'Macro'} ${n}`
   const macro: Macro = { id: uid('macro'), name: label, steps: recording.steps.map(({ command, input, title }) => ({ command, input, title })), createdAt: Date.now(), fps: getProject().settings.fps }
   useMacros.setState({ macros: [...macros, macro], lastId: macro.id, recording: null })
@@ -131,9 +132,9 @@ onDispatch((e) => {
   const recording = useMacros.getState().recording
   if (!recording || replaying || e.source !== 'user') return
   const note = (why: string) => useMacros.setState({ recording: { ...recording, skipped: recording.skipped.includes(why) ? recording.skipped : [...recording.skipped, why] } })
-  if (!recordable(e.name)) return void note(`${e.label} — macros hold edits to clips, not to media, tracks or timelines`)
+  if (!recordable(e.name)) return void note(tt('{0} — macros hold edits to clips, not to media, tracks or timelines', e.label))
   const context = (steps: RecordedStep[]) => ({ clipId: recording.clipId, results: steps.map((s) => s.result), made: steps.map((s) => s.made) })
-  if (!touches(e.name, e.input, e.before, context(recording.steps))) return void note(`${e.label} — it wasn’t made to the clip being recorded on`)
+  if (!touches(e.name, e.input, e.before, context(recording.steps))) return void note(tt('{0} — it wasn’t made to the clip being recorded on', e.label))
   const write = (earlier: RecordedStep[], origin: Project): RecordedStep => ({ command: e.name, input: generalize(e.name, e.input, origin, context(earlier)), title: e.label, result: e.result, made: madeBy(origin, e.after), origin, entry: e.entry })
   const last = recording.steps[recording.steps.length - 1]
   const earlier = recording.steps.slice(0, -1)
@@ -197,12 +198,12 @@ export function runMacro(macro: Macro, clipIds: readonly string[], source: 'user
   const run: MacroRun = { done: 0, failed: [] }
   // Recorded at another frame rate, its lengths are worth the same time here.
   const scale = macro.fps ? getProject().settings.fps / macro.fps : 1
-  const opened = beginTransaction(`Macro: ${macro.name}`, source)
+  const opened = beginTransaction(tt('Macro: {0}', macro.name), source)
   replaying = true
   try {
     for (const target of targets) {
       if (!getProject().clips[target.id]) {
-        run.failed.push({ clipId: target.id, name: target.name, why: 'an earlier run of the macro removed it' })
+        run.failed.push({ clipId: target.id, name: target.name, why: tt('an earlier run of the macro removed it') })
         continue
       }
       const mark = savepoint()
@@ -213,14 +214,14 @@ export function runMacro(macro: Macro, clipIds: readonly string[], source: 'user
           const was = getProject()
           const res = dispatch(step.command, instantiate(step, was, ctx, scale) as never, { label: step.title, source })
           if (!res.ok) {
-            why = `step ${n + 1} (${step.title}): ${res.error}`
+            why = tt('step {0} ({1}): {2}', n + 1, step.title, res.error)
             break
           }
           ctx.results.push(res.result)
           ctx.made.push(madeBy(was, getProject()))
         } catch (err) {
           if (!(err instanceof MacroError)) throw err
-          why = `step ${n + 1} (${step.title}): ${err.message}`
+          why = tt('step {0} ({1}): {2}', n + 1, step.title, err.message)
           break
         }
       }

@@ -16,6 +16,7 @@ import { constantRateFor, isUneven, needsFullCheck, rateLabel, timingFromMetrics
 import { dispatch, getProject } from '@/editor/store'
 import type { Asset, FrameTiming, OriginalMedia } from '@/editor/types'
 import { desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
 
 /** Copies being made: asset id → progress (0..1). */
 export const useConformJobs = create<{ jobs: Record<string, number> }>(() => ({ jobs: {} }))
@@ -94,8 +95,8 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
   setProgress(assetId, 0)
   try {
     const track = await input.getPrimaryVideoTrack()
-    if (!track) throw new Error('It has no video.')
-    const handle = api ? await api.files.beginConform(`${assetId}-${source.mtime ?? 0}-${String(rate).replace('.', '_')}fps`) : null
+    if (!track) throw new Error(tt('It has no video.'))
+    const handle = api ? await api.files.beginConform(tt('{0}-{1}-{2}fps', assetId, source.mtime ?? 0, String(rate).replace('.', '_'))) : null
     const memory = handle ? null : new BufferTarget()
     const target = handle
       ? new StreamTarget(new WritableStream<StreamTargetChunk>({ write: (chunk) => api!.export.write(handle.id, chunk.position, chunk.data.slice()) }), { chunked: true, chunkSize: 4 * 1024 * 1024 })
@@ -105,7 +106,7 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
     try {
       // H.264 where this computer can encode it at this size, else the next codec an MP4 can carry.
       const codec = await getFirstEncodableVideoCodec(format.getSupportedVideoCodecs(), { width: track.displayWidth, height: track.displayHeight })
-      if (!codec) throw new Error('This computer has no encoder for a video this size.')
+      if (!codec) throw new Error(tt('This computer has no encoder for a video this size.'))
       const conversion = await Conversion.init({
         input,
         output,
@@ -114,9 +115,9 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
         video: { frameRate: rate, codec, quality: QUALITY_VERY_HIGH, keyFrameInterval: 2, forceTranscode: true },
         showWarnings: false,
       })
-      if (!conversion.isValid) throw new Error('This video can’t be re-encoded on this computer.')
+      if (!conversion.isValid) throw new Error(tt('This video can’t be re-encoded on this computer.'))
       // The sound goes along as it is where an MP4 can hold it, re-encoded where it can't — but never left behind.
-      if ((await input.getPrimaryAudioTrack()) && !conversion.utilizedTracks.some((t) => t.isAudioTrack())) throw new Error('Its sound can’t be carried over into the copy on this computer.')
+      if ((await input.getPrimaryAudioTrack()) && !conversion.utilizedTracks.some((t) => t.isAudioTrack())) throw new Error(tt('Its sound can’t be carried over into the copy on this computer.'))
       conversion.onProgress = (p) => setProgress(assetId, p)
       cancels.set(assetId, () => void conversion.cancel())
       await conversion.execute()
@@ -125,12 +126,12 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
       if (handle && api) {
         const done = await api.export.finish(handle.id)
         const info = await api.files.urlForPath(done.path)
-        if (!info) throw new Error('The copy went missing.')
+        if (!info) throw new Error(tt('The copy went missing.'))
         next = { url: info.url, path: info.path, fileName: info.name, size: info.size, mtime: info.mtime }
       } else {
         const bytes = memory!.buffer
-        if (!bytes) throw new Error('Nothing was written.')
-        next = { url: URL.createObjectURL(new Blob([bytes], { type: 'video/mp4' })), fileName: `${asset.name} (${rateLabel(rate)} fps).mp4`, size: bytes.byteLength }
+        if (!bytes) throw new Error(tt('Nothing was written.'))
+        next = { url: URL.createObjectURL(new Blob([bytes], { type: 'video/mp4' })), fileName: tt('{0} ({1} fps).mp4', asset.name, rateLabel(rate)), size: bytes.byteLength }
       }
       // What the copy actually is, read back from it rather than assumed.
       const read = await readFrameTiming(next.url).catch(() => ({ timing: null, fps: undefined, duration: undefined }))
@@ -162,7 +163,7 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
             ...(still.proxy ? { proxy: null } : {}),
           },
         },
-        { label: `Constant ${rateLabel(rate)} fps copy of ${asset.name}` },
+        { label: tt('Constant {0} fps copy of {1}', rateLabel(rate), asset.name) },
       )
       if (!res.ok) throw new Error(res.error)
       return true
@@ -179,13 +180,13 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
 
 /** conformAsset with the outcome shown as a toast. */
 export async function conformWithToast(assetId: string, fps?: number) {
-  const name = getProject().assets[assetId]?.name ?? 'Video'
+  const name = getProject().assets[assetId]?.name ?? tt('Video')
   try {
     const ok = await conformAsset(assetId, fps)
-    if (ok) toast.success(`${name} now plays a constant-frame-rate copy`, { description: desktop ? 'The original file is untouched. Undo, or “Use the original”, goes back to it.' : 'Kept in memory for this session — the desktop app keeps it on disk.' })
+    if (ok) toast.success(tt('{0} now plays a constant-frame-rate copy', name), { description: desktop ? tt('The original file is untouched. Undo, or “Use the original”, goes back to it.') : tt('Kept in memory for this session — the desktop app keeps it on disk.') })
     return ok
   } catch (err) {
-    if (err instanceof Error && err.name === 'ConversionCanceledError') toast('Stopped', { description: `${name} still plays the original file.` })
+    if (err instanceof Error && err.name === 'ConversionCanceledError') toast(tt('Stopped'), { description: tt('{0} still plays the original file.', name) })
     else toast.error('Couldn’t make a constant-frame-rate copy', { description: `${name}: ${err instanceof Error ? err.message : String(err)}` })
     return false
   }

@@ -29,7 +29,7 @@ function newTimeline(settings?: { width: number; height: number }, name?: string
 /** A copy of the open timeline in another shape, reframed to fit (one undo step). */
 function reshapedCopy(width: number, height: number, label: string) {
   const p = getProject()
-  useEditor.getState().transaction(`${label} copy`, 'user', () => {
+  useEditor.getState().transaction(tt('{0} copy', label), 'user', () => {
     const res = dispatch('sequence.duplicate', { id: openSequenceId(p), name: `${openSequenceName(p)} · ${label}`, open: true })
     if (res.ok) reframe(width, height, 'user')
   })
@@ -43,7 +43,7 @@ function deleteTimeline(id: string) {
   if (uses.length) return void toast(tt('“{0}” is nested in {1}', seq.name, uses.map((u) => `“${u.name}”`).join(', ')), { description: tt('Remove it there first.') })
   const others = allSequences(p).filter((s) => s.id !== id)
   if (!others.length) return
-  useEditor.getState().transaction(`Delete ${seq.name}`, 'user', () => {
+  useEditor.getState().transaction(tt('Delete {0}', seq.name), 'user', () => {
     if (id === openSequenceId(getProject())) dispatch('sequence.open', { id: others[0].id })
     const res = dispatch('sequence.delete', { id })
     if (!res.ok) toast(res.error)
@@ -99,7 +99,7 @@ export function TimelineSwitcher() {
               {tt('Same shape')}{' '}<span className="ml-auto text-fg-4">{settings.width}×{settings.height}</span>
             </MenuItem>
             {PRESETS.map((p) => (
-              <MenuItem key={p.id} onSelect={() => newTimeline({ width: p.width, height: p.height }, `${p.label} timeline`)}>
+              <MenuItem key={p.id} onSelect={() => newTimeline({ width: p.width, height: p.height }, tt('{0} timeline', p.label))}>
                 {p.label} <span className="ml-auto text-fg-4">{p.hint.split(' · ')[0]}</span>
               </MenuItem>
             ))}

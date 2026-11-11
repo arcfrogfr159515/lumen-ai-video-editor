@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { transcribeSpeech, transcribers, TRANSCRIBER_NAMES } from '@/project/transcribe'
 import { onWhisperProgress } from '@/project/whisper'
+import { tt } from '@/lib/i18n'
 
 type VoiceState = 'idle' | 'recording' | 'transcribing'
 
@@ -33,7 +34,7 @@ export function useVoiceInput(onText: (text: string) => void) {
       let toastId: string | number | undefined
       const off = onWhisperProgress((m) => {
         if (m.type === 'progress' && m.status === 'progress' && m.total && m.total > 5_000_000) {
-          toastId = toast.loading(`Downloading the speech model… ${Math.round(m.progress ?? 0)}%`, { id: toastId, description: 'One time, about 75 MB. Then it works offline.' })
+          toastId = toast.loading(tt('Downloading the speech model… {0}%', Math.round(m.progress ?? 0)), { id: toastId, description: tt('One time, about 75 MB. Then it works offline.') })
         }
       })
       try {
@@ -43,7 +44,7 @@ export function useVoiceInput(onText: (text: string) => void) {
         const text = await transcribeSpeech(buffer)
         if (toastId !== undefined) toast.dismiss(toastId)
         if (text) onText(text)
-        else toast('Didn’t catch that', { description: 'Nothing was heard in the recording.' })
+        else toast(tt('Didn’t catch that'), { description: tt('Nothing was heard in the recording.') })
       } catch (err) {
         if (toastId !== undefined) toast.dismiss(toastId)
         toast.error('Voice input failed', { description: `${TRANSCRIBER_NAMES[using]}: ${err instanceof Error ? err.message : String(err)}` })

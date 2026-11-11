@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { between, choice, flag, kept, quietStorage } from '@/lib/persisted'
 import { useEditor } from './store'
+import { tt } from '@/lib/i18n'
 
 export type LeftTab = 'media' | 'audio' | 'text' | 'effects' | 'transitions' | 'looks' | 'script' | 'notes' | 'generate'
 export type RightTab = 'inspector' | 'mixer' | 'copilot'
@@ -15,20 +16,20 @@ export const ZOOM_MAX = 720
 /** How much of the viewer's resolution the preview renders: 1 = full, 0.5 = half… Auto adapts while playing. */
 export type PreviewRes = 'auto' | 1 | 0.5 | 0.25 | 0.125
 export const PREVIEW_RES: { value: PreviewRes; label: string; hint: string }[] = [
-  { value: 'auto', label: 'Auto', hint: 'Full resolution, stepping down while playing when this computer can’t keep up' },
-  { value: 1, label: 'Full', hint: 'Every pixel of the viewer' },
-  { value: 0.5, label: '1/2', hint: 'Half resolution — about four times less work' },
-  { value: 0.25, label: '1/4', hint: 'Quarter resolution — for heavy effects on slower computers' },
-  { value: 0.125, label: '1/8', hint: 'Draft — the lightest preview' },
+  { value: 'auto', label: tt('Auto'), hint: tt('Full resolution, stepping down while playing when this computer can’t keep up') },
+  { value: 1, label: tt('Full'), hint: tt('Every pixel of the viewer') },
+  { value: 0.5, label: '1/2', hint: tt('Half resolution — about four times less work') },
+  { value: 0.25, label: '1/4', hint: tt('Quarter resolution — for heavy effects on slower computers') },
+  { value: 0.125, label: '1/8', hint: tt('Draft — the lightest preview') },
 ]
 
 /** Render previews' resolution, as a fraction of the project's. */
 export type RenderRes = 1 | 0.5 | 0.25 | 0.125
 export const RENDER_RES: { value: RenderRes; label: string; hint: string }[] = [
-  { value: 1, label: 'Full', hint: 'Every pixel — the slowest to render and the largest files' },
-  { value: 0.5, label: '1/2', hint: 'Half resolution, upscaled on playback — the best balance' },
-  { value: 0.25, label: '1/4', hint: 'Quarter resolution — renders four times faster than 1/2' },
-  { value: 0.125, label: '1/8', hint: 'Draft — renders in moments' },
+  { value: 1, label: tt('Full'), hint: tt('Every pixel — the slowest to render and the largest files') },
+  { value: 0.5, label: '1/2', hint: tt('Half resolution, upscaled on playback — the best balance') },
+  { value: 0.25, label: '1/4', hint: tt('Quarter resolution — renders four times faster than 1/2') },
+  { value: 0.125, label: '1/8', hint: tt('Draft — renders in moments') },
 ]
 
 /** How lower-resolution pictures (previews, renders) are scaled up to the viewer. */

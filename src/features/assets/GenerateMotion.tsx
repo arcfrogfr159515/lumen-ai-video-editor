@@ -117,17 +117,17 @@ function nameFor(template: Template, v: Record<string, unknown>) {
   const plain = (s: unknown) => String(s ?? '').replace(/[*|]/g, ' ').replace(/\s+/g, ' ').trim()
   switch (template) {
     case 'lower-third':
-      return `Lower third — ${plain(v.name)}`
+      return tt('Lower third — {0}', plain(v.name))
     case 'title-card':
-      return `Title — ${plain(v.title)}`
+      return tt('Title — {0}', plain(v.title))
     case 'kinetic':
-      return `Kinetic — ${plain(v.text)}`
+      return tt('Kinetic — {0}', plain(v.text))
     case 'counter':
-      return `Counter — ${v.value}${v.suffix ?? ''}`
+      return tt('Counter — {0}{1}', v.value, v.suffix ?? '')
     case 'quote':
-      return `Quote — ${plain(v.text)}`
+      return tt('Quote — {0}', plain(v.text))
     case 'chapter':
-      return `Chapter ${plain(v.number)} — ${plain(v.title)}`
+      return tt('Chapter {0} — {1}', plain(v.number), plain(v.title))
   }
 }
 
@@ -137,11 +137,11 @@ export function GenerateMotion() {
   const settings = useEditor((s) => s.project.settings)
   const [template, setTemplate] = useState<Template>('lower-third')
   const [values, setValues] = useState<Record<Template, Record<string, unknown>>>({
-    'lower-third': { name: 'Your Name', title: tt('Your role'), accent: '#d6ee00', style: 'editorial' },
+    'lower-third': { name: tt('Your Name'), title: tt('Your role'), accent: '#d6ee00', style: 'editorial' },
     'title-card': { title: tt('Your *title*'), subtitle: '', eyebrow: '', accent: '#d6ee00', style: 'editorial', font: 'editorial' },
-    kinetic: { text: 'Say it *loud*', style: 'punch', accent: '#d6ee00' },
+    kinetic: { text: tt('Say it *loud*'), style: 'punch', accent: '#d6ee00' },
     counter: { value: 100, suffix: '%', label: '', accent: '#d6ee00' },
-    quote: { text: 'Simplicity is the ultimate sophistication.', author: '', accent: '#d6ee00', font: 'editorial' },
+    quote: { text: tt('Simplicity is the ultimate sophistication.'), author: '', accent: '#d6ee00', font: 'editorial' },
     chapter: { number: '01', title: tt('Chapter title'), accent: '#d6ee00', font: 'display' },
   })
   const [busy, setBusy] = useState(false)
@@ -189,8 +189,8 @@ export function GenerateMotion() {
 
         {template === 'lower-third' && (
           <>
-            <Labeled label={tt('Name')}>{text('name', 'Name')}</Labeled>
-            <Labeled label={tt('Title')}>{text('title', 'Role or title')}</Labeled>
+            <Labeled label={tt('Name')}>{text('name', tt('Name'))}</Labeled>
+            <Labeled label={tt('Title')}>{text('title', tt('Role or title'))}</Labeled>
             <div className="flex gap-1">
               {(['left', 'right'] as const).map((a) => (
                 <Chip key={a} active={(v.align ?? 'left') === a} onClick={() => set('align', a)}>
@@ -202,14 +202,14 @@ export function GenerateMotion() {
         )}
         {template === 'title-card' && (
           <>
-            <Labeled label={tt('Title')}>{text('title', 'Title — | breaks a line, *word* for emphasis')}</Labeled>
-            <Labeled label={tt('Subtitle')}>{text('subtitle', 'Optional')}</Labeled>
-            <Labeled label={tt('Eyebrow')}>{text('eyebrow', 'Optional small line above')}</Labeled>
+            <Labeled label={tt('Title')}>{text('title', tt('Title — | breaks a line, *word* for emphasis'))}</Labeled>
+            <Labeled label={tt('Subtitle')}>{text('subtitle', tt('Optional'))}</Labeled>
+            <Labeled label={tt('Eyebrow')}>{text('eyebrow', tt('Optional small line above'))}</Labeled>
           </>
         )}
         {template === 'kinetic' && (
           <>
-            <Labeled label={tt('Words')}>{text('text', 'Words, *emphasis* in stars')}</Labeled>
+            <Labeled label={tt('Words')}>{text('text', tt('Words, *emphasis* in stars'))}</Labeled>
             <p className="-mt-2 text-2xs text-fg-4">{tt('Wrap a word in *stars* to highlight it.')}</p>
           </>
         )}
@@ -222,19 +222,19 @@ export function GenerateMotion() {
               <Labeled label={tt('Prefix')}>{text('prefix', '$')}</Labeled>
               <Labeled label={tt('Suffix')}>{text('suffix', '%')}</Labeled>
             </div>
-            <Labeled label={tt('Label')}>{text('label', 'What the number means')}</Labeled>
+            <Labeled label={tt('Label')}>{text('label', tt('What the number means'))}</Labeled>
           </>
         )}
         {template === 'quote' && (
           <>
-            <Labeled label={tt('Quote')}>{text('text', 'The words')}</Labeled>
-            <Labeled label={tt('Who said it')}>{text('author', 'Optional')}</Labeled>
+            <Labeled label={tt('Quote')}>{text('text', tt('The words'))}</Labeled>
+            <Labeled label={tt('Who said it')}>{text('author', tt('Optional'))}</Labeled>
           </>
         )}
         {template === 'chapter' && (
           <div className="grid grid-cols-[64px_1fr] gap-2">
             <Labeled label={tt('No.')}>{text('number', '01')}</Labeled>
-            <Labeled label={tt('Title')}>{text('title', 'Chapter title')}</Labeled>
+            <Labeled label={tt('Title')}>{text('title', tt('Chapter title'))}</Labeled>
           </div>
         )}
 

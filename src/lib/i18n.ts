@@ -89,7 +89,30 @@ export function fill(text: string, args: readonly unknown[]): string {
   return args.length ? text.replace(/\{(\d+)\}/g, (place, at) => (Number(at) < args.length ? String(args[Number(at)]) : place)) : text
 }
 
+/**
+ * Marks a name that is kept in English as data — something code looks things up by, or that is saved in a
+ * project — and is translated only where it is shown, with `tt(value)`. It answers with what it was given.
+ */
+export const tm = <T extends string>(text: T): T => text
+
 /** A sentence of the interface, in this window's language. */
 export function tt(text: string, ...args: unknown[]): string {
   return fill(translation(text), args)
+}
+
+/**
+ * The same words where they mean something else: `ttc('fade', 'In')` is "In" as it is said of a fade. The
+ * dictionary has it as `In ⟦fade⟧`; without that entry it is whatever "In" is elsewhere.
+ */
+export function ttc(context: string, text: string, ...args: unknown[]): string {
+  const dictionary = DICTIONARIES[language]
+  return fill(dictionary?.[`${text} ⟦${context}⟧`] ?? dictionary?.[text] ?? text, args)
+}
+
+/**
+ * A count with what is counted: `counted(3, 'clip')` is "3 clips", `counted(1, 'clip')` "1 clip" — or whatever
+ * the dictionary has for `{0} clips` and `{0} clip`, in a language that may not tell one from many at all.
+ */
+export function counted(n: number, one: string, many = `${one}s`): string {
+  return tt(n === 1 ? `{0} ${one}` : `{0} ${many}`, n)
 }

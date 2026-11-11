@@ -11,6 +11,7 @@ import { captionStyle, layCaptions, type CaptionStyle } from './subtitles'
 import { cutRanges, timelineScript } from './text-edit'
 import { consumed, localForSource } from './timing'
 import type { Clip, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 const ai = { source: 'ai' as const }
 
@@ -248,7 +249,7 @@ export function cutSpokenWords(indexes: readonly number[], opts: { label?: strin
   if (!ranges.length) return out
   const keepWhole = bedClips(project)
   const source = opts.source ?? 'user'
-  useEditor.getState().transaction(opts.label ?? `Delete ${indexes.length} word${indexes.length === 1 ? '' : 's'}`, source, () => {
+  useEditor.getState().transaction(opts.label ?? tt('Delete {0} word{1}', indexes.length, indexes.length === 1 ? '' : 's'), source, () => {
     // Last stretch first, so the earlier ones are still where they were found.
     for (const [start, end] of [...ranges].reverse()) {
       const res = dispatch('timeline.removeRange', { start, end, keepWhole }, { source })
@@ -274,7 +275,7 @@ export async function removePauses(opts: { clipIds?: string[]; minGap?: number }
   const joins: number[] = []
   let removed = 0
   let seconds = 0
-  useEditor.getState().transaction('Remove pauses', 'ai', () => {
+  useEditor.getState().transaction(tt('Remove pauses'), 'ai', () => {
     // Last stretch first, so earlier positions stay valid as later ones close up.
     for (const [a, b] of [...cuts].reverse()) {
       if (!dispatch('timeline.removeRange', { start: a, end: b, keepWhole }, ai).ok) continue
@@ -353,7 +354,7 @@ export function addCaptions(opts: { maxWords?: number; size?: number; y?: number
     }
   }
   if (!lines.length) return { added: 0, trackId: null as string | null }
-  const { ids, trackId } = layCaptions(lines, { label: 'Add captions', source: opts.source ?? 'ai', size: opts.size, y: opts.y, uppercase: opts.uppercase, style: opts.style, accent: opts.accent })
+  const { ids, trackId } = layCaptions(lines, { label: tt('Add captions'), source: opts.source ?? 'ai', size: opts.size, y: opts.y, uppercase: opts.uppercase, style: opts.style, accent: opts.accent })
   return { added: ids.length, trackId }
 }
 
@@ -389,7 +390,7 @@ export async function duckMusic(opts: { depth?: number; musicClipIds?: string[];
   regions = merged
   const ramp = Math.round(fps * 0.25)
   let ducked = 0
-  useEditor.getState().transaction('Duck music under speech', 'ai', () => {
+  useEditor.getState().transaction(tt('Duck music under speech'), 'ai', () => {
     for (const m of music) {
       const base = m.audio.volume
       const kfs: { frame: number; value: number }[] = []
@@ -427,7 +428,7 @@ export function reframe(width: number, height: number, source: 'user' | 'ai' = '
   const sx = width / W0
   const sy = height / H0
   const textScale = Math.sqrt(Math.min(sx, sy) * Math.max(Math.min(sx, sy), 0.5))
-  useEditor.getState().transaction(`Canvas ${width}×${height}`, source, () => {
+  useEditor.getState().transaction(tt('Canvas {0}×{1}', width, height), source, () => {
     dispatch('project.update', { settings: { width, height } }, how)
     for (const c of Object.values(getProject().clips)) {
       if (c.kind === 'text') {
@@ -468,11 +469,11 @@ export async function suggestFor(project: Project): Promise<Suggestion | null> {
     const secs = cuts.reduce((s, [a, b]) => s + b - a, 0) / project.settings.fps
     return {
       id: `pauses-${count}-${Math.round(secs * 10)}`,
-      text: `${count} long pauses (${secs.toFixed(1)}s) in your speech`,
-      action: 'Tighten',
+      text: tt('{0} long pauses ({1}s) in your speech', count, secs.toFixed(1)),
+      action: tt('Tighten'),
       run: async () => {
         const r = await removePauses()
-        return `Removed ${r.removed} pauses (${r.seconds.toFixed(1)}s)`
+        return tt('Removed {0} pauses ({1}s)', r.removed, r.seconds.toFixed(1))
       },
     }
   }
@@ -480,11 +481,11 @@ export async function suggestFor(project: Project): Promise<Suggestion | null> {
   if (music.length && !music.some((m) => m.keyframes.volume?.length)) {
     return {
       id: 'duck',
-      text: 'Music plays at full level under speech',
-      action: 'Duck it',
+      text: tt('Music plays at full level under speech'),
+      action: tt('Duck it'),
       run: async () => {
         const r = await duckMusic()
-        return r.ducked ? `Ducked ${r.ducked} music clip${r.ducked > 1 ? 's' : ''} under ${r.regions} stretches of speech` : 'Nothing to duck'
+        return r.ducked ? tt('Ducked {0} music clip{1} under {2} stretches of speech', r.ducked, r.ducked > 1 ? 's' : '', r.regions) : tt('Nothing to duck')
       },
     }
   }

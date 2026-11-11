@@ -16,10 +16,10 @@ import { ttx } from '@/lib/i18n-react'
 
 /** What Chromium calls its features, in the editor's words. */
 const FEATURES: [key: string, label: string][] = [
-  ['gpu_compositing', 'Drawing the editor'],
-  ['webgl', 'Grading, mattes and 3D'],
-  ['video_decode', 'Playing video'],
-  ['video_encode', 'Encoding exports'],
+  ['gpu_compositing', tt('Drawing the editor')],
+  ['webgl', tt('Grading, mattes and 3D')],
+  ['video_decode', tt('Playing video')],
+  ['video_encode', tt('Encoding exports')],
 ]
 
 const featureState = (value: string | undefined) => (!value ? 'unknown' : value.startsWith('enabled') ? 'on' : value.includes('software') ? 'software' : 'off')

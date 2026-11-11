@@ -10,6 +10,7 @@ import { placeAsset } from '@/editor/placement'
 import { usePlayback } from '@/editor/playback'
 import { dispatch, getProject, useEditor } from '@/editor/store'
 import { useUI } from '@/editor/ui-store'
+import { tt } from '@/lib/i18n'
 
 interface MediaSelection {
   ids: string[]
@@ -44,7 +45,7 @@ export const clearMediaSelection = () => useMediaSelection.setState({ ids: [], a
 export function addMediaAtPlayhead(ids: string[]) {
   let at = usePlayback.getState().frame
   const placed: string[] = []
-  useEditor.getState().transaction(ids.length > 1 ? `Add ${ids.length} clips` : 'Add clip', 'user', () => {
+  useEditor.getState().transaction(ids.length > 1 ? tt('Add {0} clips', ids.length) : tt('Add clip'), 'user', () => {
     for (const id of ids) {
       const clipId = placeAsset(id, at)
       if (!clipId) continue
@@ -65,9 +66,9 @@ export function removeMedia(ids: string[]) {
   const res = dispatch('asset.remove', { ids })
   if (!res.ok) return void toast.error(res.error)
   clearMediaSelection()
-  const what = `${ids.length} media item${ids.length === 1 ? '' : 's'}`
-  toast(`Removed ${what}${clips ? ` and ${clips} clip${clips === 1 ? '' : 's'} using ${ids.length === 1 ? 'it' : 'them'}` : ''}`, {
-    action: { label: 'Undo', onClick: () => useEditor.getState().undo() },
+  const what = tt('{0} media item{1}', ids.length, ids.length === 1 ? '' : 's')
+  toast(tt('Removed {0}{1}', what, clips ? (' ' + tt('and {0} clip{1} using {2}', clips, clips === 1 ? '' : 's', ids.length === 1 ? tt('it') : tt('them'))) : ''), {
+    action: { label: tt('Undo'), onClick: () => useEditor.getState().undo() },
   })
 }
 
@@ -75,7 +76,7 @@ export function removeMedia(ids: string[]) {
 export function toggleFavorite(ids: string[]) {
   const assets = getProject().assets
   const all = ids.every((id) => assets[id]?.favorite)
-  useEditor.getState().transaction(all ? 'Remove from favorites' : 'Add to favorites', 'user', () => {
+  useEditor.getState().transaction(all ? tt('Remove from favorites') : tt('Add to favorites'), 'user', () => {
     for (const id of ids) if (assets[id]) dispatch('asset.update', { id, patch: { favorite: !all } })
   })
 }

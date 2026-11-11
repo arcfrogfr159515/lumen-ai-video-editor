@@ -9,6 +9,7 @@ import { clamp } from '@/lib/math'
 import { bezier, easeAt, type Easing } from './easing'
 import { isRamped, MAX_SPEED, MIN_SPEED } from './timing'
 import type { Clip } from './types'
+import { tt } from '@/lib/i18n'
 
 export interface CurvePoint {
   /** Where along the clip, 0 (its start) to 1 (its end). */
@@ -107,11 +108,11 @@ export function easingOf(h: Handles): Easing {
 
 /** The shapes a segment can be given in one go. */
 export const SEGMENT_SHAPES: { id: Easing; label: string; hint: string }[] = [
-  { id: 'ease', label: 'Smooth', hint: 'Eases out of one speed and into the next' },
-  { id: 'linear', label: 'Straight', hint: 'Changes speed at a steady rate' },
-  { id: 'ease-in', label: 'Late', hint: 'Holds on, then changes quickly at the end' },
-  { id: 'ease-out', label: 'Early', hint: 'Changes quickly, then settles' },
-  { id: 'hold', label: 'Hold', hint: 'Stays at this speed, then jumps to the next' },
+  { id: 'ease', label: tt('Smooth'), hint: tt('Eases out of one speed and into the next') },
+  { id: 'linear', label: tt('Straight'), hint: tt('Changes speed at a steady rate') },
+  { id: 'ease-in', label: tt('Late'), hint: tt('Holds on, then changes quickly at the end') },
+  { id: 'ease-out', label: tt('Early'), hint: tt('Changes quickly, then settles') },
+  { id: 'hold', label: tt('Hold'), hint: tt('Stays at this speed, then jumps to the next') },
 ]
 
 const clampSpeed = (s: number) => clamp(s, MIN_SPEED, MAX_SPEED)

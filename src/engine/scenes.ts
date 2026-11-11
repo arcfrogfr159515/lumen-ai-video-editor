@@ -6,6 +6,7 @@
  */
 import type { Asset } from '@/editor/types'
 import { scanFrames } from './analysis'
+import { tt } from '@/lib/i18n'
 
 /** HSV per pixel (hue 0..180, saturation and value 0..255), like OpenCV's. */
 export function toHsv(rgba: Uint8ClampedArray, out: Float32Array = new Float32Array((rgba.length / 4) * 3)): Float32Array {
@@ -98,8 +99,8 @@ export interface SceneReport {
  * Shot changes in source seconds [from, to) of a video. `onProgress` gets 0..1.
  */
 export async function detectScenes(asset: Asset, from: number, to: number, opts: SceneOptions = {}, onProgress?: (p: number) => void, signal?: AbortSignal): Promise<SceneReport> {
-  if (asset.kind !== 'video' || asset.source.type !== 'file') throw new Error(`“${asset.name}” isn’t a video file.`)
-  if (asset.source.missing) throw new Error(`“${asset.name}” is offline — its file can’t be found.`)
+  if (asset.kind !== 'video' || asset.source.type !== 'file') throw new Error(tt('“{0}” isn’t a video file.', asset.name))
+  if (asset.source.missing) throw new Error(tt('“{0}” is offline — its file can’t be found.', asset.name))
   const fps = asset.fps ?? 30
   const times: number[] = []
   const scores: number[] = []

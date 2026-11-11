@@ -142,13 +142,13 @@ export function Storyboard() {
         const ids = sel.includes(what.card.clipId) ? cards.filter((c) => sel.includes(c.clipId)).map((c) => c.clipId) : [what.card.clipId]
         const hit = cardAt(ev.clientX, ev.clientY)
         if (!hit) return
-        applyMoves(cardMoves(sections, ids, hit.before), ids.length === 1 ? 'Move a card' : `Move ${ids.length} cards`)
+        applyMoves(cardMoves(sections, ids, hit.before), ids.length === 1 ? tt('Move a card') : tt('Move {0} cards', ids.length))
         useUI.getState().select(ids)
       } else {
         const hit = sectionAt(ev.clientX, ev.clientY)
         if (!hit) return
         const m = sectionMove(sections, what.section.id, hit.before)
-        if (m) applyMoves([m], `Move “${what.section.title || 'section'}”`)
+        if (m) applyMoves([m], tt('Move “{0}”', what.section.title || tt('section')))
       }
     }
     window.addEventListener('pointermove', move)
@@ -164,7 +164,7 @@ export function Storyboard() {
     // Where the group sits among the others, then one along.
     const at = cards.slice(0, first).filter((c) => !ids.includes(c.clipId)).length + step
     if (at < 0 || at > rest.length) return
-    applyMoves(cardMoves(sections, ids, rest[at]?.clipId ?? null), step > 0 ? 'Move later' : 'Move earlier')
+    applyMoves(cardMoves(sections, ids, rest[at]?.clipId ?? null), step > 0 ? tt('Move later') : tt('Move earlier'))
   }
 
   const onKeyDown = (e: ReactKeyboardEvent) => {

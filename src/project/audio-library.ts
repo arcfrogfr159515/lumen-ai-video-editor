@@ -13,6 +13,7 @@ import { renderSfx, SFX } from '@/engine/sfx'
 import { encodeWav, resample } from '@/engine/wav'
 import { uid } from '@/lib/id'
 import { desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
 
 // ─── Sound effects ───────────────────────────────────────────────────────
 
@@ -37,7 +38,7 @@ function remember(id: string, path: string) {
 
 export function sfxBuffer(id: string) {
   const def = SFX.find((s) => s.id === id)
-  if (!def) return Promise.reject(new Error('Unknown sound effect'))
+  if (!def) return Promise.reject(new Error(tt('Unknown sound effect')))
   let p = rendered.get(id)
   if (!p) {
     p = renderSfx(def)
@@ -47,7 +48,7 @@ export function sfxBuffer(id: string) {
 }
 
 async function sfxFile(id: string): Promise<MediaFileInfo> {
-  if (!desktop) throw new Error('Needs the desktop app.')
+  if (!desktop) throw new Error(tt('Needs the desktop app.'))
   const known = registry()[id]
   if (known) {
     const info = await desktop.files.urlForPath(known)
@@ -62,7 +63,7 @@ async function sfxFile(id: string): Promise<MediaFileInfo> {
 /** The project asset for a built-in effect (created on first use). */
 export async function sfxAsset(id: string): Promise<string> {
   const def = SFX.find((s) => s.id === id)
-  if (!def) throw new Error('Unknown sound effect')
+  if (!def) throw new Error(tt('Unknown sound effect'))
   const tag = `sfx:${id}`
   const existing = Object.values(getProject().assets).find((a) => a.tags?.includes(tag) && !(a.source.type === 'file' && a.source.missing))
   if (existing) return existing.id
@@ -79,7 +80,7 @@ export async function sfxAsset(id: string): Promise<string> {
     tags: [tag, 'sfx', def.category],
     addedAt: Date.now(),
   }
-  const res = dispatch('asset.add', { asset }, { label: `Add ${def.name}` })
+  const res = dispatch('asset.add', { asset }, { label: tt('Add {0}', def.name) })
   if (!res.ok) throw new Error(res.error)
   return asset.id
 }
@@ -186,7 +187,7 @@ export async function finishRecording(rec: Recording, name: string): Promise<Ass
   if (!rec.chunks.length || !desktop) return null
   const decoded = await new OfflineAudioContext(1, 1, 48000).decodeAudioData(await new Blob(rec.chunks).arrayBuffer())
   if (decoded.duration < 0.3) {
-    toast('Recording too short', { description: 'Hold the record button a little longer.' })
+    toast(tt('Recording too short'), { description: tt('Hold the record button a little longer.') })
     return null
   }
   const pcm = await resample(decoded, 48000, 1)
@@ -202,7 +203,7 @@ export async function finishRecording(rec: Recording, name: string): Promise<Ass
     tags: ['recording', 'voice'],
     addedAt: Date.now(),
   }
-  const res = dispatch('asset.add', { asset }, { label: 'Record voiceover' })
+  const res = dispatch('asset.add', { asset }, { label: tt('Record voiceover') })
   return res.ok ? asset : null
 }
 

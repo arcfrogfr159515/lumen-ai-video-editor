@@ -40,7 +40,7 @@ import { formatDuration } from '@/lib/time'
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
-const QUALITY_LABEL = (q: number) => (q < 30 ? 'Draft' : q < 60 ? 'Good' : q < 85 ? 'High' : 'Master')
+const QUALITY_LABEL = (q: number) => (q < 30 ? tt('Draft') : q < 60 ? tt('Good') : q < 85 ? tt('High') : tt('Master'))
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2)
 
 interface Size {
@@ -189,14 +189,14 @@ export function ExportDialog() {
   // What will really encode this, said plainly.
   const here = encoders[codec]
   const encoderHint = !here
-    ? 'Use the GPU encoder when available'
+    ? tt('Use the GPU encoder when available')
     : hw
       ? here.hardware
-        ? 'The graphics card encodes — fastest'
-        : 'No graphics-card encoder for this here — the processor will encode'
+        ? tt('The graphics card encodes — fastest')
+        : tt('No graphics-card encoder for this here — the processor will encode')
       : here.software
-        ? 'The processor encodes — slower, works everywhere'
-        : 'Only graphics cards encode this codec, so the graphics card will'
+        ? tt('The processor encodes — slower, works everywhere')
+        : tt('Only graphics cards encode this codec, so the graphics card will')
 
   const seconds = duration / projectFps
   const videoBits = info.video && !gif && !png ? videoBitrate(out.width, out.height, fps, codec, quality) : 0
@@ -228,7 +228,7 @@ export function ExportDialog() {
     }
   }
 
-  const request = () => ({ defaultName: name || 'Untitled', extension: info.extension, filterName: info.filter, folder: Boolean(info.folder) })
+  const request = () => ({ defaultName: name || tt('Untitled'), extension: info.extension, filterName: info.filter, folder: Boolean(info.folder) })
 
   const start = async () => {
     if (!desktop || running) return
@@ -265,7 +265,7 @@ export function ExportDialog() {
     if (!target) return
     const { project: p, settings } = job()
     const timelineName = timelines.find((t) => t.id === timelineId)?.name ?? openSequenceName(current)
-    const detail = info.video ? `${info.label} · ${out.width}×${out.height}${gif || png ? '' : ` · ${CODEC_LABEL[codec].split(' —')[0]}`}${transparent ? ' · alpha' : ''}` : `${info.label} audio`
+    const detail = info.video ? `${info.label} · ${out.width}×${out.height}${gif || png ? '' : ` · ${CODEC_LABEL[codec].split(' —')[0]}`}${transparent ? ' · alpha' : ''}` : tt('{0} audio', info.label)
     queueExport({ label: timelines.length > 1 ? `${name} · ${timelineName}` : name, detail, project: p, settings, target })
     // The dialog stays open, to queue another size, format or timeline.
     toast.success(tt('Added to the render queue'), {
@@ -292,7 +292,7 @@ export function ExportDialog() {
                     <div className="text-center">
                       <div className="text-3xl font-semibold tracking-tight text-white tabular">{Math.round(pct * 100)}%</div>
                       <div className="mt-1 text-xs text-white/70 tabular">
-                        {progress?.phase === 'rendering' ? `${info.video ? 'Frame' : 'Block'} ${progress.done} / ${progress.total}` : progress?.message}
+                        {progress?.phase === 'rendering' ? `${info.video ? tt('Frame') : tt('Block')} ${progress.done} / ${progress.total}` : progress?.message}
                       </div>
                     </div>
                   ) : (

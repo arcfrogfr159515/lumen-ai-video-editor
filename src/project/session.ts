@@ -12,6 +12,7 @@ import { getProject, migrateProject, useEditor } from '@/editor/store'
 import type { Project, ProjectSettings } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
 
 interface SessionState {
   /** The .lumen file this project was opened from / saved to (null = never saved). */
@@ -86,8 +87,8 @@ function load(data: Project, path: string | null) {
   useUI.getState().requestFit()
   if (repairs.length) {
     const shown = repairs.slice(0, 4).map((r) => r[0].toUpperCase() + r.slice(1))
-    toast.warning('This project was damaged and has been repaired', {
-      description: `${shown.join('. ')}.${repairs.length > shown.length ? ` And ${repairs.length - shown.length} more.` : ''} The file is as it was until you save.`,
+    toast.warning(tt('This project was damaged and has been repaired'), {
+      description: tt('{0}.{1} The file is as it was until you save.', shown.join('. '), repairs.length > shown.length ? (' ' + tt('And {0} more.', repairs.length - shown.length)) : ''),
       duration: 15000,
     })
   }
@@ -119,8 +120,8 @@ export async function openProject(path?: string) {
     load(JSON.parse(opened.text) as Project, opened.path)
     void refreshRecent()
     if (opened.missing.length) {
-      toast.warning(`${opened.missing.length} media file${opened.missing.length > 1 ? 's are' : ' is'} missing`, {
-        description: 'They were moved or deleted. Relink them from the Media panel.',
+      toast.warning(tt('{0} media file{1} missing', opened.missing.length, opened.missing.length > 1 ? tt('s are') : (' ' + tt('is'))), {
+        description: tt('They were moved or deleted. Relink them from the Media panel.'),
       })
       useUI.getState().setLeftTab('media')
     }
@@ -167,7 +168,7 @@ export async function saveProjectAs(): Promise<boolean> {
     void refreshRecent()
     if (snap.loads !== loads) return true
     markSaved(res.path, snap.version)
-    toast.success('Project saved', { description: res.path })
+    toast.success(tt('Project saved'), { description: res.path })
     return true
   } catch (err) {
     toast.error('Couldn’t save the project', { description: errorText(err) })
@@ -234,10 +235,10 @@ export async function restoreVersion(version: ProjectVersion, asCopy = false) {
       useSession.setState({ savedVersion: -1 })
     }
     syncWindow()
-    toast.success(asCopy ? 'Opened the version as a new project' : 'Version restored', {
-      description: asCopy ? 'Save it to keep it.' : 'Save to keep it — the state before the restore is in the version history.',
+    toast.success(asCopy ? tt('Opened the version as a new project') : tt('Version restored'), {
+      description: asCopy ? tt('Save it to keep it.') : tt('Save to keep it — the state before the restore is in the version history.'),
     })
-    if (opened.missing.length) toast.warning(`${opened.missing.length} media file${opened.missing.length > 1 ? 's are' : ' is'} missing`)
+    if (opened.missing.length) toast.warning(tt('{0} media file{1} missing', opened.missing.length, opened.missing.length > 1 ? tt('s are') : (' ' + tt('is'))))
     return true
   } catch (err) {
     toast.error('Couldn’t restore that version', { description: errorText(err) })
@@ -248,19 +249,19 @@ export async function restoreVersion(version: ProjectVersion, asCopy = false) {
 /** Copies the project and every media file into one folder the user picks. */
 export async function collectProject() {
   if (!desktop) return
-  const id = toast.loading('Collecting project…', { description: 'Choose a folder' })
+  const id = toast.loading(tt('Collecting project…'), { description: tt('Choose a folder') })
   const off = desktop.project.onCollectProgress((p) => {
     if (!p.total) return
-    toast.loading(`Collecting project… ${Math.round((p.done / p.total) * 100)}%`, { id, description: p.file || 'Writing the project file' })
+    toast.loading(tt('Collecting project… {0}%', Math.round((p.done / p.total) * 100)), { id, description: p.file || tt('Writing the project file') })
   })
   try {
     const res = await desktop.project.collect(getProject().name, serialize(getProject()))
     if (!res) return void toast.dismiss(id)
     const size = res.bytes >= 1e9 ? `${(res.bytes / 1e9).toFixed(2)} GB` : `${Math.max(1, Math.round(res.bytes / 1e6))} MB`
-    toast.success('Project collected', {
+    toast.success(tt('Project collected'), {
       id,
-      description: `${res.files} media file${res.files === 1 ? '' : 's'} (${size}) copied next to the project.${res.missing.length ? ` ${res.missing.length} missing file${res.missing.length > 1 ? 's' : ''} couldn’t be copied.` : ''}`,
-      action: { label: 'Open it', onClick: () => void openProject(res.path) },
+      description: tt('{0} media file{1} ({2}) copied next to the project.{3}', res.files, res.files === 1 ? '' : 's', size, res.missing.length ? (' ' + tt('{0} missing file{1} couldn’t be copied.', res.missing.length, res.missing.length > 1 ? 's' : '')) : ''),
+      action: { label: tt('Open it'), onClick: () => void openProject(res.path) },
       duration: 12000,
     })
   } catch (err) {

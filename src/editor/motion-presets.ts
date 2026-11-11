@@ -9,6 +9,7 @@
 import type { Easing } from './easing'
 import { propAt } from './keyframes'
 import type { AnimatableProp, Clip, Keyframe } from './types'
+import { tt } from '@/lib/i18n'
 
 export type PresetGroup = 'camera' | 'in' | 'out' | 'emphasis'
 
@@ -22,35 +23,35 @@ export interface MotionPreset {
 }
 
 export const MOTION_PRESETS: MotionPreset[] = [
-  { id: 'ken-burns', name: 'Ken Burns', group: 'camera', description: 'Slow push in with a gentle drift' },
-  { id: 'ken-burns-out', name: 'Ken Burns out', group: 'camera', description: 'Slow pull back with a gentle drift' },
-  { id: 'push-in', name: 'Push in', group: 'camera', description: 'Move in to focus — builds tension' },
-  { id: 'pull-out', name: 'Pull out', group: 'camera', description: 'Move back to reveal the scene' },
-  { id: 'pan-left', name: 'Pan left', group: 'camera', description: 'Glide across to the left' },
-  { id: 'pan-right', name: 'Pan right', group: 'camera', description: 'Glide across to the right' },
-  { id: 'tilt-up', name: 'Tilt up', group: 'camera', description: 'Glide upward' },
-  { id: 'tilt-down', name: 'Tilt down', group: 'camera', description: 'Glide downward' },
-  { id: 'drift', name: 'Drift', group: 'camera', description: 'Barely-there movement that keeps a still alive' },
-  { id: 'slide-in-left', name: 'Slide in ←', group: 'in', description: 'Arrives from the left', seconds: 0.6 },
-  { id: 'slide-in-right', name: 'Slide in →', group: 'in', description: 'Arrives from the right', seconds: 0.6 },
-  { id: 'slide-in-up', name: 'Slide in ↑', group: 'in', description: 'Rises into place', seconds: 0.6 },
-  { id: 'slide-in-down', name: 'Slide in ↓', group: 'in', description: 'Drops into place', seconds: 0.6 },
-  { id: 'pop-in', name: 'Pop in', group: 'in', description: 'Scales up with a little overshoot', seconds: 0.5 },
-  { id: 'fade-in', name: 'Fade in', group: 'in', description: 'Fades up', seconds: 0.5 },
-  { id: 'zoom-in', name: 'Zoom in', group: 'in', description: 'Settles in from slightly larger', seconds: 0.7 },
-  { id: 'drop-in', name: 'Drop in', group: 'in', description: 'Falls in and bounces', seconds: 0.8 },
-  { id: 'spin-in', name: 'Spin in', group: 'in', description: 'Turns into place', seconds: 0.7 },
-  { id: 'slide-out-left', name: 'Slide out ←', group: 'out', description: 'Leaves to the left', seconds: 0.45 },
-  { id: 'slide-out-right', name: 'Slide out →', group: 'out', description: 'Leaves to the right', seconds: 0.45 },
-  { id: 'slide-out-up', name: 'Slide out ↑', group: 'out', description: 'Leaves upward', seconds: 0.45 },
-  { id: 'slide-out-down', name: 'Slide out ↓', group: 'out', description: 'Leaves downward', seconds: 0.45 },
-  { id: 'pop-out', name: 'Pop out', group: 'out', description: 'Shrinks away', seconds: 0.4 },
-  { id: 'fade-out', name: 'Fade out', group: 'out', description: 'Fades away', seconds: 0.5 },
-  { id: 'zoom-out', name: 'Zoom out', group: 'out', description: 'Grows and fades away', seconds: 0.5 },
-  { id: 'punch', name: 'Punch', group: 'emphasis', description: 'A quick punch-in — land it on a beat', seconds: 0.35 },
-  { id: 'pulse', name: 'Pulse', group: 'emphasis', description: 'Two soft beats in scale', seconds: 0.6 },
-  { id: 'shake', name: 'Shake', group: 'emphasis', description: 'A short camera shake that settles', seconds: 0.45 },
-  { id: 'wobble', name: 'Wobble', group: 'emphasis', description: 'A playful rock side to side', seconds: 0.6 },
+  { id: 'ken-burns', name: tt('Ken Burns'), group: 'camera', description: tt('Slow push in with a gentle drift') },
+  { id: 'ken-burns-out', name: tt('Ken Burns out'), group: 'camera', description: tt('Slow pull back with a gentle drift') },
+  { id: 'push-in', name: tt('Push in'), group: 'camera', description: 'Move in to focus — builds tension' },
+  { id: 'pull-out', name: tt('Pull out'), group: 'camera', description: tt('Move back to reveal the scene') },
+  { id: 'pan-left', name: tt('Pan left'), group: 'camera', description: tt('Glide across to the left') },
+  { id: 'pan-right', name: tt('Pan right'), group: 'camera', description: tt('Glide across to the right') },
+  { id: 'tilt-up', name: tt('Tilt up'), group: 'camera', description: tt('Glide upward') },
+  { id: 'tilt-down', name: tt('Tilt down'), group: 'camera', description: tt('Glide downward') },
+  { id: 'drift', name: tt('Drift'), group: 'camera', description: tt('Barely-there movement that keeps a still alive') },
+  { id: 'slide-in-left', name: tt('Slide in ←'), group: 'in', description: tt('Arrives from the left'), seconds: 0.6 },
+  { id: 'slide-in-right', name: tt('Slide in →'), group: 'in', description: tt('Arrives from the right'), seconds: 0.6 },
+  { id: 'slide-in-up', name: tt('Slide in ↑'), group: 'in', description: tt('Rises into place'), seconds: 0.6 },
+  { id: 'slide-in-down', name: tt('Slide in ↓'), group: 'in', description: tt('Drops into place'), seconds: 0.6 },
+  { id: 'pop-in', name: tt('Pop in'), group: 'in', description: tt('Scales up with a little overshoot'), seconds: 0.5 },
+  { id: 'fade-in', name: tt('Fade in'), group: 'in', description: tt('Fades up'), seconds: 0.5 },
+  { id: 'zoom-in', name: tt('Zoom in'), group: 'in', description: tt('Settles in from slightly larger'), seconds: 0.7 },
+  { id: 'drop-in', name: tt('Drop in'), group: 'in', description: tt('Falls in and bounces'), seconds: 0.8 },
+  { id: 'spin-in', name: tt('Spin in'), group: 'in', description: tt('Turns into place'), seconds: 0.7 },
+  { id: 'slide-out-left', name: tt('Slide out ←'), group: 'out', description: tt('Leaves to the left'), seconds: 0.45 },
+  { id: 'slide-out-right', name: tt('Slide out →'), group: 'out', description: tt('Leaves to the right'), seconds: 0.45 },
+  { id: 'slide-out-up', name: tt('Slide out ↑'), group: 'out', description: tt('Leaves upward'), seconds: 0.45 },
+  { id: 'slide-out-down', name: tt('Slide out ↓'), group: 'out', description: tt('Leaves downward'), seconds: 0.45 },
+  { id: 'pop-out', name: tt('Pop out'), group: 'out', description: tt('Shrinks away'), seconds: 0.4 },
+  { id: 'fade-out', name: tt('Fade out'), group: 'out', description: tt('Fades away'), seconds: 0.5 },
+  { id: 'zoom-out', name: tt('Zoom out'), group: 'out', description: tt('Grows and fades away'), seconds: 0.5 },
+  { id: 'punch', name: tt('Punch'), group: 'emphasis', description: tt('A quick punch-in — land it on a beat'), seconds: 0.35 },
+  { id: 'pulse', name: tt('Pulse'), group: 'emphasis', description: tt('Two soft beats in scale'), seconds: 0.6 },
+  { id: 'shake', name: tt('Shake'), group: 'emphasis', description: tt('A short camera shake that settles'), seconds: 0.45 },
+  { id: 'wobble', name: tt('Wobble'), group: 'emphasis', description: tt('A playful rock side to side'), seconds: 0.6 },
 ]
 
 export const PRESET_IDS = MOTION_PRESETS.map((p) => p.id) as [string, ...string[]]
@@ -96,7 +97,7 @@ export function presetRange(clip: Clip, preset: MotionPreset, fps: number, opts:
  */
 export function presetKeyframes(clip: Clip, presetId: string, frame: Frame, opts: AnimateOptions = {}): { keys: Keys; range: [number, number] } {
   const preset = MOTION_PRESETS.find((p) => p.id === presetId)
-  if (!preset) throw new Error(`Unknown motion preset “${presetId}”`)
+  if (!preset) throw new Error(tt('Unknown motion preset “{0}”', presetId))
   const [a, b] = presetRange(clip, preset, frame.fps, opts)
   const k = Math.max(0.1, Math.min(3, opts.intensity ?? 1))
   const ez = (fallback: Easing) => opts.easing ?? fallback

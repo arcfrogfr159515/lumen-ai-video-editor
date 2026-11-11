@@ -8,6 +8,7 @@ import { uid } from '@/lib/id'
 import { clipEnd, clipsOnTrack, fitToMedia, framesIn, isMagneticTrack, sourceFrames, trackAccepts } from './ops'
 import { MAX_SPEED, MIN_SPEED } from './timing'
 import type { Asset, Clip, ClipTake, Frame, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 export class TakeError extends Error {}
 
@@ -72,11 +73,11 @@ export interface AddTakeInput {
  * becomes its first take the first time. Returns the new take's id.
  */
 export function addTake(p: Project, clip: Clip, input: AddTakeInput): string {
-  if (!canHaveTakes(clip)) throw new TakeError(clip.freeze ? 'A freeze frame holds one frame — it has no takes' : `“${clip.name}” has no footage to swap — takes are for video, image and audio clips`)
+  if (!canHaveTakes(clip)) throw new TakeError(clip.freeze ? tt('A freeze frame holds one frame — it has no takes') : tt('“{0}” has no footage to swap — takes are for video, image and audio clips', clip.name))
   const asset: Asset | undefined = p.assets[input.assetId]
-  if (!asset) throw new TakeError(`Asset ${input.assetId} not found`)
+  if (!asset) throw new TakeError(tt('Asset {0} not found', input.assetId))
   const track = p.tracks.find((t) => t.id === clip.trackId)
-  if (track && !trackAccepts(track, asset.kind)) throw new TakeError(`“${asset.name}” is ${asset.kind === 'audio' ? 'sound' : 'a picture'} — it can’t be a take of a clip on ${track.kind === 'audio' ? 'an audio' : 'a video'} track`)
+  if (track && !trackAccepts(track, asset.kind)) throw new TakeError(tt('“{0}” is {1} — it can’t be a take of a clip on {2} track', asset.name, asset.kind === 'audio' ? tt('sound') : tt('a picture'), track.kind === 'audio' ? tt('an audio') : tt('a video')))
   const total = asset.duration !== undefined ? framesIn(asset.duration, p.settings.fps) : Infinity
   const inPoint = Math.max(0, Math.min(Math.round(input.inPoint ?? 0), total === Infinity ? Infinity : Math.max(0, total - 1)))
   if (!clip.takes?.length) {
@@ -117,10 +118,10 @@ export interface SwitchResult {
 export function switchTake(p: Project, clip: Clip, takeId: string): SwitchResult {
   const takes = clip.takes
   const target = takes?.find((t) => t.id === takeId)
-  if (!takes || !target) throw new TakeError(`“${clip.name}” has no take ${takeId}`)
+  if (!takes || !target) throw new TakeError(tt('“{0}” has no take {1}', clip.name, takeId))
   if (target.id === clip.takeId) return { takeId, shortenedBy: 0, slidBack: 0 }
-  if (target.assetId && !p.assets[target.assetId]) throw new TakeError(`The media of take “${target.name}” isn’t in this project any more`)
-  if (target.sequenceId && !p.sequences?.[target.sequenceId]) throw new TakeError(`The timeline of take “${target.name}” isn’t in this project any more`)
+  if (target.assetId && !p.assets[target.assetId]) throw new TakeError(tt('The media of take “{0}” isn’t in this project any more', target.name))
+  if (target.sequenceId && !p.sequences?.[target.sequenceId]) throw new TakeError(tt('The timeline of take “{0}” isn’t in this project any more', target.name))
 
   // What is showing may have been slipped or re-timed: put it away as it is now.
   const showing = takes.findIndex((t) => t.id === clip.takeId)
@@ -191,7 +192,7 @@ export function switchTake(p: Project, clip: Clip, takeId: string): SwitchResult
  */
 export function removeTake(p: Project, clip: Clip, takeId: string) {
   const takes = clip.takes
-  if (!takes?.some((t) => t.id === takeId)) throw new TakeError(`“${clip.name}” has no take ${takeId}`)
+  if (!takes?.some((t) => t.id === takeId)) throw new TakeError(tt('“{0}” has no take {1}', clip.name, takeId))
   if (takes.length > 1 && clip.takeId === takeId) {
     const i = takes.findIndex((t) => t.id === takeId)
     switchTake(p, clip, takes[i > 0 ? i - 1 : 1].id)
@@ -212,10 +213,10 @@ export function describeTake(p: Pick<Project, 'assets' | 'sequences' | 'settings
   const fps = p.settings.fps
   if (take.sequenceId) {
     const seq = p.sequences?.[take.sequenceId]
-    return { source: seq ? `Timeline “${seq.name}”` : 'Missing timeline', seconds: null, missing: !seq }
+    return { source: seq ? tt('Timeline “{0}”', seq.name) : tt('Missing timeline'), seconds: null, missing: !seq }
   }
   const asset = take.assetId ? p.assets[take.assetId] : undefined
-  if (!asset) return { source: 'Missing media', seconds: null, missing: true }
+  if (!asset) return { source: tt('Missing media'), seconds: null, missing: true }
   const from = take.inPoint / fps
   return { source: asset.name, seconds: asset.duration !== undefined ? Math.max(0, asset.duration - from) : null, missing: asset.source.type === 'file' && Boolean(asset.source.missing) }
 }

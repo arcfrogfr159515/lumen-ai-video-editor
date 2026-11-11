@@ -7,6 +7,7 @@ import { clamp } from '@/lib/math'
 import type { CommandInput, CommandName } from './commands'
 import { adjacentAfter, adjacentBefore, clipEnd, isMagneticTrack, isRippleLocked, mediaEdgeLimits, rollBounds } from './ops'
 import type { Clip, Frame, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 /**
  * roll: the cut moves, the clip before it growing as the one after shrinks.
@@ -16,9 +17,9 @@ import type { Clip, Frame, Project } from './types'
 export type TrimSide = 'roll' | 'out' | 'in'
 
 export const TRIM_SIDES: { id: TrimSide; label: string; hint: string }[] = [
-  { id: 'roll', label: 'Roll', hint: 'Moves the cut: one clip gets longer, the other shorter' },
-  { id: 'out', label: 'Out', hint: 'Where the clip before the cut ends — everything after it follows' },
-  { id: 'in', label: 'In', hint: 'The frame the clip after the cut starts on — everything after it follows' },
+  { id: 'roll', label: tt('Roll'), hint: tt('Moves the cut: one clip gets longer, the other shorter') },
+  { id: 'out', label: tt('Out'), hint: tt('Where the clip before the cut ends — everything after it follows') },
+  { id: 'in', label: tt('In'), hint: tt('The frame the clip after the cut starts on — everything after it follows') },
 ]
 
 /** A place on a track where a clip ends, another begins, or both. */

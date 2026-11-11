@@ -75,7 +75,7 @@ export function ScriptPanel() {
     else toast(tt('Nothing to cut there'))
     setSelection(null)
   }
-  const deleteSelection = () => cut([...selected], `Delete ${selected.size} word${selected.size === 1 ? '' : 's'}`)
+  const deleteSelection = () => cut([...selected], tt('Delete {0} word{1}', selected.size, selected.size === 1 ? '' : 's'))
 
   /** Press on a word: go to it and start a selection; drag to extend it; Shift extends the last one. */
   const onPointerDown = (e: ReactPointerEvent) => {
@@ -143,20 +143,20 @@ export function ScriptPanel() {
         <SearchInput value={query} onChange={setQuery} placeholder={tt('Find words in the script')} aria-label={tt('Find words in the script')} />
         <div className="flex flex-wrap items-center gap-1">
           {query.trim() ? (
-            <Button size="xs" variant="secondary" disabled={!matches.length} onClick={() => cut(matches.flat(), `Delete “${query.trim()}” (${matches.length}×)`)} title={tt('Cut every place this is said')}>
+            <Button size="xs" variant="secondary" disabled={!matches.length} onClick={() => cut(matches.flat(), tt('Delete “{0}” ({1}×)', query.trim(), matches.length))} title={tt('Cut every place this is said')}>
               <Trash />{' '}{ttx('Cut {0} match{1}', matches.length, matches.length === 1 ? '' : tt('es'))}
             </Button>
           ) : (
             <>
-              <Button size="xs" variant="secondary" disabled={!fillers.length} onClick={() => cut(fillers, `Remove ${fillers.length} hesitation${fillers.length === 1 ? '' : 's'}`)} title={tt('Um, uh, er… — every word that is only a hesitation')}>
+              <Button size="xs" variant="secondary" disabled={!fillers.length} onClick={() => cut(fillers, tt('Remove {0} hesitation{1}', fillers.length, fillers.length === 1 ? '' : 's'))} title={tt('Um, uh, er… — every word that is only a hesitation')}>
                 <Eraser />{' '}{ttx('Hesitations {0}', fillers.length || '')}
               </Button>
-              <Button size="xs" variant="secondary" disabled={!repeats.length} onClick={() => cut(repeats, 'Remove stumbles')} title={tt('Words said twice in a row: the first saying goes')}>
+              <Button size="xs" variant="secondary" disabled={!repeats.length} onClick={() => cut(repeats, tt('Remove stumbles'))} title={tt('Words said twice in a row: the first saying goes')}>
                 <Repeat2 />{' '}{ttx('Stumbles {0}', repeats.length || '')}
               </Button>
             </>
           )}
-          <Button size="xs" variant="ghost" className="ml-auto" disabled={!words.length} onClick={() => void copyText(scriptText(lines), 'Script copied')}>
+          <Button size="xs" variant="ghost" className="ml-auto" disabled={!words.length} onClick={() => void copyText(scriptText(lines), tt('Script copied'))}>
             {tt('Copy')}
           </Button>
         </div>

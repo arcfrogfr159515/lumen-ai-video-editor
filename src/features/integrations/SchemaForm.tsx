@@ -177,7 +177,7 @@ function JsonField({ id, value, onChange }: { id: string; value: unknown; onChan
           onChange(JSON.parse(text))
           e.target.setCustomValidity('')
         } catch {
-          e.target.setCustomValidity('Not valid JSON')
+          e.target.setCustomValidity(tt('Not valid JSON'))
           e.target.reportValidity()
         }
       }}

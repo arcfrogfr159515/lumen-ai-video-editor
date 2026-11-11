@@ -21,8 +21,8 @@ const day = (t: number) => {
   const d = new Date(t)
   const today = new Date()
   const yesterday = new Date(Date.now() - 86_400_000)
-  if (d.toDateString() === today.toDateString()) return 'Today'
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  if (d.toDateString() === today.toDateString()) return tt('Today')
+  if (d.toDateString() === yesterday.toDateString()) return tt('Yesterday')
   return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })
 }
 const length = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
@@ -81,7 +81,7 @@ export function VersionHistoryDialog() {
                   <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold', KIND[v.kind].className)}>{KIND[v.kind].label}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-fg-3">
                     {ttx('{0} · {1} · {2} clip{3}', v.name, length(v.seconds), v.clips, v.clips === 1 ? '' : 's')}
-                    {g.day === 'Today' && i === 0 && groups[0] === g && <span className="ml-1.5 text-fg-4">{tt('(latest)')}</span>}
+                    {g.day === tt('Today') && i === 0 && groups[0] === g && <span className="ml-1.5 text-fg-4">{tt('(latest)')}</span>}
                   </span>
                   <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover/v:opacity-100 focus-within:opacity-100">
                     <Button size="xs" variant="ghost" disabled={busy !== null} onClick={() => void act(v, true)} title={tt('Open this version as a new, unsaved project')}>

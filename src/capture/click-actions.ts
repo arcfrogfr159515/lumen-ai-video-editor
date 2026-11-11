@@ -9,6 +9,7 @@ import { propAt } from '@/editor/keyframes'
 import { dispatch, getProject, useEditor, type ActionSource } from '@/editor/store'
 import type { Clip } from '@/editor/types'
 import { zoomKeys, type ZoomOptions } from './autozoom'
+import { tt } from '@/lib/i18n'
 
 /** A clip's clicks that fall inside it, with the timeline frame each lands on. */
 export function clipClicks(clip: Clip): { click: CursorClick; frame: number }[] {
@@ -27,11 +28,11 @@ export function clipClicks(clip: Clip): { click: CursorClick; frame: number }[] 
 function recordingClip(clipId: string) {
   const project = getProject()
   const clip = project.clips[clipId]
-  if (!clip) throw new Error(`There’s no clip ${clipId}.`)
+  if (!clip) throw new Error(tt('There’s no clip {0}.', clipId))
   const asset = clip.assetId ? project.assets[clip.assetId] : undefined
-  if (!asset?.cursor) throw new Error('This clip has no click data. Clicks are kept when a screen recording is made with “Clicks” on.')
-  if (clip.speed !== 1 || clip.reverse || clip.keyframes.speed?.length) throw new Error('Clicks can only be followed on a clip at normal speed. Set its speed back to 100% first.')
-  if (!asset.width || !asset.height) throw new Error('The recording’s size isn’t known.')
+  if (!asset?.cursor) throw new Error(tt('This clip has no click data. Clicks are kept when a screen recording is made with “Clicks” on.'))
+  if (clip.speed !== 1 || clip.reverse || clip.keyframes.speed?.length) throw new Error(tt('Clicks can only be followed on a clip at normal speed. Set its speed back to 100% first.'))
+  if (!asset.width || !asset.height) throw new Error(tt('The recording’s size isn’t known.'))
   return { project, clip, asset, cursor: asset.cursor, width: asset.width, height: asset.height }
 }
 
@@ -52,9 +53,9 @@ export function zoomOnClicks(clipId: string, opts: ZoomOptions & { clear?: boole
   const keys = opts.clear
     ? { scale: [], x: [], y: [], spans: [] }
     : zoomKeys(cursor, { duration: clip.duration, inPoint: clip.inPoint, fps, ...base, mediaWidth: width, mediaHeight: height, frameWidth: project.settings.width, frameHeight: project.settings.height }, opts)
-  if (!opts.clear && !keys.spans.length) throw new Error('There are no clicks inside this clip to zoom on.')
+  if (!opts.clear && !keys.spans.length) throw new Error(tt('There are no clicks inside this clip to zoom on.'))
   let count = 0
-  useEditor.getState().transaction(opts.clear ? 'Remove zooms on clicks' : 'Zoom on clicks', source, () => {
+  useEditor.getState().transaction(opts.clear ? tt('Remove zooms on clicks') : tt('Zoom on clicks'), source, () => {
     for (const prop of ['scale', 'x', 'y'] as const) {
       if (clip.keyframes[prop]?.length) dispatch('keyframe.clear', { clipId, prop }, { source })
       for (const k of keys[prop]) {
@@ -93,14 +94,14 @@ export function highlightClicks(clipId: string, opts: HighlightOptions = {}, sou
   const fps = project.settings.fps
   const buttons = new Set(opts.buttons ?? ['left'])
   const clicks = clipClicks(clip).filter(({ click }) => buttons.has(click.button) && click.x >= 0 && click.x <= 1 && click.y >= 0 && click.y <= 1)
-  if (!clicks.length) throw new Error('There are no clicks inside this clip to highlight.')
+  if (!clicks.length) throw new Error(tt('There are no clicks inside this clip to highlight.'))
   const fit = Math.min(project.settings.width / width, project.settings.height / height)
   const length = Math.max(4, Math.round((opts.seconds ?? 0.5) * fps))
   const size = Math.round(project.settings.height * Math.min(0.4, Math.max(0.02, opts.size ?? 0.09)))
   let made = 0
   let trackId = ''
-  useEditor.getState().transaction('Highlight clicks', source, () => {
-    const track = dispatch('track.add', { kind: 'video', name: 'Clicks' }, { source })
+  useEditor.getState().transaction(tt('Highlight clicks'), source, () => {
+    const track = dispatch('track.add', { kind: 'video', name: tt('Clicks') }, { source })
     if (!track.ok) return
     trackId = track.result as string
     clicks.forEach(({ click, frame }, i) => {
@@ -118,7 +119,7 @@ export function highlightClicks(clipId: string, opts: HighlightOptions = {}, sou
           kind: 'text',
           start: clip.start + frame,
           duration,
-          name: 'Click',
+          name: tt('Click'),
           // The glyph's own height is about 0.7 of its font size.
           patch: { text: { ...DEFAULT_TEXT, content: '●', size: Math.round(size / 0.7), color: opts.color ?? '#ffd400', shadow: 0, weight: 400 }, transform: { ...DEFAULT_TRANSFORM, x: Math.round(x), y: Math.round(y), scale: 0.45, opacity: 0.75 } },
         },
@@ -133,6 +134,6 @@ export function highlightClicks(clipId: string, opts: HighlightOptions = {}, sou
       made++
     })
   })
-  if (!made) throw new Error('The highlights couldn’t be added.')
+  if (!made) throw new Error(tt('The highlights couldn’t be added.'))
   return { highlights: made, track_id: trackId }
 }

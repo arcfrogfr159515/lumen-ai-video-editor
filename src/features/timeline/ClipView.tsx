@@ -277,7 +277,7 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
   )
 }
 
-const GUIDE_TITLE: Record<GuideKind, string> = { pause: 'Speech stops here', speech: 'Speech starts here', cut: 'A new shot starts here' }
+const GUIDE_TITLE: Record<GuideKind, string> = { pause: tt('Speech stops here'), speech: tt('Speech starts here'), cut: tt('A new shot starts here') }
 
 /** Where speech pauses and where shots change, as fine lines in the clip. Edits snap to them. */
 function GuideTicks({ clip, width }: { clip: Clip; width: number }) {

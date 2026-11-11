@@ -197,7 +197,7 @@ export function Timeline() {
       // Several media land one after another: the ghost covers them all.
       const all = (payload.assetIds ?? [payload.assetId]).map((id) => project.assets[id]).filter(Boolean)
       length = all.reduce((n, a) => n + assetFrames(project, a), 0)
-      label = all.length > 1 ? `${all.length} items` : asset.name
+      label = all.length > 1 ? tt('{0} items', all.length) : asset.name
     } else if (payload.type === 'title') {
       const preset = TITLE_PRESETS.find((p) => p.id === payload.presetId) ?? TITLE_PRESETS[0]
       kind = 'text'
@@ -315,7 +315,7 @@ export function Timeline() {
         }
         let at = ghost?.start ?? frame
         const placed: string[] = []
-        useEditor.getState().transaction(ids.length > 1 ? `Add ${ids.length} clips` : 'Add clip', 'user', () => {
+        useEditor.getState().transaction(ids.length > 1 ? tt('Add {0} clips', ids.length) : tt('Add clip'), 'user', () => {
           for (const id of ids) {
             const asset = getProject().assets[id]
             const onTrack = ghost?.trackId && asset && trackAccepts(getProject().tracks.find((t) => t.id === ghost.trackId)!, asset.kind) ? ghost.trackId : undefined

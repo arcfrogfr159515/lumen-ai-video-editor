@@ -36,7 +36,7 @@ function Body({ onClose }: { onClose: () => void }) {
 
   const save = async (list: Macro[], name: string) => {
     try {
-      await saveTextFile({ name, extension: 'json', filterName: 'Lumen macros', mime: 'application/json', text: exportMacros(list) }, list.length === 1 ? 'Saved the macro' : `Saved ${list.length} macros`)
+      await saveTextFile({ name, extension: 'json', filterName: tt('Lumen macros'), mime: 'application/json', text: exportMacros(list) }, list.length === 1 ? tt('Saved the macro') : tt('Saved {0} macros', list.length))
     } catch (err) {
       toast.error(tt('Couldn’t save the file'), { description: err instanceof Error ? err.message : String(err) })
     }
@@ -71,7 +71,7 @@ function Body({ onClose }: { onClose: () => void }) {
           <Button size="sm" variant="ghost" onClick={() => void load()}>
             <Upload />{' '}{tt('Import')}
           </Button>
-          <Button size="sm" variant="ghost" disabled={!macros.length} onClick={() => void save(macros, 'Lumen macros')}>
+          <Button size="sm" variant="ghost" disabled={!macros.length} onClick={() => void save(macros, tt('Lumen macros'))}>
             <Download />{' '}{tt('Export all')}
           </Button>
         </div>

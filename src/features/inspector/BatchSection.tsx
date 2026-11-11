@@ -32,7 +32,7 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
   const [level, setLevel] = useState(0)
   const [fadeIn, setFadeIn] = useState(0.5)
   const [fadeOut, setFadeOut] = useState(0.5)
-  const [pattern, setPattern] = useState('Shot {nn}')
+  const [pattern, setPattern] = useState(tt('Shot {nn}'))
 
   /** How many of the selected clips an operation applies to. */
   const count = (field: BatchField) => clips.filter((c) => !batchSkip({ assets }, c, field)).length
@@ -75,11 +75,11 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
           <div className="grid flex-1 grid-cols-4 gap-1">
             {[
               [0.5, '½×'],
-              [0.8, 'Slower'],
-              [1.25, 'Faster'],
+              [0.8, tt('Slower')],
+              [1.25, tt('Faster')],
               [2, '2×'],
             ].map(([factor, label]) => (
-              <button key={label} type="button" disabled={!timed} title={tt('Each clip plays at {0} times the speed it has now', factor)} onClick={() => run({ speed: { mode: 'scale', value: factor as number } }, `Speed × ${factor} on ${timed} clips`)} className={chip}>
+              <button key={label} type="button" disabled={!timed} title={tt('Each clip plays at {0} times the speed it has now', factor)} onClick={() => run({ speed: { mode: 'scale', value: factor as number } }, tt('Speed × {0} on {1} clips', factor, timed))} className={chip}>
                 {label}
               </button>
             ))}
@@ -88,7 +88,7 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
         <Row label={tt('Volume')}>
           <div className="grid flex-1 grid-cols-4 gap-1">
             {[-3, -1, 1, 3].map((db) => (
-              <button key={db} type="button" disabled={!sound} title={tt('Each clip {0} {1} dB from where it is', db > 0 ? tt('up') : tt('down'), Math.abs(db))} onClick={() => run({ volume: { mode: 'offset', value: db } }, `Volume ${db > 0 ? '+' : '−'}${Math.abs(db)} dB on ${sound} clips`)} className={chip}>
+              <button key={db} type="button" disabled={!sound} title={tt('Each clip {0} {1} dB from where it is', db > 0 ? tt('up') : tt('down'), Math.abs(db))} onClick={() => run({ volume: { mode: 'offset', value: db } }, tt('Volume {0}{1} dB on {2} clips', db > 0 ? '+' : '−', Math.abs(db), sound))} className={chip}>
                 {db > 0 ? '+' : '−'}
                 {ttx('{0} dB', Math.abs(db))}
               </button>
@@ -97,14 +97,14 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
         </Row>
         <Row label={tt('Set level')}>
           <ScrubInput aria-label={tt('Level to set')} value={level} onChange={setLevel} min={-60} max={12} step={0.5} precision={1} unit={tt('dB')} className="w-[76px]" disabled={!sound} />
-          <Button size="xs" variant="secondary" disabled={!sound} onClick={() => run({ volume: { mode: 'set', value: level } }, `Volume ${level} dB on ${sound} clips`)}>
+          <Button size="xs" variant="secondary" disabled={!sound} onClick={() => run({ volume: { mode: 'set', value: level } }, tt('Volume {0} dB on {1} clips', level, sound))}>
             {ttx('Set on {0}', sound)}
           </Button>
         </Row>
         <Row label={tt('Fades')}>
-          <ScrubInput aria-label={tt('Fade in, seconds')} prefix="In" value={fadeIn} onChange={setFadeIn} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[78px]" disabled={!sound} />
-          <ScrubInput aria-label={tt('Fade out, seconds')} prefix="Out" value={fadeOut} onChange={setFadeOut} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[84px]" disabled={!sound} />
-          <Button size="xs" variant="secondary" disabled={!sound} onClick={() => run({ fadeIn: Math.round(fadeIn * fps), fadeOut: Math.round(fadeOut * fps) }, `Fades on ${sound} clips`)}>
+          <ScrubInput aria-label={tt('Fade in, seconds')} prefix={tt('In')} value={fadeIn} onChange={setFadeIn} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[78px]" disabled={!sound} />
+          <ScrubInput aria-label={tt('Fade out, seconds')} prefix={tt('Out')} value={fadeOut} onChange={setFadeOut} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[84px]" disabled={!sound} />
+          <Button size="xs" variant="secondary" disabled={!sound} onClick={() => run({ fadeIn: Math.round(fadeIn * fps), fadeOut: Math.round(fadeOut * fps) }, tt('Fades on {0} clips', sound))}>
             {tt('Set')}
           </Button>
         </Row>
@@ -118,7 +118,7 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
             <MenuContent align="start" className="max-h-[320px] overflow-y-auto">
               <MenuLabel>{ttx('Add to {0} clips', picture)}</MenuLabel>
               {EFFECTS.map((e) => (
-                <MenuItem key={e.kind} onSelect={() => run({ effects: { add: [e.kind as EffectKind] } }, `Add ${e.name} to ${picture} clips`)}>
+                <MenuItem key={e.kind} onSelect={() => run({ effects: { add: [e.kind as EffectKind] } }, tt('Add {0} to {1} clips', e.name, picture))}>
                   {e.name}
                 </MenuItem>
               ))}
@@ -131,10 +131,10 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
               </Button>
             </MenuTrigger>
             <MenuContent align="start">
-              <MenuItem onSelect={() => run({ effects: { enabled: false } }, 'Switch effects off')}>{tt('Switch off')}</MenuItem>
-              <MenuItem onSelect={() => run({ effects: { enabled: true } }, 'Switch effects on')}>{tt('Switch on')}</MenuItem>
+              <MenuItem onSelect={() => run({ effects: { enabled: false } }, tt('Switch effects off'))}>{tt('Switch off')}</MenuItem>
+              <MenuItem onSelect={() => run({ effects: { enabled: true } }, tt('Switch effects on'))}>{tt('Switch on')}</MenuItem>
               <MenuSeparator />
-              <MenuItem danger onSelect={() => run({ effects: { remove: 'all' } }, 'Remove effects')}>
+              <MenuItem danger onSelect={() => run({ effects: { remove: 'all' } }, tt('Remove effects'))}>
                 {tt('Remove them all')}
               </MenuItem>
             </MenuContent>
@@ -147,12 +147,12 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
             onChange={(e) => setPattern(e.target.value)}
             onKeyDown={(e) => {
               e.stopPropagation()
-              if (e.key === 'Enter' && pattern.trim()) run({ rename: pattern.trim() }, `Rename ${clips.length} clips`)
+              if (e.key === 'Enter' && pattern.trim()) run({ rename: pattern.trim() }, tt('Rename {0} clips', clips.length))
             }}
             title={RENAME_TOKENS.map((t) => `${t.token} — ${t.means}`).join('\n')}
             className="h-7 min-w-0 flex-1 rounded-md bg-white/[0.05] px-2 text-sm text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
           />
-          <Button size="xs" variant="secondary" disabled={!pattern.trim()} onClick={() => run({ rename: pattern.trim() }, `Rename ${clips.length} clips`)}>
+          <Button size="xs" variant="secondary" disabled={!pattern.trim()} onClick={() => run({ rename: pattern.trim() }, tt('Rename {0} clips', clips.length))}>
             {tt('Rename')}
           </Button>
         </Row>

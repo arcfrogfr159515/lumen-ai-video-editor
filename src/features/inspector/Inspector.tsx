@@ -54,10 +54,10 @@ const TABS: Record<ClipKind, Tab[]> = {
   adjustment: ['color', 'video'],
 }
 
-const TAB_LABEL: Record<Tab, string> = { video: 'Video', text: 'Text', color: 'Color', audio: 'Audio', speed: 'Speed', animate: 'Animate' }
+const TAB_LABEL: Record<Tab, string> = { video: tt('Video'), text: tt('Text'), color: tt('Color'), audio: tt('Audio'), speed: tt('Speed'), animate: tt('Animate') }
 
 const KIND_ICON: Record<ClipKind, typeof Film> = { video: Film, image: ImageIcon, audio: AudioLines, text: Type, adjustment: Blend }
-const KIND_LABEL: Record<ClipKind, string> = { video: 'Video', image: 'Image', audio: 'Audio', text: 'Title', adjustment: 'Adjustment layer' }
+const KIND_LABEL: Record<ClipKind, string> = { video: tt('Video'), image: tt('Image'), audio: tt('Audio'), text: tt('Title'), adjustment: tt('Adjustment layer') }
 
 // Remember the last tab per clip kind so the inspector feels stable while hopping between clips.
 const lastTab: Partial<Record<ClipKind, Tab>> = {}
@@ -110,7 +110,7 @@ function ClipInspector({ clip }: { clip: Clip }) {
             <MenuItem icon={<Copy />} shortcut="mod+d" onSelect={actions.duplicateSelection}>
               {tt('Duplicate')}
             </MenuItem>
-            <MenuItem icon={<AiSparkle />} onSelect={() => void sendPrompt(clip.kind === 'audio' ? 'Remove the long pauses from this' : 'Make this look cinematic')}>
+            <MenuItem icon={<AiSparkle />} onSelect={() => void sendPrompt(clip.kind === 'audio' ? tt('Remove the long pauses from this') : tt('Make this look cinematic'))}>
               {clip.kind === 'audio' ? tt('Clean up with Copilot') : tt('Grade with Copilot')}
             </MenuItem>
             <MenuSeparator />
@@ -288,7 +288,7 @@ function ProjectInspector() {
             {tt('Not sure where to start?')}
           </div>
           <p className="mt-1 text-xs leading-relaxed text-fg-3">{tt('Ask Copilot to review your edit — it watches the timeline and suggests what to fix first.')}</p>
-          <Button size="sm" variant="secondary" className="mt-3" onClick={() => void sendPrompt('Review my edit and give me feedback')}>
+          <Button size="sm" variant="secondary" className="mt-3" onClick={() => void sendPrompt(tt('Review my edit and give me feedback'))}>
             {tt('Review my edit')}
           </Button>
         </div>

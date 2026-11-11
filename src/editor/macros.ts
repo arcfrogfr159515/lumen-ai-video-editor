@@ -7,6 +7,7 @@
 import type { CommandName } from './commands'
 import { clipEnd } from './ops'
 import type { Clip, Frame, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 /**
  * A clip a step is about: the one the macro runs on, one an earlier step
@@ -268,20 +269,20 @@ export function instantiate(step: MacroStep, project: Project, ctx: ReplayContex
   const result = (value: Extract<Placeholder, { $result: unknown }>) => {
     const { step: n, path } = value.$result
     const found = at(ctx.results[n], path)
-    if (typeof found !== 'string') throw new MacroError(`step ${n + 1} made nothing for this step to work on`)
+    if (typeof found !== 'string') throw new MacroError(tt('step {0} made nothing for this step to work on', n + 1))
     return found
   }
   const piece = (value: Extract<Placeholder, { $made: unknown }>) => {
     const { step: n, index } = value.$made
     const found = ctx.made?.[n]?.[index]
-    if (!found) throw new MacroError(`step ${n + 1} didn’t leave the piece this step works on`)
+    if (!found) throw new MacroError(tt('step {0} didn’t leave the piece this step works on', n + 1))
     return found
   }
   /** The clip a reference names (the clip the macro runs on when there is none), as it is now. */
   const clipOf = (ref: ClipRef | undefined): Clip => {
     const id = !ref || '$clip' in ref ? ctx.clipId : '$made' in ref ? piece(ref) : result(ref)
     const clip = project.clips[id] as Clip | undefined
-    if (!clip) throw new MacroError(ref && !('$clip' in ref) ? 'the piece an earlier step made is gone by this step' : 'the clip is gone by this step')
+    if (!clip) throw new MacroError(ref && !('$clip' in ref) ? tt('the piece an earlier step made is gone by this step') : tt('the clip is gone by this step'))
     return clip
   }
   const isRef = (v: unknown): v is ClipRef => isPlain(v) && ('$clip' in v || '$result' in v || '$made' in v)
@@ -300,7 +301,7 @@ export function instantiate(step: MacroStep, project: Project, ctx: ReplayContex
       const { $track: by, of } = value as Extract<Placeholder, { $track: unknown }>
       const c = clipOf(of)
       const track = project.tracks[project.tracks.findIndex((t) => t.id === c.trackId) + by]
-      if (!track) throw new MacroError('there is no track that far from the clip’s')
+      if (!track) throw new MacroError(tt('there is no track that far from the clip’s'))
       return track.id
     }
     if ('$result' in value) return result(value as Extract<Placeholder, { $result: unknown }>)
@@ -308,17 +309,17 @@ export function instantiate(step: MacroStep, project: Project, ctx: ReplayContex
     if ('$effect' in value) {
       const { kind, index } = (value as Extract<Placeholder, { $effect: unknown }>).$effect
       const effect = clipOf(owner).effects.filter((e) => e.kind === kind)[index]
-      if (!effect) throw new MacroError(`the clip has no ${kind} effect to change`)
+      if (!effect) throw new MacroError(tt('the clip has no {0} effect to change', kind))
       return effect.id
     }
     if ('$mask' in value) {
       const mask = clipOf(owner).masks?.[(value as { $mask: number }).$mask]
-      if (!mask) throw new MacroError('the clip has no such mask')
+      if (!mask) throw new MacroError(tt('the clip has no such mask'))
       return mask.id
     }
     if ('$take' in value) {
       const take = clipOf(owner).takes?.[(value as { $take: number }).$take]
-      if (!take) throw new MacroError('the clip has no such take')
+      if (!take) throw new MacroError(tt('the clip has no such take'))
       return take.id
     }
     const to = [value.clipId, value.id, Array.isArray(value.ids) ? value.ids[0] : undefined].find(isRef)
@@ -339,9 +340,9 @@ export function importMacros(text: string): Macro[] {
   try {
     data = JSON.parse(text)
   } catch {
-    throw new MacroError('That file isn’t a macro file (it isn’t JSON).')
+    throw new MacroError(tt('That file isn’t a macro file (it isn’t JSON).'))
   }
-  if (!isPlain(data) || data.format !== FORMAT || !Array.isArray(data.macros)) throw new MacroError('That file isn’t a macro file.')
+  if (!isPlain(data) || data.format !== FORMAT || !Array.isArray(data.macros)) throw new MacroError(tt('That file isn’t a macro file.'))
   return data.macros.filter(wellFormed)
 }
 

@@ -7,6 +7,7 @@
  * Pure: events in, message out (the store feeds it; tests drive it directly).
  */
 import type { AgentErrorCode, AgentEventBody, AgentUsage } from '@shared/ai'
+import { tt } from '@/lib/i18n'
 
 export type StepStatus = 'writing' | 'running' | 'done' | 'error' | 'stopped'
 
@@ -84,78 +85,78 @@ export interface Reply {
 export type LocalEvent = { type: 'tool-progress'; tool: string; message: string } | { type: 'tool-images'; tool: string; images: string[] }
 
 const TOOL_TITLES: Record<string, string> = {
-  get_project: 'Read the project',
-  place_asset: 'Place media on the timeline',
-  seek: 'Move the playhead',
-  render_3d_title: 'Render a 3D title in Blender',
-  render_3d_background: 'Render a 3D background in Blender',
-  render_blender_script: 'Render a Blender scene',
-  blender_live: 'Run code in Blender',
-  render_motion_graphic: 'Render a motion graphic',
-  render_hyperframes_html: 'Render a HyperFrames composition',
-  get_job: 'Check on a render',
-  import_media_url: 'Import media',
-  import_media_file: 'Import media',
-  transcribe_media: 'Transcribe speech',
-  find_pauses: 'Find pauses',
-  remove_pauses: 'Remove pauses',
-  add_captions: 'Add captions',
-  duck_music: 'Duck the music',
-  reframe: 'Reframe the canvas',
-  generate_image: 'Generate an image',
-  generate_video: 'Generate a video',
-  add_sound_effect: 'Add a sound effect',
-  list_voices: 'Look up voices',
-  generate_voiceover: 'Generate a voiceover',
-  generate_sound_effect: 'Generate a sound effect',
-  generate_music: 'Generate music',
-  get_frame: 'Look at the video',
-  get_contact_sheet: 'Watch the edit',
-  get_media_frames: 'Look at the footage',
-  get_editor_screenshot: 'Look at the editor',
-  get_clips_at: 'Check what’s on screen',
-  get_clip: 'Read clip details',
-  find_media: 'Search the media',
-  get_transcript: 'Read the transcript',
-  analyze_audio: 'Listen to the sound',
-  get_history: 'Check the history',
-  list_catalog: 'Look up effects and presets',
-  batch_edit: 'Make the edits',
-  add_title: 'Add a title',
-  undo: 'Undo',
-  redo: 'Redo',
-  select_clips: 'Select clips',
-  playback: 'Play the preview',
-  save_project: 'Save the project',
-  export_video: 'Export the video',
-  shell: 'Run a command',
-  web_search: 'Search the web',
-  read_web_page: 'Read a web page',
-  screenshot_web_page: 'Look at a web page',
-  watch_web_video: 'Watch a video link',
-  read_attachment: 'Open an attached file',
-  list_capture_sources: 'Look at what can be recorded',
-  start_recording: 'Start recording',
-  recording_status: 'Check the recording',
-  pause_recording: 'Pause the recording',
-  add_recording_marker: 'Mark this moment',
-  stop_recording: 'Stop recording',
-  zoom_on_clicks: 'Zoom on the clicks',
-  highlight_clicks: 'Highlight the clicks',
-  record_studio_take: 'Film a studio take',
-  list_skills: 'Check its skills',
-  detect_beats: 'Find the beat',
-  cut_to_beats: 'Cut to the beat',
-  cut_out_subject: 'Cut out the subject',
-  clip_animate: 'Animate',
-  use_skill: 'Use a skill',
-  read_skill_file: 'Read a skill’s notes',
-  detect_scenes: 'Find the scene changes',
-  stabilize_clip: 'Stabilize the clip',
-  track_motion: 'Track motion',
-  graphics_report: 'Check the graphics card',
-  ingest_start: 'Start frame ingest',
-  ingest_status: 'Check frame ingest',
+  get_project: tt('Read the project'),
+  place_asset: tt('Place media on the timeline'),
+  seek: tt('Move the playhead'),
+  render_3d_title: tt('Render a 3D title in Blender'),
+  render_3d_background: tt('Render a 3D background in Blender'),
+  render_blender_script: tt('Render a Blender scene'),
+  blender_live: tt('Run code in Blender'),
+  render_motion_graphic: tt('Render a motion graphic'),
+  render_hyperframes_html: tt('Render a HyperFrames composition'),
+  get_job: tt('Check on a render'),
+  import_media_url: tt('Import media'),
+  import_media_file: tt('Import media'),
+  transcribe_media: tt('Transcribe speech'),
+  find_pauses: tt('Find pauses'),
+  remove_pauses: tt('Remove pauses'),
+  add_captions: tt('Add captions'),
+  duck_music: tt('Duck the music'),
+  reframe: tt('Reframe the canvas'),
+  generate_image: tt('Generate an image'),
+  generate_video: tt('Generate a video'),
+  add_sound_effect: tt('Add a sound effect'),
+  list_voices: tt('Look up voices'),
+  generate_voiceover: tt('Generate a voiceover'),
+  generate_sound_effect: tt('Generate a sound effect'),
+  generate_music: tt('Generate music'),
+  get_frame: tt('Look at the video'),
+  get_contact_sheet: tt('Watch the edit'),
+  get_media_frames: tt('Look at the footage'),
+  get_editor_screenshot: tt('Look at the editor'),
+  get_clips_at: tt('Check what’s on screen'),
+  get_clip: tt('Read clip details'),
+  find_media: tt('Search the media'),
+  get_transcript: tt('Read the transcript'),
+  analyze_audio: tt('Listen to the sound'),
+  get_history: tt('Check the history'),
+  list_catalog: tt('Look up effects and presets'),
+  batch_edit: tt('Make the edits'),
+  add_title: tt('Add a title'),
+  undo: tt('Undo'),
+  redo: tt('Redo'),
+  select_clips: tt('Select clips'),
+  playback: tt('Play the preview'),
+  save_project: tt('Save the project'),
+  export_video: tt('Export the video'),
+  shell: tt('Run a command'),
+  web_search: tt('Search the web'),
+  read_web_page: tt('Read a web page'),
+  screenshot_web_page: tt('Look at a web page'),
+  watch_web_video: tt('Watch a video link'),
+  read_attachment: tt('Open an attached file'),
+  list_capture_sources: tt('Look at what can be recorded'),
+  start_recording: tt('Start recording'),
+  recording_status: tt('Check the recording'),
+  pause_recording: tt('Pause the recording'),
+  add_recording_marker: tt('Mark this moment'),
+  stop_recording: tt('Stop recording'),
+  zoom_on_clicks: tt('Zoom on the clicks'),
+  highlight_clicks: tt('Highlight the clicks'),
+  record_studio_take: tt('Film a studio take'),
+  list_skills: tt('Check its skills'),
+  detect_beats: tt('Find the beat'),
+  cut_to_beats: tt('Cut to the beat'),
+  cut_out_subject: tt('Cut out the subject'),
+  clip_animate: tt('Animate'),
+  use_skill: tt('Use a skill'),
+  read_skill_file: tt('Read a skill’s notes'),
+  detect_scenes: tt('Find the scene changes'),
+  stabilize_clip: tt('Stabilize the clip'),
+  track_motion: tt('Track motion'),
+  graphics_report: tt('Check the graphics card'),
+  ingest_start: tt('Start frame ingest'),
+  ingest_status: tt('Check frame ingest'),
 }
 
 export function toolTitle(tool: string) {
@@ -187,7 +188,7 @@ export function inputText(input: unknown) {
     return undefined
   }
   if (!text || text === '{}') return undefined
-  return text.length > INPUT_LIMIT ? `${text.slice(0, INPUT_LIMIT)}\n… (${text.length - INPUT_LIMIT} more characters)` : text
+  return text.length > INPUT_LIMIT ? tt('{0}\n… ({1} more characters)', text.slice(0, INPUT_LIMIT), text.length - INPUT_LIMIT) : text
 }
 
 let seq = 0
@@ -211,7 +212,7 @@ function latestTool(parts: Part[], tool: string): ToolPart | undefined {
 /** What to say is happening once a tool has finished: the next one still running, or waiting on the model. */
 function afterTool(parts: Part[], now: number): Activity {
   const running = parts.findLast((p): p is ToolPart => p.kind === 'tool' && p.status === 'running')
-  return running ? { kind: 'tool', label: running.title, since: running.startedAt } : { kind: 'waiting', label: 'Reading the result…', since: now }
+  return running ? { kind: 'tool', label: running.title, since: running.startedAt } : { kind: 'waiting', label: tt('Reading the result…'), since: now }
 }
 
 /** A reply after one more event. */
@@ -226,23 +227,23 @@ export function applyEvent<T extends Reply>(reply: T, e: AgentEventBody | LocalE
     case 'step': {
       // A request the model was still writing when its connection dropped never ran: it goes with the step it was in.
       const kept = closeThinking(parts, now).filter((p) => !(p.kind === 'tool' && p.status === 'writing'))
-      return { ...seen, parts: kept, activity: { kind: 'waiting', label: e.index <= 1 ? 'Asking the model…' : 'Waiting for the model…', since: now } }
+      return { ...seen, parts: kept, activity: { kind: 'waiting', label: e.index <= 1 ? tt('Asking the model…') : tt('Waiting for the model…'), since: now } }
     }
     case 'reasoning': {
       const last = parts[parts.length - 1]
       if (last?.kind === 'thinking' && last.ms === undefined) {
-        return { ...seen, parts: [...parts.slice(0, -1), { ...last, text: last.text + e.delta }], activity: { kind: 'thinking', label: 'Thinking…', since: last.startedAt } }
+        return { ...seen, parts: [...parts.slice(0, -1), { ...last, text: last.text + e.delta }], activity: { kind: 'thinking', label: tt('Thinking…'), since: last.startedAt } }
       }
       // Whitespace alone doesn't open a stretch of thinking.
       if (!e.delta.trim()) return seen
-      return { ...seen, parts: [...parts, { kind: 'thinking', id: pid('think'), text: e.delta.replace(/^\s+/, ''), startedAt: now }], activity: { kind: 'thinking', label: 'Thinking…', since: now } }
+      return { ...seen, parts: [...parts, { kind: 'thinking', id: pid('think'), text: e.delta.replace(/^\s+/, ''), startedAt: now }], activity: { kind: 'thinking', label: tt('Thinking…'), since: now } }
     }
     case 'reasoning-end':
-      return { ...seen, parts: closeThinking(parts, now), activity: reply.activity?.kind === 'thinking' ? { kind: 'waiting', label: 'Working…', since: now } : reply.activity }
+      return { ...seen, parts: closeThinking(parts, now), activity: reply.activity?.kind === 'thinking' ? { kind: 'waiting', label: tt('Working…'), since: now } : reply.activity }
     case 'text': {
       const closed = closeThinking(parts, now)
       const last = closed[closed.length - 1]
-      const activity: Activity = reply.activity?.kind === 'answering' ? reply.activity : { kind: 'answering', label: 'Writing…', since: now }
+      const activity: Activity = reply.activity?.kind === 'answering' ? reply.activity : { kind: 'answering', label: tt('Writing…'), since: now }
       if (last?.kind === 'text') return { ...seen, parts: [...closed.slice(0, -1), { ...last, text: last.text + e.delta }], activity }
       const text = e.delta.replace(/^\s+/, '')
       return text ? { ...seen, parts: [...closed, { kind: 'text', id: pid('text'), text }], activity } : { ...seen, parts: closed }
@@ -254,7 +255,7 @@ export function applyEvent<T extends Reply>(reply: T, e: AgentEventBody | LocalE
       const next = known
         ? replace(closed, e.callId, (p) => ({ ...p, chars: e.chars }))
         : [...closed, { kind: 'tool' as const, id: e.callId, tool: e.tool, title, status: 'writing' as const, startedAt: now, chars: e.chars }]
-      return { ...seen, parts: next, activity: { kind: 'writing', label: `Preparing: ${title}`, since: known?.startedAt ?? now } }
+      return { ...seen, parts: next, activity: { kind: 'writing', label: tt('Preparing: {0}', title), since: known?.startedAt ?? now } }
     }
     case 'tool-start': {
       const closed = closeThinking(parts, now)
@@ -319,7 +320,7 @@ export function transcriptText(reply: Reply) {
   return (reply.parts ?? [])
     .map((p) => {
       if (p.kind === 'text') return p.text.trim()
-      if (p.kind === 'thinking') return `> Thinking\n${p.text.trim().replace(/^/gm, '> ')}`
+      if (p.kind === 'thinking') return tt('> Thinking\n{0}', p.text.trim().replace(/^/gm, '> '))
       if (p.kind === 'note') return `_${p.text}_`
       return [`**${p.title}** (\`${p.tool}\`) — ${p.status}`, p.input ? `Input:\n\`\`\`json\n${p.input}\n\`\`\`` : '', p.output ? `Result:\n\`\`\`\n${p.output}\n\`\`\`` : ''].filter(Boolean).join('\n')
     })
@@ -348,9 +349,9 @@ export function compact(n: number) {
 export function usageLine(reply: Reply & { startedAt?: number }) {
   const u = reply.usage
   const bits: string[] = []
-  if (u?.inputTokens) bits.push(`${compact(u.inputTokens)} tokens in${u.cachedTokens ? ` (${compact(u.cachedTokens)} from cache)` : ''}`)
-  if (u?.outputTokens) bits.push(`${compact(u.outputTokens)} out`)
-  if (u?.steps && u.steps > 1) bits.push(`${u.steps} steps`)
+  if (u?.inputTokens) bits.push(tt('{0} tokens in{1}', compact(u.inputTokens), u.cachedTokens ? (' ' + tt('({0} from cache)', compact(u.cachedTokens))) : ''))
+  if (u?.outputTokens) bits.push(tt('{0} out', compact(u.outputTokens)))
+  if (u?.steps && u.steps > 1) bits.push(tt('{0} steps', u.steps))
   if (u?.costUsd) bits.push(`$${u.costUsd < 0.01 ? u.costUsd.toFixed(4) : u.costUsd.toFixed(2)}`)
   if (reply.startedAt && reply.finishedAt && reply.finishedAt > reply.startedAt) bits.push(duration(reply.finishedAt - reply.startedAt))
   return bits.join(' · ')

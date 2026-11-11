@@ -2,6 +2,7 @@ import { isAnimated } from './keyframes'
 import { usePlayback } from './playback'
 import { dispatch, getProject } from './store'
 import type { AnimatableProp } from './types'
+import { tt } from '@/lib/i18n'
 
 /**
  * Sets an animatable property the way motion designers expect: if the property
@@ -15,9 +16,9 @@ export function setAnimatable(clipId: string, prop: AnimatableProp, value: numbe
     const local = Math.max(0, Math.min(clip.duration, usePlayback.getState().frame - clip.start))
     dispatch('keyframe.set', { clipId, prop, frame: local, value }, { coalesce })
   } else if (prop === 'volume') {
-    dispatch('clip.update', { ids: [clipId], patch: { audio: { volume: value } } }, { coalesce, label: 'Edit volume' })
+    dispatch('clip.update', { ids: [clipId], patch: { audio: { volume: value } } }, { coalesce, label: tt('Edit volume') })
   } else {
-    dispatch('clip.update', { ids: [clipId], patch: { transform: { [prop]: value } } }, { coalesce, label: `Edit ${prop}` })
+    dispatch('clip.update', { ids: [clipId], patch: { transform: { [prop]: value } } }, { coalesce, label: tt('Edit {0}', prop) })
   }
 }
 

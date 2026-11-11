@@ -11,6 +11,7 @@ import { dispatch, getProject } from '@/editor/store'
 import type { Asset, Project } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
 
 /** Proxies being made: asset id → progress (0..1). */
 export const useProxyJobs = create<{ jobs: Record<string, number> }>(() => ({ jobs: {} }))
@@ -92,7 +93,7 @@ async function build(assetId: string) {
   const input = new Input({ source: new UrlSource(asset.source.url), formats: ALL_FORMATS })
   try {
     const track = await input.getPrimaryVideoTrack()
-    if (!track) throw new Error('It has no video to make a proxy of.')
+    if (!track) throw new Error(tt('It has no video to make a proxy of.'))
     const height = Math.min(PROXY_HEIGHT, track.displayHeight) & ~1
     const width = Math.round((track.displayWidth * height) / track.displayHeight / 2) * 2
     // The file name carries the source's modification time, so a replaced file gets a fresh proxy.
@@ -109,13 +110,13 @@ async function build(assetId: string) {
         audio: { discard: true },
         showWarnings: false,
       })
-      if (!conversion.isValid) throw new Error('This video can’t be converted here.')
+      if (!conversion.isValid) throw new Error(tt('This video can’t be converted here.'))
       conversion.onProgress = (p) => setProgress(assetId, p)
       cancels.set(assetId, () => void conversion.cancel())
       await conversion.execute()
       const done = await api.export.finish(handle.id)
       const info = await api.files.urlForPath(done.path)
-      if (!info) throw new Error('The proxy file went missing.')
+      if (!info) throw new Error(tt('The proxy file went missing.'))
       if (getProject().assets[assetId]) dispatch('asset.update', { id: assetId, patch: { proxy: { path: done.path, url: info.url, width, height } } }, { history: false })
     } catch (err) {
       await api.export.abort(handle.id).catch(() => {})

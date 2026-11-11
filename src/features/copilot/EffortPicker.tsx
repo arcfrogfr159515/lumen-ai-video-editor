@@ -19,7 +19,7 @@ export function EffortPicker() {
   if (!target || !levels.length) return null
 
   const current = target.effort && levels.includes(target.effort) ? target.effort : undefined
-  const source = fromSettings && target.kind === 'local' ? ` — from your ${LOCAL_AGENT_NAMES[target.agent]} settings` : ''
+  const source = fromSettings && target.kind === 'local' ? (' ' + tt('— from your {0} settings', LOCAL_AGENT_NAMES[target.agent])) : ''
   const pick = (effort: Effort | undefined) => {
     setEffort(effort)
     setOpen(false)

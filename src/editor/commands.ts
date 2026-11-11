@@ -72,6 +72,7 @@ import { addTake, clearTakes, neighbourTake, removeTake, switchTake, TakeError }
 import { resolveEdit } from './three-point'
 import { averageSpeed, consumed, isRamped, MAX_SPEED, MIN_SPEED } from './timing'
 import type { AnimatableProp, BusMix, Clip, Marker, Project, Sequence, Track } from './types'
+import { counted, tt } from '@/lib/i18n'
 
 export class CommandError extends Error {}
 
@@ -456,28 +457,29 @@ interface Command<S extends z.ZodType> {
 
 const command = <S extends z.ZodType>(c: Command<S>) => c
 
-const plural = (n: number, word: string) => (n === 1 ? word : `${n} ${word}s`)
+/** What an edit was made to, for its name in the history: "clip", or "3 clips". */
+const plural = (n: number, word: string) => (n === 1 ? tt(word) : counted(n, word))
 
 function getClip(p: Project, clipId: string): Clip {
   const c = p.clips[clipId]
-  if (!c) throw new CommandError(`Clip ${clipId} not found`)
+  if (!c) throw new CommandError(tt('Clip {0} not found', clipId))
   return c
 }
 
 function getTrack(p: Project, trackId: string) {
   const t = p.tracks.find((t) => t.id === trackId)
-  if (!t) throw new CommandError(`Track ${trackId} not found`)
+  if (!t) throw new CommandError(tt('Track {0} not found', trackId))
   return t
 }
 
 function assertEditable(p: Project, clip: Clip) {
-  if (getTrack(p, clip.trackId).locked) throw new CommandError(`"${clip.name}" is on a locked track`)
+  if (getTrack(p, clip.trackId).locked) throw new CommandError(tt('"{0}" is on a locked track', clip.name))
 }
 
 /** An insert pushes the clips after it later, which a ripple-locked track refuses. */
 function assertCanInsert(p: Project, trackId: string) {
   const track = getTrack(p, trackId)
-  if (track.rippleLock) throw new CommandError(`${track.name} is ripple-locked: its clips hold their place, so nothing can be inserted there. Overwrite instead, or turn its ripple lock off.`)
+  if (track.rippleLock) throw new CommandError(tt('{0} is ripple-locked: its clips hold their place, so nothing can be inserted there. Overwrite instead, or turn its ripple lock off.', track.name))
 }
 
 const NO_CROP = { left: 0, right: 0, top: 0, bottom: 0, radius: 0 }
@@ -508,7 +510,7 @@ const settingsInput = z.object({ width: z.number().int().min(16).max(8192), heig
 function plainSequence(p: Project, id: string): Sequence {
   if (id === openSequenceId(p)) return openSequence(isDraft(p) ? current(p) : p)
   const seq = p.sequences?.[id]
-  if (!seq) throw new CommandError(`Timeline ${id} not found`)
+  if (!seq) throw new CommandError(tt('Timeline {0} not found', id))
   return isDraft(seq) ? current(seq) : seq
 }
 
@@ -532,13 +534,13 @@ function applyPatch(p: Project, clip: Clip, patch: ClipPatch) {
   if (matte === null) delete clip.matte
   else if (matte) {
     const m = p.assets[matte.assetId]
-    if (!m?.matteOf) throw new CommandError('That isn’t a subject matte — make one with cut_out_subject')
+    if (!m?.matteOf) throw new CommandError(tt('That isn’t a subject matte — make one with cut_out_subject'))
     clip.matte = matte
   }
   if (angle !== undefined) {
     const seq = clip.sequenceId ? p.sequences?.[clip.sequenceId] : undefined
-    if (!seq?.multicam) throw new CommandError(`“${clip.name}” isn’t a multicam clip`)
-    if (!angleTracks(seq).some((t) => t.id === angle)) throw new CommandError(`Angle ${angle} isn’t a camera of “${seq.name}”`)
+    if (!seq?.multicam) throw new CommandError(tt('“{0}” isn’t a multicam clip', clip.name))
+    if (!angleTracks(seq).some((t) => t.id === angle)) throw new CommandError(tt('Angle {0} isn’t a camera of “{1}”', angle, seq.name))
     clip.angle = angle
   }
   if (follow === null) delete clip.follow
@@ -546,7 +548,7 @@ function applyPatch(p: Project, clip: Clip, patch: ClipPatch) {
   if (stabilize === null) delete clip.stabilize
   else if (stabilize) {
     const next = { ...clip.stabilize, ...stabilize }
-    if (!next.path?.length || next.rate === undefined || next.start === undefined) throw new CommandError('Stabilize the clip first (it needs the measured camera path)')
+    if (!next.path?.length || next.rate === undefined || next.start === undefined) throw new CommandError(tt('Stabilize the clip first (it needs the measured camera path)'))
     clip.stabilize = { smooth: 1, zoom: 1, rotation: true, ...next } as Clip['stabilize']
   }
   if (transform) Object.assign(clip.transform, transform)
@@ -562,7 +564,7 @@ function applyPatch(p: Project, clip: Clip, patch: ClipPatch) {
     if (lut === null) delete clip.color.lut
     else if (lut) {
       const next = { amount: 1, ...clip.color.lut, ...lut }
-      if (!next.id || !p.luts?.[next.id]) throw new CommandError(`LUT ${next.id ?? ''} isn't in this project — import it first`)
+      if (!next.id || !p.luts?.[next.id]) throw new CommandError(tt('LUT {0} isn\'t in this project — import it first', next.id ?? ''))
       clip.color.lut = { id: next.id, amount: next.amount }
     }
   }
@@ -681,18 +683,18 @@ export const commands = {
       mode: editMode.default('free'),
     }),
     title: (i) =>
-      i.sequenceId ? 'Add nested timeline' : i.kind === 'text' ? 'Add title' : i.kind === 'adjustment' ? 'Add adjustment layer' : i.mode === 'insert' ? 'Insert clip' : i.mode === 'overwrite' ? 'Overwrite clip' : 'Add clip',
+      i.sequenceId ? tt('Add nested timeline') : i.kind === 'text' ? tt('Add title') : i.kind === 'adjustment' ? tt('Add adjustment layer') : i.mode === 'insert' ? tt('Insert clip') : i.mode === 'overwrite' ? tt('Overwrite clip') : tt('Add clip'),
     run(p, i) {
       const track = getTrack(p, i.trackId)
-      if (!trackAccepts(track, i.kind)) throw new CommandError(`A ${i.kind} clip can't go on an ${track.kind} track`)
+      if (!trackAccepts(track, i.kind)) throw new CommandError(tt('A {0} clip can\'t go on an {1} track', i.kind, track.kind))
       const source = i.assetId ? p.assets[i.assetId] : undefined
-      if (i.assetId && !source) throw new CommandError(`Asset ${i.assetId} not found`)
+      if (i.assetId && !source) throw new CommandError(tt('Asset {0} not found', i.assetId))
       let nestedName: string | undefined
       if (i.sequenceId) {
-        if (i.kind !== 'video' && i.kind !== 'audio') throw new CommandError('A nested timeline plays as a video or audio clip')
+        if (i.kind !== 'video' && i.kind !== 'audio') throw new CommandError(tt('A nested timeline plays as a video or audio clip'))
         const seq = p.sequences?.[i.sequenceId]
-        if (!seq) throw new CommandError(i.sequenceId === openSequenceId(p) ? 'A timeline can’t contain itself' : `Timeline ${i.sequenceId} not found`)
-        if (wouldLoop(p, openSequenceId(p), i.sequenceId)) throw new CommandError(`“${seq.name}” already contains this timeline — nesting it here would make a loop`)
+        if (!seq) throw new CommandError(i.sequenceId === openSequenceId(p) ? tt('A timeline can’t contain itself') : tt('Timeline {0} not found', i.sequenceId))
+        if (wouldLoop(p, openSequenceId(p), i.sequenceId)) throw new CommandError(tt('“{0}” already contains this timeline — nesting it here would make a loop', seq.name))
         nestedName = seq.name
       }
       const inPoint = i.inPoint ?? 0
@@ -735,19 +737,19 @@ export const commands = {
     }),
     title: (i, p) =>
       i.mode === 'insert'
-        ? `Insert ${plural(i.moves.length, 'clip')}`
+        ? tt('Insert {0}', plural(i.moves.length, 'clip'))
         : i.mode === 'overwrite'
-          ? `Overwrite with ${plural(i.moves.length, 'clip')}`
+          ? tt('Overwrite with {0}', plural(i.moves.length, 'clip'))
           : i.moves.every((m) => isMagneticTrack(p, m.trackId ?? p.clips[m.id]?.trackId ?? ''))
-            ? 'Reorder clips'
-            : `Move ${plural(i.moves.length, 'clip')}`,
+            ? tt('Reorder clips')
+            : tt('Move {0}', plural(i.moves.length, 'clip')),
     run(p, i) {
       const moving = i.moves.map((m) => {
         const clip = getClip(p, m.id)
         assertEditable(p, clip)
         const track = getTrack(p, m.trackId ?? clip.trackId)
-        if (!trackAccepts(track, clip.kind)) throw new CommandError(`"${clip.name}" can't go on ${track.name}`)
-        if (track.locked) throw new CommandError(`${track.name} is locked`)
+        if (!trackAccepts(track, clip.kind)) throw new CommandError(tt('"{0}" can\'t go on {1}', clip.name, track.name))
+        if (track.locked) throw new CommandError(tt('{0} is locked', track.name))
         return { id: clip.id, start: m.start, duration: clip.duration, trackId: track.id }
       })
       let delta = 0
@@ -792,7 +794,7 @@ export const commands = {
   'clip.roll': command({
     description: 'Roll edit: move the cut between a clip and the clip touching it on the left to a new frame — one gets longer, the other shorter, nothing else moves. Pass the right-hand clip. Returns the frame the cut landed on.',
     input: z.object({ id, frame }),
-    title: () => 'Roll edit',
+    title: () => tt('Roll edit'),
     run(p, i) {
       const clip = getClip(p, i.id)
       assertEditable(p, clip)
@@ -807,7 +809,7 @@ export const commands = {
   'clip.slip': command({
     description: 'Slip a clip: show an earlier (negative) or later (positive) part of its footage, by `frames` source frames, without moving or resizing it. Returns the frames actually slipped.',
     input: z.object({ id, frames: z.number().int() }),
-    title: () => 'Slip',
+    title: () => tt('Slip'),
     run(p, i) {
       const clip = getClip(p, i.id)
       assertEditable(p, clip)
@@ -818,7 +820,7 @@ export const commands = {
   'clip.slide': command({
     description: 'Slide a clip along its track by `frames` (negative = earlier): the clips touching it either side give and take frames so no gap opens. Returns the frames actually slid.',
     input: z.object({ id, frames: z.number().int() }),
-    title: () => 'Slide',
+    title: () => tt('Slide'),
     run(p, i) {
       const clip = getClip(p, i.id)
       assertEditable(p, clip)
@@ -830,10 +832,10 @@ export const commands = {
     description:
       'Split clips at a timeline frame. With ids, splits only those clips; otherwise splits every clip under the frame on unlocked tracks. Returns the ids of the new right-hand clips.',
     input: z.object({ frame, ids: z.array(id).optional() }),
-    title: () => 'Split',
+    title: () => tt('Split'),
     run(p, i) {
       const targets = clipsAt(p, i.frame, i.ids)
-      if (!targets.length) throw new CommandError('Nothing to split at the playhead')
+      if (!targets.length) throw new CommandError(tt('Nothing to split at the playhead'))
       return splitClips(p, targets, i.frame).map((c) => c.id)
     },
   }),
@@ -851,8 +853,8 @@ export const commands = {
   'timeline.removeRange': command({
     description:
       'Take a stretch of time out of the whole timeline (like Extract): clips inside it are removed, clips across it lose that stretch, and everything later — on every unlocked track, plus markers — moves left to close up. Clips listed in keepWhole (music beds, ambience) are not cut: they keep playing through the join and end earlier. Tracks with sync lock off or ripple lock on (track_update) are left exactly as they are.',
-    input: z.object({ start: frame, end: frame, keepWhole: z.array(id).default([]) }).refine((i) => i.end > i.start, 'end must be after start'),
-    title: () => 'Remove range',
+    input: z.object({ start: frame, end: frame, keepWhole: z.array(id).default([]) }).refine((i) => i.end > i.start, tt('end must be after start')),
+    title: () => tt('Remove range'),
     run(p, i) {
       removeRange(p, i.start, i.end, new Set(i.keepWhole))
     },
@@ -865,7 +867,7 @@ export const commands = {
     title: (i) => {
       const keys = Object.keys(i.patch)
       const what = keys.length === 1 ? keys[0] : 'properties'
-      return i.ids.length > 1 ? `Edit ${what} on ${i.ids.length} clips` : `Edit ${what}`
+      return i.ids.length > 1 ? tt('Edit {0} on {1} clips', what, i.ids.length) : tt('Edit {0}', what)
     },
     run(p, i) {
       for (const clipId of i.ids) {
@@ -879,7 +881,7 @@ export const commands = {
   'clip.duplicate': command({
     description: 'Duplicate clips; each copy is placed right after its original on the same track. Returns the new ids.',
     input: z.object({ ids: z.array(id).min(1) }),
-    title: (i) => `Duplicate ${plural(i.ids.length, 'clip')}`,
+    title: (i) => tt('Duplicate {0}', plural(i.ids.length, 'clip')),
     run(p, i) {
       // Copies of grouped clips are grouped with each other, not with the originals.
       const groups = new Map<string, string>()
@@ -919,7 +921,7 @@ export const commands = {
     description:
       'Paste clips (whole clips as get_clip returns them, or copies) so the earliest lands at frame `at`; their spacing and tracks are kept (or all go on `trackId` when it fits). By default they slide to the nearest free spot; mode "overwrite" covers what is there, "insert" pushes it later. Returns the new ids.',
     input: z.object({ clips: z.array(clipSnapshot).min(1), at: frame, trackId: id.optional(), mode: editMode.default('free') }),
-    title: (i) => `Paste ${plural(i.clips.length, 'clip')}`,
+    title: (i) => tt('Paste {0}', plural(i.clips.length, 'clip')),
     run(p, i) {
       const first = Math.min(...i.clips.map((c) => c.start))
       const usable = (trackId: string | undefined, kind: Clip['kind']) => {
@@ -928,7 +930,7 @@ export const commands = {
       }
       const placed = i.clips.map((c) => {
         const track = usable(i.trackId, c.kind) ?? usable(c.trackId, c.kind) ?? p.tracks.find((t) => !t.locked && trackAccepts(t, c.kind))
-        if (!track) throw new CommandError(`There's no unlocked ${c.kind === 'audio' ? 'audio' : 'video'} track to paste “${c.name}” on`)
+        if (!track) throw new CommandError(tt('There\'s no unlocked {0} track to paste “{1}” on', c.kind === 'audio' ? tt('audio') : tt('video'), c.name))
         return { snap: c, id: uid('clip'), trackId: track.id, start: i.at + (c.start - first), duration: c.duration }
       })
       let delta = 0
@@ -950,10 +952,10 @@ export const commands = {
         clip.trackId = m.trackId
         clip.start = m.start + delta - (isMagneticTrack(p, m.trackId) ? 0.5 : 0)
         clip.effects = clip.effects.map((e) => ({ ...e, id: uid('fx') }))
-        if (clip.assetId && !p.assets[clip.assetId]) throw new CommandError(`The media of “${clip.name}” isn't in this project`)
+        if (clip.assetId && !p.assets[clip.assetId]) throw new CommandError(tt('The media of “{0}” isn\'t in this project', clip.name))
         if (clip.sequenceId) {
-          if (!p.sequences?.[clip.sequenceId]) throw new CommandError(clip.sequenceId === openSequenceId(p) ? `“${clip.name}” plays this timeline — it can't go inside itself` : `The timeline “${clip.name}” plays isn't in this project`)
-          if (wouldLoop(p, openSequenceId(p), clip.sequenceId)) throw new CommandError(`“${clip.name}” already contains this timeline — pasting it here would make a loop`)
+          if (!p.sequences?.[clip.sequenceId]) throw new CommandError(clip.sequenceId === openSequenceId(p) ? tt('“{0}” plays this timeline — it can\'t go inside itself', clip.name) : tt('The timeline “{0}” plays isn\'t in this project', clip.name))
+          if (wouldLoop(p, openSequenceId(p), clip.sequenceId)) throw new CommandError(tt('“{0}” already contains this timeline — pasting it here would make a loop', clip.name))
         }
         if (clip.groupId) {
           if (!groups.has(clip.groupId)) groups.set(clip.groupId, uid('grp'))
@@ -972,8 +974,8 @@ export const commands = {
       'Paste attributes: copy chosen properties from one clip (fromId, or a whole clip in `from`) onto others — transform (with its keyframes), crop, color, effects, audio mix, speed, animation, text style or blend mode. Properties that don’t fit a clip’s kind are skipped.',
     input: z
       .object({ fromId: id.optional(), from: clipSnapshot.optional(), ids: z.array(id).min(1), include: z.array(attribute).min(1) })
-      .refine((i) => i.fromId || i.from, 'Give fromId or from'),
-    title: (i) => `Paste ${i.include.length === 1 ? i.include[0] : 'attributes'}`,
+      .refine((i) => i.fromId || i.from, tt('Give fromId or from')),
+    title: (i) => tt('Paste {0}', i.include.length === 1 ? i.include[0] : tt('attributes')),
     run(p, i) {
       // A copy, so pasting onto the source clip's own group can't feed back into it.
       const source = cloneClip(i.fromId ? getClip(p, i.fromId) : (i.from as Clip))
@@ -989,7 +991,7 @@ export const commands = {
   'clip.detachAudio': command({
     description: 'Split the sound of video clips onto their own audio clips (on a free audio track), linked to the picture: they move together, and each can be trimmed on its own for J- and L-cuts. Returns the new audio clip ids.',
     input: z.object({ ids: z.array(id).min(1) }),
-    title: (i) => (i.ids.length > 1 ? 'Detach audio from clips' : 'Detach audio'),
+    title: (i) => (i.ids.length > 1 ? tt('Detach audio from clips') : tt('Detach audio')),
     run(p, i) {
       return i.ids.map((clipId) => {
         const clip = getClip(p, clipId)
@@ -1006,12 +1008,12 @@ export const commands = {
   'clip.reattachAudio': command({
     description: 'Put detached sound back into its video clips: the linked audio clips are removed and each video plays its own sound again, keeping the audio clip’s volume and fades.',
     input: z.object({ ids: z.array(id).min(1) }),
-    title: () => 'Reattach audio',
+    title: () => tt('Reattach audio'),
     run(p, i) {
       for (const clipId of i.ids) {
         const clip = getClip(p, clipId)
         assertEditable(p, clip)
-        if (!clip.audio.detached) throw new CommandError(`“${clip.name}” still has its own sound`)
+        if (!clip.audio.detached) throw new CommandError(tt('“{0}” still has its own sound', clip.name))
         reattachAudio(p, clip)
       }
     },
@@ -1020,7 +1022,7 @@ export const commands = {
   'clip.group': command({
     description: 'Group clips so they select and move together (grouping a clip that is already grouped merges the groups). Returns the group id.',
     input: z.object({ ids: z.array(id).min(2) }),
-    title: () => 'Group clips',
+    title: () => tt('Group clips'),
     run(p, i) {
       i.ids.forEach((clipId) => getClip(p, clipId))
       return groupClips(p, i.ids)
@@ -1030,7 +1032,7 @@ export const commands = {
   'clip.ungroup': command({
     description: 'Ungroup clips (and unlink detached sound from its picture): every clip in their groups becomes independent.',
     input: z.object({ ids: z.array(id).min(1) }),
-    title: () => 'Ungroup clips',
+    title: () => tt('Ungroup clips'),
     run(p, i) {
       i.ids.forEach((clipId) => getClip(p, clipId))
       ungroupClips(p, i.ids)
@@ -1040,12 +1042,12 @@ export const commands = {
   'clip.freeze': command({
     description: 'Freeze frame: hold the picture a clip shows at timeline `frame` for `duration` frames. The clip is cut there and the still goes in between, pushing the rest of the track later. Returns the freeze clip id.',
     input: z.object({ id, frame, duration: length }),
-    title: () => 'Freeze frame',
+    title: () => tt('Freeze frame'),
     run(p, i) {
       const clip = getClip(p, i.id)
       assertEditable(p, clip)
-      if (clip.kind !== 'video') throw new CommandError('Freeze frames are made from video clips')
-      if (i.frame < clip.start || i.frame >= clipEnd(clip)) throw new CommandError(`Frame ${i.frame} isn't inside “${clip.name}”`)
+      if (clip.kind !== 'video') throw new CommandError(tt('Freeze frames are made from video clips'))
+      if (i.frame < clip.start || i.frame >= clipEnd(clip)) throw new CommandError(tt('Frame {0} isn\'t inside “{1}”', i.frame, clip.name))
       assertCanInsert(p, clip.trackId)
       return freezeFrame(p, clip, i.frame, i.duration).id
     },
@@ -1061,12 +1063,12 @@ export const commands = {
         .min(2)
         .nullable(),
     }),
-    title: (i) => (i.points ? 'Speed ramp' : 'Remove speed ramp'),
+    title: (i) => (i.points ? tt('Speed ramp') : tt('Remove speed ramp')),
     run(p, i) {
       const clip = getClip(p, i.id)
       assertEditable(p, clip)
-      if (clip.kind !== 'video' && clip.kind !== 'audio') throw new CommandError('Only video and audio clips have a speed')
-      if (clip.freeze) throw new CommandError('A freeze frame has no speed to ramp')
+      if (clip.kind !== 'video' && clip.kind !== 'audio') throw new CommandError(tt('Only video and audio clips have a speed'))
+      if (clip.freeze) throw new CommandError(tt('A freeze frame has no speed to ramp'))
       if (!i.points) {
         if (!clip.keyframes.speed) return
         applyPatch(p, clip, { speed: Math.round(averageSpeed(clip) * 100) / 100 })
@@ -1097,7 +1099,7 @@ export const commands = {
     description:
       'Add an effect to clips (or update it if already present). Amount is 0–100. Keys make part of the picture transparent: chromaKey takes params { color: "#00ff00" (the screen colour), tolerance, softness, spill } and lumaKey takes { threshold, softness, invert: 0 keys out the dark, 1 the bright }, all 0–100.',
     input: z.object({ ids: z.array(id).min(1), kind: effectKind, amount: z.number().min(0).max(100).optional(), params: effectParams.optional() }),
-    title: (i) => `Add ${EFFECTS.find((e) => e.kind === i.kind)?.name ?? 'effect'}`,
+    title: (i) => tt('Add {0}', EFFECTS.find((e) => e.kind === i.kind)?.name ?? tt('effect')),
     run(p, i) {
       const preset = EFFECTS.find((e) => e.kind === i.kind)!
       for (const clipId of i.ids) {
@@ -1122,11 +1124,11 @@ export const commands = {
       effectId: id,
       patch: z.object({ enabled: z.boolean(), amount: z.number().min(0).max(100), params: effectParams }).partial(),
     }),
-    title: () => 'Edit effect',
+    title: () => tt('Edit effect'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       const fx = clip.effects.find((e) => e.id === i.effectId)
-      if (!fx) throw new CommandError('Effect not found')
+      if (!fx) throw new CommandError(tt('Effect not found'))
       const { params, ...rest } = i.patch
       Object.assign(fx, rest)
       if (params) fx.params = { ...fx.params, ...params }
@@ -1136,10 +1138,10 @@ export const commands = {
   'effect.remove': command({
     description: 'Remove an effect from a clip. Effect ids are in get_clip → effects.',
     input: z.object({ clipId: id, effectId: id }),
-    title: () => 'Remove effect',
+    title: () => tt('Remove effect'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
-      if (!clip.effects.some((e) => e.id === i.effectId)) throw new CommandError(`"${clip.name}" has no effect ${i.effectId}`)
+      if (!clip.effects.some((e) => e.id === i.effectId)) throw new CommandError(tt('"{0}" has no effect {1}', clip.name, i.effectId))
       clip.effects = clip.effects.filter((e) => e.id !== i.effectId)
     },
   }),
@@ -1149,11 +1151,11 @@ export const commands = {
     description:
       'Add a shape mask to a clip: only the part inside the shape shows (invert: only the part outside). On an adjustment layer, the grade applies only there. Position and size are fractions of the frame (x, y = center); feather is a fraction of the frame. Returns the mask id.',
     input: z.object({ clipId: id, mask: mask.omit({ id: true }).partial() }),
-    title: () => 'Add mask',
+    title: () => tt('Add mask'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
-      if (clip.kind === 'audio') throw new CommandError('Audio clips have no picture to mask')
+      if (clip.kind === 'audio') throw new CommandError(tt('Audio clips have no picture to mask'))
       const m = { id: uid('mask'), shape: 'ellipse' as const, x: 0.5, y: 0.5, width: 0.5, height: 0.5, rotation: 0, feather: 0.04, roundness: 0, invert: false, opacity: 1, ...i.mask }
       clip.masks = [...(clip.masks ?? []), m]
       return m.id
@@ -1163,12 +1165,12 @@ export const commands = {
   'mask.update': command({
     description: 'Change a mask: move, resize, rotate, feather, round, invert or fade it (mask ids are in get_clip → masks).',
     input: z.object({ clipId: id, maskId: id, patch: maskPatch }),
-    title: () => 'Edit mask',
+    title: () => tt('Edit mask'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
       const m = clip.masks?.find((x) => x.id === i.maskId)
-      if (!m) throw new CommandError(`“${clip.name}” has no mask ${i.maskId}`)
+      if (!m) throw new CommandError(tt('“{0}” has no mask {1}', clip.name, i.maskId))
       const { follow, ...rest } = i.patch
       Object.assign(m, rest)
       if (follow === null) delete m.follow
@@ -1179,10 +1181,10 @@ export const commands = {
   'mask.remove': command({
     description: 'Remove a mask from a clip.',
     input: z.object({ clipId: id, maskId: id }),
-    title: () => 'Remove mask',
+    title: () => tt('Remove mask'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
-      if (!clip.masks?.some((m) => m.id === i.maskId)) throw new CommandError(`“${clip.name}” has no mask ${i.maskId}`)
+      if (!clip.masks?.some((m) => m.id === i.maskId)) throw new CommandError(tt('“{0}” has no mask {1}', clip.name, i.maskId))
       clip.masks = clip.masks.filter((m) => m.id !== i.maskId)
       if (!clip.masks.length) delete clip.masks
     },
@@ -1193,12 +1195,12 @@ export const commands = {
     description:
       'Set a keyframe on an animatable property (x, y, scale, rotation, opacity, volume, rotateX, rotateY, z — or speed, for a speed ramp) at a frame relative to the clip start.',
     input: z.object({ clipId: id, prop: animatable, frame, value: z.number(), easing: easing.optional() }),
-    title: (i) => `Keyframe ${i.prop}`,
+    title: (i) => tt('Keyframe {0}', i.prop),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
       const speed = i.prop === 'speed'
-      if (speed && clip.kind !== 'video' && clip.kind !== 'audio') throw new CommandError('Only video and audio clips have a speed')
+      if (speed && clip.kind !== 'video' && clip.kind !== 'audio') throw new CommandError(tt('Only video and audio clips have a speed'))
       const value = speed ? Math.min(MAX_SPEED, Math.max(MIN_SPEED, i.value)) : i.value
       const kfs = (clip.keyframes[i.prop] ??= [])
       const existing = kfs.find((k) => k.frame === i.frame)
@@ -1216,7 +1218,7 @@ export const commands = {
   'keyframe.remove': command({
     description: 'Remove the keyframe at a clip-relative frame.',
     input: z.object({ clipId: id, prop: animatable, frame }),
-    title: (i) => `Remove ${i.prop} keyframe`,
+    title: (i) => tt('Remove {0} keyframe', i.prop),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       const kfs = clip.keyframes[i.prop]
@@ -1235,7 +1237,7 @@ export const commands = {
   'keyframe.clear': command({
     description: 'Remove all keyframes from a property, keeping its first value.',
     input: z.object({ clipId: id, prop: animatable }),
-    title: (i) => `Clear ${i.prop} animation`,
+    title: (i) => tt('Clear {0} animation', i.prop),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       const first = clip.keyframes[i.prop]?.[0]
@@ -1248,11 +1250,11 @@ export const commands = {
   'keyframe.move': command({
     description: 'Move the keyframes at one clip-relative frame to another — of every animated property, or just `prop`. A keyframe already at the target is replaced.',
     input: z.object({ clipId: id, from: frame, to: frame, prop: animatable.optional() }),
-    title: () => 'Move keyframe',
+    title: () => tt('Move keyframe'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
-      if (i.to >= clip.duration) throw new CommandError('That’s past the end of the clip')
+      if (i.to >= clip.duration) throw new CommandError(tt('That’s past the end of the clip'))
       if (i.from === i.to) return
       let moved = false
       for (const prop of i.prop ? [i.prop] : ANIMATABLE) {
@@ -1263,7 +1265,7 @@ export const commands = {
         moved = true
         if (prop === 'speed') fitToMedia(p, clip)
       }
-      if (!moved) throw new CommandError(`There’s no keyframe at frame ${i.from}`)
+      if (!moved) throw new CommandError(tt('There’s no keyframe at frame {0}', i.from))
     },
   }),
 
@@ -1278,7 +1280,7 @@ export const commands = {
       intensity: z.number().min(0.1).max(3).optional(),
       easing: easing.optional(),
     }),
-    title: (i) => `Animate: ${MOTION_PRESETS.find((p) => p.id === i.preset)?.name ?? i.preset}`,
+    title: (i) => tt('Animate: {0}', MOTION_PRESETS.find((p) => p.id === i.preset)?.name ?? i.preset),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
@@ -1301,7 +1303,7 @@ export const commands = {
       index: z.number().int().min(0).optional(),
       role: z.enum(['main', 'titles', 'captions']).optional(),
     }),
-    title: (i) => `Add ${i.kind} track`,
+    title: (i) => tt('Add {0} track', i.kind),
     run(p, i) {
       const count = p.tracks.filter((t) => t.kind === i.kind).length
       const track = createTrack(i.kind, {
@@ -1337,19 +1339,19 @@ export const commands = {
     title: (i) => {
       const [key] = Object.keys(i.patch)
       const toggles: Record<string, [string, string]> = {
-        hidden: ['Hide track', 'Show track'],
-        locked: ['Lock track', 'Unlock track'],
-        muted: ['Mute track', 'Unmute track'],
-        solo: ['Solo track', 'Unsolo track'],
-        syncLock: ['Sync lock on', 'Sync lock off'],
-        rippleLock: ['Ripple lock on', 'Ripple lock off'],
+        hidden: [tt('Hide track'), tt('Show track')],
+        locked: [tt('Lock track'), tt('Unlock track')],
+        muted: [tt('Mute track'), tt('Unmute track')],
+        solo: [tt('Solo track'), tt('Unsolo track')],
+        syncLock: [tt('Sync lock on'), tt('Sync lock off')],
+        rippleLock: [tt('Ripple lock on'), tt('Ripple lock off')],
       }
       const pair = toggles[key]
-      return pair ? pair[i.patch[key as keyof typeof i.patch] ? 0 : 1] : 'Edit track'
+      return pair ? pair[i.patch[key as keyof typeof i.patch] ? 0 : 1] : tt('Edit track')
     },
     run(p, i) {
       const track = getTrack(p, i.id)
-      if (i.patch.rippleLock && isMagneticTrack(p, track.id)) throw new CommandError(`${track.name} is the main track: it always closes its gaps, so it can’t be ripple-locked`)
+      if (i.patch.rippleLock && isMagneticTrack(p, track.id)) throw new CommandError(tt('{0} is the main track: it always closes its gaps, so it can’t be ripple-locked', track.name))
       Object.assign(track, i.patch)
       if (i.patch.solo === false) delete track.solo
       // The defaults are stored as absent, so projects stay as they were.
@@ -1361,7 +1363,7 @@ export const commands = {
   'track.move': command({
     description: 'Move a track up or down the stack (index 0 is the top). Video tracks higher up draw over the ones below.',
     input: z.object({ id, index: z.number().int().min(0) }),
-    title: () => 'Reorder tracks',
+    title: () => tt('Reorder tracks'),
     run(p, i) {
       getTrack(p, i.id)
       moveTrack(p, i.id, i.index)
@@ -1371,7 +1373,7 @@ export const commands = {
   'track.remove': command({
     description: 'Remove a track and every clip on it (track ids are in get_project → tracks).',
     input: z.object({ id }),
-    title: () => 'Remove track',
+    title: () => tt('Remove track'),
     run(p, i) {
       getTrack(p, i.id)
       for (const c of Object.values(p.clips)) if (c.trackId === i.id) delete p.clips[c.id]
@@ -1412,8 +1414,8 @@ export const commands = {
   'timeline.setRange': command({
     description:
       'Set the in and out points (frames, out exclusive) that mark a stretch of the timeline — it can loop in playback, export on its own, or be lifted or extracted. null clears them.',
-    input: z.object({ range: z.object({ in: frame, out: frame }).refine((r) => r.out > r.in, 'out must be after in').nullable() }),
-    title: (i) => (i.range ? 'Mark in and out' : 'Clear in and out'),
+    input: z.object({ range: z.object({ in: frame, out: frame }).refine((r) => r.out > r.in, tt('out must be after in')).nullable() }),
+    title: (i) => (i.range ? tt('Mark in and out') : tt('Clear in and out')),
     run(p, i) {
       p.range = i.range
     },
@@ -1421,8 +1423,8 @@ export const commands = {
 
   'timeline.liftRange': command({
     description: 'Lift a stretch of time: clear everything between two frames on every unlocked track and leave the gap (timeline_removeRange closes it up instead).',
-    input: z.object({ start: frame, end: frame }).refine((i) => i.end > i.start, 'end must be after start'),
-    title: () => 'Lift',
+    input: z.object({ start: frame, end: frame }).refine((i) => i.end > i.start, tt('end must be after start')),
+    title: () => tt('Lift'),
     run(p, i) {
       liftRange(p, i.start, i.end)
     },
@@ -1433,7 +1435,7 @@ export const commands = {
     description:
       'Drop a marker on the timeline ruler. kind says what it is for: chapter (starts a section of the film — chapters export as a chapter list and divide the storyboard), todo (something still to fix; tick it off with marker_update done), comment (a remark), or leave it out for a plain marker. note holds more than fits in the label. Returns the id.',
     input: z.object({ id: id.optional(), frame, label: z.string().optional(), color: markerColor.optional(), kind: markerKind.optional(), note: z.string().max(2000).optional() }),
-    title: (i) => (i.kind ? `Add ${markerKindInfo(i.kind).label.toLowerCase()}` : 'Add marker'),
+    title: (i) => (i.kind ? tt('Add {0}', markerKindInfo(i.kind).label.toLowerCase()) : tt('Add marker')),
     run(p, i) {
       const kind = i.kind ?? 'plain'
       const marker: Marker = {
@@ -1457,10 +1459,10 @@ export const commands = {
       id,
       patch: z.object({ frame, label: z.string(), color: markerColor, kind: markerKind.nullable(), note: z.string().max(2000).nullable(), done: z.boolean() }).partial(),
     }),
-    title: (i) => (i.patch.done !== undefined && Object.keys(i.patch).length === 1 ? (i.patch.done ? 'Tick off to-do' : 'Reopen to-do') : 'Edit marker'),
+    title: (i) => (i.patch.done !== undefined && Object.keys(i.patch).length === 1 ? (i.patch.done ? tt('Tick off to-do') : tt('Reopen to-do')) : tt('Edit marker')),
     run(p, i) {
       const m = p.markers.find((m) => m.id === i.id)
-      if (!m) throw new CommandError('Marker not found')
+      if (!m) throw new CommandError(tt('Marker not found'))
       const { kind, note, done, ...rest } = i.patch
       Object.assign(m, rest)
       if (kind === null) delete m.kind
@@ -1472,7 +1474,7 @@ export const commands = {
       if (note === null || note?.trim() === '') delete m.note
       else if (note !== undefined) m.note = note.trim()
       if (done !== undefined) {
-        if (m.kind !== 'todo') throw new CommandError('Only to-do markers can be ticked off — set kind to todo first')
+        if (m.kind !== 'todo') throw new CommandError(tt('Only to-do markers can be ticked off — set kind to todo first'))
         if (done) m.done = true
         else delete m.done
       }
@@ -1484,9 +1486,9 @@ export const commands = {
   'marker.remove': command({
     description: 'Remove a marker (marker ids are in get_project → markers).',
     input: z.object({ id }),
-    title: () => 'Remove marker',
+    title: () => tt('Remove marker'),
     run(p, i) {
-      if (!p.markers.some((m) => m.id === i.id)) throw new CommandError('Marker not found')
+      if (!p.markers.some((m) => m.id === i.id)) throw new CommandError(tt('Marker not found'))
       p.markers = p.markers.filter((m) => m.id !== i.id)
     },
   }),
@@ -1496,10 +1498,10 @@ export const commands = {
     description:
       'Add a 3D LUT to the project (from a .cube file: `size` points per side and size³ RGB triples, red fastest, as 8-bit values in base64). Apply it with clip_update → color.lut. Returns the id.',
     input: z.object({ lut: z.object({ id: id.optional(), name: z.string().min(1), size: z.number().int().min(2).max(65), data: z.string().min(1) }) }),
-    title: (i) => `Import LUT ${i.lut.name}`,
+    title: (i) => tt('Import LUT {0}', i.lut.name),
     run(p, i) {
       const lutId = i.lut.id ?? uid('lut')
-      if (atob(i.lut.data).length !== i.lut.size ** 3 * 3) throw new CommandError(`A ${i.lut.size}-point LUT needs ${i.lut.size ** 3 * 3} bytes`)
+      if (atob(i.lut.data).length !== i.lut.size ** 3 * 3) throw new CommandError(tt('A {0}-point LUT needs {1} bytes', i.lut.size, i.lut.size ** 3 * 3))
       p.luts = { ...p.luts, [lutId]: { ...i.lut, id: lutId } }
       return lutId
     },
@@ -1508,9 +1510,9 @@ export const commands = {
   'lut.remove': command({
     description: 'Remove a LUT from the project; clips using it lose it.',
     input: z.object({ id }),
-    title: () => 'Remove LUT',
+    title: () => tt('Remove LUT'),
     run(p, i) {
-      if (!p.luts?.[i.id]) throw new CommandError(`LUT ${i.id} not found`)
+      if (!p.luts?.[i.id]) throw new CommandError(tt('LUT {0} not found', i.id))
       delete p.luts[i.id]
       for (const c of Object.values(p.clips)) if (c.color.lut?.id === i.id) delete c.color.lut
     },
@@ -1519,7 +1521,7 @@ export const commands = {
   'font.add': command({
     description: 'Embed a font file (base64) in the project so titles can use it as `custom:<id>`. Returns the id.',
     input: z.object({ font: z.object({ id: id.optional(), name: z.string().min(1), family: z.string().min(1), fileName: z.string(), data: z.string().min(1) }) }),
-    title: (i) => `Add font ${i.font.name}`,
+    title: (i) => tt('Add font {0}', i.font.name),
     run(p, i) {
       const fontId = i.font.id ?? uid('font')
       p.fonts = { ...p.fonts, [fontId]: { ...i.font, id: fontId } }
@@ -1530,9 +1532,9 @@ export const commands = {
   'font.remove': command({
     description: 'Remove a font from the project; titles using it go back to the default typeface.',
     input: z.object({ id }),
-    title: () => 'Remove font',
+    title: () => tt('Remove font'),
     run(p, i) {
-      if (!p.fonts?.[i.id]) throw new CommandError(`Font ${i.id} not found`)
+      if (!p.fonts?.[i.id]) throw new CommandError(tt('Font {0} not found', i.id))
       delete p.fonts[i.id]
       for (const c of Object.values(p.clips)) if (c.text?.font === `custom:${i.id}`) c.text.font = 'sans'
     },
@@ -1542,7 +1544,7 @@ export const commands = {
   'asset.add': command({
     description: 'Register a media asset in the project library.',
     input: z.object({ asset }),
-    title: (i) => `Import ${i.asset.name}`,
+    title: (i) => tt('Import {0}', i.asset.name),
     run(p, i) {
       p.assets[i.asset.id] = i.asset
       return i.asset.id
@@ -1579,10 +1581,10 @@ export const commands = {
         })
         .partial(),
     }),
-    title: (i) => (i.patch.conformedFrom ? 'Use a constant-frame-rate copy' : i.patch.conformedFrom === null ? 'Use the original file' : i.patch.source ? 'Relink media' : i.patch.proxy === null ? 'Remove proxy' : 'Edit media'),
+    title: (i) => (i.patch.conformedFrom ? tt('Use a constant-frame-rate copy') : i.patch.conformedFrom === null ? tt('Use the original file') : i.patch.source ? tt('Relink media') : i.patch.proxy === null ? tt('Remove proxy') : tt('Edit media')),
     run(p, i) {
       const a = p.assets[i.id]
-      if (!a) throw new CommandError('Asset not found')
+      if (!a) throw new CommandError(tt('Asset not found'))
       const { proxy, frameTiming, conformedFrom, sceneCuts, ...rest } = i.patch
       Object.assign(a, rest)
       if (proxy === null) delete a.proxy
@@ -1599,7 +1601,7 @@ export const commands = {
   'asset.remove': command({
     description: 'Remove assets from the library, along with every clip that uses them.',
     input: z.object({ ids: z.array(id).min(1) }),
-    title: (i) => `Remove ${plural(i.ids.length, 'media item')}`,
+    title: (i) => tt('Remove {0}', plural(i.ids.length, 'media item')),
     run(p, i) {
       const ids = new Set(i.ids)
       // A media item's subject mattes go with it.
@@ -1627,9 +1629,9 @@ export const commands = {
     description:
       'Make a new, empty timeline (sequence) — another cut, or another format of the same media such as a 9:16 version. Settings default to the open timeline’s. It opens unless open is false (sequence_open switches). Returns its id.',
     input: z.object({ id: id.optional(), name: z.string().min(1).optional(), settings: settingsInput.partial().optional(), open: z.boolean().default(true) }),
-    title: (i) => `New timeline${i.name ? ` “${i.name}”` : ''}`,
+    title: (i) => tt('New timeline{0}', i.name ? ` “${i.name}”` : ''),
     run(p, i) {
-      if (i.id && getSequence(p, i.id)) throw new CommandError(`A timeline with id ${i.id} already exists`)
+      if (i.id && getSequence(p, i.id)) throw new CommandError(tt('A timeline with id {0} already exists', i.id))
       const seq = blankSequence(i.name ?? freshName(p, 'Timeline'), { ...p.settings, ...i.settings }, i.id)
       p.sequences ??= {}
       p.sequences[seq.id] = seq
@@ -1641,10 +1643,10 @@ export const commands = {
   'sequence.open': command({
     description: 'Switch the editor to another timeline (sequence ids are in get_project → timelines). Every other command then works on that timeline. Undo switches back.',
     input: z.object({ id }),
-    title: (i, p) => `Open ${getSequence(p, i.id)?.name ?? 'timeline'}`,
+    title: (i, p) => tt('Open {0}', getSequence(p, i.id)?.name ?? tt('timeline')),
     run(p, i) {
       if (i.id === openSequenceId(p)) return
-      if (!p.sequences?.[i.id]) throw new CommandError(`Timeline ${i.id} not found`)
+      if (!p.sequences?.[i.id]) throw new CommandError(tt('Timeline {0} not found', i.id))
       swapIn(p, i.id)
     },
   }),
@@ -1652,12 +1654,12 @@ export const commands = {
   'sequence.rename': command({
     description: 'Rename a timeline (sequence). Clips that play it keep their own names.',
     input: z.object({ id, name: z.string().min(1) }),
-    title: () => 'Rename timeline',
+    title: () => tt('Rename timeline'),
     run(p, i) {
       if (i.id === openSequenceId(p)) p.sequence = { ...p.sequence, id: openSequenceId(p), name: i.name }
       else {
         const seq = p.sequences?.[i.id]
-        if (!seq) throw new CommandError(`Timeline ${i.id} not found`)
+        if (!seq) throw new CommandError(tt('Timeline {0} not found', i.id))
         seq.name = i.name
       }
     },
@@ -1666,10 +1668,10 @@ export const commands = {
   'sequence.duplicate': command({
     description: 'Copy a timeline (sequence) with everything on it — to try another cut without touching the first. Returns the copy’s id; it opens if open is true.',
     input: z.object({ id, name: z.string().min(1).optional(), open: z.boolean().default(false) }),
-    title: () => 'Duplicate timeline',
+    title: () => tt('Duplicate timeline'),
     run(p, i) {
       const src = plainSequence(p, i.id)
-      const copy = copySequence(src, i.name ?? freshName(p, `${src.name} copy`))
+      const copy = copySequence(src, i.name ?? freshName(p, tt('{0} copy', src.name)))
       p.sequences ??= {}
       p.sequences[copy.id] = copy
       if (i.open) swapIn(p, copy.id)
@@ -1680,13 +1682,13 @@ export const commands = {
   'sequence.delete': command({
     description: 'Delete a timeline (sequence). Not the open one, and not one another timeline still plays (nested) — remove those clips first.',
     input: z.object({ id }),
-    title: (i, p) => `Delete ${getSequence(p, i.id)?.name ?? 'timeline'}`,
+    title: (i, p) => tt('Delete {0}', getSequence(p, i.id)?.name ?? tt('timeline')),
     run(p, i) {
-      if (i.id === openSequenceId(p)) throw new CommandError('That timeline is open — open another one first')
+      if (i.id === openSequenceId(p)) throw new CommandError(tt('That timeline is open — open another one first'))
       const seq = p.sequences?.[i.id]
-      if (!seq) throw new CommandError(`Timeline ${i.id} not found`)
+      if (!seq) throw new CommandError(tt('Timeline {0} not found', i.id))
       const uses = usesOf(p, i.id)
-      if (uses.length) throw new CommandError(`“${seq.name}” is nested in ${uses.map((u) => `“${u.name}”`).join(', ')} — remove it there first`)
+      if (uses.length) throw new CommandError(tt('“{0}” is nested in {1} — remove it there first', seq.name, uses.map((u) => `“${u.name}”`).join(', ')))
       delete p.sequences![i.id]
     },
   }),
@@ -1695,11 +1697,11 @@ export const commands = {
     description:
       'Branch a timeline: a full copy to try another version of the cut on, that remembers where it came from. Compare a branch with the timeline it came from with compare_timelines, and take the stretches that work back with timeline_mergeFrom. id defaults to the open timeline; the branch opens unless open is false. Returns its id.',
     input: z.object({ id: id.optional(), name: z.string().min(1).optional(), open: z.boolean().default(true) }),
-    title: () => 'Branch timeline',
+    title: () => tt('Branch timeline'),
     run(p, i) {
       const src = plainSequence(p, i.id ?? openSequenceId(p))
-      if (src.multicam) throw new CommandError('A multicam timeline holds camera angles, not a cut — branch the timeline that plays it')
-      const branch = branchSequence(src, i.name ?? freshName(p, `${src.name} · branch`))
+      if (src.multicam) throw new CommandError(tt('A multicam timeline holds camera angles, not a cut — branch the timeline that plays it'))
+      const branch = branchSequence(src, i.name ?? freshName(p, tt('{0} · branch', src.name)))
       p.sequences ??= {}
       p.sequences[branch.id] = branch
       if (i.open) swapIn(p, branch.id)
@@ -1713,15 +1715,15 @@ export const commands = {
     input: z
       .object({
         sequenceId: id,
-        a: z.object({ start: frame, end: frame }).refine((r) => r.end >= r.start, 'end must not be before start'),
-        b: z.object({ start: frame, end: frame }).refine((r) => r.end >= r.start, 'end must not be before start'),
+        a: z.object({ start: frame, end: frame }).refine((r) => r.end >= r.start, tt('end must not be before start')),
+        b: z.object({ start: frame, end: frame }).refine((r) => r.end >= r.start, tt('end must not be before start')),
       })
-      .refine((i) => i.a.end > i.a.start || i.b.end > i.b.start, 'both stretches are empty'),
-    title: (i, p) => `Take a stretch from ${getSequence(p, i.sequenceId)?.name ?? 'another timeline'}`,
+      .refine((i) => i.a.end > i.a.start || i.b.end > i.b.start, tt('both stretches are empty')),
+    title: (i, p) => tt('Take a stretch from {0}', getSequence(p, i.sequenceId)?.name ?? tt('another timeline')),
     run(p, i) {
-      if (i.sequenceId === openSequenceId(p)) throw new CommandError('That is the open timeline — pick the other one')
+      if (i.sequenceId === openSequenceId(p)) throw new CommandError(tt('That is the open timeline — pick the other one'))
       const from = plainSequence(p, i.sequenceId)
-      if (from.settings.fps !== p.settings.fps) throw new CommandError(`“${from.name}” runs at ${from.settings.fps} fps and this timeline at ${p.settings.fps} — their frames don’t line up`)
+      if (from.settings.fps !== p.settings.fps) throw new CommandError(tt('“{0}” runs at {1} fps and this timeline at {2} — their frames don’t line up', from.name, from.settings.fps, p.settings.fps))
       const clipIds = takeHunk(p, from, { a: [i.a.start, i.a.end], b: [i.b.start, i.b.end], kind: i.a.end === i.a.start ? 'added' : i.b.end === i.b.start ? 'removed' : 'changed' })
       return { clipIds }
     },
@@ -1731,7 +1733,7 @@ export const commands = {
     description:
       'Nest clips: move them (and anything linked to them) into a new timeline, and put one clip playing that timeline where they were — then grade, transform, speed up or cut them as one piece. sequence_open the new timeline to edit inside it. Returns { clipId, sequenceId }.',
     input: z.object({ ids: z.array(id).min(1), name: z.string().min(1).optional() }),
-    title: (i) => `Nest ${plural(i.ids.length, 'clip')}`,
+    title: (i) => tt('Nest {0}', plural(i.ids.length, 'clip')),
     run(p, i) {
       return timeline(() => nestClips(p, i.ids, i.name))
     },
@@ -1741,7 +1743,7 @@ export const commands = {
     description:
       'Break a nested clip apart: the part of its timeline it shows comes back onto this timeline in its place, on free tracks. The nested clip’s own transform, grade and effects are dropped; its timeline stays in the project. Returns the new clip ids.',
     input: z.object({ id }),
-    title: () => 'Break apart nested clip',
+    title: () => tt('Break apart nested clip'),
     run(p, i) {
       const clip = getClip(p, i.id)
       assertEditable(p, clip)
@@ -1760,7 +1762,7 @@ export const commands = {
       start: frame.optional(),
       trackId: id.optional(),
     }),
-    title: () => 'Create multicam clip',
+    title: () => tt('Create multicam clip'),
     run(p, i) {
       const fps = p.settings.fps
       const first = Math.min(...i.angles.map((a) => a.offset))
@@ -1769,17 +1771,17 @@ export const commands = {
       const soundTracks: Track[] = []
       i.angles.forEach((a, n) => {
         const asset = p.assets[a.assetId]
-        if (!asset) throw new CommandError(`Asset ${a.assetId} not found`)
-        if (asset.kind !== 'video') throw new CommandError(`“${asset.name}” isn’t video — every angle needs pictures`)
+        if (!asset) throw new CommandError(tt('Asset {0} not found', a.assetId))
+        if (asset.kind !== 'video') throw new CommandError(tt('“{0}” isn’t video — every angle needs pictures', asset.name))
         const name = a.name ?? asset.name
         const start = Math.round((a.offset - first) * fps)
         const duration = Math.max(1, framesIn(asset.duration ?? 1, fps))
-        const video = createTrack('video', { name: `Cam ${n + 1} · ${name}`, height: TRACK_HEIGHTS.video })
+        const video = createTrack('video', { name: tt('Cam {0} · {1}', n + 1, name), height: TRACK_HEIGHTS.video })
         tracks.push(video)
         const pic = createClip({ kind: 'video', trackId: video.id, start, duration, assetId: asset.id, name, audio: { detached: true } })
         clips[pic.id] = pic
         if (asset.hasAudio !== false) {
-          const sound = createTrack('audio', { name: `Sound ${n + 1} · ${name}`, height: TRACK_HEIGHTS.audio, muted: n !== i.audio })
+          const sound = createTrack('audio', { name: tt('Sound {0} · {1}', n + 1, name), height: TRACK_HEIGHTS.audio, muted: n !== i.audio })
           soundTracks.push(sound)
           const clip = createClip({ kind: 'audio', trackId: sound.id, start, duration, assetId: asset.id, name })
           clips[clip.id] = clip
@@ -1790,9 +1792,9 @@ export const commands = {
       p.sequences[seq.id] = seq
       if (!i.place) return { sequenceId: seq.id, clipId: null }
       const trackId = i.trackId ?? p.tracks.find((t) => t.role === 'main' && !t.locked)?.id ?? p.tracks.find((t) => t.kind === 'video' && !t.locked)?.id
-      if (!trackId) throw new CommandError('No video track to put the multicam clip on')
+      if (!trackId) throw new CommandError(tt('No video track to put the multicam clip on'))
       const track = getTrack(p, trackId)
-      if (track.kind !== 'video') throw new CommandError('A multicam clip goes on a video track')
+      if (track.kind !== 'video') throw new CommandError(tt('A multicam clip goes on a video track'))
       const duration = Math.max(1, Math.max(...Object.values(clips).map(clipEnd)))
       const clip = createClip({ kind: 'video', trackId, start: findFreeStart(p, trackId, i.start ?? 0, duration), duration, name: seq.name, sequenceId: seq.id })
       clip.angle = tracks[0].id
@@ -1805,16 +1807,16 @@ export const commands = {
     description:
       'Cut to another camera angle of a multicam clip at a frame: the clip is split there and the part after it shows angle `angle` (1 = the first camera). At the clip’s first frame the whole clip switches. clipId defaults to the multicam clip under the frame. Returns the id of the clip now showing that angle.',
     input: z.object({ frame, angle: z.number().int().min(1).max(16), clipId: id.optional() }),
-    title: (i) => `Cut to angle ${i.angle}`,
+    title: (i) => tt('Cut to angle {0}', i.angle),
     run(p, i) {
       const clip = i.clipId ? getClip(p, i.clipId) : multicamAt(p, i.frame)
-      if (!clip) throw new CommandError('No multicam clip at that frame')
+      if (!clip) throw new CommandError(tt('No multicam clip at that frame'))
       const seq = clip.sequenceId ? p.sequences?.[clip.sequenceId] : undefined
-      if (!seq?.multicam) throw new CommandError(`“${clip.name}” isn’t a multicam clip`)
+      if (!seq?.multicam) throw new CommandError(tt('“{0}” isn’t a multicam clip', clip.name))
       assertEditable(p, clip)
       const angle = angleTracks(seq)[i.angle - 1]
-      if (!angle) throw new CommandError(`“${seq.name}” has ${angleTracks(seq).length} angles`)
-      if (i.frame < clip.start || i.frame >= clipEnd(clip)) throw new CommandError('That frame isn’t inside the clip')
+      if (!angle) throw new CommandError(tt('“{0}” has {1} angles', seq.name, angleTracks(seq).length))
+      if (i.frame < clip.start || i.frame >= clipEnd(clip)) throw new CommandError(tt('That frame isn’t inside the clip'))
       const target = i.frame > clip.start ? (splitClips(p, [clip], i.frame)[0] ?? clip) : clip
       target.angle = angle.id
       return target.id
@@ -1842,7 +1844,7 @@ export const commands = {
         .optional(),
       rename: z.string().min(1).max(120).optional(),
     }),
-    title: (i) => `Batch-edit ${plural(i.ids.length, 'clip')}`,
+    title: (i) => tt('Batch-edit {0}', plural(i.ids.length, 'clip')),
     run(p, i) {
       const clips = i.ids.map((clipId) => getClip(p, clipId))
       clips.forEach((c) => assertEditable(p, c))
@@ -1861,7 +1863,7 @@ export const commands = {
       // Names first: the pattern numbers the clips as they stand, before speed changes move anything.
       if (i.rename) {
         const names = batchNames(p, i.ids, i.rename)
-        if (!names) throw new CommandError('That pattern leaves the clips without a name')
+        if (!names) throw new CommandError(tt('That pattern leaves the clips without a name'))
         each('rename', (clip) => {
           const name = names.get(clip.id)
           if (!name || name === clip.name) return false
@@ -2000,7 +2002,7 @@ export const commands = {
     description:
       'Add a media item as an alternate take of a clip: another candidate for the same place (another take of the line, another piece of B-roll). The clip keeps its start, length, grade, effects and sound settings; only what plays there changes when takes are switched. The clip’s own footage becomes its first take. inPoint is where in the media the take starts (project frames). show (default true) switches to the new take straight away. Returns { takeId, shortenedBy, slidBack }.',
     input: z.object({ clipId: id, assetId: id, inPoint: frame.optional(), name: z.string().min(1).max(120).optional(), speed: z.number().min(MIN_SPEED).max(MAX_SPEED).optional(), show: z.boolean().default(true) }),
-    title: () => 'Add take',
+    title: () => tt('Add take'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
@@ -2014,22 +2016,22 @@ export const commands = {
   'take.switch': command({
     description:
       'Show another take of a clip in its place. Give takeId (get_clip → takes), or step: 1 for the next take, -1 for the one before (wrapping round). The clip keeps its start and length when the take has the footage for it: a take that starts too near the end of its media starts earlier (slidBack frames), and one that is too short altogether makes the clip shorter (shortenedBy frames) until a longer take is shown again. Returns { takeId, shortenedBy, slidBack }.',
-    input: z.object({ clipId: id, takeId: id.optional(), step: z.number().int().min(-64).max(64).optional() }).refine((i) => i.takeId !== undefined || (i.step !== undefined && i.step !== 0), 'give takeId or a step'),
-    title: () => 'Switch take',
+    input: z.object({ clipId: id, takeId: id.optional(), step: z.number().int().min(-64).max(64).optional() }).refine((i) => i.takeId !== undefined || (i.step !== undefined && i.step !== 0), tt('give takeId or a step')),
+    title: () => tt('Switch take'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
-      if (!clip.takes?.length) throw new CommandError(`“${clip.name}” has no alternate takes — add one with take_add`)
+      if (!clip.takes?.length) throw new CommandError(tt('“{0}” has no alternate takes — add one with take_add', clip.name))
       const target = i.takeId ?? neighbourTake(clip, i.step!)?.id
-      if (!target) throw new CommandError(`“${clip.name}” has only one take`)
+      if (!target) throw new CommandError(tt('“{0}” has only one take', clip.name))
       return takes(() => switchTake(p, clip, target))
     },
   }),
 
   'take.remove': command({
     description: 'Take a candidate off a clip. Removing the take that is showing shows the one before it first. With all: true, every candidate but the one showing goes and the clip is a plain clip again.',
-    input: z.object({ clipId: id, takeId: id.optional(), all: z.boolean().default(false) }).refine((i) => i.all || i.takeId !== undefined, 'give takeId, or all: true'),
-    title: (i) => (i.all ? 'Keep only this take' : 'Remove take'),
+    input: z.object({ clipId: id, takeId: id.optional(), all: z.boolean().default(false) }).refine((i) => i.all || i.takeId !== undefined, tt('give takeId, or all: true')),
+    title: (i) => (i.all ? tt('Keep only this take') : tt('Remove take')),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
@@ -2055,13 +2057,13 @@ export const commands = {
       mode: z.enum(['insert', 'overwrite']).default('overwrite'),
       fit: z.enum(['fit', 'source', 'timeline']).default('source'),
     }),
-    title: (i) => (i.mode === 'insert' ? 'Insert edit' : 'Overwrite edit'),
+    title: (i) => (i.mode === 'insert' ? tt('Insert edit') : tt('Overwrite edit')),
     run(p, i) {
       const asset = p.assets[i.assetId]
-      if (!asset) throw new CommandError(`Asset ${i.assetId} not found`)
+      if (!asset) throw new CommandError(tt('Asset {0} not found', i.assetId))
       const track = getTrack(p, i.trackId)
-      if (track.locked) throw new CommandError(`${track.name} is locked`)
-      if (!trackAccepts(track, asset.kind)) throw new CommandError(`“${asset.name}” can’t go on ${track.name}: ${asset.kind === 'audio' ? 'sound goes on an audio track' : 'pictures go on a video track'}`)
+      if (track.locked) throw new CommandError(tt('{0} is locked', track.name))
+      if (!trackAccepts(track, asset.kind)) throw new CommandError(tt('“{0}” can’t go on {1}: {2}', asset.name, track.name, asset.kind === 'audio' ? tt('sound goes on an audio track') : tt('pictures go on a video track')))
       const marked = i.useRange ? p.range : null
       const edit = resolveEdit(
         {
@@ -2104,9 +2106,9 @@ export const commands = {
       'Pick up a stretch of the whole timeline — frames start to end (exclusive) — and put it down so it starts where frame `to` is now, the stretch in between closing up behind it: reordering sections of the film with everything that goes with them (titles, B-roll, captions, sound, markers). `to` must be at or before start, or at or after end. It happens on every track that follows ripples; a clip lying across an edge of the stretch is cut there. Clips listed in keepWhole (music beds) are never cut, and their tracks are left as they are. Returns { movedBy } in frames (negative: earlier).',
     input: z
       .object({ start: frame, end: frame, to: frame, keepWhole: z.array(id).default([]) })
-      .refine((i) => i.end > i.start, 'end must be after start')
-      .refine((i) => i.to <= i.start || i.to >= i.end, 'to must be outside the stretch being moved'),
-    title: () => 'Move a stretch of the timeline',
+      .refine((i) => i.end > i.start, tt('end must be after start'))
+      .refine((i) => i.to <= i.start || i.to >= i.end, tt('to must be outside the stretch being moved')),
+    title: () => tt('Move a stretch of the timeline'),
     run(p, i) {
       return { movedBy: moveRange(p, i.start, i.end, i.to, new Set(i.keepWhole)) }
     },
@@ -2122,12 +2124,12 @@ export const commands = {
       flashFrames: z.number().int().min(1).max(12).default(FLASH_FRAMES),
       trackIds: z.array(id).default([]),
     }),
-    title: () => 'Clean up gaps',
+    title: () => tt('Clean up gaps'),
     run(p, i) {
       for (const trackId of i.trackIds) {
         const track = getTrack(p, trackId)
-        if (track.locked) throw new CommandError(`${track.name} is locked`)
-        if (track.rippleLock) throw new CommandError(`${track.name} is ripple-locked: its clips hold their place, so its gaps stay`)
+        if (track.locked) throw new CommandError(tt('{0} is locked', track.name))
+        if (track.rippleLock) throw new CommandError(tt('{0} is ripple-locked: its clips hold their place, so its gaps stay', track.name))
       }
       return closeGaps(p, i)
     },
@@ -2140,7 +2142,7 @@ export const commands = {
       auto: z.enum(['source', 'speaker', 'angle', 'track']).nullable().optional(),
       rules: z.array(colorRule.extend({ id: id.optional() })).max(40).optional(),
     }),
-    title: () => 'Clip colours',
+    title: () => tt('Clip colours'),
     run(p, i) {
       const next = { auto: p.clipColors?.auto, rules: p.clipColors?.rules ?? [] }
       if (i.auto !== undefined) next.auto = i.auto ?? undefined
@@ -2157,7 +2159,7 @@ export const commands = {
       name: z.string().min(1).optional(),
       settings: settingsInput.partial().optional(),
     }),
-    title: (i) => (i.name ? 'Rename project' : 'Project settings'),
+    title: (i) => (i.name ? tt('Rename project') : tt('Project settings')),
     run(p, i) {
       if (i.name) p.name = i.name
       if (!i.settings) return

@@ -168,4 +168,4 @@ export function MulticamDialog() {
   )
 }
 
-const plural = (n: number) => `${n} camera${n === 1 ? '' : 's'}`
+const plural = (n: number) => tt('{0} camera{1}', n, n === 1 ? '' : 's')

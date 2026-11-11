@@ -18,6 +18,7 @@ import { dispatch, getProject, undoEntry, useEditor } from './store'
 import { nearestCut, refreshCut, trimLimits, trimSides, trimStep, type TrimCut, type TrimSide } from './trim-mode'
 import type { Frame, Project } from './types'
 import { useUI } from './ui-store'
+import { tt } from '@/lib/i18n'
 
 interface TrimState {
   /** The cut being trimmed, where it is now; null when trim mode is off. */
@@ -29,7 +30,7 @@ interface TrimState {
 
 export const useTrim = create<TrimState>(() => ({ cut: null, side: 'roll', moved: 0 }))
 
-const LABEL: Record<TrimSide, string> = { roll: 'Roll the cut', out: 'Trim the out point', in: 'Trim the in point' }
+const LABEL: Record<TrimSide, string> = { roll: tt('Roll the cut'), out: tt('Trim the out point'), in: tt('Trim the in point') }
 
 /** The timeline and the cut as they were when this stretch of trimming began. */
 let base: { project: Project; cut: TrimCut } | null = null

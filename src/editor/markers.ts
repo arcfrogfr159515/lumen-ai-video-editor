@@ -5,15 +5,16 @@
 import { formatTimecode } from '@/lib/time'
 import { projectDuration } from './ops'
 import type { Frame, Marker, MarkerColor, MarkerKind, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 /** A marker's kind as the filter and the lists name it: plain markers have none. */
 export type MarkerFilter = MarkerKind | 'plain'
 
 export const MARKER_KINDS: { id: MarkerFilter; label: string; plural: string; hint: string; color: MarkerColor }[] = [
-  { id: 'chapter', label: 'Chapter', plural: 'Chapters', hint: 'Starts a section of the film, and names it in a chapter list', color: 'sky' },
-  { id: 'todo', label: 'To-do', plural: 'To-dos', hint: 'Something still to fix here — tick it off when it’s done', color: 'amber' },
-  { id: 'comment', label: 'Comment', plural: 'Comments', hint: 'A remark for whoever reads the timeline next', color: 'violet' },
-  { id: 'plain', label: 'Marker', plural: 'Markers', hint: 'A place to come back to', color: 'lime' },
+  { id: 'chapter', label: tt('Chapter'), plural: tt('Chapters'), hint: tt('Starts a section of the film, and names it in a chapter list'), color: 'sky' },
+  { id: 'todo', label: tt('To-do'), plural: tt('To-dos'), hint: tt('Something still to fix here — tick it off when it’s done'), color: 'amber' },
+  { id: 'comment', label: tt('Comment'), plural: tt('Comments'), hint: tt('A remark for whoever reads the timeline next'), color: 'violet' },
+  { id: 'plain', label: tt('Marker'), plural: tt('Markers'), hint: tt('A place to come back to'), color: 'lime' },
 ]
 
 export const markerKindOf = (m: Pick<Marker, 'kind'>): MarkerFilter => m.kind ?? 'plain'
@@ -23,7 +24,7 @@ export const markerKindInfo = (kind: MarkerFilter) => MARKER_KINDS.find((k) => k
 /** The label a new marker of a kind gets when none is given. */
 export function defaultMarkerLabel(markers: readonly Marker[], kind: MarkerFilter) {
   const n = markers.filter((m) => markerKindOf(m) === kind).length + 1
-  return kind === 'chapter' ? `Chapter ${n}` : kind === 'todo' ? `To-do ${n}` : kind === 'comment' ? `Comment ${n}` : `Marker ${markers.length + 1}`
+  return kind === 'chapter' ? tt('Chapter {0}', n) : kind === 'todo' ? `To-do ${n}` : kind === 'comment' ? tt('Comment {0}', n) : tt('Marker {0}', markers.length + 1)
 }
 
 export interface MarkerQuery {
@@ -101,10 +102,10 @@ export function chapterAt(list: readonly Chapter[], frame: Frame) {
 export type MarkerExportFormat = 'youtube' | 'markdown' | 'csv' | 'json'
 
 export const MARKER_EXPORTS: Record<MarkerExportFormat, { label: string; extension: string; hint: string; mime: string }> = {
-  youtube: { label: 'YouTube chapters', extension: 'txt', hint: 'A chapter list to paste into a video description', mime: 'text/plain' },
-  markdown: { label: 'Markdown', extension: 'md', hint: 'Chapters, a to-do checklist and comments, to read or share', mime: 'text/markdown' },
-  csv: { label: 'CSV', extension: 'csv', hint: 'One row per marker, for a spreadsheet', mime: 'text/csv' },
-  json: { label: 'JSON', extension: 'json', hint: 'Everything, for another tool to read', mime: 'application/json' },
+  youtube: { label: tt('YouTube chapters'), extension: 'txt', hint: tt('A chapter list to paste into a video description'), mime: 'text/plain' },
+  markdown: { label: tt('Markdown'), extension: 'md', hint: tt('Chapters, a to-do checklist and comments, to read or share'), mime: 'text/markdown' },
+  csv: { label: 'CSV', extension: 'csv', hint: tt('One row per marker, for a spreadsheet'), mime: 'text/csv' },
+  json: { label: tt('JSON'), extension: 'json', hint: tt('Everything, for another tool to read'), mime: 'application/json' },
 }
 
 /** 0:00, 12:05 or 1:02:03 — how video sites write chapter times. */
@@ -139,11 +140,11 @@ export function exportMarkers(project: Pick<Project, 'markers' | 'clips' | 'sett
   const warnings: string[] = []
   if (format === 'youtube') {
     const list = chapters(project, 'Intro')
-    if (!list.length) return { text: '', count: 0, warnings: ['There are no chapter markers yet.'] }
+    if (!list.length) return { text: '', count: 0, warnings: [tt('There are no chapter markers yet.')] }
     const long = list[list.length - 1].start >= 3600 * fps
-    if (list.length < 3) warnings.push('YouTube needs at least three chapters.')
+    if (list.length < 3) warnings.push(tt('YouTube needs at least three chapters.'))
     const short = list.filter((c) => c.end - c.start < 10 * fps)
-    if (short.length) warnings.push(`${short.length === 1 ? `“${short[0].title}” is` : `${short.length} chapters are`} shorter than 10 seconds, which YouTube doesn’t accept.`)
+    if (short.length) warnings.push(tt('{0} shorter than 10 seconds, which YouTube doesn’t accept.', short.length === 1 ? tt('“{0}” is', short[0].title) : tt('{0} chapters are', short.length)))
     return { text: list.map((c) => `${clockTime(c.start, fps, long)} ${c.title}`).join('\n') + '\n', count: list.length, warnings }
   }
   const marks = filterMarkers(project.markers, query).sort((a, b) => a.frame - b.frame)
@@ -162,11 +163,11 @@ export function exportMarkers(project: Pick<Project, 'markers' | 'clips' | 'sett
     return { text: JSON.stringify({ project: project.name, fps, markers: rows }, null, 2) + '\n', count: marks.length, warnings }
   }
   if (format === 'csv') {
-    const rows = [['Timecode', 'Seconds', 'Kind', 'Label', 'Note', 'Done', 'Color'], ...marks.map((m) => [tc(m), (m.frame / fps).toFixed(3), markerKindOf(m), m.label, m.note ?? '', m.kind === 'todo' ? (m.done ? 'yes' : 'no') : '', m.color])]
+    const rows = [[tt('Timecode'), tt('Seconds'), tt('Kind'), tt('Label'), tt('Note'), tt('Done'), tt('Color')], ...marks.map((m) => [tc(m), (m.frame / fps).toFixed(3), markerKindOf(m), m.label, m.note ?? '', m.kind === 'todo' ? (m.done ? 'yes' : 'no') : '', m.color])]
     // A byte-order mark, so spreadsheets read the accents.
     return { text: '\uFEFF' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n', count: marks.length, warnings }
   }
-  const lines: string[] = [`# ${project.name} — markers`, '']
+  const lines: string[] = [tt('# {0} — markers', project.name), '']
   const note = (m: Marker) => (m.note ? ` — ${m.note.replace(/\s*\n\s*/g, ' ')}` : '')
   for (const kind of MARKER_KINDS) {
     const group = marks.filter((m) => markerKindOf(m) === kind.id)

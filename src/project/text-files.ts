@@ -4,6 +4,7 @@
  */
 import { toast } from 'sonner'
 import { desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
 
 export interface TextFile {
   /** Suggested file name, without the extension. */
@@ -16,7 +17,7 @@ export interface TextFile {
 }
 
 /** Characters a file name can't hold on Windows, macOS or Linux. */
-export const safeFileName = (name: string) => name.replace(/[<>:"/\\|?*\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Untitled'
+export const safeFileName = (name: string) => name.replace(/[<>:"/\\|?*\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim() || tt('Untitled')
 
 /** Saves the text; resolves to where it went, or null if the user closed the dialog. */
 export async function saveTextFile(file: TextFile, done?: string): Promise<{ path: string } | null> {
@@ -36,7 +37,7 @@ export async function saveTextFile(file: TextFile, done?: string): Promise<{ pat
   try {
     await desktop.export.write(handle.id, 0, new TextEncoder().encode(file.text))
     const res = await desktop.export.finish(handle.id)
-    if (done) toast.success(done, { description: res.path, action: { label: 'Show', onClick: () => void desktop?.files.reveal(res.path) } })
+    if (done) toast.success(done, { description: res.path, action: { label: tt('Show'), onClick: () => void desktop?.files.reveal(res.path) } })
     return { path: res.path }
   } catch (err) {
     await desktop.export.abort(handle.id).catch(() => {})

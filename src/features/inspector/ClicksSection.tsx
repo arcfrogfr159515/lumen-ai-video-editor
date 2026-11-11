@@ -34,16 +34,16 @@ export function ClicksSection({ clip }: { clip: Clip }) {
           <span className="w-9 shrink-0 text-right text-xs font-medium text-fg-2 tabular">{zoom.toFixed(1)}×</span>
         </Row>
         <div className="flex items-center gap-1.5">
-          <Button size="xs" variant="secondary" disabled={!clicks} className="flex-1 justify-center" onClick={() => run('Couldn’t zoom on the clicks', () => zoomOnClicks(clip.id, { zoom }))}>
+          <Button size="xs" variant="secondary" disabled={!clicks} className="flex-1 justify-center" onClick={() => run(tt('Couldn’t zoom on the clicks'), () => zoomOnClicks(clip.id, { zoom }))}>
             <ZoomIn /> {zoomed ? tt('Zoom again') : tt('Zoom on clicks')}
           </Button>
           {zoomed && (
-            <IconButton size="xs" label={tt('Remove the zooms')} onClick={() => run('Couldn’t remove the zooms', () => zoomOnClicks(clip.id, { clear: true }))}>
+            <IconButton size="xs" label={tt('Remove the zooms')} onClick={() => run(tt('Couldn’t remove the zooms'), () => zoomOnClicks(clip.id, { clear: true }))}>
               <X />
             </IconButton>
           )}
         </div>
-        <Button size="xs" variant="secondary" disabled={!clicks} className="w-full justify-center" onClick={() => run('Couldn’t highlight the clicks', () => highlightClicks(clip.id))}>
+        <Button size="xs" variant="secondary" disabled={!clicks} className="w-full justify-center" onClick={() => run(tt('Couldn’t highlight the clicks'), () => highlightClicks(clip.id))}>
           <Sparkles />{' '}{tt('Highlight clicks')}
         </Button>
       </div>

@@ -210,10 +210,10 @@ function StatusBar() {
 
 function ago(ms: number) {
   const s = Math.max(0, (Date.now() - ms) / 1000)
-  if (s < 60) return 'just now'
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`
-  if (s < 86400 * 7) return `${Math.floor(s / 86400)} d ago`
+  if (s < 60) return tt('just now')
+  if (s < 3600) return tt('{0} min ago', Math.floor(s / 60))
+  if (s < 86400) return tt('{0} h ago', Math.floor(s / 3600))
+  if (s < 86400 * 7) return tt('{0} d ago', Math.floor(s / 86400))
   return new Date(ms).toLocaleDateString()
 }
 
@@ -510,7 +510,7 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
   }
   const took = p.endedAt && p.startedAt ? p.endedAt - p.startedAt : 0
   const side = busy ? duration(now - p.startedAt) : p.status === 'stopped' ? 'stopped' : took >= 1000 ? duration(took) : ''
-  const live = p.status === 'writing' ? `Writing the request${p.chars ? ` — ${p.chars.toLocaleString()} characters so far` : '…'}` : p.status === 'running' ? p.progress : undefined
+  const live = p.status === 'writing' ? tt('Writing the request{0}', p.chars ? (' ' + tt('— {0} characters so far', p.chars.toLocaleString())) : '…') : p.status === 'running' ? p.progress : undefined
   const details = Boolean(p.input || p.output)
   return (
     <motion.div layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cn('rounded-lg', busy && 'bg-white/[0.04]', undone && 'opacity-50')}>
@@ -571,7 +571,7 @@ function Detail({ label, text, bad }: { label: string; text: string; bad?: boole
     <div className="relative">
       <div className="mb-0.5 text-[10px] font-semibold tracking-wider text-fg-4 uppercase">{label}</div>
       <pre className={cn('max-h-56 overflow-auto rounded-md bg-black/30 p-2 font-mono text-[10.5px] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]', bad ? 'text-danger' : 'text-fg-3')}>{text}</pre>
-      <CopyButton text={text} label={tt('Copy what {0}', label === 'Sent' ? tt('was sent') : tt('came back'))} className="absolute top-0 right-0" />
+      <CopyButton text={text} label={tt('Copy what {0}', label === tt('Sent') ? tt('was sent') : tt('came back'))} className="absolute top-0 right-0" />
     </div>
   )
 }

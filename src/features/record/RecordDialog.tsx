@@ -22,7 +22,7 @@ const two = (n: number) => String(Math.floor(n)).padStart(2, '0')
 export const fmtClock = (s: number) => (s >= 3600 ? `${Math.floor(s / 3600)}:${two((s % 3600) / 60)}:${two(s % 60)}` : `${two(s / 60)}:${two(s % 60)}`)
 /** No microphone, no camera. */
 const NONE = 'none'
-const QUALITY_LABEL = (q: number) => (q < 30 ? 'Draft' : q < 60 ? 'Good' : q < 85 ? 'High' : 'Master')
+const QUALITY_LABEL = (q: number) => (q < 30 ? tt('Draft') : q < 60 ? tt('Good') : q < 85 ? tt('High') : tt('Master'))
 
 /** Cameras and microphones, by name. */
 function useDevices(open: boolean) {
@@ -266,14 +266,14 @@ export function RecordDialog() {
   const encoderHint = ready
     ? ready.encoder
     : !here
-      ? 'Checking this computer’s encoders…'
+      ? tt('Checking this computer’s encoders…')
       : settings.hardware
         ? here.hardware
-          ? 'The graphics card encodes'
-          : 'No graphics-card encoder for this here: another one is used'
+          ? tt('The graphics card encodes')
+          : tt('No graphics-card encoder for this here: another one is used')
         : here.software
-          ? 'The processor encodes: heavier, works everywhere'
-          : 'Only graphics cards encode this codec'
+          ? tt('The processor encodes: heavier, works everywhere')
+          : tt('Only graphics cards encode this codec')
   const bitrate = ready?.bitrate ?? (settings.rate.mode === 'bitrate' ? settings.rate.mbps * 1e6 : videoBitrate(frame.width, frame.height, fps, settings.codec, settings.rate.quality))
   const sound = effectiveAudio(settings, source, helper)
   const perMinute = ((bitrate + (sound.audio === 'off' ? 0 : 192_000)) * 60) / 8
@@ -359,7 +359,7 @@ export function RecordDialog() {
               <RefreshCw className={cn(refreshing && 'animate-spin')} />
             </IconButton>
             <span className="ml-auto truncate text-xs text-fg-3 tabular">
-              {source && known ? `${srcWidth}×${srcHeight}${settings.region ? ` · part ${frame.crop.width}×${frame.crop.height}` : ''}` : ''}
+              {source && known ? `${srcWidth}×${srcHeight}${settings.region ? ` · ${tt('part {0}×{1}', frame.crop.width, frame.crop.height)}` : ''}` : ''}
             </span>
           </div>
           <div className={cn('mt-2 grid min-h-0 flex-1 grid-cols-4 content-start gap-1.5 overflow-y-auto pr-1', !idle && 'pointer-events-none opacity-50')}>
@@ -382,7 +382,7 @@ export function RecordDialog() {
               options={CAPTURE_RESOLUTIONS.map((r) => {
                 const f = captureFrame(srcWidth, srcHeight, settings.region, r.value)
                 const bigger = r.value !== 'native' && f.width > frame.crop.width
-                return { value: String(r.value), label: `${r.label} · ${f.width}×${f.height}${bigger ? ' (scaled up)' : ''}` }
+                return { value: String(r.value), label: `${r.label} · ${f.width}×${f.height}${bigger ? ` ${tt('(scaled up)')}` : ''}` }
               })}
             />
           </Row>

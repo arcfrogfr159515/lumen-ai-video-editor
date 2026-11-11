@@ -25,6 +25,7 @@ import { renderLayer3D } from './three/layer'
 import { createStage, frameStage, scratchCanvas as scratchLayer, type Stage } from './three/stage'
 import { renderText3D } from './three/text'
 import { renderTransition3D } from './three/transitions'
+import { tt } from '@/lib/i18n'
 
 /** On-screen footprint of a clip, in project pixels (center-based). */
 export interface ClipBounds {
@@ -605,9 +606,9 @@ function renderMediaLayer(project: Project, clip: Clip, local: number, W: number
 
   if (clip.sequenceId) {
     if (nested) rect = drawContain(lctx, nested, W, H, stab)
-    else if (!project.sequences?.[clip.sequenceId]) drawSlate(lctx, W, H, 'Timeline missing')
-  } else if (!asset) drawSlate(lctx, W, H, 'Media missing')
-  else if (asset.source.missing) drawSlate(lctx, W, H, `Media offline — ${asset.source.type === 'file' ? asset.source.fileName : asset.name}`)
+    else if (!project.sequences?.[clip.sequenceId]) drawSlate(lctx, W, H, tt('Timeline missing'))
+  } else if (!asset) drawSlate(lctx, W, H, tt('Media missing'))
+  else if (asset.source.missing) drawSlate(lctx, W, H, tt('Media offline — {0}', asset.source.type === 'file' ? asset.source.fileName : asset.name))
   else if (asset.source.type === 'file' && asset.kind === 'video') {
     // The preview plays a proxy when there is one; exports read the original (see media.ts).
     const url = asset.proxy && useUI.getState().useProxies ? asset.proxy.url : asset.source.url
@@ -619,11 +620,11 @@ function renderMediaLayer(project: Project, clip: Clip, local: number, W: number
     }
   } else if (asset.source.type === 'file') {
     const img = getImage(asset.source.url)
-    if (img === 'error') drawSlate(lctx, W, H, 'Media offline')
+    if (img === 'error') drawSlate(lctx, W, H, tt('Media offline'))
     else if (img) rect = drawContain(lctx, img, W, H, stab)
   } else if (asset.source.type === 'sequence') {
     const img = sequenceFrame(asset.source, t)
-    if (img === 'error') drawSlate(lctx, W, H, 'Frames missing')
+    if (img === 'error') drawSlate(lctx, W, H, tt('Frames missing'))
     else if (img) rect = drawContain(lctx, img, W, H, stab)
   }
 

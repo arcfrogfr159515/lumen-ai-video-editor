@@ -82,7 +82,7 @@ export function Generate3D() {
   const jobs = useIntegrations((s) => s.jobs)
   const settings = useEditor((s) => s.project.settings)
   const [template, setTemplate] = useState<Template>('title3d')
-  const [text, setText] = useState('Your title')
+  const [text, setText] = useState(tt('Your title'))
   const [material, setMaterial] = useState('chrome')
   const [color, setColor] = useState('#d6ee00')
   const [font, setFont] = useState('sans')
@@ -119,7 +119,7 @@ export function Generate3D() {
       if (template === 'title3d')
         await renderBlender({ template, params: { text, material, color, font, motion, depth: depth / 100 }, duration: secs, quality, prompt: text })
       else if (template === 'shapes') await renderBlender({ template, params: { palette, style }, duration: secs, quality, transparent: false })
-      else await renderBlender({ template, params: {}, script, name: 'Blender scene', duration: secs, quality, transparent })
+      else await renderBlender({ template, params: {}, script, name: tt('Blender scene'), duration: secs, quality, transparent })
     } catch (err) {
       toast.error(tt('Couldn’t start the render'), { description: err instanceof Error ? err.message : String(err) })
     } finally {
@@ -133,9 +133,9 @@ export function Generate3D() {
         <div className="grid grid-cols-3 gap-1.5">
           {(
             [
-              ['title3d', '3D title', <Type key="t" />],
-              ['shapes', 'Background', <Mountain key="m" />],
-              ['script', 'Script', <Code key="c" />],
+              ['title3d', tt('3D title'), <Type key="t" />],
+              ['shapes', tt('Background'), <Mountain key="m" />],
+              ['script', tt('Script'), <Code key="c" />],
             ] as const
           ).map(([id, label, icon]) => (
             <button

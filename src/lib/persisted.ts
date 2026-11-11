@@ -14,6 +14,7 @@
 
 import { toast } from 'sonner'
 import { createJSONStorage } from 'zustand/middleware'
+import { tt } from '@/lib/i18n'
 
 /**
  * Local storage for a store kept between sessions, that says so instead of
@@ -39,8 +40,8 @@ export function quietStorage<S>(what: 'settings' | 'macros' = 'settings') {
           if (failing) return
           failing = true
           console.warn(`${name} couldn’t be saved`, err)
-          if (what === 'macros') toast.warning('Your macros couldn’t be saved', { description: 'Lumen’s storage for settings on this computer is full. They work until Lumen is closed — export them from the Macros dialog to keep them.', duration: 12000 })
-          else toast.warning('Your settings couldn’t be saved', { description: 'Lumen’s storage for settings on this computer is full. They’ll be as they were the next time Lumen opens.', duration: 12000 })
+          if (what === 'macros') toast.warning(tt('Your macros couldn’t be saved'), { description: tt('Lumen’s storage for settings on this computer is full. They work until Lumen is closed — export them from the Macros dialog to keep them.'), duration: 12000 })
+          else toast.warning(tt('Your settings couldn’t be saved'), { description: tt('Lumen’s storage for settings on this computer is full. They’ll be as they were the next time Lumen opens.'), duration: 12000 })
         }
       },
     }

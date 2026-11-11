@@ -12,13 +12,14 @@ import { defaultTracks } from './new-project'
 import { adjacentBefore, clipEnd, clipsOnTrack, cloneClip, isMagneticTrack, overlaps, setClipEnd, setClipStart, withGroups } from './ops'
 import { isRamped } from './timing'
 import type { Clip, Frame, Project, ProjectSettings, Sequence, Track } from './types'
+import { tt } from '@/lib/i18n'
 
 export const MAIN_SEQUENCE_ID = 'seq_main'
 
 export class TimelineError extends Error {}
 
 export const openSequenceId = (p: Pick<Project, 'sequence'>) => p.sequence?.id ?? MAIN_SEQUENCE_ID
-export const openSequenceName = (p: Pick<Project, 'sequence'>) => p.sequence?.name ?? 'Main timeline'
+export const openSequenceName = (p: Pick<Project, 'sequence'>) => p.sequence?.name ?? tt('Main timeline')
 
 /** Frames a set of clips runs for (the end of the last one). */
 export function clipsLength(clips: Record<string, Clip>): Frame {
@@ -69,7 +70,7 @@ export function freshName(p: Project, base: string) {
 export function swapIn(p: Project, id: string) {
   if (id === openSequenceId(p)) return
   const next = p.sequences?.[id]
-  if (!next) throw new TimelineError(`Timeline ${id} not found`)
+  if (!next) throw new TimelineError(tt('Timeline {0} not found', id))
   const stored = openSequence(p)
   p.sequences ??= {}
   p.sequences[stored.id] = stored
@@ -88,7 +89,7 @@ export function swapIn(p: Project, id: string) {
 /** The project with timeline `id` open — for exporting a timeline that isn't the one on screen. */
 export function withSequenceOpen(p: Project, id: string): Project {
   if (id === openSequenceId(p)) return p
-  if (!p.sequences?.[id]) throw new TimelineError(`Timeline ${id} not found`)
+  if (!p.sequences?.[id]) throw new TimelineError(tt('Timeline {0} not found', id))
   return produce(p, (d) => swapIn(d, id))
 }
 
@@ -239,7 +240,7 @@ function freeTrack(p: Project, kind: Track['kind'], a: Frame, b: Frame, prefer: 
     if (t && free(t)) return t.id
   }
   const nearIndex = near ? p.tracks.findIndex((t) => t.id === near) : -1
-  const track = createTrack(kind, { name: kind === 'video' ? 'Video' : 'Audio' })
+  const track = createTrack(kind, { name: kind === 'video' ? tt('Video') : tt('Audio') })
   if (kind === 'video') p.tracks.splice(Math.max(0, nearIndex), 0, track)
   else p.tracks.push(track)
   return track.id
@@ -254,8 +255,8 @@ export function nestClips(p: Project, ids: string[], name?: string): { clipId: s
   const clips = withGroups(p, ids)
     .map((id) => p.clips[id])
     .filter((c): c is Clip => Boolean(c))
-  if (!clips.length) throw new TimelineError('Select the clips to nest first')
-  for (const c of clips) if (p.tracks.find((t) => t.id === c.trackId)?.locked) throw new TimelineError(`“${c.name}” is on a locked track`)
+  if (!clips.length) throw new TimelineError(tt('Select the clips to nest first'))
+  for (const c of clips) if (p.tracks.find((t) => t.id === c.trackId)?.locked) throw new TimelineError(tt('“{0}” is on a locked track', c.name))
   const from = Math.min(...clips.map((c) => c.start))
   const to = Math.max(...clips.map(clipEnd))
   const used = p.tracks.filter((t) => clips.some((c) => c.trackId === t.id))
@@ -312,12 +313,12 @@ export function nestClips(p: Project, ids: string[], name?: string): { clipId: s
  */
 export function unnestClip(p: Project, id: string): string[] {
   const nest = p.clips[id]
-  if (!nest?.sequenceId) throw new TimelineError('That clip isn’t a nested timeline')
+  if (!nest?.sequenceId) throw new TimelineError(tt('That clip isn’t a nested timeline'))
   const seq = p.sequences?.[nest.sequenceId]
-  if (!seq) throw new TimelineError('Its timeline is missing')
-  if (seq.settings.fps !== p.settings.fps) throw new TimelineError(`The nested timeline runs at ${seq.settings.fps} fps and this one at ${p.settings.fps} — it can’t be broken apart`)
-  if (nest.speed !== 1 || nest.reverse || nest.freeze || isRamped(nest)) throw new TimelineError('Only a nested clip playing at normal speed can be broken apart')
-  if (p.tracks.find((t) => t.id === nest.trackId)?.locked) throw new TimelineError(`“${nest.name}” is on a locked track`)
+  if (!seq) throw new TimelineError(tt('Its timeline is missing'))
+  if (seq.settings.fps !== p.settings.fps) throw new TimelineError(tt('The nested timeline runs at {0} fps and this one at {1} — it can’t be broken apart', seq.settings.fps, p.settings.fps))
+  if (nest.speed !== 1 || nest.reverse || nest.freeze || isRamped(nest)) throw new TimelineError(tt('Only a nested clip playing at normal speed can be broken apart'))
+  if (p.tracks.find((t) => t.id === nest.trackId)?.locked) throw new TimelineError(tt('“{0}” is on a locked track', nest.name))
   const offset = nest.start - nest.inPoint
   const w0 = nest.inPoint
   const w1 = nest.inPoint + nest.duration
@@ -340,7 +341,7 @@ export function unnestClip(p: Project, id: string): string[] {
       }
       return cursor >= w1
     })
-    if (!covering) throw new TimelineError('On the main track, a nested timeline can only be broken apart when one of its video tracks fills the whole clip')
+    if (!covering) throw new TimelineError(tt('On the main track, a nested timeline can only be broken apart when one of its video tracks fills the whole clip'))
     map.set(covering.id, nest.trackId)
   }
   // The rest go to free tracks, nearest the nested clip's own track first.

@@ -94,7 +94,7 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
             {connected
               ? spec.local || spec.needsBaseURL
                 ? (state?.baseURL ?? '')
-                : `${state?.via === 'oauth' ? 'Signed in' : 'Key'} ${state?.keyHint ?? ''}${models?.models.length ? ` · ${models.models.length} models` : ''}`
+                : `${state?.via === 'oauth' ? tt('Signed in') : tt('Key')} ${state?.keyHint ?? ''}${models?.models.length ? ` · ${tt('{0} models', models.models.length)}` : ''}`
               : spec.tagline}
           </div>
           {models?.error && connected && <div className="mt-0.5 truncate text-2xs text-danger/80">{models.error}</div>}
@@ -267,7 +267,7 @@ function LocalAgentCard({ id }: { id: LocalAgentId }) {
             {a && <StatusDot status={a.found && a.signedIn ? 'ready' : a.found ? 'needs-auth' : 'disconnected'} />}
           </div>
           <div className="truncate text-2xs text-fg-4">
-            {!a ? tt('Checking…') : !a.found ? tt('Not installed') : `${a.signedIn ? `Signed in · ${a.account ?? 'your account'}` : 'Not signed in'}${a.version ? ` · v${a.version}` : ''}`}
+            {!a ? tt('Checking…') : !a.found ? tt('Not installed') : `${a.signedIn ? tt('Signed in · {0}', a.account ?? tt('your account')) : tt('Not signed in')}${a.version ? ` · v${a.version}` : ''}`}
           </div>
           {a?.path && <div className="truncate font-mono text-[10px] text-fg-4/80">{a.path}</div>}
         </div>

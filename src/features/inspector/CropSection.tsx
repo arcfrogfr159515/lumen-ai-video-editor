@@ -93,10 +93,10 @@ export function CropSection({ clip }: { clip: Clip }) {
           ))}
         </div>
         <div className="space-y-1">
-          {edge('left', 'Left', 'right')}
-          {edge('right', 'Right', 'left')}
-          {edge('top', 'Top', 'bottom')}
-          {edge('bottom', 'Bottom', 'top')}
+          {edge('left', tt('Left'), 'right')}
+          {edge('right', tt('Right'), 'left')}
+          {edge('top', tt('Top'), 'bottom')}
+          {edge('bottom', tt('Bottom'), 'top')}
           <ValueSlider label={tt('Corners')} value={Math.round(crop.radius * 100)} min={0} max={100} unit="%" onChange={(v) => set({ radius: v / 100 }, `crop:${clip.id}:radius`)} />
         </div>
         <Button size="sm" variant={cropMode ? 'primary' : 'secondary'} className="w-full" onClick={() => useUI.getState().setCropMode(!cropMode)}>

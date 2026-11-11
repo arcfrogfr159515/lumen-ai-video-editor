@@ -6,6 +6,7 @@
 import { uid } from '@/lib/id'
 import { formatTimecode } from '@/lib/time'
 import type { Clip, ClipTask, Frame, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 export interface ClipNoteRow {
   clipId: string
@@ -65,13 +66,13 @@ export const renameTask = (tasks: readonly ClipTask[] | undefined, id: string, t
 /** The timeline's notes and tasks as a checklist to read or hand over. */
 export function notesMarkdown(project: Pick<Project, 'clips' | 'tracks' | 'settings' | 'name'>): string {
   const rows = clipNotes(project)
-  const lines = [`# ${project.name} — clip notes`, '']
+  const lines = [tt('# {0} — clip notes', project.name), '']
   for (const row of rows) {
     lines.push(`## \`${formatTimecode(row.start, project.settings.fps)}\` ${row.name} (${row.trackName})`, '')
     if (row.note) lines.push(row.note, '')
     for (const t of row.tasks) lines.push(`- [${t.done ? 'x' : ' '}] ${t.text}`)
     if (row.tasks.length) lines.push('')
   }
-  if (!rows.length) lines.push('No notes yet.', '')
+  if (!rows.length) lines.push(tt('No notes yet.'), '')
   return lines.join('\n')
 }

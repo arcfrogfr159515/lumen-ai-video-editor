@@ -27,14 +27,14 @@ import { Scopes } from './Scopes'
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
-const RES_SHORT: Record<string, string> = { '1': 'Full', '0.5': '½', '0.25': '¼', '0.125': '⅛' }
+const RES_SHORT: Record<string, string> = { '1': tt('Full'), '0.5': '½', '0.25': '¼', '0.125': '⅛' }
 
 /** Preview resolution while playing (Auto adapts to this computer) and while paused. */
 function ResolutionMenu() {
   const playbackRes = useUI((s) => s.playbackRes)
   const pausedRes = useUI((s) => s.pausedRes)
   const auto = useAutoRes((s) => s.level)
-  const label = playbackRes === 'auto' ? `Auto${auto < 1 ? ` · ${RES_SHORT[String(auto)]}` : ''}` : RES_SHORT[String(playbackRes)]
+  const label = playbackRes === 'auto' ? tt('Auto{0}', auto < 1 ? ` · ${RES_SHORT[String(auto)]}` : '') : RES_SHORT[String(playbackRes)]
   return (
     <Menu>
       <Tip content={tt('Preview resolution — lower plays heavy timelines smoothly')}>

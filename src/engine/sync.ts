@@ -6,6 +6,7 @@
  */
 import type { Asset } from '@/editor/types'
 import { speechAudio } from './audio-engine'
+import { tt } from '@/lib/i18n'
 
 // ─── FFT ─────────────────────────────────────────────────────────────────
 
@@ -150,7 +151,7 @@ export function refineOffset(a: Float32Array, b: Float32Array, rate: number, coa
 /** A recording's sound as mono samples (16 kHz — plenty for timing). */
 async function monoSamples(asset: Asset): Promise<{ data: Float32Array; rate: number }> {
   const buf = await speechAudio(asset)
-  if (!buf) throw new Error(`“${asset.name}” has no sound to sync by.`)
+  if (!buf) throw new Error(tt('“{0}” has no sound to sync by.', asset.name))
   if (buf.numberOfChannels === 1) return { data: buf.getChannelData(0), rate: buf.sampleRate }
   const data = new Float32Array(buf.length)
   for (let c = 0; c < buf.numberOfChannels; c++) {
@@ -165,7 +166,7 @@ async function monoSamples(asset: Asset): Promise<{ data: Float32Array; rate: nu
  * The reference gets offset 0, confidence Infinity.
  */
 export async function syncByAudio(assets: Asset[], onProgress?: (done: number, total: number) => void): Promise<SyncResult[]> {
-  if (assets.length < 2) throw new Error('Pick at least two recordings to sync.')
+  if (assets.length < 2) throw new Error(tt('Pick at least two recordings to sync.'))
   const total = assets.length * 2
   let done = 0
   const tick = () => onProgress?.(++done, total)

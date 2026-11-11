@@ -8,6 +8,7 @@ import { adjacentAfter, adjacentBefore, clipEnd, clipsOnTrack, sourceFrames, tra
 import { dispatch, getProject, useEditor } from './store'
 import type { ActionSource } from './store'
 import type { Asset, Clip, ClipKind, EffectKind, Project, Track, TransitionAlign, TransitionKind } from './types'
+import { tt } from '@/lib/i18n'
 
 const STILL_SECONDS = 5
 
@@ -21,12 +22,13 @@ function isFreeAt(project: Project, track: Track, start: number, duration: numbe
 
 export type AudioRole = 'voice' | 'music' | 'sfx'
 
+// By what a track is called — in English or in Chinese, whichever language the project was made in.
 const ROLE_TRACK: Record<AudioRole, RegExp> = {
-  voice: /voice|\bvo\b|narrat|dialog|interview|speech/i,
-  music: /music|score|song|soundtrack|\bbed\b/i,
-  sfx: /sfx|sound|effect|foley/i,
+  voice: /voice|\bvo\b|narrat|dialog|interview|speech|人声|配音|旁白|语音|对白/i,
+  music: /music|score|song|soundtrack|\bbed\b|音乐|配乐|歌曲/i,
+  sfx: /sfx|sound|effect|foley|音效|效果音/i,
 }
-const ROLE_NAME: Record<AudioRole, string> = { voice: 'Voice', music: 'Music', sfx: 'Sound effects' }
+const ROLE_NAME: Record<AudioRole, string> = { voice: tt('Voice'), music: tt('Music'), sfx: tt('Sound effects') }
 
 /** What kind of sound an audio asset is — from its tags, where it came from, its transcript or its name. Null when it can't tell. */
 export function audioRole(asset: Asset): AudioRole | null {
@@ -70,14 +72,14 @@ export function placeSequence(sequenceId: string, frame: number, opts: { trackId
   const project = getProject()
   const seq = project.sequences?.[sequenceId]
   if (!seq) {
-    toast(sequenceId in (project.sequences ?? {}) ? 'Timeline missing' : 'A timeline can’t contain itself')
+    toast(sequenceId in (project.sequences ?? {}) ? tt('Timeline missing') : tt('A timeline can’t contain itself'))
     return null
   }
   const duration = sourceFrames(project, { sequenceId })
   const wanted = opts.trackId ? project.tracks.find((t) => t.id === opts.trackId) : undefined
   const kind: ClipKind = wanted?.kind === 'audio' ? 'audio' : 'video'
   let clipId: string | null = null
-  useEditor.getState().transaction(`Add ${seq.name}`, opts.source ?? 'user', () => {
+  useEditor.getState().transaction(tt('Add {0}', seq.name), opts.source ?? 'user', () => {
     const trackId = ensureTrack(kind, frame, duration, opts.trackId, opts.source)
     if (!trackId) return
     const res = dispatch('clip.add', { trackId, kind, start: frame, duration, sequenceId })
@@ -106,7 +108,7 @@ export function placeAsset(assetId: string, frame: number, opts: PlaceOptions = 
   const inPoint = Math.max(0, Math.round(opts.inPoint ?? 0))
   const duration = Math.max(1, Math.min(opts.duration ?? Infinity, assetFrames(project, asset) - inPoint))
   let clipId: string | null = null
-  useEditor.getState().transaction(`Add ${asset.name}`, opts.source ?? 'user', () => {
+  useEditor.getState().transaction(tt('Add {0}', asset.name), opts.source ?? 'user', () => {
     const trackId = ensureTrack(asset.kind, frame, duration, opts.trackId, opts.source, opts.overlay ?? Boolean(asset.alpha), asset.kind === 'audio' ? audioRole(asset) : null)
     if (!trackId) return
     const res = dispatch('clip.add', { trackId, kind: asset.kind, start: frame, duration, assetId, name: asset.name, ...(inPoint ? { inPoint } : {}), ...(opts.patch ? { patch: opts.patch } : {}) })
@@ -120,7 +122,7 @@ export function placeTitle(presetId: string, frame: number, opts: { trackId?: st
   const project = getProject()
   const duration = Math.round(preset.duration * project.settings.fps)
   let clipId: string | null = null
-  useEditor.getState().transaction(`Add ${preset.name} title`, opts.source ?? 'user', () => {
+  useEditor.getState().transaction(tt('Add {0} title', preset.name), opts.source ?? 'user', () => {
     const trackId = ensureTrack('text', frame, duration, opts.trackId, opts.source)
     if (!trackId) return
     const content = opts.content ?? preset.sample
@@ -143,7 +145,7 @@ export function applyEffect(kind: EffectKind, clipIds: string[], source: ActionS
   const project = getProject()
   const ids = clipIds.filter((id) => project.clips[id] && visualKinds.has(project.clips[id].kind))
   if (!ids.length) {
-    toast('Select a video, image or title clip first')
+    toast(tt('Select a video, image or title clip first'))
     return false
   }
   return dispatch('effect.add', { ids, kind }, { source }).ok
@@ -154,10 +156,10 @@ export function applyLook(lookId: string, clipIds: string[], source: ActionSourc
   const project = getProject()
   const ids = clipIds.filter((id) => project.clips[id] && project.clips[id].kind !== 'audio' && project.clips[id].kind !== 'text')
   if (!look || !ids.length) {
-    toast('Select a video or image clip to apply a look')
+    toast(tt('Select a video or image clip to apply a look'))
     return false
   }
-  return dispatch('clip.update', { ids, patch: { color: look.grade, look: look.id } }, { source, label: `Apply ${look.name} look` }).ok
+  return dispatch('clip.update', { ids, patch: { color: look.grade, look: look.id } }, { source, label: tt('Apply {0} look', look.name) }).ok
 }
 
 export interface TransitionSpot {
@@ -189,7 +191,7 @@ export function applyTransition(kind: TransitionKind, clipId: string, source: Ac
   const clip = project.clips[clipId]
   if (!clip || clip.kind === 'audio') return false
   if (!adjacentBefore(project, clip)) {
-    toast('Transitions go on a cut', { description: 'Drop it where two clips touch on a track: on the end of the first, on the cut, or on the start of the second.' })
+    toast(tt('Transitions go on a cut'), { description: tt('Drop it where two clips touch on a track: on the end of the first, on the cut, or on the start of the second.') })
     return false
   }
   // Keeps the length of a transition that is only being swapped or moved.

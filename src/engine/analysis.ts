@@ -5,6 +5,7 @@
  */
 import { CanvasSink } from 'mediabunny'
 import { openInput } from './decode'
+import { tt } from '@/lib/i18n'
 
 export class AnalysisCancelled extends Error {
   constructor() {
@@ -35,7 +36,7 @@ export async function scanFrames(
   const input = openInput(url)
   try {
     const track = await input.getPrimaryVideoTrack()
-    if (!track || !(await track.canDecode())) throw new Error('This video can’t be decoded here.')
+    if (!track || !(await track.canDecode())) throw new Error(tt('This video can’t be decoded here.'))
     const w = Math.max(16, Math.round(Math.min(width, track.displayWidth) / 2) * 2)
     const h = Math.max(16, Math.round((w * track.displayHeight) / track.displayWidth / 2) * 2)
     const sink = new CanvasSink(track, { width: w, height: h, fit: 'fill', poolSize: 2 })

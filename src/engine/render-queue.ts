@@ -9,6 +9,7 @@ import type { Project } from '@/editor/types'
 import { uid } from '@/lib/id'
 import { desktop } from '@/lib/platform'
 import { ExportCancelled, exportRunning, runExport, type ExportResult, type ExportSettings } from './export'
+import { tt } from '@/lib/i18n'
 
 export type JobStatus = 'queued' | 'running' | 'done' | 'failed' | 'cancelled'
 
@@ -78,11 +79,11 @@ export function stopQueue(cancelCurrent = false) {
 }
 
 async function runJob(job: QueueJob) {
-  if (!desktop) throw new Error('Rendering needs the desktop app.')
+  if (!desktop) throw new Error(tt('Rendering needs the desktop app.'))
   runningId = job.id
   controller = new AbortController()
   const started = performance.now()
-  update(job.id, { status: 'running', progress: 0, message: 'Starting…', error: undefined })
+  update(job.id, { status: 'running', progress: 0, message: tt('Starting…'), error: undefined })
   try {
     const handle = await desktop.export.open(job.target.token)
     update(job.id, { target: { ...job.target, path: handle.path } })

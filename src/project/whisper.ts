@@ -9,6 +9,7 @@ import type { TranscriptSegment } from '@shared/integrations'
 import { activeRegions } from '@/engine/audio-engine'
 import { resample } from '@/engine/wav'
 import type { WhisperConfig, WhisperMessage, WhisperRequest } from './whisper.worker'
+import { tt } from '@/lib/i18n'
 
 export const WHISPER_MODEL = 'onnx-community/whisper-base'
 
@@ -43,7 +44,7 @@ function getWorker() {
       }
     }
     worker.onerror = (e) => {
-      for (const p of pending.values()) p.reject(new Error(e.message || 'The speech model crashed.'))
+      for (const p of pending.values()) p.reject(new Error(e.message || tt('The speech model crashed.')))
       pending.clear()
       worker?.terminate()
       worker = null

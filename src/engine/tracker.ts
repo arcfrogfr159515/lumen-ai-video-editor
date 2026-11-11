@@ -9,6 +9,7 @@
  */
 import type { Asset } from '@/editor/types'
 import { AnalysisCancelled, scanFrames, toGray } from './analysis'
+import { tt } from '@/lib/i18n'
 
 // ─── Images ──────────────────────────────────────────────────────────────
 
@@ -223,7 +224,7 @@ export class PatchFollower {
       this.x = this.box.x * gray.width - this.tw / 2
       this.y = this.box.y * gray.height - this.th / 2
       this.tpl = makeTemplate(gray, this.x, this.y, this.tw, this.th)
-      if (!this.tpl) throw new Error('There isn’t enough detail in that box to follow — put it over something with texture or edges.')
+      if (!this.tpl) throw new Error(tt('There isn’t enough detail in that box to follow — put it over something with texture or edges.'))
       this.tplHalf = makeTemplate(half, this.x / 2, this.y / 2, Math.floor(this.tw / 2), Math.floor(this.th / 2))
       sample(1)
       return true
@@ -278,8 +279,8 @@ const trackingWidth = (box: TrackBox) => Math.round(Math.min(1280, Math.max(240,
  * (or backwards when `to` < `from`). Positions are fractions of the picture.
  */
 export async function trackBox(asset: Asset, box: TrackBox, from: number, to: number, onProgress?: (p: number) => void, signal?: AbortSignal): Promise<TrackSample[]> {
-  if (asset.kind !== 'video' || asset.source.type !== 'file') throw new Error(`“${asset.name}” isn’t a video file.`)
-  if (asset.source.missing) throw new Error(`“${asset.name}” is offline — its file can’t be found.`)
+  if (asset.kind !== 'video' || asset.source.type !== 'file') throw new Error(tt('“{0}” isn’t a video file.', asset.name))
+  if (asset.source.missing) throw new Error(tt('“{0}” is offline — its file can’t be found.', asset.name))
   const url = asset.source.url
   const width = trackingWidth(box)
   const span = Math.abs(to - from) || 1e-3
@@ -385,8 +386,8 @@ export function frameMotion(prev: Gray, cur: Gray): { dx: number; dy: number; an
  * of the picture) and angle (radians) per frame, starting at zero.
  */
 export async function measureShake(asset: Asset, from: number, to: number, onProgress?: (p: number) => void, signal?: AbortSignal): Promise<{ start: number; rate: number; path: number[] }> {
-  if (asset.kind !== 'video' || asset.source.type !== 'file') throw new Error(`“${asset.name}” isn’t a video file.`)
-  if (asset.source.missing) throw new Error(`“${asset.name}” is offline — its file can’t be found.`)
+  if (asset.kind !== 'video' || asset.source.type !== 'file') throw new Error(tt('“{0}” isn’t a video file.', asset.name))
+  if (asset.source.missing) throw new Error(tt('“{0}” is offline — its file can’t be found.', asset.name))
   const path: number[] = []
   const times: number[] = []
   let prev: Gray | null = null
@@ -414,7 +415,7 @@ export async function measureShake(asset: Asset, from: number, to: number, onPro
     },
     signal,
   )
-  if (times.length < 2) throw new Error('Too little footage to stabilize.')
+  if (times.length < 2) throw new Error(tt('Too little footage to stabilize.'))
   const rate = (times.length - 1) / Math.max(1e-3, times[times.length - 1] - times[0])
   return { start: times[0], rate: Math.round(rate * 1000) / 1000, path }
 }

@@ -31,6 +31,7 @@ import { needsGpuGrade } from './gl-grade'
 import { withVideoFrames } from './media'
 import { useAutoRes } from './preview-res'
 import { FrameFeeder } from './stills'
+import { tt } from '@/lib/i18n'
 
 /** Bump when rendered files from older versions must not be reused. */
 const FORMAT = 1
@@ -390,7 +391,7 @@ export async function renderPreviews(range: [number, number], label: string, opt
   // The background starts where you are.
   if (background) todo = todo.sort((a, b) => Math.abs(a - playhead) - Math.abs(b - playhead))
   if (!todo.length) {
-    if (!background) toast.success('Everything here is rendered already.')
+    if (!background) toast.success(tt('Everything here is rendered already.'))
     return
   }
 
@@ -404,7 +405,7 @@ export async function renderPreviews(range: [number, number], label: string, opt
   // The graphics card's H.264 encoder when it works at this size, else the processor's.
   let plan = await workingEncoder('avc', width, height, fps, renderBitrate(width, height, fps))
   const feeder = new FrameFeeder(project, width, height)
-  let failed: unknown = plan ? null : new Error('This computer can’t encode H.264 video at this size, so previews can’t be rendered. Try a lower render resolution.')
+  let failed: unknown = plan ? null : new Error(tt('This computer can’t encode H.264 video at this size, so previews can’t be rendered. Try a lower render resolution.'))
   try {
     for (const index of plan ? todo : []) {
       await whilePlaying(ctl.signal)
@@ -515,6 +516,6 @@ if (desktop && typeof window !== 'undefined') {
     if (!useUI.getState().backgroundRender || useRenders.getState().job || usePlayback.getState().playing) return
     if (performance.now() - lastActivity < IDLE_MS || document.hidden) return
     const project = getProject()
-    void renderPreviews([0, projectDuration(project)], 'Rendering in the background', { background: true })
+    void renderPreviews([0, projectDuration(project)], tt('Rendering in the background'), { background: true })
   }, 1000)
 }

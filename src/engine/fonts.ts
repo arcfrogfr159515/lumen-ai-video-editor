@@ -6,6 +6,7 @@
  */
 import { FONTS } from '@/editor/defaults'
 import type { FontId, FontRef, Project, ProjectFont } from '@/editor/types'
+import { tt } from '@/lib/i18n'
 
 const registered = new Map<string, FontFace>()
 const fileUrls = new Map<string, string>()
@@ -27,7 +28,7 @@ export function fontCss(ref: FontRef, project?: Pick<Project, 'fonts'>): string 
 }
 
 export function fontLabel(ref: FontRef, project?: Pick<Project, 'fonts'>) {
-  return isCustomFont(ref) ? (projectFont(project, ref)?.name ?? 'Missing font') : (FONTS[ref as FontId] ?? FONTS.sans).label
+  return isCustomFont(ref) ? (projectFont(project, ref)?.name ?? tt('Missing font')) : (FONTS[ref as FontId] ?? FONTS.sans).label
 }
 
 export function base64ToBytes(b64: string) {

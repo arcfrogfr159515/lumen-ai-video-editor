@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { create } from 'zustand'
 import type { UpdateState } from '@shared/app'
 import { APP_VERSION, desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
 
 export const RELEASES_URL = 'https://github.com/Mas-inx/lumen-ai-video-editor/releases'
 export const releaseUrl = (version: string) => `${RELEASES_URL}/tag/v${version}`
@@ -19,11 +20,11 @@ let announced: string | undefined
 let asked = false
 
 function readyToast(version: string) {
-  toast(`Lumen ${version} is ready`, {
+  toast(tt('Lumen {0} is ready', version), {
     id: 'lumen-update',
-    description: 'Restart to update. If anything is unsaved, you’ll be asked first.',
+    description: tt('Restart to update. If anything is unsaved, you’ll be asked first.'),
     duration: Number.POSITIVE_INFINITY,
-    action: { label: 'Restart', onClick: () => void installUpdate() },
+    action: { label: tt('Restart'), onClick: () => void installUpdate() },
   })
 }
 
@@ -35,11 +36,11 @@ function apply(state: UpdateState) {
   }
   if (!asked || state.status === 'checking' || state.status === 'idle') return
   asked = false
-  if (state.status === 'up-to-date') toast.success(`Lumen ${state.current} is the latest version.`)
-  else if (state.status === 'downloading') toast(`Downloading Lumen ${state.version}…`, { description: 'It installs when you restart.' })
+  if (state.status === 'up-to-date') toast.success(tt('Lumen {0} is the latest version.', state.current))
+  else if (state.status === 'downloading') toast(tt('Downloading Lumen {0}…', state.version), { description: tt('It installs when you restart.') })
   else if (state.status === 'ready' && state.version) readyToast(state.version)
   else if (state.status === 'error') toast.error(state.error ?? 'Couldn’t check for updates.')
-  else if (state.status === 'unsupported') toast('This build doesn’t update itself', { description: 'Updates come to the installed app — download it from the Releases page.' })
+  else if (state.status === 'unsupported') toast(tt('This build doesn’t update itself'), { description: tt('Updates come to the installed app — download it from the Releases page.') })
 }
 
 export function startUpdates() {

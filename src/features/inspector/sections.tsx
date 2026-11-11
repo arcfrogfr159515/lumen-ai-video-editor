@@ -287,12 +287,12 @@ export function ColorSections({ clips }: { clips: Clip[] }) {
 export function AudioSection({ clip, fps }: { clip: Clip; fps: number }) {
   const a = clip.audio
   const maxFade = Math.floor(clip.duration / 2)
-  if (clip.freeze) return <Note icon={<Snowflake />} text="A freeze frame holds one picture, so it plays no sound." />
+  if (clip.freeze) return <Note icon={<Snowflake />} text={tt('A freeze frame holds one picture, so it plays no sound.')} />
   if (a.detached)
     return (
       <Note
         icon={<Link2 />}
-        text="This clip’s sound is on its own audio clip, linked to it — select that clip to mix it, or trim it separately for J- and L-cuts."
+        text={tt('This clip’s sound is on its own audio clip, linked to it — select that clip to mix it, or trim it separately for J- and L-cuts.')}
         action={
           <Button size="sm" variant="secondary" onClick={() => dispatch('clip.reattachAudio', { ids: [clip.id] })}>
             {tt('Reattach audio')}
@@ -356,7 +356,7 @@ export function SpeedSection({ clips, fps }: { clips: Clip[]; fps: number }) {
   const ids = clips.map((c) => c.id)
   const ramped = clips.some(isRamped)
   if (clips.length === 1 && clip.freeze)
-    return <Note icon={<Snowflake />} text={`Freeze frame — holds one picture for ${formatDuration(clip.duration, fps)}. Trim it to hold longer or shorter.`} />
+    return <Note icon={<Snowflake />} text={tt('Freeze frame — holds one picture for {0}. Trim it to hold longer or shorter.', formatDuration(clip.duration, fps))} />
   return (
     <>
     <Section title={tt('Speed')} icon={<Gauge />}>
@@ -510,7 +510,7 @@ const WEIGHTS = [
 export function TextSection({ clip }: { clip: Clip }) {
   const t = clip.text!
   const projectFonts = { fonts: useEditor((s) => s.project.fonts) }
-  const set = (patch: Partial<TextStyle>, key?: string) => update([clip.id], { text: patch, ...(patch.content !== undefined && { name: patch.content.split('\n')[0] || 'Title' }) }, key)
+  const set = (patch: Partial<TextStyle>, key?: string) => update([clip.id], { text: patch, ...(patch.content !== undefined && { name: patch.content.split('\n')[0] || tt('Title') }) }, key)
   return (
     <>
       <Section title={tt('Text')} icon={<Type />}>

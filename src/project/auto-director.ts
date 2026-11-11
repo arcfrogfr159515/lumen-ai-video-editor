@@ -10,6 +10,7 @@ import { angleTracks } from '@/editor/sequences'
 import { dispatch, getProject, useEditor } from '@/editor/store'
 import type { Clip, Project, Sequence } from '@/editor/types'
 import { scanFrames, toGray } from '@/engine/analysis'
+import { tt } from '@/lib/i18n'
 
 /** Seconds each value of a camera's signal covers. */
 export const DIRECTOR_STEP = 0.1
@@ -100,10 +101,10 @@ export async function angleMotion(project: Project, seq: Sequence, onProgress?: 
 /** Plans the cuts for some multicam clips. `motion` is what watching the picture found, when it was watched. */
 export function planAutoDirect(project: Project, clipIds: readonly string[], opts: AutoDirectOptions = {}, motion?: (number[] | undefined)[]): AutoDirectPlan {
   const targets = multicamTargets(project, clipIds)
-  if (!targets) throw new Error('Select a multicam clip: one that plays a multicam timeline.')
+  if (!targets) throw new Error(tt('Select a multicam clip: one that plays a multicam timeline.'))
   const { clips, seq } = targets
   const tracks = angleTracks(seq)
-  if (tracks.length < 2) throw new Error(`“${seq.name}” has only one camera — there is nothing to cut between.`)
+  if (tracks.length < 2) throw new Error(tt('“{0}” has only one camera — there is nothing to cut between.', seq.name))
   const { levels, seconds, missing } = angleLevels(project, seq, DIRECTOR_STEP)
   const cuts = directCuts(
     levels.map((level, i) => ({ level, ...(motion?.[i] ? { motion: motion[i] } : {}) })),
@@ -129,7 +130,7 @@ export function applyAutoDirect(plan: AutoDirectPlan, source: 'user' | 'ai' = 'u
   let made = 0
   const pieces: string[] = []
   let failed: string | undefined
-  useEditor.getState().transaction('Auto-direct multicam', source, () => {
+  useEditor.getState().transaction(tt('Auto-direct multicam'), source, () => {
     for (const clipId of plan.clipIds) {
       if (!getProject().clips[clipId]) continue
       // Each switch cuts the piece the one before it left behind.

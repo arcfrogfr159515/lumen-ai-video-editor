@@ -76,7 +76,7 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
     >
       <div className="space-y-2.5">
         <Row label={tt('Label')}>
-          <LabelSwatches value={sameLabel} hint={ruleColor} onChange={(color) => update({ label: color }, color ? 'Label clip' : 'Remove label')} />
+          <LabelSwatches value={sameLabel} hint={ruleColor} onChange={(color) => update({ label: color }, color ? tt('Label clip') : tt('Remove label'))} />
         </Row>
         <Row label={tt('Speaker')}>
           <input
@@ -84,7 +84,7 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
             placeholder={heard && !clip.speaker ? tt('{0} (from the media)', heard) : tt('Who is talking')}
             aria-label={tt('Speaker')}
             onChange={(e) => setSpeaker(e.target.value)}
-            onBlur={() => speaker.trim() !== sameSpeaker && update({ speaker: speaker.trim() || null }, 'Set speaker')}
+            onBlur={() => speaker.trim() !== sameSpeaker && update({ speaker: speaker.trim() || null }, tt('Set speaker'))}
             onKeyDown={(e) => {
               e.stopPropagation()
               if (e.key === 'Enter') e.currentTarget.blur()
@@ -100,7 +100,7 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
               placeholder={tt('A note about this clip…')}
               aria-label={tt('Clip note')}
               onChange={(e) => setNote(e.target.value)}
-              onBlur={() => note.trim() !== (clip.note ?? '') && update({ note: note.trim() || null }, note.trim() ? 'Edit note' : 'Remove note')}
+              onBlur={() => note.trim() !== (clip.note ?? '') && update({ note: note.trim() || null }, note.trim() ? tt('Edit note') : tt('Remove note'))}
               onKeyDown={(e) => e.stopPropagation()}
               className="block w-full resize-none rounded-md bg-white/[0.05] px-2 py-1.5 text-sm leading-relaxed text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
             />
@@ -109,9 +109,9 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
                 <TaskRow
                   key={t.id}
                   task={t}
-                  onToggle={() => update({ tasks: toggleTask(tasks, t.id) }, t.done ? 'Reopen task' : 'Tick off task')}
-                  onRename={(text) => update({ tasks: text ? renameTask(tasks, t.id, text) : removeTask(tasks, t.id) }, text ? 'Edit task' : 'Remove task')}
-                  onRemove={() => update({ tasks: removeTask(tasks, t.id) }, 'Remove task')}
+                  onToggle={() => update({ tasks: toggleTask(tasks, t.id) }, t.done ? tt('Reopen task') : tt('Tick off task'))}
+                  onRename={(text) => update({ tasks: text ? renameTask(tasks, t.id, text) : removeTask(tasks, t.id) }, text ? tt('Edit task') : tt('Remove task'))}
+                  onRemove={() => update({ tasks: removeTask(tasks, t.id) }, tt('Remove task'))}
                 />
               ))}
             </ul>
@@ -120,7 +120,7 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
               onSubmit={(e) => {
                 e.preventDefault()
                 if (!draft.trim()) return
-                update({ tasks: addTask(tasks, draft) }, 'Add task')
+                update({ tasks: addTask(tasks, draft) }, tt('Add task'))
                 setDraft('')
               }}
             >

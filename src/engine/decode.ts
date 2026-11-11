@@ -9,6 +9,7 @@
 import { ALL_FORMATS, AudioBufferSink, CanvasSink, EncodedPacketSink, Input, UrlSource, type EncodedPacket, type InputVideoTrack, type WrappedCanvas } from 'mediabunny'
 import { timingFromMetrics } from '@/editor/frame-rate'
 import type { FrameTiming } from '@/editor/types'
+import { tt } from '@/lib/i18n'
 
 export type MediaKind = 'video' | 'audio' | 'image'
 
@@ -57,7 +58,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
     img.crossOrigin = 'anonymous'
     img.decoding = 'async'
     img.onload = () => resolve(img)
-    img.onerror = () => reject(new MediaError('This image format isn’t supported.'))
+    img.onerror = () => reject(new MediaError(tt('This image format isn’t supported.')))
     img.src = url
   })
 }
@@ -79,8 +80,8 @@ export async function probeMedia(url: string, mime: string): Promise<ProbeResult
       if (!(await video.canDecode())) {
         const codec = await video.getCodecParameterString().catch(() => null)
         throw new MediaError(
-          `This video uses ${video.codec ? video.codec.toUpperCase() : 'a codec'} that this computer can’t decode.`,
-          `no decoder for ${codec ?? video.codec ?? 'an unknown codec'} at ${video.codedWidth}×${video.codedHeight}`,
+          tt('This video uses {0} that this computer can’t decode.', video.codec ? video.codec.toUpperCase() : tt('a codec')),
+          tt('no decoder for {0} at {1}×{2}', codec ?? video.codec ?? tt('an unknown codec'), video.codedWidth, video.codedHeight),
         )
       }
       const duration = await input.computeDuration()
@@ -103,8 +104,8 @@ export async function probeMedia(url: string, mime: string): Promise<ProbeResult
         audioCodec: audio?.codec ?? null,
       }
     }
-    if (!audio) throw new MediaError('This file has no audio or video Lumen can read.')
-    if (!audioOk) throw new MediaError(`This audio uses ${audio.codec ? audio.codec.toUpperCase() : 'a codec'} that this computer can’t decode.`)
+    if (!audio) throw new MediaError(tt('This file has no audio or video Lumen can read.'))
+    if (!audioOk) throw new MediaError(tt('This audio uses {0} that this computer can’t decode.', audio.codec ? audio.codec.toUpperCase() : tt('a codec')))
     const duration = await input.computeDuration([audio])
     return { kind: 'audio', duration: round3(duration), hasAudio: true, audioCodec: audio.codec }
   } catch (err) {
@@ -114,7 +115,7 @@ export async function probeMedia(url: string, mime: string): Promise<ProbeResult
       const buffer = await decodeWithBrowser(url)
       if (buffer) return { kind: 'audio', duration: round3(buffer.duration), hasAudio: true }
     }
-    throw new MediaError('Lumen can’t read this file. It may be damaged or in a format that isn’t supported.', err instanceof Error ? err.message : String(err))
+    throw new MediaError(tt('Lumen can’t read this file. It may be damaged or in a format that isn’t supported.'), err instanceof Error ? err.message : String(err))
   } finally {
     input.dispose()
   }

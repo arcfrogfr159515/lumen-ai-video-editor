@@ -10,12 +10,13 @@
  */
 import { uid } from '@/lib/id'
 import type { Project } from './types'
+import { counted, tt } from '@/lib/i18n'
 
 export class ProjectError extends Error {}
 
 const isPlain = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === 'object' && !Array.isArray(v)
 const isFrame = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
-const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
+const count = counted
 
 /** The limits a picture can have: what a canvas can be made at. */
 const SIZE = { min: 16, max: 16384 }
@@ -26,30 +27,30 @@ function checkTimeline(t: Record<string, unknown>, assets: Record<string, unknow
   const repairs: string[] = []
   // Mid-sentence, with the timeline's own name as it was written.
   const inside = what[0].toLowerCase() + what.slice(1)
-  if (!Array.isArray(t.tracks)) throw new ProjectError(`${what} has no list of tracks.`)
-  if (t.clips !== undefined && !isPlain(t.clips)) throw new ProjectError(`${what}’s clips aren’t in a form Lumen reads.`)
-  if (t.markers !== undefined && !Array.isArray(t.markers)) throw new ProjectError(`${what}’s markers aren’t in a form Lumen reads.`)
+  if (!Array.isArray(t.tracks)) throw new ProjectError(tt('{0} has no list of tracks.', what))
+  if (t.clips !== undefined && !isPlain(t.clips)) throw new ProjectError(tt('{0}’s clips aren’t in a form Lumen reads.', what))
+  if (t.markers !== undefined && !Array.isArray(t.markers)) throw new ProjectError(tt('{0}’s markers aren’t in a form Lumen reads.', what))
 
   if (!isPlain(t.settings)) {
     t.settings = { ...DEFAULTS }
-    repairs.push(`${what} had no settings: it is ${DEFAULTS.width}×${DEFAULTS.height} at ${DEFAULTS.fps} fps`)
+    repairs.push(tt('{0} had no settings: it is {1}×{2} at {3} fps', what, DEFAULTS.width, DEFAULTS.height, DEFAULTS.fps))
   }
   const s = t.settings as Record<string, unknown>
   if (!(typeof s.fps === 'number' && Number.isFinite(s.fps) && s.fps > 0 && s.fps <= 1000)) {
     s.fps = DEFAULTS.fps
-    repairs.push(`${what}’s frame rate couldn’t be read: it is ${DEFAULTS.fps} fps`)
+    repairs.push(tt('{0}’s frame rate couldn’t be read: it is {1} fps', what, DEFAULTS.fps))
   }
   for (const side of ['width', 'height'] as const) {
     const v = s[side]
     if (!(typeof v === 'number' && Number.isFinite(v) && v >= SIZE.min && v <= SIZE.max)) {
       s[side] = DEFAULTS[side]
-      repairs.push(`${what}’s ${side} couldn’t be used: it is ${DEFAULTS[side]} px`)
+      repairs.push(tt('{0}’s {1} couldn’t be used: it is {2} px', what, side, DEFAULTS[side]))
     }
   }
   if (typeof s.background !== 'string') s.background = DEFAULTS.background
 
   const tracks = (t.tracks as unknown[]).filter((track): track is Record<string, unknown> => isPlain(track) && typeof track.id === 'string' && typeof track.kind === 'string')
-  if (tracks.length !== (t.tracks as unknown[]).length) repairs.push(`${count((t.tracks as unknown[]).length - tracks.length, 'track')} in ${inside} couldn’t be read and ${(t.tracks as unknown[]).length - tracks.length === 1 ? 'was' : 'were'} left out`)
+  if (tracks.length !== (t.tracks as unknown[]).length) repairs.push(tt('{0} in {1} couldn’t be read and {2} left out', count((t.tracks as unknown[]).length - tracks.length, 'track'), inside, (t.tracks as unknown[]).length - tracks.length === 1 ? tt('was') : tt('were')))
   t.tracks = tracks
   const trackIds = new Set(tracks.map((track) => track.id))
 
@@ -77,11 +78,11 @@ function checkTimeline(t: Record<string, unknown>, assets: Record<string, unknow
     c.id = id
     if ((c.start as number) < 0) c.start = 0
   }
-  if (dropped) repairs.push(`${count(dropped, 'clip')} in ${inside} couldn’t be read and ${dropped === 1 ? 'was' : 'were'} left out`)
+  if (dropped) repairs.push(tt('{0} in {1} couldn’t be read and {2} left out', count(dropped, 'clip'), inside, dropped === 1 ? tt('was') : tt('were')))
 
   if (Array.isArray(t.markers)) {
     const markers = t.markers.filter((m) => isPlain(m) && isFrame(m.frame))
-    if (markers.length !== t.markers.length) repairs.push(`${count(t.markers.length - markers.length, 'marker')} in ${inside} couldn’t be read and ${t.markers.length - markers.length === 1 ? 'was' : 'were'} left out`)
+    if (markers.length !== t.markers.length) repairs.push(tt('{0} in {1} couldn’t be read and {2} left out', count(t.markers.length - markers.length, 'marker'), inside, t.markers.length - markers.length === 1 ? tt('was') : tt('were')))
     t.markers = markers
   }
   return repairs
@@ -92,14 +93,14 @@ function checkTimeline(t: Record<string, unknown>, assets: Record<string, unknow
  * project; otherwise returns it (repaired in place) with what was repaired.
  */
 export function checkProject(data: unknown): { project: Project; repairs: string[] } {
-  if (!isPlain(data)) throw new ProjectError('The file doesn’t hold a project.')
-  if (data.assets !== undefined && !isPlain(data.assets)) throw new ProjectError('The project’s media list isn’t in a form Lumen reads.')
-  if (data.sequences !== undefined && !isPlain(data.sequences)) throw new ProjectError('The project’s other timelines aren’t in a form Lumen reads.')
+  if (!isPlain(data)) throw new ProjectError(tt('The file doesn’t hold a project.'))
+  if (data.assets !== undefined && !isPlain(data.assets)) throw new ProjectError(tt('The project’s media list isn’t in a form Lumen reads.'))
+  if (data.sequences !== undefined && !isPlain(data.sequences)) throw new ProjectError(tt('The project’s other timelines aren’t in a form Lumen reads.'))
   const repairs: string[] = []
   if (typeof data.id !== 'string' || !data.id) {
     // Its history and its chats are kept by this: a project without one starts them afresh.
     data.id = uid('project')
-    repairs.push('the project had no id: it has a new one, so its version history starts afresh')
+    repairs.push(tt('the project had no id: it has a new one, so its version history starts afresh'))
   }
   if (typeof data.name !== 'string' || !data.name) data.name = 'Untitled'
   const assets = (data.assets ?? {}) as Record<string, unknown>
@@ -112,11 +113,11 @@ export function checkProject(data: unknown): { project: Project; repairs: string
   // Every timeline a clip can be a nest of: the others, and the open one (a timeline that isn't open may hold it).
   const open = isPlain(data.sequence) && typeof data.sequence.id === 'string' ? [data.sequence.id] : []
   const timelines = new Set([...Object.keys(others), ...open])
-  repairs.push(...checkTimeline(data, assets, timelines, 'The timeline'))
+  repairs.push(...checkTimeline(data, assets, timelines, tt('The timeline')))
   for (const [id, sequence] of Object.entries(others)) {
     const s = sequence as Record<string, unknown>
     s.id = id
-    repairs.push(...checkTimeline(s, assets, timelines, `The timeline “${typeof s.name === 'string' ? s.name : id}”`))
+    repairs.push(...checkTimeline(s, assets, timelines, tt('The timeline “{0}”', typeof s.name === 'string' ? s.name : id)))
   }
   return { project: data as unknown as Project, repairs }
 }

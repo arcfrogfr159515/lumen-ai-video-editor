@@ -8,17 +8,18 @@ import { hashString } from '@/lib/math'
 import { angleTracks } from './sequences'
 import { consumed } from './timing'
 import type { Asset, Clip, ClipColoring, ColorRule, ColorRuleField, LabelColor, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 export const LABEL_COLORS: { id: LabelColor; name: string; css: string }[] = [
-  { id: 'red', name: 'Red', css: '#ef5b5b' },
-  { id: 'orange', name: 'Orange', css: '#f08c3a' },
-  { id: 'yellow', name: 'Yellow', css: '#e6c229' },
-  { id: 'green', name: 'Green', css: '#4cc26a' },
-  { id: 'teal', name: 'Teal', css: '#2bb8a6' },
-  { id: 'blue', name: 'Blue', css: '#4c8dff' },
-  { id: 'purple', name: 'Purple', css: '#9a6bff' },
-  { id: 'pink', name: 'Pink', css: '#ee6fb4' },
-  { id: 'gray', name: 'Gray', css: '#8d8f88' },
+  { id: 'red', name: tt('Red'), css: '#ef5b5b' },
+  { id: 'orange', name: tt('Orange'), css: '#f08c3a' },
+  { id: 'yellow', name: tt('Yellow'), css: '#e6c229' },
+  { id: 'green', name: tt('Green'), css: '#4cc26a' },
+  { id: 'teal', name: tt('Teal'), css: '#2bb8a6' },
+  { id: 'blue', name: tt('Blue'), css: '#4c8dff' },
+  { id: 'purple', name: tt('Purple'), css: '#9a6bff' },
+  { id: 'pink', name: tt('Pink'), css: '#ee6fb4' },
+  { id: 'gray', name: tt('Gray'), css: '#8d8f88' },
 ]
 
 const CSS = new Map(LABEL_COLORS.map((c) => [c.id, c.css]))
@@ -29,20 +30,20 @@ export const labelCss = (color: LabelColor) => CSS.get(color) ?? '#8d8f88'
 const AUTO: LabelColor[] = ['blue', 'orange', 'green', 'purple', 'yellow', 'teal', 'pink', 'red']
 
 export const COLOR_FIELDS: { id: ColorRuleField; label: string; hint: string; placeholder: string }[] = [
-  { id: 'source', label: 'Source', hint: 'The media a clip plays: part of its file name, or its id', placeholder: 'interview_cam_a' },
-  { id: 'speaker', label: 'Speaker', hint: 'Who is speaking in the clip', placeholder: 'Anna' },
-  { id: 'angle', label: 'Camera', hint: 'The angle a multicam clip shows: its number or name', placeholder: '2' },
-  { id: 'track', label: 'Track', hint: 'The track a clip is on', placeholder: 'Overlay' },
-  { id: 'name', label: 'Clip name', hint: 'Part of the clip’s name', placeholder: 'b-roll' },
-  { id: 'tag', label: 'Media tag', hint: 'A tag on the clip’s media', placeholder: 'drone' },
-  { id: 'kind', label: 'Kind', hint: 'video, image, audio, text or adjustment', placeholder: 'text' },
+  { id: 'source', label: tt('Source'), hint: tt('The media a clip plays: part of its file name, or its id'), placeholder: 'interview_cam_a' },
+  { id: 'speaker', label: tt('Speaker'), hint: tt('Who is speaking in the clip'), placeholder: tt('Anna') },
+  { id: 'angle', label: tt('Camera'), hint: tt('The angle a multicam clip shows: its number or name'), placeholder: '2' },
+  { id: 'track', label: tt('Track'), hint: tt('The track a clip is on'), placeholder: tt('Overlay') },
+  { id: 'name', label: tt('Clip name'), hint: tt('Part of the clip’s name'), placeholder: 'b-roll' },
+  { id: 'tag', label: tt('Media tag'), hint: tt('A tag on the clip’s media'), placeholder: 'drone' },
+  { id: 'kind', label: tt('Kind'), hint: tt('video, image, audio, text or adjustment'), placeholder: 'text' },
 ]
 
 export const AUTO_MODES: { id: NonNullable<ClipColoring['auto']>; label: string; hint: string }[] = [
-  { id: 'source', label: 'Source', hint: 'Every media item gets its own colour' },
-  { id: 'speaker', label: 'Speaker', hint: 'Every speaker gets their own colour' },
-  { id: 'angle', label: 'Camera', hint: 'Every camera angle gets its own colour' },
-  { id: 'track', label: 'Track', hint: 'Every track gets its own colour' },
+  { id: 'source', label: tt('Source'), hint: tt('Every media item gets its own colour') },
+  { id: 'speaker', label: tt('Speaker'), hint: tt('Every speaker gets their own colour') },
+  { id: 'angle', label: tt('Camera'), hint: tt('Every camera angle gets its own colour') },
+  { id: 'track', label: tt('Track'), hint: tt('Every track gets its own colour') },
 ]
 
 type Scope = Pick<Project, 'assets' | 'tracks' | 'sequences'>
@@ -197,7 +198,7 @@ export function colorLegend(project: Scope & Pick<Project, 'clips' | 'clipColors
   for (const clip of Object.values(project.clips)) {
     const tint = clipTint(project, clip)
     if (!tint) continue
-    const label = tint.from === 'label' ? 'Labelled by hand' : (tint.why ?? '')
+    const label = tint.from === 'label' ? tt('Labelled by hand') : (tint.why ?? '')
     const key = `${tint.from}|${label}|${tint.color}`
     const row = rows.get(key)
     if (row) row.clips++

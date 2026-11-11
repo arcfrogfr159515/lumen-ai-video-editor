@@ -4,6 +4,7 @@
  * (lift / gamma / gain) and the HSL bands. Pure functions, unit-tested.
  */
 import type { ColorGrade, CurvePoints, HslAdjust, HslBand, Wheel, Wheels } from './types'
+import { tt } from '@/lib/i18n'
 
 // ─── Curves ──────────────────────────────────────────────────────────────
 
@@ -95,14 +96,14 @@ export function wheelParams(w: Wheels): { lift: number[]; gamma: number[]; gain:
 // ─── HSL ─────────────────────────────────────────────────────────────────
 
 export const HSL_BANDS: { band: HslBand; hue: number; label: string; swatch: string }[] = [
-  { band: 'red', hue: 0, label: 'Red', swatch: '#ff4a4a' },
-  { band: 'orange', hue: 30, label: 'Orange', swatch: '#ff9a3c' },
-  { band: 'yellow', hue: 60, label: 'Yellow', swatch: '#ffe14a' },
-  { band: 'green', hue: 120, label: 'Green', swatch: '#4ade6a' },
-  { band: 'aqua', hue: 180, label: 'Aqua', swatch: '#3ee6e0' },
-  { band: 'blue', hue: 240, label: 'Blue', swatch: '#4a7dff' },
-  { band: 'purple', hue: 270, label: 'Purple', swatch: '#9b5cff' },
-  { band: 'magenta', hue: 300, label: 'Magenta', swatch: '#ff4ad2' },
+  { band: 'red', hue: 0, label: tt('Red'), swatch: '#ff4a4a' },
+  { band: 'orange', hue: 30, label: tt('Orange'), swatch: '#ff9a3c' },
+  { band: 'yellow', hue: 60, label: tt('Yellow'), swatch: '#ffe14a' },
+  { band: 'green', hue: 120, label: tt('Green'), swatch: '#4ade6a' },
+  { band: 'aqua', hue: 180, label: tt('Aqua'), swatch: '#3ee6e0' },
+  { band: 'blue', hue: 240, label: tt('Blue'), swatch: '#4a7dff' },
+  { band: 'purple', hue: 270, label: tt('Purple'), swatch: '#9b5cff' },
+  { band: 'magenta', hue: 300, label: tt('Magenta'), swatch: '#ff4ad2' },
 ]
 
 export const isNeutralHsl = (h?: HslAdjust) => !h || Object.values(h).every((b) => !b || (!b.hue && !b.saturation && !b.luminance))

@@ -15,13 +15,14 @@ import { kindFromMime, MediaError, probeMedia } from '@/engine/decode'
 import { uid } from '@/lib/id'
 import { desktop } from '@/lib/platform'
 import { loadSubtitleFile } from './subtitle-files'
+import { counted, tt } from '@/lib/i18n'
 
 const stripExtension = (name: string) => name.replace(/\.[^.]+$/, '')
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+const plural = counted
 
 async function assetFromFile(file: MediaFileInfo): Promise<Asset> {
   const kind = kindFromMime(file.mime)
-  if (!kind) throw new MediaError('Not a media file.')
+  if (!kind) throw new MediaError(tt('Not a media file.'))
   const meta = await probeMedia(file.url, file.mime)
   const asset: Asset = {
     id: uid('asset'),
@@ -78,7 +79,7 @@ export async function importMediaFiles(files: MediaFileInfo[], failures: ImportF
     if (hit) existing.push(hit)
     return !hit
   })
-  const id = fresh.length ? toast.loading(`Importing ${plural(fresh.length, 'file')}…`) : undefined
+  const id = fresh.length ? toast.loading(tt('Importing {0}…', plural(fresh.length, 'file'))) : undefined
   const failed = failures
   const results = await mapLimit(fresh, 3, async (file) => {
     try {
@@ -90,22 +91,22 @@ export async function importMediaFiles(files: MediaFileInfo[], failures: ImportF
   })
   const assets = results.filter((a): a is Asset => Boolean(a))
   if (assets.length) {
-    useEditor.getState().transaction(`Import ${plural(assets.length, 'file')}`, 'user', () => {
+    useEditor.getState().transaction(tt('Import {0}', plural(assets.length, 'file')), 'user', () => {
       for (const asset of assets) dispatch('asset.add', { asset })
     })
     useUI.getState().setLeftTab('media')
     void analyzeAssets(assets.map((a) => a.id))
     const uneven = assets.filter((a) => isUneven(a.frameTiming))
     if (uneven.length)
-      toast(uneven.length === 1 ? `${uneven[0].name} has an uneven frame rate` : `${uneven.length} videos have an uneven frame rate`, {
-        description: 'They play as they are. A constant-frame-rate copy steps and scrubs frame by frame.',
-        action: { label: 'Review', onClick: () => useTimelineView.getState().set({ cleanup: 'rates' }) },
+      toast(uneven.length === 1 ? tt('{0} has an uneven frame rate', uneven[0].name) : tt('{0} videos have an uneven frame rate', uneven.length), {
+        description: tt('They play as they are. A constant-frame-rate copy steps and scrubs frame by frame.'),
+        action: { label: tt('Review'), onClick: () => useTimelineView.getState().set({ cleanup: 'rates' }) },
         duration: 9000,
       })
   }
   if (failed.length === 1 && !assets.length) toast.error(`Couldn’t import ${failed[0].name}`, { id, description: failed[0].reason })
   else if (failed.length) toast.error(`Imported ${assets.length}, couldn’t import ${failed.length}`, { id, description: failed.map((f) => `${f.name}: ${f.reason}`).join('\n') })
-  else if (id) toast.success(`Imported ${plural(assets.length, 'file')}`, { id })
+  else if (id) toast.success(tt('Imported {0}', plural(assets.length, 'file')), { id })
   return [...assets, ...existing]
 }
 
@@ -147,7 +148,7 @@ export async function relinkAsset(assetId: string) {
   if (!file) return false
   try {
     const fresh = await assetFromFile(file)
-    if (fresh.kind !== asset.kind) throw new MediaError(`That’s ${fresh.kind === 'image' ? 'an image' : `a ${fresh.kind} file`} — pick the ${asset.kind} file this media came from.`)
+    if (fresh.kind !== asset.kind) throw new MediaError(tt('That’s {0} — pick the {1} file this media came from.', fresh.kind === 'image' ? tt('an image') : tt('a {0} file', fresh.kind), asset.kind))
     dispatch('asset.update', {
       id: assetId,
       patch: {
@@ -157,7 +158,7 @@ export async function relinkAsset(assetId: string) {
         ...(fresh.hasAudio !== undefined ? { hasAudio: fresh.hasAudio } : {}),
       },
     })
-    toast.success(`Relinked ${asset.name}`)
+    toast.success(tt('Relinked {0}', asset.name))
     void analyzeAssets([assetId], true)
     return true
   } catch (err) {

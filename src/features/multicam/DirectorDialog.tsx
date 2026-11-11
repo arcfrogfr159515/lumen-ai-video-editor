@@ -26,7 +26,7 @@ import { ttx } from '@/lib/i18n-react'
 
 const ANGLE_COLORS = LABEL_COLORS.filter((c) => c.id !== 'gray').map((c) => c.css)
 
-const WHY: Record<string, string> = { opening: 'opens here', speaker: 'takes over', everyone: 'several speak', quiet: 'nobody speaks', reaction: 'a look at who is listening' }
+const WHY: Record<string, string> = { opening: tt('opens here'), speaker: tt('takes over'), everyone: tt('several speak'), quiet: tt('nobody speaks'), reaction: tt('a look at who is listening') }
 
 /** The multicam clips to direct: the selected ones, else the one under the playhead. */
 function targetIds(project: Project): string[] {

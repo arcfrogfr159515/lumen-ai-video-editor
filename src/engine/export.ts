@@ -44,6 +44,7 @@ import { LoudnessMeter } from './loudness'
 import { withVideoFrames } from './media'
 import { FrameFeeder } from './stills'
 import { encodeWav } from './wav'
+import { tt } from '@/lib/i18n'
 
 export { CODECS_FOR, encoderSupport, videoBitrate, type CodecAvailability, type ExportVideoCodec } from './encoders'
 
@@ -85,10 +86,10 @@ export interface ExportResult {
 
 /** Loudness targets people deliver to. */
 export const LOUDNESS_TARGETS = [
-  { id: 'streaming', label: '−14 LUFS · YouTube, Spotify, TikTok', lufs: -14, peak: -1 },
-  { id: 'apple', label: '−16 LUFS · Apple, podcasts', lufs: -16, peak: -1 },
-  { id: 'ebu', label: '−23 LUFS · EBU R128 broadcast', lufs: -23, peak: -1 },
-  { id: 'atsc', label: '−24 LUFS · ATSC A/85 broadcast', lufs: -24, peak: -2 },
+  { id: 'streaming', label: tt('−14 LUFS · YouTube, Spotify, TikTok'), lufs: -14, peak: -1 },
+  { id: 'apple', label: tt('−16 LUFS · Apple, podcasts'), lufs: -16, peak: -1 },
+  { id: 'ebu', label: tt('−23 LUFS · EBU R128 broadcast'), lufs: -23, peak: -1 },
+  { id: 'atsc', label: tt('−24 LUFS · ATSC A/85 broadcast'), lufs: -24, peak: -2 },
 ] as const
 
 export interface ExportProgress {
@@ -115,28 +116,28 @@ function previewOf(canvas: HTMLCanvasElement) {
 
 export class ExportCancelled extends Error {
   constructor() {
-    super('Export cancelled')
+    super(tt('Export cancelled'))
   }
 }
 
 export const FORMAT_INFO: Record<ExportFormat, { label: string; extension: string; filter: string; video: boolean; folder?: boolean }> = {
-  mp4: { label: 'MP4', extension: 'mp4', filter: 'MP4 video', video: true },
-  mov: { label: 'MOV', extension: 'mov', filter: 'QuickTime movie', video: true },
-  webm: { label: 'WebM', extension: 'webm', filter: 'WebM video', video: true },
-  gif: { label: 'GIF', extension: 'gif', filter: 'Animated GIF', video: true },
-  png: { label: 'PNG', extension: 'png', filter: 'PNG frames', video: true, folder: true },
-  wav: { label: 'WAV', extension: 'wav', filter: 'WAV audio', video: false },
-  m4a: { label: 'M4A', extension: 'm4a', filter: 'M4A audio', video: false },
+  mp4: { label: tt('MP4'), extension: 'mp4', filter: tt('MP4 video'), video: true },
+  mov: { label: tt('MOV'), extension: 'mov', filter: tt('QuickTime movie'), video: true },
+  webm: { label: tt('WebM'), extension: 'webm', filter: tt('WebM video'), video: true },
+  gif: { label: tt('GIF'), extension: 'gif', filter: tt('Animated GIF'), video: true },
+  png: { label: tt('PNG'), extension: 'png', filter: tt('PNG frames'), video: true, folder: true },
+  wav: { label: tt('WAV'), extension: 'wav', filter: tt('WAV audio'), video: false },
+  m4a: { label: 'M4A', extension: 'm4a', filter: tt('M4A audio'), video: false },
 }
 
 /** Formats that can keep a transparent background. */
 export const canAlpha = (format: ExportFormat, codec: ExportVideoCodec) => format === 'png' || (format === 'webm' && codec === 'vp9')
 
 export const CODEC_LABEL: Record<ExportVideoCodec, string> = {
-  avc: 'H.264 — plays everywhere',
-  hevc: 'HEVC (H.265) — smaller files',
-  av1: 'AV1 — best compression',
-  vp9: 'VP9 — open, widely supported',
+  avc: tt('H.264 — plays everywhere'),
+  hevc: tt('HEVC (H.265) — smaller files'),
+  av1: tt('AV1 — best compression'),
+  vp9: tt('VP9 — open, widely supported'),
 }
 
 /**
@@ -174,12 +175,12 @@ async function normalization(project: Project, range: [number, number], target: 
     const t1 = Math.min(range[1] / fps, t0 + step)
     const buf = await renderMix(project, t0, t1)
     meter.push([buf.getChannelData(0), buf.getChannelData(1)])
-    onProgress({ phase: 'preparing', done: i + 1, total, speed: 0, eta: 0, message: `Measuring loudness (${Math.round(((i + 1) / total) * 100)}%)…` })
+    onProgress({ phase: 'preparing', done: i + 1, total, speed: 0, eta: 0, message: tt('Measuring loudness ({0}%)…', Math.round(((i + 1) / total) * 100)) })
   }
   const measured = meter.result().lufs
   if (measured === null) return {}
   const gainDb = Math.max(-40, Math.min(30, target.lufs - measured))
-  onProgress({ phase: 'preparing', done: 1, total: 1, speed: 0, eta: 0, message: `Loudness ${measured.toFixed(1)} LUFS → ${target.lufs} LUFS (${gainDb >= 0 ? '+' : ''}${gainDb.toFixed(1)} dB)` })
+  onProgress({ phase: 'preparing', done: 1, total: 1, speed: 0, eta: 0, message: tt('Loudness {0} LUFS → {1} LUFS ({2}{3} dB)', measured.toFixed(1), target.lufs, gainDb >= 0 ? '+' : '', gainDb.toFixed(1)) })
   return { gainDb, ceiling: target.peak }
 }
 
@@ -215,7 +216,7 @@ export const exportRunning = () => running
 export async function runExport(project: Project, settings: ExportSettings, handle: ExportHandle, onProgress: (p: ExportProgress) => void, signal: AbortSignal): Promise<ExportResult> {
   if (running) {
     await desktop?.export.abort(handle.id).catch(() => {})
-    throw new Error('Another export is already running — wait for it to finish.')
+    throw new Error(tt('Another export is already running — wait for it to finish.'))
   }
   running = true
   // What is drawn is this copy of the project: its fonts stay, even if the open project gives them up meanwhile.
@@ -231,9 +232,9 @@ export async function runExport(project: Project, settings: ExportSettings, hand
 /** The stretches of footage this export couldn't decode and showed a held picture for. */
 function damageWarnings(project: Project): string[] {
   return collectHeld().map(({ url, damage: d }) => {
-    const name = Object.values(project.assets).find((a) => a.source.type === 'file' && a.source.url === url)?.name ?? 'A video'
-    const length = Number.isFinite(d.to) ? `${(d.to - d.from).toFixed(2)} s` : 'the rest of it'
-    return `“${name}” can’t be decoded for ${length} from ${d.from.toFixed(2)} s in (the file is damaged there). The picture before it is held.`
+    const name = Object.values(project.assets).find((a) => a.source.type === 'file' && a.source.url === url)?.name ?? tt('A video')
+    const length = Number.isFinite(d.to) ? `${(d.to - d.from).toFixed(2)} s` : tt('the rest of it')
+    return tt('“{0}” can’t be decoded for {1} from {2} s in (the file is damaged there). The picture before it is held.', name, length, d.from.toFixed(2))
   })
 }
 
@@ -251,22 +252,22 @@ async function exportOnce(source: Project, settings: ExportSettings, handle: Exp
 }
 
 async function renderTo(source: Project, settings: ExportSettings, handle: ExportHandle, onProgress: (p: ExportProgress) => void, signal: AbortSignal): Promise<ExportResult> {
-  if (!desktop) throw new Error('Exporting needs the desktop app.')
+  if (!desktop) throw new Error(tt('Exporting needs the desktop app.'))
   playback.pause()
   const api = desktop
   const project = settings.burnCaptions === false ? withoutCaptions(source) : source
   const range = settings.range ?? [0, projectDuration(project)]
   const seconds = (range[1] - range[0]) / project.settings.fps
-  if (seconds <= 0) throw new Error('The timeline is empty — add some clips first.')
+  if (seconds <= 0) throw new Error(tt('The timeline is empty — add some clips first.'))
   const check = () => {
     if (signal.aborted) throw new ExportCancelled()
   }
 
   try {
-    onProgress({ phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: settings.format === 'png' ? 'Preparing…' : 'Preparing audio…' })
+    onProgress({ phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: settings.format === 'png' ? 'Preparing…' : tt('Preparing audio…') })
     await document.fonts.ready
     if (settings.format === 'png') return await exportFrames(project, settings, range, handle, onProgress, check)
-    await prepareAudio(project, (done, total) => onProgress({ phase: 'preparing', done, total, speed: 0, eta: 0, message: `Preparing audio (${done}/${total})…` }))
+    await prepareAudio(project, (done, total) => onProgress({ phase: 'preparing', done, total, speed: 0, eta: 0, message: tt('Preparing audio ({0}/{1})…', done, total) }))
     check()
     const mixOpts = settings.loudness && settings.format !== 'gif' && hasAudio(project) ? await normalization(project, range, settings.loudness, onProgress, check) : {}
 
@@ -296,7 +297,7 @@ const ENCODER_STALL_MS = 60_000
 
 function noEncoderMessage(req: EncoderRequest, attempts: EncoderAttempt[]) {
   const tried = attempts.map((a) => `${describeEncoder(a)}: ${a.error ?? 'failed'}`).join(' · ')
-  return `This computer can’t encode ${CODEC_NAME[req.codec]} at ${req.width}×${req.height}, ${req.fps} fps — try a smaller size, a lower frame rate or another format. (${tried})`
+  return tt('This computer can’t encode {0} at {1}×{2}, {3} fps — try a smaller size, a lower frame rate or another format. ({4})', CODEC_NAME[req.codec], req.width, req.height, req.fps, tried)
 }
 
 async function exportMedia(
@@ -317,7 +318,7 @@ async function exportMedia(
   let plan: EncoderPlan | null = null
   if (request) {
     // Tried for real, with a few frames at this size: some drivers accept settings and then fail.
-    onProgress({ phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: 'Checking the encoder…' })
+    onProgress({ phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: tt('Checking the encoder…') })
     const choice = await chooseEncoder(request)
     if (!choice.plan) throw new Error(noEncoderMessage(request, choice.attempts))
     plan = choice.plan
@@ -341,9 +342,9 @@ async function exportMedia(
       const next = await chooseEncoder(request)
       if (!next.plan) {
         forgive()
-        throw new Error(`${describeEncoder(plan)} stopped working (${errorText(err)}), and this computer has no other encoder for this export.`)
+        throw new Error(tt('{0} stopped working ({1}), and this computer has no other encoder for this export.', describeEncoder(plan), errorText(err)))
       }
-      onProgress({ phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: `${describeEncoder(plan)} stopped working — starting again with ${describeEncoder(next.plan)}…` })
+      onProgress({ phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: tt('{0} stopped working — starting again with {1}…', describeEncoder(plan), describeEncoder(next.plan)) })
       await api.export.restart(handle.id)
       plan = next.plan
     }
@@ -406,7 +407,7 @@ async function encodeMedia(
     audioSource = new AudioBufferSource({ codec, bitrate: codec.startsWith('pcm') ? undefined : 192_000 })
     output.addAudioTrack(audioSource)
   }
-  if (!videoSource && !audioSource) throw new Error('There’s no audio to export.')
+  if (!videoSource && !audioSource) throw new Error(tt('There’s no audio to export.'))
 
   /** What the encoder and the file writer throw, told apart. */
   const encoding = async <T>(work: Promise<T>): Promise<T> => {
@@ -415,7 +416,7 @@ async function encodeMedia(
       return await Promise.race([
         work,
         new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(new EncoderFailure('The encoder stopped answering.')), ENCODER_STALL_MS)
+          timer = setTimeout(() => reject(new EncoderFailure(tt('The encoder stopped answering.'))), ENCODER_STALL_MS)
         }),
       ])
     } catch (err) {
@@ -456,7 +457,7 @@ async function encodeMedia(
       }
     }
     progress(plan ? totalFrames : blocks, true)
-    onProgress({ phase: 'finishing', done: 1, total: 1, speed: 0, eta: 0, message: 'Finishing file…' })
+    onProgress({ phase: 'finishing', done: 1, total: 1, speed: 0, eta: 0, message: tt('Finishing file…') })
     videoSource?.close()
     audioSource?.close()
     // The encoder's last frames come out here.
@@ -493,14 +494,14 @@ async function exportFrames(project: Project, settings: ExportSettings, range: [
       await feeder.prepare(projectFrame)
       withVideoFrames(feeder.frame, () => renderFrame(ctx, project, projectFrame, { transparent }))
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
-      if (!blob) throw new Error('Couldn’t encode a PNG frame.')
+      if (!blob) throw new Error(tt('Couldn’t encode a PNG frame.'))
       await pending
       pending = blob.arrayBuffer().then((buf) => api.export.writeFrame(handle.id, i, new Uint8Array(buf)))
       progress(i + 1)
     }
     await pending
     progress(total, true)
-    onProgress({ phase: 'finishing', done: 1, total: 1, speed: 0, eta: 0, message: 'Finishing…' })
+    onProgress({ phase: 'finishing', done: 1, total: 1, speed: 0, eta: 0, message: tt('Finishing…') })
     return await api.export.finish(handle.id)
   } finally {
     feeder.dispose()
@@ -535,7 +536,7 @@ async function exportGif(project: Project, settings: ExportSettings, range: [num
       if (i % 4 === 3) await new Promise((r) => setTimeout(r, 0))
     }
     gif.finish()
-    onProgress({ phase: 'finishing', done: 1, total: 1, speed: 0, eta: 0, message: 'Writing file…' })
+    onProgress({ phase: 'finishing', done: 1, total: 1, speed: 0, eta: 0, message: tt('Writing file…') })
     await api.export.write(handle.id, 0, gif.bytes())
     return await api.export.finish(handle.id)
   } finally {

@@ -36,11 +36,11 @@ import { ttx } from '@/lib/i18n-react'
 type Mode = GenerateMode
 
 const PLACEHOLDER: Record<Mode, string> = {
-  video: 'Describe the shot: subject, action, camera move, light…',
-  image: 'Describe the image: subject, style, composition…',
-  voice: 'Type what the narrator should say…',
-  music: 'Genre, mood, instruments, how it should build…',
-  sfx: 'Describe the sound, e.g. a heavy wooden door creaking open…',
+  video: tt('Describe the shot: subject, action, camera move, light…'),
+  image: tt('Describe the image: subject, style, composition…'),
+  voice: tt('Type what the narrator should say…'),
+  music: tt('Genre, mood, instruments, how it should build…'),
+  sfx: tt('Describe the sound, e.g. a heavy wooden door creaking open…'),
 }
 
 const PROVIDER_NAME: Record<GenProvider, string> = { openai: 'OpenAI', gemini: 'Google' }
@@ -161,7 +161,7 @@ function MediaGenerator() {
         if (mode === 'image') await generateImage({ provider: gen.provider, model: gen.model, prompt: text, aspect })
         else await generateVideo({ provider: gen.provider, model: gen.model, prompt: text, aspect: aspect === '1:1' ? '16:9' : aspect, seconds, resolution: gen.provider === 'gemini' ? resolution : undefined })
       } else if (mode === 'voice') {
-        if (!voice) throw new Error('No ElevenLabs voices found on your account.')
+        if (!voice) throw new Error(tt('No ElevenLabs voices found on your account.'))
         await elevenSpeak({ text, voiceId: voice.id, voiceName: voice.name, modelId: voiceModel })
       } else if (mode === 'music') await elevenMusic({ prompt: text, lengthSeconds: musicLength, instrumental })
       else await elevenSfx({ prompt: text, durationSeconds: sfxLength || undefined, loop })

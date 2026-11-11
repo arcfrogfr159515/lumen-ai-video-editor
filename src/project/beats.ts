@@ -9,13 +9,14 @@ import type { Asset, Clip } from '@/editor/types'
 import { loadAudio } from '@/engine/audio-engine'
 import { detectBeats, type BeatGrid } from '@/engine/beats'
 import { decodeAudio } from '@/engine/decode'
+import { tt } from '@/lib/i18n'
 
 const running = new Map<string, Promise<BeatGrid>>()
 
 /** The beat grid of a media item, found the first time and kept on it. */
 export function analyzeBeats(assetId: string): Promise<BeatGrid> {
   const asset = getProject().assets[assetId]
-  if (!asset) return Promise.reject(new Error('That media isn’t in the project.'))
+  if (!asset) return Promise.reject(new Error(tt('That media isn’t in the project.')))
   if (asset.beats) return Promise.resolve(asset.beats)
   let job = running.get(assetId)
   if (!job) {
@@ -26,11 +27,11 @@ export function analyzeBeats(assetId: string): Promise<BeatGrid> {
 }
 
 async function find(asset: Asset): Promise<BeatGrid> {
-  if (asset.kind === 'image') throw new Error(`“${asset.name}” is an image — it has no sound.`)
-  if (asset.source.type !== 'file' || asset.source.missing) throw new Error(`“${asset.name}” is offline.`)
+  if (asset.kind === 'image') throw new Error(tt('“{0}” is an image — it has no sound.', asset.name))
+  if (asset.source.type !== 'file' || asset.source.missing) throw new Error(tt('“{0}” is offline.', asset.name))
   // Long files stream in playback; beats only need the first quarter hour, decoded once.
   const buffer = (await loadAudio(asset)) ?? (await decodeAudio(asset.source.url))
-  if (!buffer) throw new Error(`“${asset.name}” has no sound Lumen can decode.`)
+  if (!buffer) throw new Error(tt('“{0}” has no sound Lumen can decode.', asset.name))
   const channels = Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c))
   const grid = await detectBeats(channels, buffer.sampleRate)
   if (getProject().assets[asset.id]) dispatch('asset.update', { id: asset.id, patch: { beats: grid } }, { history: false })
@@ -39,7 +40,7 @@ async function find(asset: Asset): Promise<BeatGrid> {
 
 /** The beats of a music clip on the timeline (detecting them first if needed). */
 export async function beatsOf(clip: Clip): Promise<{ grid: BeatGrid; beats: TimelineBeat[] }> {
-  if (!clip.assetId) throw new Error('That clip has no media to listen to.')
+  if (!clip.assetId) throw new Error(tt('That clip has no media to listen to.'))
   const grid = await analyzeBeats(clip.assetId)
   return { grid, beats: clipBeats(getProject(), getProject().clips[clip.id] ?? clip) }
 }
@@ -59,21 +60,21 @@ export interface MontageResult {
 export async function cutToBeats(clipIds: string[], opts: { every?: number; music?: string; from?: number; downbeat?: boolean } = {}): Promise<MontageResult> {
   const project = getProject()
   const music = musicClip(project, opts.music)
-  if (!music) throw new Error('Add music to the timeline first — the cuts follow its beat.')
+  if (!music) throw new Error(tt('Add music to the timeline first — the cuts follow its beat.'))
   const { grid, beats } = await beatsOf(music)
-  if (beats.length < 2) throw new Error('Couldn’t find a steady beat in that music.')
+  if (beats.length < 2) throw new Error(tt('Couldn’t find a steady beat in that music.'))
   const clips = clipIds
     .map((id) => getProject().clips[id])
     .filter((c): c is Clip => Boolean(c) && c.kind !== 'audio' && c.id !== music.id)
     .sort((a, b) => a.start - b.start)
-  if (!clips.length) throw new Error('Select the video or image clips to cut to the beat.')
+  if (!clips.length) throw new Error(tt('Select the video or image clips to cut to the beat.'))
   const every = Math.max(1, Math.round(opts.every ?? 2))
   const from = opts.from ?? Math.min(...clips.map((c) => c.start))
   let i = beats.findIndex((b) => b.frame >= from && (!opts.downbeat || b.down))
-  if (i < 0) throw new Error('There are no beats after that point.')
+  if (i < 0) throw new Error(tt('There are no beats after that point.'))
   const fps = getProject().settings.fps
   const placed: MontageResult['placed'] = []
-  useEditor.getState().transaction(`Cut ${clips.length} clips to the beat`, 'user', () => {
+  useEditor.getState().transaction(tt('Cut {0} clips to the beat', clips.length), 'user', () => {
     // Out of the way first, so clips never overlap mid-move.
     const parking = Math.max(...Object.values(getProject().clips).map(clipEnd)) + fps * 10
     dispatch('clip.move', { moves: clips.map((c, k) => ({ id: c.id, start: parking + k * fps * 60 })), mode: 'free' })

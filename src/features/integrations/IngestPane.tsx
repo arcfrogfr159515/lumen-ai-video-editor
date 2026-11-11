@@ -102,12 +102,12 @@ function ClipRow({ clip }: { clip: IngestClip }) {
   const active = clip.status === 'receiving' || clip.status === 'assembling'
   const detail =
     clip.status === 'done'
-      ? `${clip.received} frames · ${clip.width}×${clip.height} · ${megabytes(clip.bytes ?? 0)}`
+      ? tt('{0} frames · {1}×{2} · {3}', clip.received, clip.width, clip.height, megabytes(clip.bytes ?? 0))
       : clip.status === 'error'
-        ? (clip.error ?? 'Failed')
+        ? (clip.error ?? tt('Failed'))
         : clip.status === 'assembling'
-          ? 'Finishing the file…'
-          : `${clip.received} of ${total || '?'} frames · ${clip.width}×${clip.height}`
+          ? tt('Finishing the file…')
+          : tt('{0} of {1} frames · {2}×{3}', clip.received, total || '?', clip.width, clip.height)
   const show = () => {
     useUI.getState().setLeftTab('media')
     useIntegrations.setState({ hubOpen: false })

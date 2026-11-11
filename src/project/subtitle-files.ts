@@ -6,10 +6,11 @@ import { toast } from 'sonner'
 import { getProject } from '@/editor/store'
 import { formatCues, importSubtitles, timelineCues, type SubtitleFormat } from '@/editor/subtitles'
 import { desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
 
 export const SUBTITLE_FORMATS: Record<SubtitleFormat, { label: string; filter: string }> = {
-  srt: { label: 'SRT', filter: 'SubRip subtitles' },
-  vtt: { label: 'WebVTT', filter: 'WebVTT subtitles' },
+  srt: { label: tt('SRT'), filter: tt('SubRip subtitles') },
+  vtt: { label: tt('WebVTT'), filter: tt('WebVTT subtitles') },
 }
 
 /** Reads a subtitle file the user picks and lays it on the timeline. */
@@ -27,7 +28,7 @@ export function pickSubtitles() {
 export async function loadSubtitleFile(file: File) {
   try {
     const res = importSubtitles(await file.text(), { name: file.name.replace(/\.[^.]+$/, '') })
-    toast.success(`${res.added} caption${res.added === 1 ? '' : 's'} from ${file.name}`)
+    toast.success(tt('{0} caption{1} from {2}', res.added, res.added === 1 ? '' : 's', file.name))
     return res
   } catch (err) {
     toast.error(`Couldn’t read ${file.name}`, { description: err instanceof Error ? err.message : String(err) })
@@ -42,7 +43,7 @@ export async function loadSubtitleFile(file: File) {
 export async function saveSubtitles(format: SubtitleFormat, name = getProject().name): Promise<{ path: string; cues: number } | null> {
   const cues = timelineCues(getProject())
   if (!cues.length) {
-    toast('No captions to export', { description: 'Add captions (or import a subtitle file) first.' })
+    toast(tt('No captions to export'), { description: tt('Add captions (or import a subtitle file) first.') })
     return null
   }
   const text = formatCues(cues, format)
@@ -60,7 +61,7 @@ export async function saveSubtitles(format: SubtitleFormat, name = getProject().
   try {
     await desktop.export.write(handle.id, 0, new TextEncoder().encode(text))
     const res = await desktop.export.finish(handle.id)
-    toast.success(`Saved ${cues.length} caption${cues.length === 1 ? '' : 's'}`, { description: res.path, action: { label: 'Show', onClick: () => void desktop?.files.reveal(res.path) } })
+    toast.success(tt('Saved {0} caption{1}', cues.length, cues.length === 1 ? '' : 's'), { description: res.path, action: { label: tt('Show'), onClick: () => void desktop?.files.reveal(res.path) } })
     return { path: res.path, cues: cues.length }
   } catch (err) {
     await desktop.export.abort(handle.id).catch(() => {})

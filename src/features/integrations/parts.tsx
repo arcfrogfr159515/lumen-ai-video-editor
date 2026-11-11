@@ -29,11 +29,11 @@ export function StatusDot({ status, className }: { status: McpStatus | 'ready' |
 }
 
 export const STATUS_LABEL: Record<McpStatus, string> = {
-  connected: 'Connected',
+  connected: tt('Connected'),
   connecting: 'Connecting…',
-  'needs-auth': 'Waiting for sign-in',
-  error: 'Error',
-  disconnected: 'Not connected',
+  'needs-auth': tt('Waiting for sign-in'),
+  error: tt('Error'),
+  disconnected: tt('Not connected'),
 }
 
 /** A gradient icon tile used for integration headers. */
@@ -209,7 +209,7 @@ export function JobOutcome({ job }: { job: Job }) {
 
 const ago = (t: number) => {
   const s = Math.round((Date.now() - t) / 1000)
-  return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  return s < 60 ? tt('just now') : s < 3600 ? tt('{0} min ago', Math.round(s / 60)) : new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
 /** A render/generation in the Generate panel: live progress, then the result. */

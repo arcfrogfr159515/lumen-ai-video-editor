@@ -9,6 +9,7 @@ import { createClip, createTrack, TRACK_HEIGHTS } from './defaults'
 import { ANIMATABLE, propAt } from './keyframes'
 import { consumed, consumedAt, localForConsumed, sourceFrameAt, speedAt, splitInPoints } from './timing'
 import type { AnimatableProp, Clip, ClipKind, Frame, Project, Track, Transition } from './types'
+import { tt } from '@/lib/i18n'
 
 export const clipEnd = (c: Pick<Clip, 'start' | 'duration'>) => c.start + c.duration
 
@@ -761,7 +762,7 @@ export function moveRange(p: Project, a: Frame, b: Frame, to: Frame, keepWhole: 
  */
 export function rollEdit(p: Project, right: Clip, frame: Frame): Frame {
   const left = adjacentBefore(p, right)
-  if (!left) throw new Error(`“${right.name}” has no clip right before it to roll against`)
+  if (!left) throw new Error(tt('“{0}” has no clip right before it to roll against', right.name))
   const [lo, hi] = rollBounds(p, left, right)
   const target = clamp(Math.round(frame), lo, hi)
   if (target === right.start) return right.start
@@ -843,7 +844,7 @@ export function freezeFrame(p: Project, clip: Clip, frame: Frame, duration: Fram
   const local = at - clip.start
   const hold = cloneClip(clip)
   hold.id = uid('clip')
-  hold.name = `${clip.name} (freeze)`
+  hold.name = tt('{0} (freeze)', clip.name)
   hold.freeze = true
   hold.inPoint = Math.round(sourceFrameAt(clip, local))
   hold.start = at
@@ -931,7 +932,7 @@ function audioTrackFor(p: Project, a: Frame, b: Frame): Track {
   const pick = free.find((t) => /voice|dialog|narrat|audio/i.test(t.name)) ?? free[0]
   if (pick) return pick
   const count = p.tracks.filter((t) => t.kind === 'audio').length
-  const track = createTrack('audio', { id: uid('track'), name: `Audio ${count + 1}`, height: TRACK_HEIGHTS.audio })
+  const track = createTrack('audio', { id: uid('track'), name: tt('Audio {0}', count + 1), height: TRACK_HEIGHTS.audio })
   p.tracks.push(track)
   return track
 }
@@ -942,10 +943,10 @@ function audioTrackFor(p: Project, a: Frame, b: Frame): Track {
  * the new audio clip.
  */
 export function detachAudio(p: Project, clip: Clip): Clip {
-  if (clip.kind !== 'video') throw new Error(`“${clip.name}” isn’t a video clip`)
-  if (clip.audio.detached) throw new Error(`“${clip.name}” already has its sound on its own clip`)
+  if (clip.kind !== 'video') throw new Error(tt('“{0}” isn’t a video clip', clip.name))
+  if (clip.audio.detached) throw new Error(tt('“{0}” already has its sound on its own clip', clip.name))
   const asset = clip.assetId ? p.assets[clip.assetId] : undefined
-  if (!asset || asset.hasAudio === false) throw new Error(`“${clip.name}” has no sound to detach`)
+  if (!asset || asset.hasAudio === false) throw new Error(tt('“{0}” has no sound to detach', clip.name))
   const track = audioTrackFor(p, clip.start, clipEnd(clip))
   const sound = createClip({
     id: uid('clip'),

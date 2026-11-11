@@ -16,6 +16,7 @@ import { clipSourceTime } from '@/engine/compositor'
 import { uid } from '@/lib/id'
 import { desktop } from '@/lib/platform'
 import type { SegmentConfig, SegmentMessage, SegmentRequest } from './segment.worker'
+import { tt } from '@/lib/i18n'
 
 export type Subject = 'person' | 'any'
 
@@ -63,7 +64,7 @@ function getWorker() {
       }
     }
     worker.onerror = (e) => {
-      for (const p of pending.values()) p.reject(new Error(e.message || 'The segmentation model crashed.'))
+      for (const p of pending.values()) p.reject(new Error(e.message || tt('The segmentation model crashed.')))
       pending.clear()
       worker?.terminate()
       worker = null
@@ -163,16 +164,16 @@ function grayscale(ctx: CanvasRenderingContext2D, alpha: Uint8Array, width: numb
  * matte image.
  */
 export async function subjectMatte(clip: Clip, subject: Subject, opts: { onProgress?: (p: MatteProgress) => void; signal?: AbortSignal } = {}): Promise<{ assetId: string; from: number }> {
-  if (!desktop) throw new Error('Cutting out subjects needs Lumen’s desktop app.')
+  if (!desktop) throw new Error(tt('Cutting out subjects needs Lumen’s desktop app.'))
   const project = getProject()
   const asset = clip.assetId ? project.assets[clip.assetId] : undefined
-  if (!asset || asset.kind === 'audio') throw new Error('Pick a video or image clip — there’s no picture to cut out of this one.')
-  if (asset.source.type !== 'file' || asset.source.missing) throw new Error(`“${asset.name}” is offline or isn’t a single file.`)
+  if (!asset || asset.kind === 'audio') throw new Error(tt('Pick a video or image clip — there’s no picture to cut out of this one.'))
+  if (asset.source.type !== 'file' || asset.source.missing) throw new Error(tt('“{0}” is offline or isn’t a single file.', asset.name))
   const fps = project.settings.fps
   const [from, to] = asset.kind === 'image' ? [0, 0] : stretchOf(clip, asset, fps)
   const reuse = existingMatte(asset, subject, from, to)
   if (reuse) return { assetId: reuse.id, from: reuse.matteOf!.from }
-  const name = `${asset.name.replace(/\.[^.]+$/, '')} — ${subject === 'person' ? 'person' : 'subject'} matte`
+  const name = tt('{0} — {1} matte', asset.name.replace(/\.[^.]+$/, ''), subject === 'person' ? tt('person') : tt('subject'))
 
   if (asset.kind === 'image') {
     const img = await loadImage(asset.source.url)
@@ -187,7 +188,7 @@ export async function subjectMatte(clip: Clip, subject: Subject, opts: { onProgr
     const alpha = await segmentFrame(ctx.getImageData(0, 0, width, height).data, width, height, subject)
     const box = subjectBox(alpha, width, height) ?? undefined
     grayscale(ctx, alpha, width, height)
-    const blob = await new Promise<Blob>((r, x) => canvas.toBlob((b) => (b ? r(b) : x(new Error('Couldn’t save the matte'))), 'image/png'))
+    const blob = await new Promise<Blob>((r, x) => canvas.toBlob((b) => (b ? r(b) : x(new Error(tt('Couldn’t save the matte')))), 'image/png'))
     const info = await desktop.files.saveMedia('generated', `${name}.png`, new Uint8Array(await blob.arrayBuffer()))
     opts.onProgress?.({ done: 1, total: 1 })
     return { assetId: addMatte(asset, subject, name, info, { kind: 'image', width, height }, 0, 0, box), from: 0 }
@@ -239,7 +240,7 @@ export async function subjectMatte(clip: Clip, subject: Subject, opts: { onProgr
       },
       opts.signal,
     )
-    if (!output || !source) throw new Error('No frames came out of that clip.')
+    if (!output || !source) throw new Error(tt('No frames came out of that clip.'))
     ;(source as CanvasSource).close()
     await (output as Output).finalize()
   } catch (err) {
@@ -284,7 +285,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error('Couldn’t load the image'))
+    img.onerror = () => reject(new Error(tt('Couldn’t load the image')))
     img.src = url
   })
 }

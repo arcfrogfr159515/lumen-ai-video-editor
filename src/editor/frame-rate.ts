@@ -5,6 +5,7 @@
  * picks the constant rate a copy of it should be given.
  */
 import type { FrameTiming } from './types'
+import { tt } from '@/lib/i18n'
 
 /** The rates cameras and screens actually run at. */
 export const COMMON_RATES = [12, 15, 23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60, 90, 100, 119.88, 120, 144, 240] as const
@@ -100,8 +101,8 @@ export const rateLabel = (fps: number) => (Math.abs(fps - 23.976) < 0.002 ? '23.
 
 /** What a file's frame timing is, in a line. */
 export function describeTiming(t: FrameTiming | undefined): string {
-  if (!t) return 'Not checked yet'
-  if (t.variable) return `Variable: ${rateLabel(t.min)}–${rateLabel(t.max)} fps, usually ${rateLabel(t.median)}`
-  if (t.dropped) return `${rateLabel(t.grid ?? t.median)} fps with frames missing (as slow as ${rateLabel(t.min)} fps in places)`
-  return `Constant ${rateLabel(t.grid ?? t.median)} fps${isWhole(t) ? '' : ' at the start — the rest isn’t checked yet'}`
+  if (!t) return tt('Not checked yet')
+  if (t.variable) return tt('Variable: {0}–{1} fps, usually {2}', rateLabel(t.min), rateLabel(t.max), rateLabel(t.median))
+  if (t.dropped) return tt('{0} fps with frames missing (as slow as {1} fps in places)', rateLabel(t.grid ?? t.median), rateLabel(t.min))
+  return tt('Constant {0} fps{1}', rateLabel(t.grid ?? t.median), isWhole(t) ? '' : (' ' + tt('at the start — the rest isn’t checked yet')))
 }

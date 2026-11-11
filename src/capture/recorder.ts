@@ -38,6 +38,7 @@ import { uid } from '@/lib/id'
 import { desktop } from '@/lib/platform'
 import { analyzeAssets } from '@/project/media-import'
 import type { CaptureFromWorker, CaptureToWorker, RecordJob, SegmentInfo, VideoReady, WorkerStats } from './capture.worker'
+import { tt } from '@/lib/i18n'
 
 const message = (err: unknown) => (err instanceof Error ? err.message : String(err))
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
@@ -152,13 +153,13 @@ let previewing: Promise<MediaStream> | null = null
  */
 export function effectiveAudio(settings: CaptureSettings, source: CaptureSource | null, helper: CaptureHelperState | null): { audio: CaptureAudio; note?: string } {
   if (settings.audio !== 'app') return { audio: settings.audio }
-  if (source?.kind !== 'window') return { audio: 'system', note: 'A whole screen isn’t one app, so everything the computer plays is recorded.' }
-  if (!helper?.appAudio) return { audio: 'system', note: `${helper?.reason ?? 'One app’s sound can’t be recorded here.'} Everything the computer plays is recorded instead.` }
+  if (source?.kind !== 'window') return { audio: 'system', note: tt('A whole screen isn’t one app, so everything the computer plays is recorded.') }
+  if (!helper?.appAudio) return { audio: 'system', note: tt('{0} Everything the computer plays is recorded instead.', helper?.reason ?? tt('One app’s sound can’t be recorded here.')) }
   return { audio: 'app' }
 }
 
 async function acquire(settings: CaptureSettings, audio: CaptureAudio): Promise<MediaStream> {
-  if (!desktop) throw new Error('Recording needs the desktop app.')
+  if (!desktop) throw new Error(tt('Recording needs the desktop app.'))
   await desktop.capture.arm(settings.sourceId, audio === 'system')
   try {
     return await navigator.mediaDevices.getDisplayMedia({
@@ -167,7 +168,7 @@ async function acquire(settings: CaptureSettings, audio: CaptureAudio): Promise<
       audio: audio === 'system' ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000 } : false,
     })
   } catch (err) {
-    throw new Error(`Couldn’t start capturing that ${settings.sourceId.startsWith('screen') ? 'screen' : 'window'} (${message(err)}). If it is a window, check it isn’t minimized.`)
+    throw new Error(tt('Couldn’t start capturing that {0} ({1}). If it is a window, check it isn’t minimized.', settings.sourceId.startsWith('screen') ? tt('screen') : tt('window'), message(err)))
   }
 }
 
@@ -321,7 +322,7 @@ class Track {
     transfer: Transferable[],
     onNote: (text: string) => void,
   ) {
-    this.worker = new Worker(new URL('./capture.worker.ts', import.meta.url), { type: 'module', name: `record-${role}` })
+    this.worker = new Worker(new URL('./capture.worker.ts', import.meta.url), { type: 'module', name: tt('record-{0}', role) })
     let readyOk: (v: VideoReady | undefined) => void = () => {}
     let readyFail: (e: Error) => void = () => {}
     let doneOk: () => void = () => {}
@@ -344,7 +345,7 @@ class Track {
           .then((f) => desktop!.export.write(f.id, msg.position, msg.data))
           .then(
             () => this.send({ type: 'written', id: msg.id }),
-            (err: unknown) => broke(`Couldn’t write the recording: ${message(err)}`),
+            (err: unknown) => broke(tt('Couldn’t write the recording: {0}', message(err))),
           )
       } else if (msg.type === 'ready') readyOk(msg.video)
       else if (msg.type === 'segment') this.segments.push(msg.info)
@@ -353,7 +354,7 @@ class Track {
       else if (msg.type === 'done') doneOk()
       else if (msg.type === 'error') broke(msg.message)
     }
-    this.worker.onerror = (e) => broke(e.message || 'The encoder stopped unexpectedly.')
+    this.worker.onerror = (e) => broke(e.message || tt('The encoder stopped unexpectedly.'))
     this.worker.postMessage({ type: 'start', job } satisfies CaptureToWorker, transfer)
   }
 
@@ -447,7 +448,7 @@ function listen() {
   })
   desktop.capture.onStreamEnded((key, reason) => {
     if (!session?.keys.includes(key) || !key.startsWith('audio')) return
-    if (reason !== 'ended' && isRecording()) note(`The app’s sound stopped: ${reason}`)
+    if (reason !== 'ended' && isRecording()) note(tt('The app’s sound stopped: {0}', reason))
   })
   desktop.capture.onHotkey((key) => {
     if (key === 'toggle') {
@@ -473,7 +474,7 @@ export interface StartOptions {
 }
 
 /** A screen that shows more colours than sRGB (most laptop panels made since 2021). */
-export const wideGamutDisplay = () => typeof matchMedia === 'function' && matchMedia('(color-gamut: p3)').matches
+export const wideGamutDisplay = () => typeof matchMedia === 'function' && matchMedia(tt('(color-gamut: p3)')).matches
 
 /**
  * What a recording says its colours are. Capture hands over the numbers the
@@ -489,8 +490,8 @@ function captureColor(settings: CaptureSettings): NonNullable<NonNullable<Record
 
 /** Starts a recording with the current settings (or these). Resolves once it is rolling. */
 export async function startRecording(opts: StartOptions = {}): Promise<{ name: string; ready: VideoReady | null; notes: string[] }> {
-  if (!desktop) throw new Error('Recording needs the desktop app.')
-  if (get().phase !== 'idle') throw new Error('A recording is already running. Stop it first.')
+  if (!desktop) throw new Error(tt('Recording needs the desktop app.'))
+  if (get().phase !== 'idle') throw new Error(tt('A recording is already running. Stop it first.'))
   listen()
   if (opts.settings) updateSettings(opts.settings)
   const settings = get().settings
@@ -499,7 +500,7 @@ export async function startRecording(opts: StartOptions = {}): Promise<{ name: s
     await refreshSources(false)
     source = sourceById(settings.sourceId)
   }
-  if (!source) throw new Error('Pick a screen or a window to record first.')
+  if (!source) throw new Error(tt('Pick a screen or a window to record first.'))
   const helper = get().helper ?? (await desktop.capture.helper())
   const { audio, note: audioNote } = effectiveAudio(settings, source, helper)
   const name = cleanRecordingName(opts.name ?? '') || recordingName(new Date())
@@ -533,7 +534,7 @@ export async function startRecording(opts: StartOptions = {}): Promise<{ name: s
         const samples = sound(track.clone())
         job.audio = { kind: 'track', samples }
         transfer.push(samples)
-      } else note('The system’s sound wasn’t available, so the recording has none.')
+      } else note(tt('The system’s sound wasn’t available, so the recording has none.'))
     } else if (audio === 'app') {
       const audioKey = `audio-${uid('rec')}`
       s.keys.push(audioKey)
@@ -541,7 +542,7 @@ export async function startRecording(opts: StartOptions = {}): Promise<{ name: s
         const format = await desktop.capture.startAppAudio(audioKey, { hwnd: source.hwnd, pid: source.pid })
         job.audio = { kind: 'pcm', sampleRate: format.sampleRate, channels: format.channels, t: format.t - s.wall }
       } catch (err) {
-        note(`${message(err)} The recording has no sound of its own.`)
+        note(tt('{0} The recording has no sound of its own.', message(err)))
       }
     }
     if (settings.cursorData) {
@@ -561,7 +562,7 @@ export async function startRecording(opts: StartOptions = {}): Promise<{ name: s
           new Track('webcam', name, 'mp4', { role: 'webcam', clock: clockNow(), video: { frames: camFrames, region: null, resolution: 'native', fps: camFps, codec: 'avc', hardware: settings.hardware, rate: { mode: 'quality', quality: 72 }, keyframeSeconds: 2 } }, [camFrames], note),
         )
       } catch (err) {
-        note(`The camera couldn’t be opened (${message(err)}), so it isn’t recorded.`)
+        note(tt('The camera couldn’t be opened ({0}), so it isn’t recorded.', message(err)))
       }
     }
     if (settings.mic) {
@@ -571,13 +572,13 @@ export async function startRecording(opts: StartOptions = {}): Promise<{ name: s
         const samples = sound(mic.getAudioTracks()[0])
         s.tracks.push(new Track('mic', name, 'm4a', { role: 'mic', clock: clockNow(), audio: { kind: 'track', samples } }, [samples], note))
       } catch (err) {
-        note(`The microphone couldn’t be opened (${message(err)}), so it isn’t recorded.`)
+        note(tt('The microphone couldn’t be opened ({0}), so it isn’t recorded.', message(err)))
       }
     }
 
     // Each encoder says when it has seen the picture and is running.
     const settled = await Promise.race([Promise.all(s.tracks.map((t) => t.ready)), sleep(15_000).then(() => null)])
-    if (!settled) throw new Error(`No picture arrived from “${source.name}”. If it is a window, bring it back from the taskbar: a minimized window has nothing to record.`)
+    if (!settled) throw new Error(tt('No picture arrived from “{0}”. If it is a window, bring it back from the taskbar: a minimized window has nothing to record.', source.name))
     const ready = settled[0] ?? null
     if (ready?.note) note(ready.note)
     set({ ready })
@@ -601,7 +602,7 @@ export async function startRecording(opts: StartOptions = {}): Promise<{ name: s
     // The window closing (or the screen going away) ends the recording with what it has.
     s.ended = () => {
       if (session === s && isRecording()) {
-        note(source.kind === 'window' ? 'The window closed, so the recording ended there.' : 'The screen went away, so the recording ended there.')
+        note(source.kind === 'window' ? tt('The window closed, so the recording ended there.') : tt('The screen went away, so the recording ended there.'))
         void stopRecording().catch(() => {})
       }
     }
@@ -613,13 +614,13 @@ export async function startRecording(opts: StartOptions = {}): Promise<{ name: s
         if (t.role === 'screen') {
           set({ error: message(err) })
           void stopRecording().catch(() => {})
-        } else note(`${t.role === 'webcam' ? 'The camera' : 'The microphone'} stopped: ${message(err)}`)
+        } else note(tt('{0} stopped: {1}', t.role === 'webcam' ? tt('The camera') : tt('The microphone'), message(err)))
       })
     }
     return { name, ready, notes: get().notes }
   } catch (err) {
     await abandon(s)
-    if (err instanceof Cancelled) throw new Error('The recording was cancelled before it started.')
+    if (err instanceof Cancelled) throw new Error(tt('The recording was cancelled before it started.'))
     set({ error: message(err) })
     throw err
   }
@@ -675,7 +676,7 @@ async function watchDisk(s: Session) {
   if (session !== s || free === null || free === undefined) return
   set((st) => ({ stats: { ...st.stats, free } }))
   if (free < LOW_DISK && isRecording()) {
-    note('The disk is almost full, so the recording stopped while there was room to finish the file.')
+    note(tt('The disk is almost full, so the recording stopped while there was room to finish the file.'))
     void stopRecording().catch(() => {})
   }
 }
@@ -739,7 +740,7 @@ export interface RecordingResult {
 export function stopRecording(opts: StopOptions = {}): Promise<RecordingResult | null> {
   if (stopping) return stopping
   const s = session
-  if (!s) return Promise.reject(new Error('No recording is running.'))
+  if (!s) return Promise.reject(new Error(tt('No recording is running.')))
   // Still counting down or getting ready: there is nothing to keep yet.
   if (!isRecording()) {
     s.cancelled = true
@@ -766,7 +767,7 @@ async function finish(s: Session, opts: StopOptions): Promise<RecordingResult | 
     await abandon(s)
     return null
   }
-  const busy = toast.loading('Finishing the recording', { description: s.name, duration: Infinity })
+  const busy = toast.loading(tt('Finishing the recording'), { description: s.name, duration: Infinity })
   try {
     for (const t of s.tracks) t.send({ type: 'stop', at })
     // An encoder that has already failed still has files worth finishing.
@@ -774,17 +775,17 @@ async function finish(s: Session, opts: StopOptions): Promise<RecordingResult | 
     const made: { role: Role; file: RecordedFile; segment: SegmentInfo }[] = []
     for (const t of s.tracks) for (const m of await t.finish()) made.push({ role: t.role, ...m })
     for (const stream of s.streams) stopStream(stream)
-    if (!made.some((m) => m.role === 'screen')) throw new Error(get().error ?? 'Nothing was recorded.')
+    if (!made.some((m) => m.role === 'screen')) throw new Error(get().error ?? tt('Nothing was recorded.'))
 
     const { assets, clips, clicks } = await addToProject(s, made, opts)
     const seconds = Math.max(0, recordingSeconds(s.clock, at))
     const result: RecordingResult = { name: s.name, seconds, files: made.map((m) => m.file), assets, clips, markers: get().markers, clicks, notes: get().notes }
-    const where = clips.length ? 'on the timeline' : assets.length ? 'in the media library' : 'saved'
-    toast.success(`Recorded ${formatSeconds(seconds)}`, {
+    const where = clips.length ? tt('on the timeline') : assets.length ? tt('in the media library') : 'saved'
+    toast.success(tt('Recorded {0}', formatSeconds(seconds)), {
       id: busy,
       description: `${s.name} · ${where}${get().notes.length ? ` · ${get().notes.length} note${get().notes.length > 1 ? 's' : ''}` : ''}`,
       duration: 7000,
-      action: assets.length ? { label: 'Show', onClick: () => useUI.getState().setLeftTab('media') } : { label: 'Open folder', onClick: () => void desktop!.files.reveal(made[0].file.path) },
+      action: assets.length ? { label: tt('Show'), onClick: () => useUI.getState().setLeftTab('media') } : { label: tt('Open folder'), onClick: () => void desktop!.files.reveal(made[0].file.path) },
     })
     return result
   } catch (err) {
@@ -805,7 +806,7 @@ async function finish(s: Session, opts: StopOptions): Promise<RecordingResult | 
   }
 }
 
-const formatSeconds = (s: number) => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min` : s >= 60 ? `${Math.floor(s / 60)} min ${Math.round(s % 60)} s` : `${Math.round(s * 10) / 10} s`)
+const formatSeconds = (s: number) => (s >= 3600 ? tt('{0} h {1} min', Math.floor(s / 3600), Math.floor((s % 3600) / 60)) : s >= 60 ? tt('{0} min {1} s', Math.floor(s / 60), Math.round(s % 60)) : `${Math.round(s * 10) / 10} s`)
 
 /** Where the recorded picture was on the desktop through the recording: a screen stays put, a window may have been moved. */
 function areaOver(s: Session, segment: SegmentInfo): (t: number) => Rect | null {
@@ -858,7 +859,7 @@ async function addToProject(s: Session, made: { role: Role; file: RecordedFile; 
     const cues: AssetCue[] = []
     let cursor: Asset['cursor']
     if (m.role === 'screen') {
-      for (const mk of get().markers) if (mk.t >= segment.from && mk.t <= segment.from + seconds) cues.push({ at: Math.round((mk.t - segment.from) * 1000) / 1000, kind: 'marker', label: mk.label ?? 'Marker' })
+      for (const mk of get().markers) if (mk.t >= segment.from && mk.t <= segment.from + seconds) cues.push({ at: Math.round((mk.t - segment.from) * 1000) / 1000, kind: 'marker', label: mk.label ?? tt('Marker') })
       // A sender's cue sheet counts from the start of the stretch that was asked for.
       for (const c of parseCues(opts.cues)) {
         const cueAt = c.at + trimFrom - segment.from
@@ -878,7 +879,7 @@ async function addToProject(s: Session, made: { role: Role; file: RecordedFile; 
       }
     }
     const label = m.role === 'webcam' ? ' camera' : m.role === 'mic' ? ' microphone' : ''
-    const part = made.filter((x) => x.role === m.role).length > 1 ? ` part ${segment.file + 1}` : ''
+    const part = made.filter((x) => x.role === m.role).length > 1 ? (' ' + tt('part {0}', segment.file + 1)) : ''
     const asset: Asset = {
       id: uid('asset'),
       name: `${s.name}${label}${part}`,
@@ -901,7 +902,7 @@ async function addToProject(s: Session, made: { role: Role; file: RecordedFile; 
   }
   if (!built.length) return { assets, clips, clicks }
 
-  useEditor.getState().transaction(`Add ${s.name}`, source, () => {
+  useEditor.getState().transaction(tt('Add {0}', s.name), source, () => {
     for (const b of built) {
       const res = dispatch('asset.add', { asset: b.asset }, { source })
       if (res.ok) assets.push({ id: b.asset.id, role: b.role, name: b.asset.name, seconds: b.asset.duration ?? 0, path: b.asset.source.type === 'file' ? (b.asset.source.path ?? '') : '' })
@@ -970,16 +971,16 @@ export async function offerRecovery() {
   const left = await desktop.capture.recoverable().catch(() => [])
   if (!left.length) return
   const total = left.reduce((n, r) => n + r.bytes, 0)
-  toast(`${left.length === 1 ? 'A recording wasn’t' : `${left.length} recordings weren’t`} finished`, {
-    description: `Lumen closed while recording (${(total / 1e6).toFixed(0)} MB). What was recorded can be recovered.`,
+  toast(tt('{0} finished', left.length === 1 ? tt('A recording wasn’t') : tt('{0} recordings weren’t', left.length)), {
+    description: tt('Lumen closed while recording ({0} MB). What was recorded can be recovered.', (total / 1e6).toFixed(0)),
     duration: Infinity,
-    action: { label: 'Recover', onClick: () => void recover(left.map((r) => r.path)) },
-    cancel: { label: 'Delete', onClick: () => void Promise.all(left.map((r) => desktop!.capture.forget(r.path).catch(() => {}))) },
+    action: { label: tt('Recover'), onClick: () => void recover(left.map((r) => r.path)) },
+    cancel: { label: tt('Delete'), onClick: () => void Promise.all(left.map((r) => desktop!.capture.forget(r.path).catch(() => {}))) },
   })
 }
 
 async function recover(paths: string[]) {
-  const busy = toast.loading('Recovering the recording', { duration: Infinity })
+  const busy = toast.loading(tt('Recovering the recording'), { duration: Infinity })
   let done = 0
   for (const path of paths) {
     try {
@@ -1001,11 +1002,11 @@ async function recover(paths: string[]) {
         tags: ['recording'],
         addedAt: Date.now(),
       }
-      if (dispatch('asset.add', { asset }, { label: `Recover ${asset.name}` }).ok) done++
+      if (dispatch('asset.add', { asset }, { label: tt('Recover {0}', asset.name) }).ok) done++
     } catch {
       /* this one couldn't be read; the others may be */
     }
   }
-  if (done) toast.success(`Recovered ${done === 1 ? 'the recording' : `${done} recordings`}`, { id: busy, description: 'In the media library.', action: { label: 'Show', onClick: () => useUI.getState().setLeftTab('media') } })
+  if (done) toast.success(tt('Recovered {0}', done === 1 ? tt('the recording') : tt('{0} recordings', done)), { id: busy, description: tt('In the media library.'), action: { label: tt('Show'), onClick: () => useUI.getState().setLeftTab('media') } })
   else toast.error('Nothing could be recovered', { id: busy, description: 'The files were too short or damaged.' })
 }

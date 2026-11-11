@@ -8,6 +8,7 @@ import { dispatch, getProject, useEditor, type ActionSource } from '@/editor/sto
 import type { Clip } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { subjectMatte, type MatteProgress, type Subject } from './segment'
+import { tt } from '@/lib/i18n'
 
 export interface SubjectOptions {
   subject?: Subject
@@ -18,9 +19,9 @@ export interface SubjectOptions {
 
 function pictureClip(clipId: string): Clip {
   const clip = getProject().clips[clipId]
-  if (!clip) throw new Error(`There’s no clip ${clipId}.`)
-  if (clip.kind !== 'video' && clip.kind !== 'image') throw new Error('Pick a video or image clip — that’s what the subject is cut out of.')
-  if (clip.sequenceId) throw new Error('Open the nested timeline and cut out the subject of a clip inside it.')
+  if (!clip) throw new Error(tt('There’s no clip {0}.', clipId))
+  if (clip.kind !== 'video' && clip.kind !== 'image') throw new Error(tt('Pick a video or image clip — that’s what the subject is cut out of.'))
+  if (clip.sequenceId) throw new Error(tt('Open the nested timeline and cut out the subject of a clip inside it.'))
   return clip
 }
 
@@ -48,17 +49,17 @@ export async function textBehindSubject(clipId: string, opts: SubjectOptions & {
   const source = opts.source ?? 'user'
   let subjectClipId = ''
   let titleClipId = ''
-  useEditor.getState().transaction('Text behind subject', source, () => {
+  useEditor.getState().transaction(tt('Text behind subject'), source, () => {
     const index = (trackId: string) => getProject().tracks.findIndex((t) => t.id === trackId)
     const base = getProject().clips[clipId]
 
     // The title: the one given, or a big bold one over the whole clip.
     const given = opts.titleId ? getProject().clips[opts.titleId] : undefined
-    if (given && given.kind !== 'text') throw new Error('titleId has to be a title (text clip).')
+    if (given && given.kind !== 'text') throw new Error(tt('titleId has to be a title (text clip).'))
     if (given) titleClipId = given.id
     else {
-      const id = placeTitle('headline', base.start, { content: opts.text?.trim() || 'YOUR TEXT', source })
-      if (!id) throw new Error('Couldn’t add the title.')
+      const id = placeTitle('headline', base.start, { content: opts.text?.trim() || tt('YOUR TEXT'), source })
+      if (!id) throw new Error(tt('Couldn’t add the title.'))
       titleClipId = id
       ok(dispatch('clip.trim', { id, edge: 'end', frame: base.start + base.duration }, { source }))
       // Behind the head: a little below the top of the subject, where it overlaps the letters.
@@ -83,10 +84,10 @@ export async function textBehindSubject(clipId: string, opts: SubjectOptions & {
     }
 
     // The subject on its own track right above the title: a silent copy of the clip, cut out.
-    const top = ok<string>(dispatch('track.add', { kind: 'video', name: 'Subject', index: index(title.trackId) }, { source }))
+    const top = ok<string>(dispatch('track.add', { kind: 'video', name: tt('Subject'), index: index(title.trackId) }, { source }))
     const [copy] = ok<string[]>(dispatch('clip.duplicate', { ids: [clipId] }, { source }))
     ok(dispatch('clip.move', { moves: [{ id: copy, start: base.start, trackId: top }], mode: 'overwrite' }, { source }))
-    ok(dispatch('clip.update', { ids: [copy], patch: { matte, name: `${base.name} — subject`, audio: { volume: -60 } } }, { source }))
+    ok(dispatch('clip.update', { ids: [copy], patch: { matte, name: tt('{0} — subject', base.name), audio: { volume: -60 } } }, { source }))
     subjectClipId = copy
   })
   useUI.getState().select([titleClipId])

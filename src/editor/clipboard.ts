@@ -8,6 +8,7 @@ import type { ClipSnapshot, EditMode } from './commands'
 import { clipEnd } from './ops'
 import { dispatch, getProject, rollbackTo, savepoint, useEditor } from './store'
 import type { Asset, Clip, Project } from './types'
+import { tt } from '@/lib/i18n'
 
 export interface ClipboardData {
   clips: Clip[]
@@ -44,9 +45,9 @@ export function copyClips(project: Project, ids: string[]): number {
  */
 export function pasteClips(at: number, mode: EditMode = 'free'): { ok: true; ids: string[] } | { ok: false; error: string } {
   const data = useClipboard.getState().data
-  if (!data?.clips.length) return { ok: false, error: 'Nothing to paste — copy some clips first' }
-  let result: { ok: true; ids: string[] } | { ok: false; error: string } = { ok: false, error: 'Paste failed' }
-  useEditor.getState().transaction(`Paste ${data.clips.length === 1 ? 'clip' : `${data.clips.length} clips`}`, 'user', () => {
+  if (!data?.clips.length) return { ok: false, error: tt('Nothing to paste — copy some clips first') }
+  let result: { ok: true; ids: string[] } | { ok: false; error: string } = { ok: false, error: tt('Paste failed') }
+  useEditor.getState().transaction(tt('Paste {0}', data.clips.length === 1 ? tt('clip') : tt('{0} clips', data.clips.length)), 'user', () => {
     const project = getProject()
     const mark = savepoint()
     for (const asset of data.assets) if (!project.assets[asset.id]) dispatch('asset.add', { asset })

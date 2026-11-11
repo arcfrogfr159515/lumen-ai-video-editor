@@ -8,6 +8,7 @@ import type { Asset, Project } from '@/editor/types'
 import { clipSourceTime, mediaDrawnAt, renderFrame } from './compositor'
 import { framesAt, VideoReader } from './decode'
 import { ensureImage, ensureSequenceFrame, sequenceFrame, withVideoFrames } from './media'
+import { tt } from '@/lib/i18n'
 
 /** Decodes, for one frame at a time, exactly the video frames the compositor will draw — inside nested timelines too. */
 export class FrameFeeder {
@@ -86,8 +87,8 @@ export async function timelineStills(project: Project, frames: number[], width: 
 
 /** Frames of a media file at `times` (source seconds), at most `width` wide. */
 export async function mediaStills(asset: Asset, times: number[], width: number): Promise<HTMLCanvasElement[]> {
-  if (asset.kind === 'audio') throw new Error(`“${asset.name}” is audio — it has no pictures.`)
-  if (asset.source.missing) throw new Error(`“${asset.name}” is offline — its file can’t be found.`)
+  if (asset.kind === 'audio') throw new Error(tt('“{0}” is audio — it has no pictures.', asset.name))
+  if (asset.source.missing) throw new Error(tt('“{0}” is offline — its file can’t be found.', asset.name))
   const aspect = asset.width && asset.height ? asset.width / asset.height : 16 / 9
   // Fit `width` wide; portrait media is allowed to be taller than it is wide.
   const maxH = Math.round(width / Math.min(aspect, 1))
@@ -103,7 +104,7 @@ export async function mediaStills(asset: Asset, times: number[], width: number):
   }
   if (asset.kind === 'image') {
     const img = await ensureImage(src.url)
-    if (!img) throw new Error(`“${asset.name}” couldn’t be decoded.`)
+    if (!img) throw new Error(tt('“{0}” couldn’t be decoded.', asset.name))
     const still = drawScaled(img, width, img.naturalWidth / Math.max(1, img.naturalHeight))
     return times.map(() => still)
   }
@@ -111,7 +112,7 @@ export async function mediaStills(asset: Asset, times: number[], width: number):
   const fps = asset.fps ?? 30
   const clamped = times.map((t) => Math.max(0, Math.min(t, Math.max(0, duration - 1 / fps))))
   const frames = await framesAt(src.url, clamped, width, maxH)
-  if (frames.every((f) => !f)) throw new Error(`Couldn’t decode frames from “${asset.name}”.`)
+  if (frames.every((f) => !f)) throw new Error(tt('Couldn’t decode frames from “{0}”.', asset.name))
   return frames.map((f) => f ?? blank(even(width), even(width / aspect)))
 }
 
@@ -155,7 +156,7 @@ const SHEET_GAP = 6
 
 /** Lays stills out in a labelled grid: one image the AI can read at a glance. */
 export function contactSheet(cells: SheetCell[]): HTMLCanvasElement {
-  if (!cells.length) throw new Error('Nothing to lay out')
+  if (!cells.length) throw new Error(tt('Nothing to lay out'))
   const aspect = cells[0].image.width / Math.max(1, cells[0].image.height)
   const cols = sheetColumns(cells.length, aspect)
   const rows = Math.ceil(cells.length / cols)
@@ -166,7 +167,7 @@ export function contactSheet(cells: SheetCell[]): HTMLCanvasElement {
   ctx.fillStyle = '#0b0b0a'
   ctx.fillRect(0, 0, sheet.width, sheet.height)
   const font = Math.max(11, Math.min(16, Math.round(cw / 22)))
-  ctx.font = `600 ${font}px system-ui, sans-serif`
+  ctx.font = tt('600 {0}px system-ui, sans-serif', font)
   ctx.textBaseline = 'middle'
   cells.forEach((cell, i) => {
     const x = SHEET_GAP + (i % cols) * (cw + SHEET_GAP)

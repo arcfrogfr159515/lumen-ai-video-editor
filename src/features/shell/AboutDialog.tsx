@@ -12,9 +12,9 @@ export function AboutDialog() {
   const open = useUI((s) => s.aboutOpen)
   const setOpen = useUI((s) => s.setAboutOpen)
   const rows: [string, string][] = [
-    ['Version', APP_VERSION],
+    [tt('Version'), APP_VERSION],
     ...(platform.versions ? ([['Electron', platform.versions.electron], ['Chromium', platform.versions.chrome]] as [string, string][]) : []),
-    ['Platform', platform.isWindows ? 'Windows' : platform.isMac ? 'macOS' : 'Linux'],
+    [tt('Platform'), platform.isWindows ? 'Windows' : platform.isMac ? 'macOS' : 'Linux'],
   ]
   return (
     <Dialog open={open} onOpenChange={setOpen} title={tt('About Lumen')} className="w-[min(420px,calc(100vw-32px))]">
@@ -51,7 +51,7 @@ export function AboutDialog() {
 
 const ago = (t: number) => {
   const s = Math.round((Date.now() - t) / 1000)
-  return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : `at ${new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+  return s < 60 ? tt('just now') : s < 3600 ? tt('{0} min ago', Math.round(s / 60)) : tt('at {0}', new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
 }
 
 /** Where updates stand, with the one action that fits. */
@@ -67,7 +67,7 @@ function Updates() {
   let action: ReactNode = null
   switch (u.status) {
     case 'unsupported':
-      line = 'This build doesn’t update itself — the installed app does.'
+      line = tt('This build doesn’t update itself — the installed app does.')
       break
     case 'checking':
       line = (
@@ -77,10 +77,10 @@ function Updates() {
       )
       break
     case 'downloading':
-      line = `Downloading Lumen ${u.version} — ${percent}%`
+      line = tt('Downloading Lumen {0} — {1}%', u.version, percent)
       break
     case 'ready':
-      line = `Lumen ${u.version} is ready to install.`
+      line = tt('Lumen {0} is ready to install.', u.version)
       action = (
         <Button size="sm" variant="primary" onClick={() => void installUpdate()}>
           <RefreshCw />{' '}{tt('Restart to update')}
@@ -92,11 +92,11 @@ function Updates() {
       action = check
       break
     case 'up-to-date':
-      line = `You’re up to date${u.checkedAt ? ` · checked ${ago(u.checkedAt)}` : ''}.`
+      line = tt('You’re up to date{0}.', u.checkedAt ? (' ' + tt('· checked {0}', ago(u.checkedAt))) : '')
       action = check
       break
     default:
-      line = 'Lumen checks GitHub for new versions and installs them when you restart.'
+      line = tt('Lumen checks GitHub for new versions and installs them when you restart.')
       action = check
   }
   return (

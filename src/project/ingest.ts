@@ -15,6 +15,7 @@ import { uid } from '@/lib/id'
 import { desktop } from '@/lib/platform'
 import type { IngestFromWorker, IngestToWorker } from './ingest.worker'
 import { analyzeAssets } from './media-import'
+import { tt } from '@/lib/i18n'
 
 export const useIngest = create<{ state: IngestState | null }>(() => ({ state: null }))
 
@@ -33,10 +34,10 @@ export function startIngestClient() {
 }
 
 export async function setIngestEnabled(on: boolean, persist = true) {
-  if (!desktop) throw new Error('Frame ingest needs the desktop app.')
+  if (!desktop) throw new Error(tt('Frame ingest needs the desktop app.'))
   const state = await desktop.ingest.setEnabled(on, persist)
   useIngest.setState({ state })
-  if (on && !state.running) throw new Error(state.error ?? 'Couldn’t start frame ingest.')
+  if (on && !state.running) throw new Error(state.error ?? tt('Couldn’t start frame ingest.'))
   return state
 }
 
@@ -55,7 +56,7 @@ export async function regenerateIngestToken() {
 /** Who sent a clip, for its tags and the media panel. */
 const sourceOf = (clip: IngestClip) => (typeof clip.meta.source === 'string' && clip.meta.source ? clip.meta.source : 'ingest')
 
-const progressText = (clip: IngestClip, encoded: number) => (clip.frames ? `${encoded} of ${clip.frames} frames` : `${encoded} frames`) + ` · ${clip.width}×${clip.height}`
+const progressText = (clip: IngestClip, encoded: number) => (clip.frames ? tt('{0} of {1} frames', encoded, clip.frames) : tt('{0} frames', encoded)) + ` · ${clip.width}×${clip.height}`
 
 async function receive(clip: IngestClip) {
   const api = desktop!
@@ -68,7 +69,7 @@ async function receive(clip: IngestClip) {
   }
   const worker = new Worker(new URL('./ingest.worker.ts', import.meta.url), { type: 'module', name: 'ingest' })
   const send = (msg: IngestToWorker) => worker.postMessage(msg)
-  const toastId = toast.loading(`Receiving ${clip.name}`, { description: progressText(clip, 0), duration: Infinity })
+  const toastId = toast.loading(tt('Receiving {0}', clip.name), { description: progressText(clip, 0), duration: Infinity })
   let settled = false
 
   const fail = async (reason: string, cancelled = false) => {
@@ -96,7 +97,7 @@ async function receive(clip: IngestClip) {
         } else await api.export.abort(session.proxy.id).catch(() => {})
       }
       const info = await api.files.urlForPath(master.path)
-      if (!info) throw new Error('The clip’s file went missing.')
+      if (!info) throw new Error(tt('The clip’s file went missing.'))
       const probed = await probeMedia(info.url, info.mime).catch(() => null)
       const duration = Math.round((done.frames / clip.fps) * 1000) / 1000
       // The whole of what the sender said (lists of clips carry a short form). Its cue sheet becomes the clip's cues.
@@ -119,7 +120,7 @@ async function receive(clip: IngestClip) {
         tags: [...new Set(['ingest', sourceOf(clip)])],
         addedAt: Date.now(),
       }
-      const res = dispatch('asset.add', { asset }, { label: `Receive ${clip.name}` })
+      const res = dispatch('asset.add', { asset }, { label: tt('Receive {0}', clip.name) })
       if (!res.ok) throw new Error(res.error)
       // The sender may have deleted the clip while its last bytes were written.
       const kept = await api.ingest.complete(clip.id, { assetId: asset.id, path: master.path, bytes: master.size, codec: done.label, durationSeconds: duration })
@@ -129,11 +130,11 @@ async function receive(clip: IngestClip) {
         return
       }
       void analyzeAssets([asset.id])
-      toast.success(`Received ${clip.name}`, {
+      toast.success(tt('Received {0}', clip.name), {
         id: toastId,
-        description: `${done.frames} frames · ${clip.width}×${clip.height} · ${done.label}${cues.length ? ` · ${cues.length} cue${cues.length > 1 ? 's' : ''}` : ''}`,
+        description: tt('{0} frames · {1}×{2} · {3}{4}', done.frames, clip.width, clip.height, done.label, cues.length ? (' ' + tt('· {0} cue{1}', cues.length, cues.length > 1 ? 's' : '')) : ''),
         duration: 6000,
-        action: { label: 'Show', onClick: () => useUI.getState().setLeftTab('media') },
+        action: { label: tt('Show'), onClick: () => useUI.getState().setLeftTab('media') },
       })
     } catch (err) {
       settled = false
@@ -148,14 +149,14 @@ async function receive(clip: IngestClip) {
       if (!handle) return send({ type: 'written', id: msg.id })
       api.export.write(handle.id, msg.position, msg.data).then(
         () => send({ type: 'written', id: msg.id }),
-        (err: unknown) => void fail(`Couldn’t write the file: ${message(err)}`),
+        (err: unknown) => void fail(tt('Couldn’t write the file: {0}', message(err))),
       )
     } else if (msg.type === 'progress') {
       api.ingest.progress(clip.id, msg.encoded)
-      toast.loading(`Receiving ${clip.name}`, { id: toastId, description: progressText(clip, msg.encoded), duration: Infinity })
+      toast.loading(tt('Receiving {0}', clip.name), { id: toastId, description: progressText(clip, msg.encoded), duration: Infinity })
     } else if (msg.type === 'done') void finish(msg)
     else if (msg.type === 'error') void fail(msg.message, msg.cancelled)
   }
-  worker.onerror = (e) => void fail(e.message || 'The encoder stopped unexpectedly.')
+  worker.onerror = (e) => void fail(e.message || tt('The encoder stopped unexpectedly.'))
   send({ type: 'start', clip: session.clip, nextUrl: session.nextUrl, proxy: Boolean(session.proxy) })
 }

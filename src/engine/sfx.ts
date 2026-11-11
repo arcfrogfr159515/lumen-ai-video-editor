@@ -4,6 +4,8 @@
  * time it's used and is then an ordinary file in the media library.
  */
 
+import { tt } from '@/lib/i18n'
+
 export interface SfxDef {
   id: string
   name: string
@@ -160,9 +162,9 @@ function click(ctx: BaseAudioContext, out: AudioNode, at: number, freq: number, 
 export const SFX: SfxDef[] = [
   {
     id: 'whoosh',
-    name: 'Whoosh',
+    name: tt('Whoosh'),
     category: 'Transitions',
-    description: 'Fast air sweep for cuts',
+    description: tt('Fast air sweep for cuts'),
     duration: 1,
     render(ctx, out) {
       const space = withSpace(ctx, out, 0.12, 0.9, 4)
@@ -188,9 +190,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'swoosh',
-    name: 'Soft swoosh',
+    name: tt('Soft swoosh'),
     category: 'Transitions',
-    description: 'Slow, airy pass-by',
+    description: tt('Slow, airy pass-by'),
     duration: 1.8,
     render(ctx, out) {
       const space = withSpace(ctx, out, 0.22, 1.4, 3)
@@ -216,9 +218,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'riser',
-    name: 'Riser',
+    name: tt('Riser'),
     category: 'Transitions',
-    description: 'Tension build into a drop',
+    description: tt('Tension build into a drop'),
     duration: 4,
     render(ctx, out) {
       const space = withSpace(ctx, out, 0.25, 2, 2.5)
@@ -265,9 +267,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'impact',
-    name: 'Cinematic impact',
+    name: tt('Cinematic impact'),
     category: 'Impacts',
-    description: 'Deep boom with a tail',
+    description: tt('Deep boom with a tail'),
     duration: 3,
     render(ctx, out) {
       const clip = softClip(ctx, 2.2)
@@ -293,9 +295,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'hit',
-    name: 'Punch hit',
+    name: tt('Punch hit'),
     category: 'Impacts',
-    description: 'Tight, punchy accent',
+    description: tt('Tight, punchy accent'),
     duration: 0.6,
     render(ctx, out) {
       const comp = ctx.createDynamicsCompressor()
@@ -308,9 +310,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'heartbeat',
-    name: 'Heartbeat',
+    name: tt('Heartbeat'),
     category: 'Impacts',
-    description: 'Lub-dub, for suspense',
+    description: tt('Lub-dub, for suspense'),
     duration: 1.1,
     render(ctx, out) {
       const lp = ctx.createBiquadFilter()
@@ -323,9 +325,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'pop',
-    name: 'Pop',
+    name: tt('Pop'),
     category: 'UI & accents',
-    description: 'Bubbly pop for text and stickers',
+    description: tt('Bubbly pop for text and stickers'),
     duration: 0.2,
     render(ctx, out) {
       const o = osc(ctx, 'sine', 380)
@@ -346,9 +348,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'click',
-    name: 'Click',
+    name: tt('Click'),
     category: 'UI & accents',
-    description: 'Crisp interface click',
+    description: tt('Crisp interface click'),
     duration: 0.08,
     render(ctx, out) {
       click(ctx, out, 0, 2600, 0.9, 0.018, 16)
@@ -365,9 +367,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'ding',
-    name: 'Ding',
+    name: tt('Ding'),
     category: 'UI & accents',
-    description: 'Clear bell for reveals',
+    description: tt('Clear bell for reveals'),
     duration: 2.6,
     render(ctx, out) {
       bell(ctx, withSpace(ctx, out, 0.28, 2.2, 2.5), 0, 1318.5, 0.5, 2.4)
@@ -375,9 +377,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'success',
-    name: 'Success',
+    name: tt('Success'),
     category: 'UI & accents',
-    description: 'Rising three-note chime',
+    description: tt('Rising three-note chime'),
     duration: 1.8,
     render(ctx, out) {
       const space = withSpace(ctx, out, 0.22, 1.6, 2.8)
@@ -388,9 +390,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'notify',
-    name: 'Notification',
+    name: tt('Notification'),
     category: 'UI & accents',
-    description: 'Two-tone message ping',
+    description: tt('Two-tone message ping'),
     duration: 1.2,
     render(ctx, out) {
       const space = withSpace(ctx, out, 0.18, 1.2, 3)
@@ -400,9 +402,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'shutter',
-    name: 'Camera shutter',
+    name: tt('Camera shutter'),
     category: 'UI & accents',
-    description: 'Mechanical snap for photos',
+    description: tt('Mechanical snap for photos'),
     duration: 0.4,
     render(ctx, out) {
       click(ctx, out, 0, 2400, 0.9, 0.03, 17)
@@ -413,9 +415,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'glitch',
-    name: 'Glitch',
+    name: tt('Glitch'),
     category: 'Transitions',
-    description: 'Digital stutter for tech edits',
+    description: tt('Digital stutter for tech edits'),
     duration: 0.7,
     render(ctx, out) {
       const rnd = mulberry(19)
@@ -449,9 +451,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'drone',
-    name: 'Tension drone',
+    name: tt('Tension drone'),
     category: 'Atmosphere',
-    description: 'Dark bed for suspense (loops)',
+    description: tt('Dark bed for suspense (loops)'),
     duration: 8,
     render(ctx, out) {
       const space = withSpace(ctx, out, 0.35, 3, 2)
@@ -496,9 +498,9 @@ export const SFX: SfxDef[] = [
   },
   {
     id: 'wind',
-    name: 'Wind',
+    name: tt('Wind'),
     category: 'Atmosphere',
-    description: 'Outdoor wind bed (loops)',
+    description: tt('Outdoor wind bed (loops)'),
     duration: 10,
     render(ctx, out) {
       const n = noise(ctx, 10, 22)
