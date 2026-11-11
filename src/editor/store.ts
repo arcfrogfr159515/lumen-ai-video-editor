@@ -85,6 +85,19 @@ export function onDispatch(fn: (e: DispatchEvent) => void) {
   return () => void dispatchListeners.delete(fn)
 }
 
+const projectLoadListeners = new Set<() => void>()
+
+/**
+ * Calls back after a different document is loaded (open / new project), once the
+ * new project and the cleared history are in place. For session-scoped resources
+ * tied to the old document — in-memory media copies — that can now be freed.
+ * Returns the way to stop.
+ */
+export function onProjectLoad(fn: () => void) {
+  projectLoadListeners.add(fn)
+  return () => void projectLoadListeners.delete(fn)
+}
+
 let openTransaction: HistoryEntry | null = null
 let nextEntryId = 1
 
@@ -226,6 +239,7 @@ export const useEditor = create<EditorState>()((set, get) => ({
   loadProject(project) {
     normalizeProject(project)
     set({ project, past: [], future: [], version: get().version + 1 })
+    projectLoadListeners.forEach((fn) => fn())
   },
 }))
 

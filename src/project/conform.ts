@@ -13,7 +13,7 @@ import { ALL_FORMATS, BufferTarget, Conversion, getFirstEncodableVideoCodec, Inp
 import { toast } from 'sonner'
 import { create } from 'zustand'
 import { constantRateFor, isUneven, needsFullCheck, rateLabel, timingFromMetrics } from '@/editor/frame-rate'
-import { dispatch, getProject } from '@/editor/store'
+import { dispatch, getProject, onProjectLoad } from '@/editor/store'
 import type { Asset, FrameTiming, OriginalMedia } from '@/editor/types'
 import { desktop } from '@/lib/platform'
 import { tt } from '@/lib/i18n'
@@ -22,6 +22,28 @@ import { tt } from '@/lib/i18n'
 export const useConformJobs = create<{ jobs: Record<string, number> }>(() => ({ jobs: {} }))
 
 const cancels = new Map<string, () => void>()
+
+// Browser-only: an in-memory copy is a Blob behind an object URL. The URL (and so
+// the Blob's bytes) lives until it is revoked, which the browser never does on its
+// own. Track every copy we hand to an asset and, when a different project is
+// loaded, revoke the ones the new project no longer references — the undo history
+// that could still reach them was cleared with the old document. (Desktop copies
+// are files on disk, not blobs, so there is nothing to revoke there.)
+const sessionCopyUrls = new Set<string>()
+
+onProjectLoad(() => {
+  const live = new Set<string>()
+  for (const a of Object.values(getProject().assets)) {
+    if (a.source.type === 'file') live.add(a.source.url)
+    if (a.conformedFrom?.url) live.add(a.conformedFrom.url)
+  }
+  for (const url of sessionCopyUrls) {
+    if (!live.has(url)) {
+      URL.revokeObjectURL(url)
+      sessionCopyUrls.delete(url)
+    }
+  }
+})
 
 const setProgress = (assetId: string, p: number | null) =>
   useConformJobs.setState((s) => {
@@ -136,7 +158,10 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
       // What the copy actually is, read back from it rather than assumed.
       const read = await readFrameTiming(next.url).catch(() => ({ timing: null, fps: undefined, duration: undefined }))
       const still = getProject().assets[assetId]
-      if (!still) return false
+      if (!still) {
+        if (!handle) URL.revokeObjectURL(next.url)
+        return false
+      }
       const original: OriginalMedia = {
         url: source.url,
         ...(source.path ? { path: source.path } : {}),
@@ -165,7 +190,11 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
         },
         { label: tt('Constant {0} fps copy of {1}', rateLabel(rate), asset.name) },
       )
-      if (!res.ok) throw new Error(res.error)
+      if (!res.ok) {
+        if (!handle) URL.revokeObjectURL(next.url)
+        throw new Error(res.error)
+      }
+      if (!handle) sessionCopyUrls.add(next.url)
       return true
     } catch (err) {
       if (handle && api) await api.export.abort(handle.id).catch(() => {})
