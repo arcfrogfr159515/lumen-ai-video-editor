@@ -37,7 +37,11 @@ if (process.env.LUMEN_USER_DATA) app.setPath('userData', process.env.LUMEN_USER_
 applyGraphicsSettings()
 
 // One editor at a time: opening a .lumen file while Lumen runs hands it to the open window.
-if (!app.requestSingleInstanceLock()) app.quit()
+const primary = app.requestSingleInstanceLock()
+// A second Lumen has handed its file over and is on its way out — but quitting waits until Electron has finished
+// starting, and until then this file runs on. Nothing below may start an editor in it: it would open a window,
+// register the protocols and start the servers a second time, on the first one's profile.
+if (!primary) app.quit()
 
 let mainWindow: BrowserWindow | null = null
 let startupFile = projectFromArgv(process.argv)
@@ -143,6 +147,7 @@ nativeTheme.themeSource = 'dark'
 app.setAppUserModelId('app.lumen.editor')
 
 void app.whenReady().then(() => {
+  if (!primary) return
   registerMediaProtocol()
   registerIntegrationIpc(isTrustedUrl)
   registerAppIpc(isTrustedUrl, () => {
@@ -162,6 +167,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  if (!primary) return
   stopCapture()
   abortAllExports()
   void disconnectAll()
