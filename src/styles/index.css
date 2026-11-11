@@ -12,6 +12,8 @@
 @import "@fontsource-variable/space-grotesk";
 
 @custom-variant dark (&:where(.dark, .dark *));
+/* The library rail when it is too short for nine tabs with their names (it measures itself: container-type: size). */
+@custom-variant rail-short (@container (max-height: 460px));
 
 /* ───────────────────────────── Design tokens ───────────────────────────── */
 
@@ -79,6 +81,10 @@
   --color-warn: #f5b73b;
   --color-ok: #3ccf91;
   --color-snap: #36d6f2;
+
+  /* The library rail and one tab in it */
+  --spacing-rail: 62px;
+  --spacing-rail-item: 52px;
 
   --radius-panel: 14px;
   --radius-card: 10px;

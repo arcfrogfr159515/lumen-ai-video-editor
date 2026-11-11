@@ -1,6 +1,6 @@
 import { Aperture, Blend, Clapperboard, ListChecks, Music, ScrollText, Sparkles, Type, WandSparkles } from 'lucide-react'
 import { motion } from 'motion/react'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { AiSparkle } from '@/components/brand'
 import { Tip } from '@/components/ui/tooltip'
 import { useUI, type LeftTab } from '@/editor/ui-store'
@@ -29,16 +29,26 @@ const TABS: { id: LeftTab; label: string; icon: ReactNode; hint: string }[] = [
 export function AssetsPanel() {
   const tab = useUI((s) => s.leftTab)
   const setTab = useUI((s) => s.setLeftTab)
+  const tabs = useRef<HTMLDivElement>(null)
+
+  // A tab opened from somewhere else (the command palette, a shortcut) is brought into what the rail shows.
+  useEffect(() => {
+    tabs.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' })
+  }, [tab])
 
   return (
     <div className="panel flex h-full overflow-hidden">
-      <nav className="flex w-[62px] shrink-0 flex-col items-center gap-0.5 border-r border-line py-2">
-        {TABS.map((t) => (
-          <RailButton key={t.id} active={tab === t.id} onClick={() => setTab(t.id)} label={t.label} hint={t.hint}>
-            {t.icon}
-          </RailButton>
-        ))}
-        <div className="mt-auto" />
+      {/* The rail is as tall as the panel, and the panel as short as the window makes it: where the tabs don't fit
+          with their names, they are drawn without (the name is in the tip and read out), and where they still don't
+          fit, they scroll. Generate keeps its place at the foot either way. */}
+      <nav aria-label="Library" className="flex w-rail shrink-0 flex-col items-center gap-0.5 border-r border-line py-2 [container-type:size]">
+        <div ref={tabs} className="scrollbar-none flex min-h-0 flex-1 flex-col items-center gap-0.5 overflow-y-auto">
+          {TABS.map((t) => (
+            <RailButton key={t.id} active={tab === t.id} onClick={() => setTab(t.id)} label={t.label} hint={t.hint}>
+              {t.icon}
+            </RailButton>
+          ))}
+        </div>
         <RailButton active={tab === 'generate'} onClick={() => setTab('generate')} label="Generate" hint="AI images, video, voice & music" ai>
           {tab === 'generate' ? <WandSparkles /> : <AiSparkle className="!size-[18px]" />}
         </RailButton>
@@ -60,13 +70,23 @@ export function AssetsPanel() {
 
 function RailButton({ active, onClick, label, hint, ai, children }: { active: boolean; onClick: () => void; label: string; hint: string; ai?: boolean; children: ReactNode }) {
   return (
-    <Tip content={hint} side="right">
+    <Tip
+      side="right"
+      content={
+        <>
+          {/* The name too: on a short rail it is drawn nowhere else. */}
+          <span>{label}</span>
+          <span className="font-normal text-fg-3">{hint}</span>
+        </>
+      }
+    >
       <button
         type="button"
         onClick={onClick}
         aria-current={active}
+        aria-label={label}
         className={cn(
-          'group relative flex w-[52px] flex-col items-center gap-1 rounded-[10px] pt-2 pb-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60',
+          'group relative flex w-rail-item shrink-0 flex-col items-center gap-1 rounded-card pt-2 pb-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60 rail-short:py-2',
           active ? 'text-fg' : 'text-fg-3 hover:text-fg-2',
         )}
       >
@@ -74,7 +94,7 @@ function RailButton({ active, onClick, label, hint, ai, children }: { active: bo
           <motion.span
             layoutId="rail-active"
             className={cn(
-              'absolute inset-0 rounded-[10px]',
+              'absolute inset-0 rounded-card',
               ai
                 ? 'bg-[linear-gradient(120deg,rgb(214_238_0/0.18),rgb(94_242_166/0.14),rgb(54_214_242/0.12))] shadow-[inset_0_0_0_1px_rgb(94_242_166/0.25)]'
                 : 'bg-white/[0.07] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]',
@@ -83,7 +103,7 @@ function RailButton({ active, onClick, label, hint, ai, children }: { active: bo
           />
         )}
         <span className={cn('relative [&_svg]:size-[18px] transition-transform duration-200 group-hover:-translate-y-px', active && !ai && '[&_svg]:text-accent-2')}>{children}</span>
-        <span className="relative text-[10px] leading-none font-medium">{label}</span>
+        <span className="relative text-2xs leading-none font-medium rail-short:hidden">{label}</span>
       </button>
     </Tip>
   )
