@@ -136,15 +136,28 @@ export async function startRecording(deviceId?: string): Promise<Recording> {
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { deviceId: deviceId ? { exact: deviceId } : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
   })
-  const context = new AudioContext()
-  const analyser = context.createAnalyser()
-  analyser.fftSize = 1024
-  context.createMediaStreamSource(stream).connect(analyser)
-  const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '', audioBitsPerSecond: 256_000 })
-  const rec: Recording = { stream, recorder, analyser, context, startedAt: performance.now(), chunks: [] }
-  recorder.ondataavailable = (e) => e.data.size && rec.chunks.push(e.data)
-  recorder.start(250)
-  return rec
+  let context: AudioContext | undefined
+  try {
+    context = new AudioContext()
+    const analyser = context.createAnalyser()
+    analyser.fftSize = 1024
+    context.createMediaStreamSource(stream).connect(analyser)
+    const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '', audioBitsPerSecond: 256_000 })
+    const rec: Recording = { stream, recorder, analyser, context, startedAt: performance.now(), chunks: [] }
+    recorder.ondataavailable = (e) => e.data.size && rec.chunks.push(e.data)
+    recorder.start(250)
+    return rec
+  } catch (err) {
+    // The microphone is on from the moment it is handed over: whatever fails after that must not leave it on.
+    release(stream, context)
+    throw err
+  }
+}
+
+/** Lets go of the microphone and what was listening to it. */
+function release(stream: MediaStream, context: AudioContext | undefined) {
+  stream.getTracks().forEach((t) => t.stop())
+  if (context && context.state !== 'closed') void context.close().catch(() => {})
 }
 
 /** Current input level, 0..1 (for the meter). */
@@ -158,12 +171,18 @@ export function inputLevel(rec: Recording) {
 
 /** Stops, saves the take as WAV in the media library and adds it to the project. Returns the asset. */
 export async function finishRecording(rec: Recording, name: string): Promise<Asset | null> {
-  await new Promise<void>((resolve) => {
-    rec.recorder.onstop = () => resolve()
-    rec.recorder.stop()
-  })
-  rec.stream.getTracks().forEach((t) => t.stop())
-  void rec.context.close()
+  try {
+    // A recorder that stopped by itself (the microphone was unplugged) has given all it had: there is nothing to stop.
+    if (rec.recorder.state !== 'inactive') {
+      await new Promise<void>((resolve) => {
+        rec.recorder.onstop = () => resolve()
+        rec.recorder.onerror = () => resolve()
+        rec.recorder.stop()
+      })
+    }
+  } finally {
+    release(rec.stream, rec.context)
+  }
   if (!rec.chunks.length || !desktop) return null
   const decoded = await new OfflineAudioContext(1, 1, 48000).decodeAudioData(await new Blob(rec.chunks).arrayBuffer())
   if (decoded.duration < 0.3) {
@@ -189,7 +208,9 @@ export async function finishRecording(rec: Recording, name: string): Promise<Ass
 
 export function cancelRecording(rec: Recording) {
   rec.recorder.onstop = null
-  if (rec.recorder.state !== 'inactive') rec.recorder.stop()
-  rec.stream.getTracks().forEach((t) => t.stop())
-  void rec.context.close()
+  try {
+    if (rec.recorder.state !== 'inactive') rec.recorder.stop()
+  } finally {
+    release(rec.stream, rec.context)
+  }
 }
