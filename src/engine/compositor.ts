@@ -833,6 +833,7 @@ const blurFilter = (px: number) => (px > 0.05 ? `blur(${px.toFixed(2)}px)` : 'no
 // ─── Text ────────────────────────────────────────────────────────────────
 
 const measureCache = new Map<string, number>()
+const MEASURE_CACHE_MAX = 4096
 
 function drawText(ctx: CanvasRenderingContext2D, project: Project, clip: Clip, k: number, reveal: number, wipe: number, blur: number) {
   const st = clip.text!
@@ -849,6 +850,9 @@ function drawText(ctx: CanvasRenderingContext2D, project: Project, clip: Clip, k
     let w = measureCache.get(key)
     if (w === undefined) {
       w = ctx.measureText(line).width
+      // Every line ever drawn, at every size, would stay here for as long as the window is open (word-by-word
+      // captions add one per word): start over when it has grown — measuring again costs little.
+      if (measureCache.size >= MEASURE_CACHE_MAX) measureCache.clear()
       measureCache.set(key, w)
     }
     return w
