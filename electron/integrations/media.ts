@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { Readable } from 'node:stream'
+import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { net, shell } from 'electron'
 import type { GeneratedAsset, Provenance } from '../../shared/integrations'
 import { ensureDir, mediaPath, mediaRoot, mediaUrl } from './paths'
+import { checkUrl, isCancelledRedirect, redirectTarget } from './web'
 
 /** Saving generated media (inline tool results, downloads) into Lumen's library folder. */
 
@@ -65,18 +66,128 @@ export function saveBase64(data: string, mime: string, name: string, provenance:
   return fileAsset(abs, mime, name, provenance)
 }
 
-/** Downloads remote media (e.g. a video URL a generation service returned). */
-export async function importUrl(url: string, name: string | undefined, provenance: Provenance): Promise<GeneratedAsset> {
+/** What a download may take: its size, how long the server has to answer, and how long it may send nothing. */
+export const IMPORT_LIMITS = { bytes: 4 * 1024 ** 3, answerMs: 30_000, stallMs: 60_000 }
+
+const gigabytes = (bytes: number) => `${(bytes / 1024 ** 3).toFixed(bytes >= 10 * 1024 ** 3 ? 0 : 1)} GB`
+const TOO_BIG = (bytes?: number) => `That file is ${bytes ? gigabytes(bytes) : 'too large'} — a link can bring in at most ${gigabytes(IMPORT_LIMITS.bytes)}.`
+
+interface Download {
+  url: URL
+  res: Response
+  /** Ends the request, whatever it is doing. */
+  stop: AbortController
+  /** Starts (or restarts) the clock on the request: it is ended when `ms` pass. */
+  allow(ms: number): void
+  settle(): void
+}
+
+/**
+ * Asks for the file. A link the user picked is followed as given. One the
+ * Copilot or an agent chose may only lead to public addresses — what is on
+ * this computer or the local network (a router, a NAS, a cloud metadata
+ * service) is not theirs to fetch — so each redirect is checked before it is
+ * followed.
+ */
+async function request(raw: string, local: boolean): Promise<Download> {
+  const stop = new AbortController()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const allow = (ms: number) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => stop.abort(), ms)
+    timer.unref?.()
+  }
+  const settle = () => clearTimeout(timer)
+  const failed = (url: URL, err: unknown) => {
+    settle()
+    return new Error(stop.signal.aborted ? `${url.hostname} took too long to answer.` : `Download failed${err instanceof Error && err.message ? ` (${err.message})` : ''}`)
+  }
+  let url = new URL(raw)
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('Only web URLs can be imported.')
+  if (local) {
+    allow(IMPORT_LIMITS.answerMs)
+    const res = await net.fetch(url.href, { signal: stop.signal }).catch((err: unknown) => {
+      throw failed(url, err)
+    })
+    return { url, res, stop, allow, settle }
+  }
+  url = await checkUrl(url.href)
+  for (let hop = 0; hop < 6; hop++) {
+    allow(IMPORT_LIMITS.answerMs)
+    let res: Response
+    try {
+      res = await net.fetch(url.href, { redirect: 'manual', signal: stop.signal })
+    } catch (err) {
+      // Electron's fetch, told not to follow a redirect, fails without saying where it led.
+      const to = isCancelledRedirect(err) ? await redirectTarget(url, {}, IMPORT_LIMITS.answerMs) : null
+      if (!to) throw failed(url, err)
+      url = await checkUrl(new URL(to, url).href)
+      continue
+    }
+    const location = res.headers.get('location')
+    if (res.status >= 300 && res.status < 400 && location) {
+      void res.body?.cancel().catch(() => {})
+      url = await checkUrl(new URL(location, url).href)
+      continue
+    }
+    return { url, res, stop, allow, settle }
+  }
+  settle()
+  throw new Error('Too many redirects.')
+}
+
+/**
+ * Downloads remote media (e.g. a video URL a generation service returned).
+ * `local` says the user picked the link themselves, which lets it lead to this
+ * computer or the local network (a generation service running here).
+ */
+export async function importUrl(url: string, name: string | undefined, provenance: Provenance, opts: { local?: boolean } = {}): Promise<GeneratedAsset> {
   const parsed = new URL(url)
-  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('Only web URLs can be imported.')
-  const res = await net.fetch(url)
-  if (!res.ok || !res.body) throw new Error(`Download failed (${res.status})`)
+  const { res, stop, allow, settle } = await request(url, opts.local === true)
+  const refuse = (message: string) => {
+    settle()
+    stop.abort()
+    return new Error(message)
+  }
+  if (!res.ok || !res.body) throw refuse(`Download failed (${res.status})`)
   const headerMime = res.headers.get('content-type')?.split(';')[0].trim().toLowerCase()
   const mime = headerMime && kindOf(headerMime) ? headerMime : mimeFromName(parsed.pathname)
-  if (!mime || !kindOf(mime)) throw new Error('That link isn’t an image, video or audio file.')
+  if (!mime || !kindOf(mime)) throw refuse('That link isn’t an image, video or audio file.')
+  const declared = Number(res.headers.get('content-length'))
+  if (declared > IMPORT_LIMITS.bytes) throw refuse(TOO_BIG(declared))
   const dir = ensureDir(path.join(mediaRoot(), 'imports'))
-  const abs = path.join(dir, `${randomUUID()}${EXT[mime] ?? path.extname(parsed.pathname)}`)
-  await pipeline(Readable.fromWeb(res.body as import('node:stream/web').ReadableStream), fs.createWriteStream(abs))
+  // The address ends in whatever its author liked: only a plain extension becomes part of a file name.
+  const fromPath = path.extname(parsed.pathname)
+  const abs = path.join(dir, `${randomUUID()}${EXT[mime] ?? (/^\.[a-z0-9]{1,8}$/i.test(fromPath) ? fromPath : '')}`)
+  // Written beside its final name and moved there once whole: a download that fails leaves nothing in the library.
+  const part = `${abs}.part`
+  let size = 0
+  let tooBig = false
+  const meter = new Transform({
+    transform(chunk: Buffer, _encoding, done) {
+      size += chunk.length
+      if (size > IMPORT_LIMITS.bytes) {
+        tooBig = true
+        return done(new Error(TOO_BIG()))
+      }
+      // Still arriving: the clock is on the silence between two pieces, not on the whole download.
+      allow(IMPORT_LIMITS.stallMs)
+      done(null, chunk)
+    },
+  })
+  try {
+    allow(IMPORT_LIMITS.stallMs)
+    await pipeline(Readable.fromWeb(res.body as import('node:stream/web').ReadableStream), meter, fs.createWriteStream(part), { signal: stop.signal })
+    fs.renameSync(part, abs)
+  } catch (err) {
+    const stalled = stop.signal.aborted && !tooBig
+    stop.abort()
+    fs.rmSync(part, { force: true })
+    if (stalled) throw new Error(`The download stopped: nothing arrived for ${Math.round(IMPORT_LIMITS.stallMs / 1000)} seconds.`)
+    throw err
+  } finally {
+    settle()
+  }
   return fileAsset(abs, mime, name ?? decodeURIComponent(path.basename(parsed.pathname)), provenance)
 }
 

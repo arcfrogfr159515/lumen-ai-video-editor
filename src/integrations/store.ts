@@ -152,10 +152,10 @@ async function importJob(job: Job) {
   useIntegrations.setState((s) => ({ imported: { ...s.imported, [job.id]: ids } }))
 }
 
-/** Downloads a URL a tool returned and adds it to the project. */
-export async function importLink(url: string, name?: string, provenance?: Provenance) {
+/** Downloads a URL a tool returned and adds it to the project. `byUser`: the user picked this link themselves (it may then be on this computer or the local network). */
+export async function importLink(url: string, name?: string, provenance?: Provenance, byUser = false) {
   if (!api) throw new Error('Importing needs the desktop app.')
-  const g = await api.media.importUrl(url, name, provenance)
+  const g = await api.media.importUrl(url, name, provenance, { local: byUser })
   return addGeneratedAsset(g)
 }
 
