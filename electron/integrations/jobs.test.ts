@@ -50,36 +50,42 @@ vi.mock('node:net', async () => {
   }
   return { default: { connect, isIP: () => 0 }, connect, isIP: () => 0 }
 })
-vi.mock('../offscreen', () => ({
-  exactOffscreenWindow: () => {
-    let destroyed = false
-    const image = { getSize: () => ({ width: 320, height: 180 }), toPNG: () => Buffer.from('png'), resize: () => image }
-    const win = {
-      isDestroyed: () => destroyed,
-      destroy: () => void (destroyed = true),
-      loadFile: async () => {
-        if (!env.page.loads) throw new Error('ERR_FILE_NOT_FOUND')
-      },
-      webContents: {
-        setWindowOpenHandler: () => {},
-        on: () => {},
-        setFrameRate: () => {},
-        executeJavaScript: async (code: string) => {
-          if (destroyed) throw new Error('Object has been destroyed')
-          return code.includes('getDuration') ? env.page.frames / 30 : true
+vi.mock('../offscreen', async () => {
+  const { EventEmitter } = await import('node:events')
+  return {
+    exactOffscreenWindow: () => {
+      let destroyed = false
+      // As Electron does it (seen in 44): what is asked of a window that has been destroyed is never answered —
+      // not with a result, not with an error.
+      const never = new Promise<never>(() => {})
+      const image = { getSize: () => ({ width: 320, height: 180 }), toPNG: () => Buffer.from('png'), resize: () => image }
+      const win = Object.assign(new EventEmitter(), {
+        isDestroyed: () => destroyed,
+        destroy: () => {
+          if (destroyed) return
+          destroyed = true
+          win.emit('closed')
         },
-        capturePage: async () => {
-          if (env.page.drawn === env.cancelAt) env.cancel(env.jobId)
-          if (env.page.drawn === env.page.destroyAt) destroyed = true
-          if (destroyed) throw new Error('Object has been destroyed')
-          env.page.drawn++
-          return image
+        loadFile: async () => {
+          if (!env.page.loads) throw new Error('ERR_FILE_NOT_FOUND')
         },
-      },
-    }
-    return { win, resize: () => {} }
-  },
-}))
+        webContents: Object.assign(new EventEmitter(), {
+          setWindowOpenHandler: () => {},
+          setFrameRate: () => {},
+          executeJavaScript: (code: string) => (destroyed ? never : Promise.resolve(code.includes('getDuration') ? env.page.frames / 30 : true)),
+          capturePage: () => {
+            if (env.page.drawn === env.cancelAt) env.cancel(env.jobId)
+            if (env.page.drawn === env.page.destroyAt) win.destroy()
+            if (destroyed) return never
+            env.page.drawn++
+            return Promise.resolve(image)
+          },
+        }),
+      })
+      return { win, resize: () => {} }
+    },
+  }
+})
 
 env.root = fs.mkdtempSync(path.join(os.tmpdir(), 'lumen-jobs-test-'))
 const dummy = path.join(env.root, process.platform === 'win32' ? 'blender.exe' : 'blender')
@@ -216,8 +222,9 @@ describe('a motion render', () => {
   it('fails, rather than waiting for good, when its window dies part-way', async () => {
     env.page.destroyAt = 1
     const job = await settled((await renderMotion(request)).id)
-    expect(job.status).toBe('error')
+    expect(job).toMatchObject({ status: 'error', error: 'The render window closed part-way.' })
     expect(fs.existsSync(media('hyperframes', job.id))).toBe(false)
+    expect(fs.existsSync(scratch('hyperframes', job.id))).toBe(false)
   })
 
   it('is cancelled, not failed, when it is stopped part-way — and leaves nothing behind', async () => {
