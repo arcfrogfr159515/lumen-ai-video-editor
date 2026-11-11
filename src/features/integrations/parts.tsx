@@ -112,7 +112,7 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
                   const id = placeAsset(asset.id, usePlayback.getState().frame)
                   if (id) useUI.getState().select([id])
                 }}
-                className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-ink text-ink-fg opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/gen:scale-100 group-hover/gen:opacity-100"
+                className="hit-24 absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-ink text-ink-fg opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/gen:scale-100 group-hover/gen:opacity-100"
               >
                 <Plus className="size-3.5" strokeWidth={2.5} />
               </button>

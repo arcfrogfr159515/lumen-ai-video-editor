@@ -105,7 +105,7 @@ export function MotionPresetsSection({ clip }: { clip: Clip }) {
           </div>
         ))}
         <Row label={tt('Intensity')}>
-          <Slider value={intensity} min={0.25} max={2.5} step={0.05} onChange={setIntensity} />
+          <Slider aria-label={tt('Intensity')} value={intensity} min={0.25} max={2.5} step={0.05} onChange={setIntensity} />
           <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{Math.round(intensity * 100)}%</span>
         </Row>
         <Row label={tt('Curve')}>

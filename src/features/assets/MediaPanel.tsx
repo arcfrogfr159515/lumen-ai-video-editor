@@ -548,7 +548,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
             type="button"
             aria-label={tt('Add {0} at playhead', asset.name)}
             onClick={add}
-            className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-ink text-ink-fg opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/card:scale-100 group-hover/card:opacity-100 hover:bg-accent-2 hover:text-accent-fg"
+            className="hit-24 absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-ink text-ink-fg opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/card:scale-100 group-hover/card:opacity-100 hover:bg-accent-2 hover:text-accent-fg"
           >
             <Plus className="size-3.5" strokeWidth={2.5} />
           </button>

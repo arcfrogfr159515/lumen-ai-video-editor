@@ -124,7 +124,7 @@ export function PreviewPanel() {
             useUI.getState().clearSelection()
             useUI.getState().setRightTab('inspector')
           }}
-          className="rounded-md bg-ink/[0.05] px-1.5 py-0.5 font-mono text-2xs text-fg-3 tabular transition-colors hover:bg-ink/[0.08] hover:text-fg-2"
+          className="hit-24 rounded-md bg-ink/[0.05] px-1.5 py-0.5 font-mono text-2xs text-fg-3 tabular transition-colors hover:bg-ink/[0.08] hover:text-fg-2"
         >
           {ttx('{0}×{1} · {2} fps', settings.width, settings.height, settings.fps)}
         </button>
@@ -250,7 +250,7 @@ function MasterMeter() {
   }, [])
   return (
     <Tip content={tt('Master level — open the mixer')}>
-      <button type="button" aria-label={tt('Open the mixer')} onClick={() => useUI.getState().setRightTab('mixer')} className="mr-1 flex w-16 flex-col gap-[3px] rounded-md px-1 py-1.5 outline-none hover:bg-ink/[0.05] focus-visible:ring-2 focus-visible:ring-accent/60">
+      <button type="button" aria-label={tt('Open the mixer')} onClick={() => useUI.getState().setRightTab('mixer')} className="hit-24 mr-1 flex w-16 flex-col gap-[3px] rounded-md px-1 py-1.5 outline-none hover:bg-ink/[0.05] focus-visible:ring-2 focus-visible:ring-accent/60">
         {[left, right].map((ref, i) => (
           <span key={i} className="relative h-[4px] w-full overflow-hidden rounded-full bg-ink/[0.07]">
             <span ref={ref} className="absolute inset-0 bg-[linear-gradient(to_right,#2fcf7e_0%,#2fcf7e_62%,#e6e238_76%,#f5a524_88%,#ef4444_96%)]" style={{ clipPath: 'inset(0 100% 0 0)' }} />

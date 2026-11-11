@@ -381,7 +381,7 @@ export function ExportDialog() {
           )}
           {info.video && !gif && !png && (
             <Row label={tt('Quality')}>
-              <Slider value={quality} min={10} max={100} onChange={setQuality} />
+              <Slider aria-label={tt('Quality')} value={quality} min={10} max={100} onChange={setQuality} />
               <span className="w-14 shrink-0 text-right text-xs font-medium text-fg-2">{QUALITY_LABEL(quality)}</span>
             </Row>
           )}

@@ -17,7 +17,7 @@ export function Switch({ checked, onChange, className, disabled, ...rest }: Swit
       disabled={disabled}
       aria-label={rest['aria-label']}
       className={cn(
-        'relative inline-flex h-[18px] w-[30px] shrink-0 items-center rounded-full bg-ink/[0.12] p-[2px] outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=checked]:bg-accent disabled:opacity-40',
+        'hit-24 relative inline-flex h-[18px] w-[30px] shrink-0 items-center rounded-full bg-ink/[0.12] p-[2px] outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=checked]:bg-accent disabled:opacity-40',
         className,
       )}
     >

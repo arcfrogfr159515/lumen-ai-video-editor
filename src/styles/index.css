@@ -390,6 +390,23 @@
   }
 }
 
+/* A control drawn smaller than 24 px can still be caught anywhere within 24: what catches the pointer is grown
+   around it, what is drawn stays as it is. */
+@utility hit-24 {
+  &:where(:not(.absolute, .fixed, .sticky)) {
+    position: relative;
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 24px);
+    height: max(100%, 24px);
+    transform: translate(-50%, -50%);
+  }
+}
+
 @utility tabular {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";

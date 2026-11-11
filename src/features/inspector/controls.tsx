@@ -48,7 +48,7 @@ export function KeyframeButton({ clip, prop }: { clip: Clip; prop: AnimatablePro
         </button>
       )}
       <Tip content={here ? tt('Remove keyframe') : animated ? tt('Add keyframe here') : tt('Animate this property')}>
-        <button type="button" onClick={toggle} className="grid size-5 place-items-center rounded-md outline-none hover:bg-ink/[0.06] focus-visible:ring-2 focus-visible:ring-accent/60">
+        <button type="button" aria-label={here ? tt('Remove keyframe') : animated ? tt('Add keyframe here') : tt('Animate this property')} onClick={toggle} className="hit-24 grid size-5 place-items-center rounded-md outline-none hover:bg-ink/[0.06] focus-visible:ring-2 focus-visible:ring-accent/60">
           <Diamond
             className={cn('size-[11px] transition-colors', here ? 'fill-accent-2 text-accent-2' : animated ? 'text-accent-2' : 'text-fg-4 hover:text-fg-2')}
             strokeWidth={2.2}
@@ -93,7 +93,7 @@ export function PropSlider({ clip, prop, label, min, max, step = 1, display = (v
   const set = (v: number) => setAnimatable(clip.id, prop, v, key)
   return (
     <Row label={label} trailing={<KeyframeButton clip={clip} prop={prop} />}>
-      <Slider value={display(value)} min={display(min)} max={display(max)} step={step} bipolar={bipolar} defaultValue={display(defaultValue)} onChange={(v) => set(fromDisplay(v))} />
+      <Slider aria-label={label} value={display(value)} min={display(min)} max={display(max)} step={step} bipolar={bipolar} defaultValue={display(defaultValue)} onChange={(v) => set(fromDisplay(v))} />
       <ScrubInput
         value={display(value)}
         onChange={(v) => set(fromDisplay(v))}
@@ -138,7 +138,7 @@ export function ValueSlider({
 }) {
   return (
     <Row label={label} trailing={trailing}>
-      <Slider value={value} min={min} max={max} step={step} bipolar={bipolar} gradient={gradient} defaultValue={defaultValue} onChange={onChange} />
+      <Slider aria-label={typeof label === 'string' ? label : undefined} value={value} min={min} max={max} step={step} bipolar={bipolar} gradient={gradient} defaultValue={defaultValue} onChange={onChange} />
       <ScrubInput value={value} onChange={onChange} min={min} max={max} step={step} unit={unit} className="w-[56px] shrink-0" />
       {format && <span className="sr-only">{format(value)}</span>}
     </Row>

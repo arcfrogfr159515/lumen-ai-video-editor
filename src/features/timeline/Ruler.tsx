@@ -323,7 +323,7 @@ export function TimecodeCell() {
         <button
           type="button"
           onClick={() => (setDraft(formatTimecode(usePlayback.getState().frame, fps)), setEditing(true))}
-          className="flex items-baseline gap-2 rounded px-1 font-mono text-base/[inherit] font-medium tracking-tight text-fg tabular hover:bg-ink/[0.05]"
+          className="hit-24 flex items-baseline gap-2 rounded px-1 font-mono text-base/[inherit] font-medium tracking-tight text-fg tabular hover:bg-ink/[0.05]"
           title={tt('Click to jump to a timecode')}
         >
           <span ref={readout} />

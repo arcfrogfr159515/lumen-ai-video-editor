@@ -184,7 +184,7 @@ function StatusBar() {
       <EffortPicker />
       <Popover>
         <PopoverTrigger asChild>
-          <button type="button" className="ml-auto flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 transition-colors hover:bg-ink/[0.06] hover:text-fg">
+          <button type="button" className="hit-24 ml-auto flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 transition-colors hover:bg-ink/[0.06] hover:text-fg">
             <PlugZap className="size-3" />
             {ttx('{0} tools', tools.length)}
           </button>
@@ -949,7 +949,7 @@ function Composer() {
                   <Paperclip className="mx-0.5 size-2.5" />
                 )}
                 <span className="max-w-[150px] truncate">{a.name}</span>
-                <button type="button" aria-label={tt('Remove {0}', a.name)} onClick={() => detach(a.id)} className="grid size-4 place-items-center rounded text-fg-4 hover:text-fg-2">
+                <button type="button" aria-label={tt('Remove {0}', a.name)} onClick={() => detach(a.id)} className="hit-24 grid size-4 place-items-center rounded text-fg-4 hover:text-fg-2">
                   <X className="size-2.5" />
                 </button>
               </span>
@@ -964,7 +964,7 @@ function Composer() {
               </span>
             ))}
             {selection.length > 3 && <span className="text-2xs text-fg-4">{ttx('+{0} more', selection.length - 3)}</span>}
-            <button type="button" aria-label={tt('Clear selection')} onClick={() => useUI.getState().clearSelection()} className="grid size-4 place-items-center rounded text-fg-4 hover:text-fg-2">
+            <button type="button" aria-label={tt('Clear selection')} onClick={() => useUI.getState().clearSelection()} className="hit-24 grid size-4 place-items-center rounded text-fg-4 hover:text-fg-2">
               <X className="size-3" />
             </button>
           </div>

@@ -416,7 +416,7 @@ function SaveBadge() {
       <button
         type="button"
         onClick={() => void actions.save()}
-        className="no-drag flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs text-fg-3 transition-colors hover:bg-ink/[0.06] hover:text-fg"
+        className="no-drag hit-24 flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs text-fg-3 transition-colors hover:bg-ink/[0.06] hover:text-fg"
       >
         <span className="size-1.5 rounded-full bg-accent" />
         {path ? tt('Unsaved changes') : tt('Not saved')}

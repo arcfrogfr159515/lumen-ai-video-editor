@@ -58,7 +58,7 @@ export function BrainPicker() {
         <button
           type="button"
           title={`${label.title} · ${label.subtitle}`}
-          className="-ml-1.5 flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 outline-none transition-colors hover:bg-ink/[0.06] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.07]"
+          className="hit-24 -ml-1.5 flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 outline-none transition-colors hover:bg-ink/[0.06] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.07]"
         >
           <span className="relative flex size-1.5 shrink-0">
             {ready && <span className="absolute inset-0 animate-ping rounded-full bg-ok/60" />}

@@ -30,7 +30,7 @@ export function ClicksSection({ clip }: { clip: Clip }) {
           {clicks ? tt('This recording kept {0} click{1} inside this clip. Zoom in on them, or draw a pulse where each landed.', clicks, clicks === 1 ? '' : 's') : tt('This recording kept its clicks, but none fall inside this clip.')}
         </p>
         <Row label={tt('Zoom')}>
-          <Slider value={zoom} min={1.2} max={4} step={0.1} onChange={setZoom} disabled={!clicks} />
+          <Slider aria-label={tt('Zoom')} value={zoom} min={1.2} max={4} step={0.1} onChange={setZoom} disabled={!clicks} />
           <span className="w-9 shrink-0 text-right text-xs font-medium text-fg-2 tabular">{zoom.toFixed(1)}×</span>
         </Row>
         <div className="flex items-center gap-1.5">

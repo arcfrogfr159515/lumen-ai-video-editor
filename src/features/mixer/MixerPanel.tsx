@@ -214,7 +214,7 @@ function Fader({ value, name, onChange }: { value: number; name: string; onChang
           onChange(Math.max(-60, Math.min(12, Math.round((value + (e.key === 'ArrowUp' ? 0.5 : -0.5)) * 10) / 10)), `fader:${name}:key`)
         }
       }}
-      className="group/fader relative w-5 cursor-ns-resize rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+      className="group/fader hit-24 relative w-5 cursor-ns-resize rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       <div className="absolute inset-y-1 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-shade/50 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" />
       {FADER_MARKS.map((m) => (
@@ -274,7 +274,7 @@ function Meter({ target }: { target: Target }) {
         title={tt('Clipped — click to reset')}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => delete e.currentTarget.dataset.on}
-        className="h-1.5 w-full rounded-[2px] bg-ink/[0.07] data-[on=true]:bg-danger data-[on=true]:shadow-[0_0_6px_var(--color-danger)]"
+        className="hit-24 h-1.5 w-full rounded-[2px] bg-ink/[0.07] data-[on=true]:bg-danger data-[on=true]:shadow-[0_0_6px_var(--color-danger)]"
       />
       <div className="flex min-h-0 flex-1 gap-[3px]">
         {[0, 1].map((i) => (
