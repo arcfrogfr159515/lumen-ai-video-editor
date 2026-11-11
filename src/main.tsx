@@ -1,6 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
+import { ErrorBoundary } from './components/ui/error-boundary'
+import { desktop } from './lib/platform'
+import { saveProjectAs } from './project/session'
 import { installDecoderRepair } from './engine/codec-repair'
 import './styles/index.css'
 
@@ -8,7 +11,10 @@ installDecoderRepair()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {/* The last resort: what no panel's own boundary caught still leaves a way to save. */}
+    <ErrorBoundary name="Lumen" as="app" onSaveCopy={desktop ? () => void saveProjectAs() : undefined}>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )
 

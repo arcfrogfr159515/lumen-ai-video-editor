@@ -6,6 +6,7 @@ import { startTimelineNav } from '@/editor/timeline-nav'
 import { startMediaEngine } from '@/engine/wiring'
 import { HomeScreen } from '@/features/home/HomeScreen'
 import { startSession, useSession } from '@/project/session'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AssetsPanel } from '@/features/assets/AssetsPanel'
 import { CommandPalette } from '@/features/command/CommandPalette'
@@ -65,27 +66,20 @@ export function App() {
 
         <TitleBar />
 
-        {home ? <HomeScreen /> : <Editor />}
+        {home ? (
+          <ErrorBoundary name="The start screen">
+            <HomeScreen />
+          </ErrorBoundary>
+        ) : (
+          <Editor />
+        )}
 
-        <CommandPalette />
-        <ExportDialog />
-        <RecordDialog />
-        <ShortcutsDialog />
-        <AboutDialog />
-        <GraphicsDialog />
-        <PasteAttributesDialog />
-        <ClipColorsDialog />
-        <CleanupDialog />
-        <CompareDialog />
-        <MacrosDialog />
-        <SourceMonitor />
-        <VersionHistoryDialog />
-        <RenameTimelineDialog />
-        <RenderQueueDialog />
-        <MulticamDialog />
-        <DirectorDialog />
-        <IntegrationsHub />
-        <AgentApprovals />
+        {/* Each on its own: one that fails to draw closes and says so, and the editor behind it carries on. */}
+        {DIALOGS.map(([name, Dialog]) => (
+          <ErrorBoundary key={name} name={name} as="dialog">
+            <Dialog />
+          </ErrorBoundary>
+        ))}
         <Toaster
           position="bottom-center"
           offset={20}
@@ -107,6 +101,28 @@ export function App() {
   )
 }
 
+const DIALOGS: [name: string, component: () => React.ReactNode][] = [
+  ['The command palette', CommandPalette],
+  ['The export dialog', ExportDialog],
+  ['The record dialog', RecordDialog],
+  ['The shortcuts list', ShortcutsDialog],
+  ['The About dialog', AboutDialog],
+  ['The graphics dialog', GraphicsDialog],
+  ['Paste attributes', PasteAttributesDialog],
+  ['Clip colours', ClipColorsDialog],
+  ['The clean-up dialog', CleanupDialog],
+  ['The compare view', CompareDialog],
+  ['The macros dialog', MacrosDialog],
+  ['The source monitor', SourceMonitor],
+  ['The version history', VersionHistoryDialog],
+  ['The rename dialog', RenameTimelineDialog],
+  ['The render queue', RenderQueueDialog],
+  ['The multicam dialog', MulticamDialog],
+  ['The auto-director', DirectorDialog],
+  ['Integrations', IntegrationsHub],
+  ['The approval prompt', AgentApprovals],
+]
+
 function Editor() {
   const vertical = useDefaultLayout({ id: 'lumen-layout-v', storage: localStorage })
   const horizontal = useDefaultLayout({ id: 'lumen-layout-h', storage: localStorage })
@@ -116,21 +132,29 @@ function Editor() {
         <Panel id="stage" defaultSize="58%" minSize="260px">
           <Group orientation="horizontal" id="lumen-layout-h" defaultLayout={horizontal.defaultLayout} onLayoutChanged={horizontal.onLayoutChanged}>
             <Panel id="assets" defaultSize="24%" minSize="300px" maxSize="40%">
-              <AssetsPanel />
+              <ErrorBoundary name="The media panel">
+                <AssetsPanel />
+              </ErrorBoundary>
             </Panel>
             <ResizeHandle />
             <Panel id="viewer" minSize="380px">
-              <PreviewPanel />
+              <ErrorBoundary name="The preview">
+                <PreviewPanel />
+              </ErrorBoundary>
             </Panel>
             <ResizeHandle />
             <Panel id="side" defaultSize="25%" minSize="300px" maxSize="38%">
-              <SidePanel />
+              <ErrorBoundary name="The side panel">
+                <SidePanel />
+              </ErrorBoundary>
             </Panel>
           </Group>
         </Panel>
         <ResizeHandle vertical />
         <Panel id="timeline" defaultSize="42%" minSize="200px">
-          <Timeline />
+          <ErrorBoundary name="The timeline">
+            <Timeline />
+          </ErrorBoundary>
         </Panel>
       </Group>
     </main>
