@@ -109,6 +109,8 @@ function fromStored(project: StoredProject, projectPath: string | null): { proje
   const dir = projectPath ? path.dirname(projectPath) : null
   const missing: string[] = []
   for (const [id, asset] of Object.entries(project.assets ?? {})) {
+    // What isn't an asset is for the editor to leave out, saying so; it is not for this to fall over.
+    if (!asset || typeof asset !== 'object') continue
     // Proxies live in Lumen's own folder; one that's gone is simply made again when needed.
     const proxy = asset.proxy
     if (proxy?.path && fs.existsSync(proxy.path)) {

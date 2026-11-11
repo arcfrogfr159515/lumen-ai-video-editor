@@ -7,6 +7,7 @@ import { create } from 'zustand'
 import type { ProjectVersion, RecentProject, RecoveryInfo } from '@shared/app'
 import { createEmptyProject } from '@/editor/new-project'
 import { playback } from '@/editor/playback'
+import { checkProject } from '@/editor/project-check'
 import { getProject, migrateProject, useEditor } from '@/editor/store'
 import type { Project, ProjectSettings } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
@@ -69,15 +70,27 @@ function markSaved(path: string | null, version: number) {
   else scheduleAutosave()
 }
 
-function load(project: Project, path: string | null) {
+/** Opens what a project file held. Throws (ProjectError) when it isn't a project; a damaged one is repaired, and says how. */
+function load(data: Project, path: string | null) {
+  // Before anything of the open project is given up.
+  const { project, repairs } = checkProject(data)
+  const ready = migrateProject(project)
   loads++
   playback.pause()
   useUI.getState().clearSelection()
-  useEditor.getState().loadProject(migrateProject(project))
+  useEditor.getState().loadProject(ready)
   playback.seek(0)
-  useSession.setState({ path, savedVersion: useEditor.getState().version, home: false, hasProject: true })
+  // Repaired, it is no longer what the file holds: saving is what makes the repair stick.
+  useSession.setState({ path, savedVersion: repairs.length ? -1 : useEditor.getState().version, home: false, hasProject: true })
   syncWindow()
   useUI.getState().requestFit()
+  if (repairs.length) {
+    const shown = repairs.slice(0, 4).map((r) => r[0].toUpperCase() + r.slice(1))
+    toast.warning('This project was damaged and has been repaired', {
+      description: `${shown.join('. ')}.${repairs.length > shown.length ? ` And ${repairs.length - shown.length} more.` : ''} The file is as it was until you save.`,
+      duration: 15000,
+    })
+  }
 }
 
 /** If there are unsaved changes, asks what to do. Resolves false if the user cancelled. */
@@ -175,7 +188,12 @@ export async function forgetRecent(path: string) {
 export async function recover() {
   const info = useSession.getState().recovery
   if (!info) return
-  load(JSON.parse(info.text) as Project, info.path)
+  try {
+    load(JSON.parse(info.text) as Project, info.path)
+  } catch (err) {
+    toast.error('Couldn’t recover the project', { description: errorText(err) })
+    return
+  }
   // Recovered work isn't on disk yet: keep it marked as unsaved.
   useSession.setState({ savedVersion: -1, recovery: null })
   syncWindow()
