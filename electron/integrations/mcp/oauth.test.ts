@@ -3,17 +3,20 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 
-const env = vi.hoisted(() => ({ root: '' }))
+const env = vi.hoisted(() => ({ root: '', crashed: 0 }))
 vi.mock('electron', () => ({
   app: { getPath: (name: string) => `${env.root}/${name}` },
   shell: {},
   safeStorage: {
     isEncryptionAvailable: () => true,
-    encryptString: (text: string) => Buffer.from(`enc:${Buffer.from(text, 'utf8').toString('base64')}`),
+    // Like the real one, it knows when what it is given back isn't all of what it wrote.
+    encryptString: (text: string) => Buffer.from(`enc:${Buffer.from(text, 'utf8').toString('base64')}:end`),
     decryptString: (buf: Buffer) => {
+      // The real one ends the process when handed a few bytes that begin with its version tag.
+      if (buf.length < 15) env.crashed++
       const text = buf.toString('utf8')
-      if (!text.startsWith('enc:')) throw new Error('Error while decrypting the ciphertext provided to safeStorage.decryptString.')
-      return Buffer.from(text.slice(4), 'base64').toString('utf8')
+      if (!text.startsWith('enc:') || !text.endsWith(':end')) throw new Error('Error while decrypting the ciphertext provided to safeStorage.decryptString.')
+      return Buffer.from(text.slice(4, -4), 'base64').toString('utf8')
     },
   },
 }))
@@ -67,5 +70,21 @@ describe('a sign-in kept on disk', () => {
     expect(fs.readdirSync(stored())).toEqual(['figma.bin'])
     auth.invalidateCredentials('all')
     expect(hasTokens('figma')).toBe(false)
+  })
+
+  it('reads as “not signed in” when its file was cut short, without reaching the keychain', () => {
+    const auth = new LumenOAuthProvider('runway')
+    auth.saveTokens({ access_token: 'at-123', token_type: 'Bearer' })
+    const file = path.join(stored(), 'runway.bin')
+    const saved = fs.readFileSync(file)
+    for (const length of [0, 1, 3, 9, 14, 15, 20, saved.length - 1]) {
+      fs.writeFileSync(file, saved.subarray(0, length))
+      expect(hasTokens('runway'), `cut at ${length}`).toBe(false)
+      expect(auth.tokens()).toBeUndefined()
+    }
+    expect(env.crashed).toBe(0)
+    // Signing in again writes a file that reads.
+    auth.saveTokens({ access_token: 'at-456', token_type: 'Bearer' })
+    expect(auth.tokens()).toMatchObject({ access_token: 'at-456' })
   })
 })
