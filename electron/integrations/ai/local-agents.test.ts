@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
@@ -5,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('electron', () => ({ app: { getPath: (name: string) => path.join(os.tmpdir(), 'lumen-agents-test', name), getVersion: () => '9.9.9' } }))
 vi.mock('../server', () => ({ bridgeEndpoint: async () => ({ url: 'http://127.0.0.1:0/mcp', token: 't' }) }))
 
-const { CLAUDE_CODE_MODELS, claudeTurnFlags, codexTurnFlags, parseCodexCatalog, parseCodexConfig } = await import('./local-agents')
+const { CLAUDE_CODE_MODELS, claudeTurnFlags, codexTurnFlags, parseCodexCatalog, parseCodexConfig, writeInstructions } = await import('./local-agents')
 
 // Shaped like `codex debug models` (trimmed).
 const catalog = {
@@ -64,6 +65,27 @@ describe('Codex', () => {
     expect(codexTurnFlags({ kind: 'local', agent: 'codex' })).toEqual([])
     expect(codexTurnFlags({ kind: 'local', agent: 'codex', model: 'gpt-6-sol', effort: 'ultra' })).toEqual(['-m', 'gpt-6-sol', '-c', 'model_reasoning_effort="ultra"'])
     expect(codexTurnFlags({ kind: 'local', agent: 'codex', effort: 'low' })).toEqual(['-c', 'model_reasoning_effort="low"'])
+  })
+})
+
+describe('a turn’s instructions', () => {
+  it('are in a file of the turn’s own, so two chats answering at once each read theirs', () => {
+    const colour = writeInstructions({ runId: 'run-colour', instructions: 'Skill: colour grading.' })
+    const sound = writeInstructions({ runId: 'run-sound', instructions: 'Skill: sound design.' })
+    expect(colour).not.toBe(sound)
+    // The first turn's file is still what it wrote, after the second turn wrote its own.
+    expect(fs.readFileSync(colour, 'utf8')).toContain('Skill: colour grading.')
+    expect(fs.readFileSync(colour, 'utf8')).not.toContain('sound design')
+    expect(fs.readFileSync(sound, 'utf8')).toContain('Skill: sound design.')
+    for (const file of [colour, sound]) fs.rmSync(file)
+  })
+
+  it('are named safely, whatever the turn is called', () => {
+    const file = writeInstructions({ runId: '../../evil\\name?*' })
+    expect(path.dirname(file)).toBe(path.join(os.tmpdir(), 'lumen-agents-test', 'userData', 'agents'))
+    expect(path.basename(file)).toBe('copilot-instructions-evilname.md')
+    expect(fs.readFileSync(file, 'utf8')).toContain('The Lumen tools are the MCP server named "lumen".')
+    fs.rmSync(file)
   })
 })
 

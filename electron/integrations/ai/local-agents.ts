@@ -339,13 +339,23 @@ function start(req: AgentRunRequest, bin: string, args: string[], env: Record<st
   return { child, stderr, exited }
 }
 
+/**
+ * The standing instructions of one turn, in a file of its own. Two chats can
+ * be answering at once, each with its own skills switched on: one file for
+ * all of them is whichever turn wrote it last, read by whichever starts next.
+ */
+export function writeInstructions(req: Pick<AgentRunRequest, 'runId' | 'instructions'>) {
+  const file = path.join(agentDir(), `copilot-instructions-${req.runId.replace(/[^\w-]/g, '').slice(0, 80) || 'run'}.md`)
+  fs.writeFileSync(file, `${COPILOT_INSTRUCTIONS}\n- The Lumen tools are the MCP server named "lumen".${req.instructions ? `\n\n${req.instructions}` : ''}`)
+  return file
+}
+
 // Claude Code: `claude -p --output-format stream-json`, only Lumen's tools.
 async function runClaude(req: AgentRunRequest, bin: string, url: string, token: string, prompt: string, emit: Emit) {
   const dir = agentDir()
   const config = path.join(dir, 'claude-mcp.json')
   fs.writeFileSync(config, JSON.stringify({ mcpServers: { lumen: { type: 'http', url, headers: { Authorization: `Bearer ${token}` } } } }), { mode: 0o600 })
-  const instructions = path.join(dir, 'copilot-instructions.md')
-  fs.writeFileSync(instructions, `${COPILOT_INSTRUCTIONS}\n- The Lumen tools are the MCP server named "lumen".${req.instructions ? `\n\n${req.instructions}` : ''}`)
+  const instructions = writeInstructions(req)
   const key = `claude-code:${req.conversationId}`
   const session = sessions.get(key)
   const args = [
@@ -370,6 +380,7 @@ async function runClaude(req: AgentRunRequest, bin: string, url: string, token: 
     ...(session ? ['--resume', session] : []),
   ]
   const { child, stderr, exited } = start(req, bin, args, {}, ensureDir(path.join(dir, 'workspace')))
+  void exited.then(() => fs.rmSync(instructions, { force: true }))
   child.stdin!.end(prompt)
   emit({ runId: req.runId, type: 'status', message: 'Claude Code is working…' })
 
