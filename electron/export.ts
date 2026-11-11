@@ -189,7 +189,55 @@ export function restartExport(id: string) {
   e.size = 0
 }
 
-export function finishExport(id: string) {
+/** What Windows answers when another program has the file open (a player showing the last export, a scanner, the indexer). */
+const held = (err: unknown) => ['EPERM', 'EACCES', 'EBUSY'].includes((err as NodeJS.ErrnoException).code ?? '')
+const pause = (ms: number) => void Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+
+/** `Video.mp4`'s neighbour that isn't taken yet: `Video 2.mp4`, `Video 3.mp4`… */
+function freeFile(target: string) {
+  const ext = path.extname(target)
+  const stem = target.slice(0, target.length - ext.length)
+  for (let n = 2; n < 1000; n++) {
+    const candidate = `${stem} ${n}${ext}`
+    if (!fs.existsSync(candidate)) return candidate
+  }
+  return null
+}
+
+/**
+ * Gives a written file its name, replacing what is there. Returns the name it
+ * got: when the old file can't be replaced — it is open in a player, say —
+ * the new one is saved beside it under the next free name rather than lost.
+ */
+function moveIntoPlace(partial: string, target: string): string {
+  let failure: unknown
+  // A scanner or the indexer lets go within moments.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      // Replaces the old file in one step: there is never a moment with neither.
+      fs.renameSync(partial, target)
+      return target
+    } catch (err) {
+      failure = err
+      if (!held(err)) throw err
+      pause(20 * (attempt + 1))
+    }
+  }
+  try {
+    // A read-only file can't be replaced, but it can be removed.
+    fs.rmSync(target, { force: true })
+    fs.renameSync(partial, target)
+    return target
+  } catch (err) {
+    if (!held(err)) throw err
+  }
+  const beside = freeFile(target)
+  if (!beside) throw failure
+  fs.renameSync(partial, beside)
+  return beside
+}
+
+export function finishExport(id: string): { path: string; size: number; warnings?: string[] } {
   const e = get(id)
   open.delete(String(id))
   if (e.kind === 'folder') {
@@ -197,10 +245,17 @@ export function finishExport(id: string) {
     return { path: e.path, size: e.size }
   }
   fs.closeSync(e.fd)
-  fs.rmSync(e.path, { force: true })
-  fs.renameSync(e.partial, e.path)
-  finished.add(path.resolve(e.path))
-  return { path: e.path, size: fs.statSync(e.path).size }
+  let target: string
+  try {
+    target = moveIntoPlace(e.partial, e.path)
+  } catch (err) {
+    // Everything is written; only the name is missing. The file stays (aborting this export no longer deletes it).
+    throw new Error(`The file is complete, but it couldn’t be saved as “${path.basename(e.path)}” (${err instanceof Error ? err.message : String(err)}). It is kept as “${e.partial}” — rename it to use it.`)
+  }
+  finished.add(path.resolve(target))
+  const size = fs.statSync(target).size
+  if (target === e.path) return { path: target, size }
+  return { path: target, size, warnings: [`“${path.basename(e.path)}” is open in another program and couldn’t be replaced. This was saved beside it as “${path.basename(target)}”.`] }
 }
 
 export function abortExport(id: string) {

@@ -236,7 +236,7 @@ function damageWarnings(project: Project): string[] {
 async function exportOnce(source: Project, settings: ExportSettings, handle: ExportHandle, onProgress: (p: ExportProgress) => void, signal: AbortSignal): Promise<ExportResult> {
   collectHeld()
   const rendered = await renderTo(source, settings, handle, onProgress, signal)
-  const warnings = damageWarnings(source)
+  const warnings = [...(rendered.warnings ?? []), ...damageWarnings(source)]
   const res: ExportResult = warnings.length ? { ...rendered, warnings } : rendered
   const range = settings.range ?? [0, projectDuration(source)]
   if (settings.sidecar && desktop) {
