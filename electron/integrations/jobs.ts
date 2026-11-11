@@ -36,7 +36,9 @@ let lastSent = new Map<string, number>()
 
 export function updateJob(id: string, patch: Partial<Job>) {
   const job = jobs.get(id)
-  if (!job || (job.status !== 'running' && !patch.status)) return
+  // A job that has ended stays as it ended. Work that was cancelled goes on failing for a moment — the window it
+  // drew in is gone, its process was killed — and that is not news: the job was cancelled, not broken.
+  if (!job || job.status !== 'running') return
   const next = { ...job, ...patch }
   if (next.status !== 'running') {
     next.finishedAt = Date.now()

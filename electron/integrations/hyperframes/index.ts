@@ -120,6 +120,18 @@ export async function renderMotion(req: MotionRenderRequest): Promise<Job> {
 async function run(jobId: string, req: MotionRenderRequest, label: string) {
   const out = jobDir('hyperframes', jobId)
   const work = workDir('hyperframes', jobId)
+  let finished = false
+  try {
+    finished = (await render(jobId, req, label, out, work)) && !isCancelled(jobId)
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true })
+    // The frames of a render that failed or was cancelled are of no use in the library, where nothing would ever remove them.
+    if (!finished) fs.rmSync(out, { recursive: true, force: true })
+  }
+}
+
+/** Renders the composition into `out`. True once the clip is made; false when the render was cancelled. */
+async function render(jobId: string, req: MotionRenderRequest, label: string, out: string, work: string): Promise<boolean> {
   const { width, height, fps } = req
   let html: string
   if (req.template === 'custom') {
@@ -163,7 +175,9 @@ async function run(jobId: string, req: MotionRenderRequest, label: string) {
     updateJob(jobId, { message: `Rendering ${frames} frames` })
 
     for (let i = 0; i < frames; i++) {
-      if (isCancelled(jobId) || win.isDestroyed()) return
+      if (isCancelled(jobId)) return false
+      // Gone without being cancelled (its process died): that is a failure to report, not a render to wait on for good.
+      if (win.isDestroyed()) throw new Error('The render window closed part-way.')
       await win.webContents.executeJavaScript(`window.__lumenSeek(${i / fps})`)
       let image = await win.webContents.capturePage()
       const size = image.getSize()
@@ -185,9 +199,8 @@ async function run(jobId: string, req: MotionRenderRequest, label: string) {
       provenance: { integration: 'hyperframes', tool: req.template, prompt: req.prompt, params: req.html ? { ...req.params, html: req.html } : req.params },
     }
     finishJob(jobId, { assets: [asset], message: `${frames} frames` })
+    return true
   } finally {
     if (!win.isDestroyed()) win.destroy()
-    fs.rmSync(work, { recursive: true, force: true })
-    if (isCancelled(jobId)) fs.rmSync(out, { recursive: true, force: true })
   }
 }
