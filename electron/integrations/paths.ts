@@ -77,18 +77,93 @@ export function mediaPath(url: string): string | null {
   return null
 }
 
+/** Waits without giving the thread back: what is written here is small, and its callers don't wait for anything. */
+const pause = (ms: number) => void Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+
+/**
+ * Writes a file so that it is the old one or the new one, never a piece of
+ * either: the content goes to a file beside it, is flushed to the disk, and
+ * takes the name in one step. A crash or a power cut part-way leaves the old
+ * file as it was.
+ */
+export function writeFileAtomic(file: string, data: string | Uint8Array) {
+  ensureDir(path.dirname(file))
+  const tmp = `${file}.${process.pid}.tmp`
+  try {
+    const fd = fs.openSync(tmp, 'w')
+    try {
+      fs.writeFileSync(fd, data)
+      try {
+        fs.fsyncSync(fd)
+      } catch {
+        // Not every file system can be told to flush (some network shares): the rename is still all-or-nothing.
+      }
+    } finally {
+      fs.closeSync(fd)
+    }
+    for (let attempt = 0; ; attempt++) {
+      try {
+        fs.renameSync(tmp, file)
+        return
+      } catch (err) {
+        // On Windows, a virus scanner or the search indexer reading the old file makes the rename fail for a moment.
+        const code = (err as NodeJS.ErrnoException).code
+        if (attempt >= 4 || (code !== 'EPERM' && code !== 'EACCES' && code !== 'EBUSY')) throw err
+        pause(20 * (attempt + 1))
+      }
+    }
+  } catch (err) {
+    fs.rmSync(tmp, { force: true })
+    throw err
+  }
+}
+
+/**
+ * Sets aside a file that is there but can't be read, as `<name>.unreadable`,
+ * before something is written in its place: whatever it held (a list of
+ * servers, a token) can still be looked at, or put back by hand. `fresh` says
+ * this is the first time this damaged file was seen.
+ */
+export function keepUnreadable(file: string): { path: string; fresh: boolean } | null {
+  const copy = `${file}.unreadable`
+  try {
+    const bytes = fs.readFileSync(file)
+    if (!bytes.length) return null
+    const fresh = !fs.existsSync(copy) || !fs.readFileSync(copy).equals(bytes)
+    if (fresh) fs.writeFileSync(copy, bytes)
+    return { path: copy, fresh }
+  } catch {
+    return null
+  }
+}
+
+const warned = new Set<string>()
+
 /** JSON settings file in userData (integration paths, MCP servers…). */
 export function readJson<T>(name: string, fallback: T): T {
+  const file = path.join(userDir(), name)
+  let text: string
   try {
-    return JSON.parse(fs.readFileSync(path.join(userDir(), name), 'utf8')) as T
+    text = fs.readFileSync(file, 'utf8')
   } catch {
+    // Not there yet.
+    return fallback
+  }
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    // Damaged. The defaults take over, and the next change is written over it — so what it held is kept beside it.
+    if (!warned.has(file)) {
+      warned.add(file)
+      const copy = keepUnreadable(file)
+      console.warn(`${name} can’t be read; the defaults are used.${copy ? ` What it held is kept in ${copy.path}.` : ''}`)
+    }
     return fallback
   }
 }
 
 export function writeJson(name: string, value: unknown) {
-  ensureDir(userDir())
-  fs.writeFileSync(path.join(userDir(), name), JSON.stringify(value, null, 2))
+  writeFileAtomic(path.join(userDir(), name), JSON.stringify(value, null, 2))
 }
 
 const require = createRequire(import.meta.url)
