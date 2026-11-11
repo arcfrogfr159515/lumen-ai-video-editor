@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { between, choice, flag, kept, quietStorage } from '@/lib/persisted'
 import { useEditor } from './store'
 
 export type LeftTab = 'media' | 'audio' | 'text' | 'effects' | 'transitions' | 'looks' | 'generate'
@@ -128,6 +129,9 @@ interface UIState {
   requestFit: () => void
 }
 
+/** What is remembered between sessions. */
+type KeptUI = Pick<UIState, 'leftTab' | 'rightTab' | 'snapping' | 'pxPerSecond' | 'showGuides' | 'useProxies' | 'playbackRes' | 'pausedRes' | 'autoProxies' | 'renderRes' | 'upscale' | 'backgroundRender' | 'usePreviews' | 'angleViewer'>
+
 export const useUI = create<UIState>()(
   persist(
     (set) => ({
@@ -214,7 +218,24 @@ export const useUI = create<UIState>()(
     }),
     {
       name: 'lumen.ui.v1',
-      partialize: (s) => ({
+      storage: quietStorage<KeptUI>(),
+      merge: kept<KeptUI>({
+        leftTab: choice('media', 'audio', 'text', 'effects', 'transitions', 'looks', 'generate'),
+        rightTab: choice('inspector', 'mixer', 'copilot'),
+        snapping: flag,
+        pxPerSecond: between(ZOOM_MIN, ZOOM_MAX),
+        showGuides: flag,
+        useProxies: flag,
+        playbackRes: choice('auto', 1, 0.5, 0.25, 0.125),
+        pausedRes: choice(1, 0.5, 0.25, 0.125),
+        autoProxies: flag,
+        renderRes: choice(1, 0.5, 0.25, 0.125),
+        upscale: choice('sharp', 'smooth'),
+        backgroundRender: flag,
+        usePreviews: flag,
+        angleViewer: flag,
+      }),
+      partialize: (s): KeptUI => ({
         leftTab: s.leftTab,
         rightTab: s.rightTab,
         snapping: s.snapping,
