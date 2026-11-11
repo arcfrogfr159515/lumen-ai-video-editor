@@ -3,7 +3,7 @@ import path from 'node:path'
 import { app, BrowserWindow, dialog } from 'electron'
 import { APP_IPC, type CloseChoice, type OpenedProject, type RecentProject, type RecoveryInfo, type VersionKind } from '../shared/app'
 import { fileInfo, urlFor } from './files'
-import { allowPath, ensureDir, mediaPath, readJson, userDir, writeJson } from './integrations/paths'
+import { allowPath, ensureDir, mediaPath, readJson, userDir, writeFileAtomic, writeJson } from './integrations/paths'
 import { readVersionText, writeVersion } from './versions'
 
 /**
@@ -52,12 +52,8 @@ interface StoredProject {
 
 const posix = (p: string) => p.split(path.sep).join('/')
 
-function atomicWrite(file: string, text: string) {
-  ensureDir(path.dirname(file))
-  const tmp = `${file}.${process.pid}.tmp`
-  fs.writeFileSync(tmp, text)
-  fs.renameSync(tmp, file)
-}
+/** The old file or the new one, never a piece of either — and on the disk, not only on its way there, before the old one is given up. */
+const atomicWrite = (file: string, text: string) => writeFileAtomic(file, text)
 
 // ─── Serialization ───────────────────────────────────────────────────────
 
@@ -298,7 +294,8 @@ export function readRecovery(): RecoveryInfo | null {
 // ─── Window state & closing ──────────────────────────────────────────────
 
 const state = { name: 'Untitled', path: null as string | null, dirty: false }
-let forceClose = false
+/** Windows told to close as they are: everything is saved, or the user chose not to. */
+const closing = new WeakSet<BrowserWindow>()
 
 export function setProjectState(win: BrowserWindow, next: { name?: unknown; path?: unknown; dirty?: unknown }) {
   if (typeof next.name === 'string') state.name = next.name
@@ -328,8 +325,10 @@ export async function confirmDiscard(win: BrowserWindow | null, name: string): P
 
 /** Asks before closing a window with unsaved changes. */
 export function guardClose(win: BrowserWindow) {
+  // A window starts with nothing unsaved, whatever the one before it was closed with (on macOS the app outlives its window).
+  Object.assign(state, { name: 'Untitled', path: null, dirty: false })
   win.on('close', (e) => {
-    if (forceClose || !state.dirty) return
+    if (closing.has(win) || !state.dirty) return
     e.preventDefault()
     void confirmDiscard(win, state.name).then((choice) => {
       if (choice === 'discard') {
@@ -341,7 +340,7 @@ export function guardClose(win: BrowserWindow) {
 }
 
 export function closeNow(win: BrowserWindow) {
-  forceClose = true
+  closing.add(win)
   if (!win.isDestroyed()) win.close()
 }
 
