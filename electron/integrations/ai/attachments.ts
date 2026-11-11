@@ -62,11 +62,19 @@ export function unzipEntry(zip: Buffer, name: string): Buffer | null {
     const comment = zip.readUInt16LE(p + 32)
     const local = zip.readUInt32LE(p + 42)
     if (zip.toString('utf8', p + 46, p + 46 + nameLength) === name) {
+      // The directory is only a claim: a file cut short, or one that isn't what it says, points past its own end.
+      if (local + 30 > zip.length) return null
       const start = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28)
+      if (start + packed > zip.length) return null
       const data = zip.subarray(start, start + packed)
       if (method === 0) return Buffer.from(data)
-      if (method === 8) return zlib.inflateRawSync(data, { maxOutputLength: 64 * 1024 * 1024 })
-      return null
+      if (method !== 8) return null
+      try {
+        return zlib.inflateRawSync(data, { maxOutputLength: 64 * 1024 * 1024 })
+      } catch {
+        // Not what it says it is, or more than a document's worth once unpacked.
+        return null
+      }
     }
     p += 46 + nameLength + extra + comment
   }
@@ -89,7 +97,11 @@ export function docxText(file: Buffer): string {
     })
     .replace(/<[^>]+>/g, '')
     .replace(/&(amp|lt|gt|quot|apos);/g, (_m, name: string) => XML_ENTITIES[name])
-    .replace(/&#(\d+);/g, (_m, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#(x[0-9a-f]+|\d+);/gi, (m, code: string) => {
+      const point = /^x/i.test(code) ? parseInt(code.slice(1), 16) : Number(code)
+      // A number that isn't a character stays as it was written.
+      return point > 0 && point < 0x110000 && !(point >= 0xd800 && point <= 0xdfff) ? String.fromCodePoint(point) : m
+    })
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
