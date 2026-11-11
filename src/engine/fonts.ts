@@ -43,8 +43,49 @@ export function bytesToBase64(bytes: Uint8Array) {
   return btoa(bin)
 }
 
-/** Makes every font embedded in the project available to the page (once each). */
+/** Work that draws from a copy of the project (an export) and needs the fonts it began with, whatever happens to the open one. */
+let held = 0
+let overdue: Pick<Project, 'fonts'> | null = null
+
+/** Keeps every font that is registered until the returned function is called. */
+export function holdFonts(): () => void {
+  held++
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    if (--held > 0 || !overdue) return
+    const project = overdue
+    overdue = null
+    letGo(project)
+  }
+}
+
+/**
+ * Lets go of the fonts the project no longer holds — one taken out, or all of another project's once this one is
+ * opened: the face the page keeps, and the copy of the file behind its URL. Each is the size of the font file, and a
+ * CJK font is tens of megabytes.
+ */
+function letGo(project: Pick<Project, 'fonts'>) {
+  const fonts = Object.values(project.fonts ?? {})
+  const families = new Set(fonts.map((f) => f.family))
+  for (const [family, face] of registered) {
+    if (families.has(family)) continue
+    document.fonts.delete(face)
+    registered.delete(family)
+  }
+  const ids = new Set(fonts.map((f) => f.id))
+  for (const [id, url] of fileUrls) {
+    if (ids.has(id)) continue
+    URL.revokeObjectURL(url)
+    fileUrls.delete(id)
+  }
+}
+
+/** Makes every font embedded in the project available to the page (once each), and lets go of those it no longer holds. */
 export function registerProjectFonts(project: Pick<Project, 'fonts'>) {
+  if (held) overdue = project
+  else letGo(project)
   for (const f of Object.values(project.fonts ?? {})) {
     if (registered.has(f.family)) continue
     try {

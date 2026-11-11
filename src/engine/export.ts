@@ -26,6 +26,7 @@ import { desktop } from '@/lib/platform'
 import { prepareAudio, renderMix, type MixOptions } from './audio-engine'
 import { renderFrame } from './compositor'
 import { collectHeld } from './decode'
+import { holdFonts } from './fonts'
 import {
   chooseEncoder,
   clearEncoderTest,
@@ -217,10 +218,13 @@ export async function runExport(project: Project, settings: ExportSettings, hand
     throw new Error('Another export is already running — wait for it to finish.')
   }
   running = true
+  // What is drawn is this copy of the project: its fonts stay, even if the open project gives them up meanwhile.
+  const releaseFonts = holdFonts()
   try {
     return await exportOnce(project, settings, handle, onProgress, signal)
   } finally {
     running = false
+    releaseFonts()
   }
 }
 
