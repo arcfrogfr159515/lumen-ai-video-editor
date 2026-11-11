@@ -4,6 +4,27 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 
 ## [Unreleased]
 
+### Fixed
+
+- **An edit made while the project was being saved was marked as saved.** The file was written from the project as it was when the save began, then marked saved at whatever edit the editor had reached by the time the write ended. An edit in between — by the Copilot, an agent over MCP, or you while the Save dialog was open — was not in the file, was not asked about on close, and its recovery copy was deleted. A save now marks only what it wrote; Save As writes the project as it is when the dialog closes; a save that ends after another project was opened leaves that project's path alone.
+- **Lumen did not start when the file that holds your keys had been cut short.** Electron's keychain, handed a few bytes that begin with its version tag, ends the whole app instead of reporting an error, and the file is read at start. A file too short to be the keychain's is now treated as unreadable. Keys, settings, MCP sign-ins, project files and versions are written beside their name, flushed and renamed, so an interrupted write leaves the old file whole; a keys or settings file that can't be read is kept as `<name>.unreadable` before anything replaces it, and for the keys you are told.
+- **The web tools could be pointed at this computer.** `[::ffff:127.0.0.1]` (which a URL writes as `[::ffff:7f00:1]`) and `localhost.` got past the local-network check of `read_web_page`, `screenshot_web_page` and `watch_web_video`; `import_media_url` had no check at all; and a page being photographed could load anything through a name registered to point at 127.0.0.1. Addresses are now read in every spelling, a link the Copilot or an agent chose is checked hop by hop, and the screenshot session looks up where each host leads. A link you click in a result card may still lead to this computer.
+- **A HyperFrames composition could read any file on this computer.** Its window let every `file:` address through, so a composition's HTML could put a picture or a document into its frames. It now reads only its own scratch folder and the bundled GSAP and runtime.
+- **An export failed at the last step when the old file was open in another program**, after the whole render, leaving an orphaned `.partial`. The new file replaces the old one in a single rename; when the old one is held, the export is saved beside it as `Name 2.mp4` and the result says so.
+- **Requests to services could wait for ever.** Model downloads, OpenAI transcription, image and video generation, ElevenLabs jobs and imports by link had no time limit: a server that kept the connection open and said nothing left the job "working" until Lumen was closed. Each now gives up, by the service's name. Imports by link are capped at 4 GB and leave no half-written file.
+- **A tool call hung when the editor window was reloaded, closed or crashed.** An agent over MCP or the Copilot's turn waited out the whole time a tool may take. Pending calls are now answered at once with the reason.
+- **A motion render that was stopped was reported as failed, and left its frames behind.** What is asked of a destroyed window is never answered, so the clearing up never ran, and the frame that failed with the window overwrote "cancelled" with an error. A job that has ended now stays as it ended, and failed or cancelled Blender and motion renders leave nothing in the library or in temp.
+- **A page's `alert()` in a hidden window put a box on the screen.** A composition or a web page being photographed could show a message box titled Lumen and hold the render until it was clicked away. Offscreen windows no longer show page dialogs.
+- **A second Lumen ran its whole start-up before quitting**, on the first one's profile: an editor window, the protocols, the update check. It now starts nothing.
+- **On macOS, windows after the first closed without asking about unsaved changes** once one window had been closed with "Don't save".
+- **A version written but not yet listed was lost to the history**, and a damaged `index.json` hid all of it. Versions on disk that the list doesn't have are read and listed again.
+- **A damaged Word document attached to a chat failed with "offset is out of range"** instead of saying it couldn't be read.
+- **Settings of the wrong kind in local storage threw on every start**, and with local storage full every click that changes a setting threw after the change was made. Stored values are read one by one, and the store says once when it can't be written.
+- **The microphone stayed on** when recording a voiceover couldn't be set up, or when the recorder had already stopped by the time the take was finished.
+- **Two chats answered by Claude Code at once could read each other's instructions.** Each turn has its own instructions file.
+- **The sign-in callback page showed the service's error text as markup.**
+- **Every start of the desktop app logged an unhandled error** from the Copilot opening the first project's chats before one of its stores existed.
+
 ## [1.6.2] — 2026-10-16
 
 A volume for the preview that leaves the mix alone.
