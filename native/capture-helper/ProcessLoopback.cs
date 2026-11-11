@@ -302,6 +302,7 @@ namespace Lumen.CaptureHelper
         {
             IntPtr format = Marshal.AllocHGlobal(40);
             IAudioClient c = null;
+            IAudioCaptureClient cap = null;
             try
             {
                 // The process-loopback device has no mix format of its own: we name the
@@ -331,7 +332,7 @@ namespace Lumen.CaptureHelper
                 object service;
                 hr = c.GetService(ref iid, out service);
                 if (hr < 0 || service == null) throw Failed("could not get the capture service", hr);
-                IAudioCaptureClient cap = (IAudioCaptureClient)service;
+                cap = (IAudioCaptureClient)service;
 
                 hr = c.Start();
                 if (hr < 0) throw Failed("could not start the stream", hr);
@@ -339,10 +340,14 @@ namespace Lumen.CaptureHelper
                 client = c;
                 capture = cap;
                 c = null;
+                cap = null;
             }
             finally
             {
                 Marshal.FreeHGlobal(format);
+                // On any failure after the capture service was obtained (e.g. Start() fails) it is
+                // still ours to release; a committed stream has nulled these so they are left alone.
+                if (cap != null) Marshal.ReleaseComObject(cap);
                 if (c != null) Marshal.ReleaseComObject(c);
             }
         }
