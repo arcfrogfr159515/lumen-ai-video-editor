@@ -17,25 +17,47 @@ const MAX_BYTES = 4 * 1024 * 1024
 
 // ─── Where requests may go ───────────────────────────────────────────────
 
-function blockedIp(ip: string): boolean {
-  const v = ip.toLowerCase()
+/** The eight 16-bit groups of an IPv6 address, however it is written (shortened with ::, or ending in a dotted IPv4). */
+function groups(ip: string): number[] {
+  const dotted = /^(.*:)(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(ip)
+  const v = dotted ? `${dotted[1]}${((Number(dotted[2]) << 8) | Number(dotted[3])).toString(16)}:${((Number(dotted[4]) << 8) | Number(dotted[5])).toString(16)}` : ip
+  const [head, tail] = v.split('::')
+  const before = head ? head.split(':') : []
+  const after = tail ? tail.split(':') : []
+  const all = tail === undefined ? before : [...before, ...new Array<string>(Math.max(0, 8 - before.length - after.length)).fill('0'), ...after]
+  return all.map((g) => parseInt(g, 16))
+}
+
+export function blockedIp(ip: string): boolean {
+  // A zone ("fe80::1%eth0") names the interface, not the address.
+  const v = ip.toLowerCase().split('%')[0]
   if (isIP(v) === 4) {
     const [a, b] = v.split('.').map(Number)
     // this network, loopback, private ranges, link-local (cloud metadata), carrier-grade NAT, multicast and up
     return a === 0 || a === 127 || a === 10 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224
   }
   if (isIP(v) === 6) {
-    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(v)
-    if (mapped) return blockedIp(mapped[1])
-    // unspecified, loopback, unique-local (fc00::/7), link-local (fe80::/10)
-    return v === '::' || v === '::1' || /^f[cd]/.test(v) || /^fe[89ab]/.test(v)
+    const g = groups(v)
+    if (g.length !== 8 || g.some((n) => !Number.isFinite(n))) return true
+    const v4 = (hi: number, lo: number) => blockedIp(`${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`)
+    const zeros = (n: number) => g.slice(0, n).every((x) => x === 0)
+    // An IPv4 address carried in an IPv6 one reaches the same machine, and a URL writes it in hex ("[::ffff:7f00:1]"
+    // is 127.0.0.1): mapped (::ffff:a.b.c.d), translated (::ffff:0:a.b.c.d) and compatible (::a.b.c.d, which also
+    // covers :: and ::1), NAT64 (64:ff9b::/96, and its local-use block 64:ff9b:1::/48) and 6to4 (2002:aabb:ccdd::/48).
+    if (zeros(5) && (g[5] === 0xffff || g[5] === 0)) return v4(g[6], g[7])
+    if (zeros(4) && g[4] === 0xffff && g[5] === 0) return v4(g[6], g[7])
+    if (g[0] === 0x64 && g[1] === 0xff9b) return g[2] === 1 || (g.slice(2, 6).every((x) => x === 0) ? v4(g[6], g[7]) : false)
+    if (g[0] === 0x2002) return v4(g[1], g[2])
+    // unique-local (fc00::/7), link-local (fe80::/10), site-local (fec0::/10), multicast (ff00::/8)
+    return (g[0] & 0xfe00) === 0xfc00 || (g[0] & 0xff80) === 0xfe80 || (g[0] & 0xff00) === 0xff00
   }
   return false
 }
 
 /** Hosts on this computer or the local network (by name or address) are off limits. */
 export function blockedHost(hostname: string) {
-  const h = hostname.replace(/^\[|\]$/g, '').toLowerCase()
+  // "localhost." is localhost: the root dot at the end of a name changes nothing about where it leads.
+  const h = hostname.replace(/^\[|\]$/g, '').toLowerCase().replace(/\.+$/, '')
   if (isPrivateHost(h) || h === 'localhost' || h.endsWith('.internal') || h.endsWith('.lan') || h.endsWith('.home')) return true
   if (isIP(h)) return blockedIp(h)
   // A bare name like "router" is an intranet host.
