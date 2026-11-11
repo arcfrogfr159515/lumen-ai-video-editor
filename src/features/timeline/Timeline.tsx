@@ -537,6 +537,9 @@ function TimelineMenu({ clipId, frame }: { clipId: string | null; frame: number 
   if (clip) return <ClipMenu clip={clip} />
   return (
     <ContextContent dense>
+      <ContextItem onSelect={() => actions.closeGaps(false)}>{tt('Close gaps')}</ContextItem>
+      <ContextItem onSelect={() => actions.closeGaps(true)}>{tt('Close all gaps')}</ContextItem>
+      <ContextSeparator />
       <ContextItem shortcut="mod+v" disabled={!canPaste} onSelect={() => actions.paste('free', frame)}>
         {tt('Paste here')}
       </ContextItem>

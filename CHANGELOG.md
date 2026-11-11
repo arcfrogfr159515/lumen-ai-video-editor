@@ -9,6 +9,7 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 - **Copy attributes** (Ctrl+Shift+C, and in a clip's menu). It copies one clip's attributes for Paste attributes and leaves the clips on the clipboard as they are, so Ctrl+V still pastes those.
 - **Mirror and Rotate** in a clip's menu, under Basic editing. Mirror turns the clip half-way round its upright axis (Turn Y in the inspector), which shows its mirror image; Rotate is a quarter turn clockwise. A clip whose angle is keyframed is left as it is.
 - **In a clip's menu:** Crop (on the canvas), AI generate, Smart talking-head cut (the long pauses out of this clip's speech), New multicam clip from the selected clips, Export selected clips (in and out go around them and Export opens on that range), Reselect the source range (the slip tool), Replace clip (files picked from disk go in as a take, so what played before can come back), Link media, Open file location, Edit effects and Show the keyframe speed curve (the inspector, on that pane), and Render.
+- **Close gaps and Close all gaps** in the empty-timeline menu (as CapCut's has): the first closes holes and flash slivers, the second also closes every gap between clips on every unlocked track.
 
 ### Changed
 

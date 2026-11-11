@@ -536,6 +536,21 @@ export const actions = {
     ui().select(Object.values(getProject().clips).filter((c) => !locked.has(c.trackId)).map((c) => c.id))
   },
 
+  /**
+   * Closes gaps. By default the tidy-up: holes where no track has anything, flash slivers and flash clips. With
+   * `all`, also every gap between clips on every unlocked track, moving the later clips up.
+   */
+  closeGaps(all = false) {
+    const p = getProject()
+    const trackIds = all ? p.tracks.filter((t) => !t.locked && !t.rippleLock).map((t) => t.id) : []
+    const res = dispatch('timeline.closeGaps', { trackIds })
+    if (!res.ok) return void toast(res.error)
+    const r = res.result as { holesClosed: number; flashGapsFilled: number; flashClipsRemoved: number; trackGapsClosed: number; left: number }
+    const done = r.holesClosed + r.flashGapsFilled + r.flashClipsRemoved + r.trackGapsClosed
+    if (done) toast.success(tt('Closed {0}', plural(done, 'gap')), { description: r.left ? tt('{0} left: neither neighbour has footage to cover them.', r.left) : undefined })
+    else toast(tt('No gaps to close'), { description: tt('Open the clean-up tool for flash frames and uneven rates.'), action: { label: tt('Clean up'), onClick: () => useTimelineView.getState().set({ cleanup: 'gaps' }) } })
+  },
+
   addMarker() {
     dispatch('marker.add', { frame: frame() })
   },
