@@ -5,7 +5,7 @@ import path from 'node:path'
 import { safeStorage, shell } from 'electron'
 import type { OAuthClientProvider, OAuthDiscoveryState } from '@modelcontextprotocol/sdk/client/auth.js'
 import type { OAuthClientInformationMixed, OAuthClientMetadata, OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js'
-import { ensureDir, userDir } from '../paths'
+import { ensureDir, userDir, writeFileAtomic } from '../paths'
 
 /**
  * OAuth for hosted MCP servers (Higgsfield and friends): the sign-in page
@@ -40,7 +40,8 @@ function read(serverId: string): Stored {
 function write(serverId: string, patch: Partial<Stored>) {
   const next = { ...read(serverId), ...patch }
   const json = JSON.stringify(next)
-  fs.writeFileSync(file(serverId), safeStorage.isEncryptionAvailable() ? safeStorage.encryptString(json) : Buffer.from(json, 'utf8'))
+  // Whole or not at all: half a token file reads as "not signed in".
+  writeFileAtomic(file(serverId), safeStorage.isEncryptionAvailable() ? safeStorage.encryptString(json) : Buffer.from(json, 'utf8'))
 }
 
 export function clearAuth(serverId: string) {
@@ -54,10 +55,20 @@ export const hasTokens = (serverId: string) => Boolean(read(serverId).tokens?.ac
 const pending = new Map<string, { resolve: (code: string) => void; reject: (err: Error) => void; timer: NodeJS.Timeout }>()
 let server: http.Server | null = null
 
-const PAGE = (title: string, body: string) => `<!doctype html><meta charset="utf-8"><title>${title}</title>
+const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+
+/**
+ * The page the browser lands on after signing in. What it says can come from
+ * the address (the service's own words for what went wrong), so it is shown
+ * as text — never as markup — and kept short.
+ */
+export const callbackPage = (title: string, body: string) => `<!doctype html><meta charset="utf-8"><title>${escapeHtml(title)}</title>
 <style>html{color-scheme:dark}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#080807;color:#eeeee9;font:15px/1.5 system-ui,sans-serif}
-main{text-align:center;max-width:360px}h1{font-size:20px;margin:0 0 8px;background:linear-gradient(90deg,#d6ee00,#5ef2a6,#36d6f2);-webkit-background-clip:text;color:transparent}p{color:#a2a39b;margin:0}</style>
-<main><h1>${title}</h1><p>${body}</p></main>`
+main{text-align:center;max-width:360px}h1{font-size:20px;margin:0 0 8px;background:linear-gradient(90deg,#d6ee00,#5ef2a6,#36d6f2);-webkit-background-clip:text;color:transparent}p{color:#a2a39b;margin:0;overflow-wrap:anywhere}</style>
+<main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(body.slice(0, 400))}</p></main>`
+
+/** Nothing on the page runs or loads: it is a few words and their style. */
+const PAGE_HEADERS = { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'", 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store' }
 
 function ensureServer() {
   if (server) return
@@ -71,18 +82,18 @@ function ensureServer() {
     const code = url.searchParams.get('code')
     const error = url.searchParams.get('error_description') ?? url.searchParams.get('error')
     const waiter = pending.get(state)
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+    res.writeHead(200, PAGE_HEADERS)
     if (!waiter) {
-      res.end(PAGE('Nothing to finish', 'This sign-in link has expired. Start again from Lumen.'))
+      res.end(callbackPage('Nothing to finish', 'This sign-in link has expired. Start again from Lumen.'))
       return
     }
     pending.delete(state)
     clearTimeout(waiter.timer)
     if (code) {
-      res.end(PAGE('Connected to Lumen', 'You can close this tab and head back to your edit.'))
+      res.end(callbackPage('Connected to Lumen', 'You can close this tab and head back to your edit.'))
       waiter.resolve(code)
     } else {
-      res.end(PAGE('Sign-in didn’t finish', error ?? 'The service didn’t return an authorization code.'))
+      res.end(callbackPage('Sign-in didn’t finish', error ?? 'The service didn’t return an authorization code.'))
       waiter.reject(new Error(error ?? 'Authorization was cancelled.'))
     }
     if (!pending.size) closeServer()
