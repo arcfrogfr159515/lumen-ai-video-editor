@@ -50,8 +50,17 @@ async function failure(res: Response) {
   return new Error(text || `ElevenLabs answered ${res.status}`)
 }
 
+/** The longest a request may take, the reading of its answer included: a song or the transcript of a long recording takes minutes — not for ever. */
+export const ELEVENLABS_LIMITS = { ms: 10 * 60_000 }
+
+/** A request that ran out of time, said plainly. */
+const slow = (err: unknown) => (err instanceof Error && err.name === 'TimeoutError' ? new Error('ElevenLabs took too long to answer.') : err)
+
 async function call(pathname: string, init: RequestInit & { signal?: AbortSignal } = {}) {
-  const res = await fetch(API + pathname, { ...init, headers: { 'xi-api-key': key(), ...(init.headers ?? {}) } })
+  const clock = AbortSignal.timeout(ELEVENLABS_LIMITS.ms)
+  const res = await fetch(API + pathname, { ...init, signal: init.signal ? AbortSignal.any([init.signal, clock]) : clock, headers: { 'xi-api-key': key(), ...(init.headers ?? {}) } }).catch((err: unknown) => {
+    throw slow(err)
+  })
   if (!res.ok) throw await failure(res)
   return res
 }
@@ -145,7 +154,7 @@ function track<T>(title: string, work: (job: Job, signal: AbortSignal) => Promis
   setCanceller(job.id, () => controller.abort())
   updateJob(job.id, { message: 'Working…' })
   void work(job, controller.signal).catch((err) => {
-    if (!controller.signal.aborted) failJob(job.id, err)
+    if (!controller.signal.aborted) failJob(job.id, slow(err))
   })
   return job
 }

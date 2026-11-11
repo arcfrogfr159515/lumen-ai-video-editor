@@ -5,6 +5,7 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { net } from 'electron'
 import type { GeneratedAsset, ImageGenRequest, Job, MediaModels, VideoGenRequest } from '../../../shared/integrations'
+import { steadyFetch, within } from '../deadline'
 import { createJob, failJob, finishJob, isCancelled, updateJob } from '../jobs'
 import { ensureDir, mediaRoot, mediaUrl } from '../paths'
 import { providerBaseURL, providerKey } from './providers'
@@ -16,6 +17,9 @@ import { providerBaseURL, providerKey } from './providers'
 
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta'
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** How long a service has to answer: a list of models, a picture (the slow image models take a couple of minutes), a video job being started, a look at how it is doing. */
+export const MEDIA_LIMITS = { listMs: 20_000, imageMs: 5 * 60_000, startMs: 2 * 60_000, pollMs: 60_000 }
 
 function openaiBase() {
   return providerBaseURL('openai') || 'https://api.openai.com/v1'
@@ -72,14 +76,20 @@ export async function mediaModels(provider: 'openai' | 'gemini', refresh = false
   const key = keyFor(provider)
   let value: MediaModels
   if (provider === 'openai') {
-    const res = await net.fetch(`${openaiBase()}/models`, { headers: { Authorization: `Bearer ${key}` } })
-    if (!res.ok) throw await apiError(res, 'OpenAI')
-    const ids = ((await res.json()) as { data: { id: string }[] }).data.map((m) => m.id).sort().reverse()
+    const listed = await within(MEDIA_LIMITS.listMs, 'OpenAI', null, async (signal) => {
+      const res = await net.fetch(`${openaiBase()}/models`, { headers: { Authorization: `Bearer ${key}` }, signal })
+      if (!res.ok) throw await apiError(res, 'OpenAI')
+      return (await res.json()) as { data: { id: string }[] }
+    })
+    const ids = listed.data.map((m) => m.id).sort().reverse()
     value = { image: ids.filter((id) => /^(gpt-image|dall-e-3)/.test(id)), video: ids.filter((id) => /^sora/.test(id)) }
   } else {
-    const res = await net.fetch(`${GEMINI}/models?pageSize=1000`, { headers: { 'x-goog-api-key': key } })
-    if (!res.ok) throw await apiError(res, 'Google')
-    const models = ((await res.json()) as { models: { name: string; supportedGenerationMethods?: string[] }[] }).models
+    const listed = await within(MEDIA_LIMITS.listMs, 'Google', null, async (signal) => {
+      const res = await net.fetch(`${GEMINI}/models?pageSize=1000`, { headers: { 'x-goog-api-key': key }, signal })
+      if (!res.ok) throw await apiError(res, 'Google')
+      return (await res.json()) as { models: { name: string; supportedGenerationMethods?: string[] }[] }
+    })
+    const models = listed.models
     const id = (m: { name: string }) => m.name.replace(/^models\//, '')
     value = {
       image: models.filter((m) => /image/.test(id(m)) && !/imagen/.test(id(m)) && m.supportedGenerationMethods?.includes('generateContent')).map(id).sort().reverse(),
@@ -110,14 +120,16 @@ async function imageWithOpenAI(req: ImageGenRequest, signal: AbortSignal): Promi
   const body: Record<string, unknown> = { model: req.model, prompt: req.prompt, size, n: 1 }
   if (req.model.startsWith('dall-e')) Object.assign(body, { response_format: 'b64_json', quality: 'hd' })
   else body.quality = req.quality ?? 'high'
-  const res = await net.fetch(`${openaiBase()}/images/generations`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
+  const item = await within(MEDIA_LIMITS.imageMs, 'OpenAI', signal, async (signal) => {
+    const res = await net.fetch(`${openaiBase()}/images/generations`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal,
+    })
+    if (!res.ok) throw await apiError(res, 'OpenAI')
+    return ((await res.json()) as { data: { b64_json?: string; url?: string }[] }).data[0]
   })
-  if (!res.ok) throw await apiError(res, 'OpenAI')
-  const item = ((await res.json()) as { data: { b64_json?: string; url?: string }[] }).data[0]
   const abs = path.join(outDir(), `${randomUUID()}.png`)
   if (item?.b64_json) fs.writeFileSync(abs, Buffer.from(item.b64_json, 'base64'))
   else if (item?.url) await download(item.url, abs, {}, signal)
@@ -126,8 +138,22 @@ async function imageWithOpenAI(req: ImageGenRequest, signal: AbortSignal): Promi
   return { abs, mime: 'image/png', width: w, height: h }
 }
 
-async function imageWithGemini(req: ImageGenRequest, signal: AbortSignal): Promise<ImageOut> {
+async function imageWithGemini(req: ImageGenRequest, cancel: AbortSignal): Promise<ImageOut> {
   const key = keyFor('gemini')
+  type Part = { text?: string; inlineData?: { mimeType: string; data: string }; inline_data?: { mime_type: string; data: string } }
+  type Answer = { candidates?: { content?: { parts?: Part[] }; finishReason?: string }[]; promptFeedback?: { blockReason?: string } }
+  const json = await within(MEDIA_LIMITS.imageMs, 'Google', cancel, (signal) => geminiImage(req, key, signal) as Promise<Answer>)
+  if (json.promptFeedback?.blockReason) throw new Error(`Google declined this prompt (${json.promptFeedback.blockReason}).`)
+  const parts = json.candidates?.[0]?.content?.parts ?? []
+  const img = parts.map((p) => p.inlineData ?? (p.inline_data ? { mimeType: p.inline_data.mime_type, data: p.inline_data.data } : undefined)).find(Boolean)
+  if (!img) throw new Error(parts.find((p) => p.text)?.text?.slice(0, 200) ?? 'Google returned no image.')
+  const ext = img.mimeType === 'image/jpeg' ? '.jpg' : img.mimeType === 'image/webp' ? '.webp' : '.png'
+  const abs = path.join(outDir(), `${randomUUID()}${ext}`)
+  fs.writeFileSync(abs, Buffer.from(img.data, 'base64'))
+  return { abs, mime: img.mimeType }
+}
+
+async function geminiImage(req: ImageGenRequest, key: string, signal: AbortSignal): Promise<unknown> {
   const call = (withAspect: boolean) =>
     net.fetch(`${GEMINI}/models/${encodeURIComponent(req.model)}:generateContent`, {
       method: 'POST',
@@ -142,16 +168,7 @@ async function imageWithGemini(req: ImageGenRequest, signal: AbortSignal): Promi
   // Older image models don't take an aspect ratio.
   if (res.status === 400) res = await call(false)
   if (!res.ok) throw await apiError(res, 'Google')
-  type Part = { text?: string; inlineData?: { mimeType: string; data: string }; inline_data?: { mime_type: string; data: string } }
-  const json = (await res.json()) as { candidates?: { content?: { parts?: Part[] }; finishReason?: string }[]; promptFeedback?: { blockReason?: string } }
-  if (json.promptFeedback?.blockReason) throw new Error(`Google declined this prompt (${json.promptFeedback.blockReason}).`)
-  const parts = json.candidates?.[0]?.content?.parts ?? []
-  const img = parts.map((p) => p.inlineData ?? (p.inline_data ? { mimeType: p.inline_data.mime_type, data: p.inline_data.data } : undefined)).find(Boolean)
-  if (!img) throw new Error(parts.find((p) => p.text)?.text?.slice(0, 200) ?? 'Google returned no image.')
-  const ext = img.mimeType === 'image/jpeg' ? '.jpg' : img.mimeType === 'image/webp' ? '.webp' : '.png'
-  const abs = path.join(outDir(), `${randomUUID()}${ext}`)
-  fs.writeFileSync(abs, Buffer.from(img.data, 'base64'))
-  return { abs, mime: img.mimeType }
+  return await res.json()
 }
 
 export function generateImage(req: ImageGenRequest): Job {
@@ -168,10 +185,16 @@ export function generateImage(req: ImageGenRequest): Job {
 
 // ─── Video ───────────────────────────────────────────────────────────────
 
+/** Saves a generated file. It may take as long as it takes, as long as it keeps coming; one that fails leaves nothing in the library. */
 async function download(url: string, abs: string, headers: Record<string, string>, signal: AbortSignal) {
-  const res = await net.fetch(url, { headers, signal })
+  const res = await steadyFetch(url, { headers, signal })
   if (!res.ok || !res.body) throw new Error(`Download failed (${res.status})`)
-  await pipeline(Readable.fromWeb(res.body as import('node:stream/web').ReadableStream), fs.createWriteStream(abs))
+  try {
+    await pipeline(Readable.fromWeb(res.body as import('node:stream/web').ReadableStream), fs.createWriteStream(abs))
+  } catch (err) {
+    fs.rmSync(abs, { force: true })
+    throw err
+  }
 }
 
 async function videoWithOpenAI(req: VideoGenRequest, jobId: string, signal: AbortSignal) {
@@ -182,15 +205,19 @@ async function videoWithOpenAI(req: VideoGenRequest, jobId: string, signal: Abor
   form.append('size', req.aspect === '9:16' ? '720x1280' : '1280x720')
   form.append('seconds', String(req.seconds))
   const auth = { Authorization: `Bearer ${key}` }
-  const res = await net.fetch(`${openaiBase()}/videos`, { method: 'POST', headers: auth, body: form, signal })
-  if (!res.ok) throw await apiError(res, 'OpenAI')
-  const { id } = (await res.json()) as { id: string }
+  const { id } = await within(MEDIA_LIMITS.startMs, 'OpenAI', signal, async (signal) => {
+    const res = await net.fetch(`${openaiBase()}/videos`, { method: 'POST', headers: auth, body: form, signal })
+    if (!res.ok) throw await apiError(res, 'OpenAI')
+    return (await res.json()) as { id: string }
+  })
   for (;;) {
     await sleep(4000)
     if (signal.aborted) throw new Error('Cancelled')
-    const s = await net.fetch(`${openaiBase()}/videos/${id}`, { headers: auth, signal })
-    if (!s.ok) throw await apiError(s, 'OpenAI')
-    const v = (await s.json()) as { status: string; progress?: number; error?: { message?: string } }
+    const v = await within(MEDIA_LIMITS.pollMs, 'OpenAI', signal, async (signal) => {
+      const s = await net.fetch(`${openaiBase()}/videos/${id}`, { headers: auth, signal })
+      if (!s.ok) throw await apiError(s, 'OpenAI')
+      return (await s.json()) as { status: string; progress?: number; error?: { message?: string } }
+    })
     if (v.status === 'failed') throw new Error(v.error?.message ?? 'OpenAI couldn’t generate this video.')
     updateJob(jobId, { progress: typeof v.progress === 'number' ? Math.min(0.95, v.progress / 100) : -1, message: v.status === 'queued' ? 'Queued…' : 'Generating…' })
     if (v.status === 'completed') break
@@ -204,26 +231,30 @@ async function videoWithOpenAI(req: VideoGenRequest, jobId: string, signal: Abor
 async function videoWithVeo(req: VideoGenRequest, jobId: string, signal: AbortSignal) {
   const key = keyFor('gemini')
   const headers = { 'x-goog-api-key': key, 'Content-Type': 'application/json' }
-  const res = await net.fetch(`${GEMINI}/models/${encodeURIComponent(req.model)}:predictLongRunning`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      instances: [{ prompt: req.prompt }],
-      parameters: { aspectRatio: req.aspect, durationSeconds: req.seconds, ...(req.resolution ? { resolution: req.resolution } : {}) },
-    }),
-    signal,
+  const { name } = await within(MEDIA_LIMITS.startMs, 'Google', signal, async (signal) => {
+    const res = await net.fetch(`${GEMINI}/models/${encodeURIComponent(req.model)}:predictLongRunning`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        instances: [{ prompt: req.prompt }],
+        parameters: { aspectRatio: req.aspect, durationSeconds: req.seconds, ...(req.resolution ? { resolution: req.resolution } : {}) },
+      }),
+      signal,
+    })
+    if (!res.ok) throw await apiError(res, 'Google')
+    return (await res.json()) as { name: string }
   })
-  if (!res.ok) throw await apiError(res, 'Google')
-  const { name } = (await res.json()) as { name: string }
   const started = Date.now()
   let uri: string | undefined
   for (;;) {
     await sleep(6000)
     if (signal.aborted) throw new Error('Cancelled')
-    const s = await net.fetch(`${GEMINI}/${name}`, { headers, signal })
-    if (!s.ok) throw await apiError(s, 'Google')
     type Op = { done?: boolean; error?: { message?: string }; response?: { generateVideoResponse?: { generatedSamples?: { video?: { uri?: string } }[]; raiMediaFilteredReasons?: string[] } } }
-    const op = (await s.json()) as Op
+    const op = await within(MEDIA_LIMITS.pollMs, 'Google', signal, async (signal) => {
+      const s = await net.fetch(`${GEMINI}/${name}`, { headers, signal })
+      if (!s.ok) throw await apiError(s, 'Google')
+      return (await s.json()) as Op
+    })
     if (op.error) throw new Error(op.error.message ?? 'Google couldn’t generate this video.')
     // Veo takes roughly a minute or two: show time-based progress while we wait.
     updateJob(jobId, { progress: Math.min(0.9, (Date.now() - started) / 120_000), message: 'Generating…' })
