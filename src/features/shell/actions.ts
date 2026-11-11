@@ -3,14 +3,15 @@
  * and toolbar buttons — one implementation, many entry points.
  */
 import { toast } from 'sonner'
-import { copyClips, pasteClips } from '@/editor/clipboard'
+import { copyAttributesOf, copyClips, pasteClips } from '@/editor/clipboard'
 import type { EditMode } from '@/editor/commands'
 import { clipCues, cueText, cueTone } from '@/editor/cues'
+import { isAnimated } from '@/editor/keyframes'
 import { adjacentBefore, clipEnd, clipsAt, editPoints, projectDuration, withGroups } from '@/editor/ops'
 import { playback, usePlayback } from '@/editor/playback'
 import { dispatch, getProject, useEditor } from '@/editor/store'
 import { useTimelineView } from '@/editor/timeline-view'
-import type { Tool } from '@/editor/ui-store'
+import type { InspectorTab, Tool } from '@/editor/ui-store'
 import { useUI } from '@/editor/ui-store'
 import { importDropped, pickAndImport } from '@/project/media-import'
 import { openProject, saveProject, saveProjectAs, showHome } from '@/project/session'
@@ -20,10 +21,12 @@ import { deleteRenders, renderPreviews } from '@/engine/render-cache'
 import { analyzeBeats, beatsOf, cutToBeats } from '@/project/beats'
 import { onSegmentProgress, type MatteProgress, type Subject } from '@/project/segment'
 import { cutOutSubject, textBehindSubject } from '@/project/subject'
-import { addCaptions, untranscribed } from '@/editor/smart'
+import { addCaptions, removePauses, untranscribed } from '@/editor/smart'
 import type { CaptionStyle } from '@/editor/subtitles'
+import type { Clip } from '@/editor/types'
 import { ensureTranscripts } from '@/project/transcribe'
 import { counted, tt } from '@/lib/i18n'
+import { wrapDegrees } from '@/lib/math'
 
 const ui = () => useUI.getState()
 
@@ -73,6 +76,22 @@ function targetClips(kinds?: string[]) {
     .filter((c) => !kinds || kinds.includes(c.kind))
     .sort((a, b) => (order.get(a.trackId) ?? 0) - (order.get(b.trackId) ?? 0))
     .slice(0, 1)
+}
+
+const hasPicture = (c: Clip) => c.kind !== 'audio' && c.kind !== 'adjustment'
+
+/**
+ * Turns the selected picture clips by an angle on one of their axes, as one undo step. A clip whose angle is
+ * keyframed is left as it is: a keyframe holds the angle at one moment, not for the whole clip.
+ */
+function turnClips(prop: 'rotation' | 'rotateY', by: number, label: string, nothing: string) {
+  const clips = targetClips().filter(hasPicture)
+  if (!clips.length) return void toast(nothing)
+  const free = clips.filter((c) => !isAnimated(c, prop))
+  if (!free.length) return void toast(tt('“{0}” has keyframes on that angle', clips[0].name), { description: tt('Change it at its keyframes, in the inspector.') })
+  useEditor.getState().transaction(label, 'user', () => {
+    for (const c of free) dispatch('clip.update', { ids: [c.id], patch: { transform: { [prop]: wrapDegrees((c.transform[prop] ?? 0) + by) } } })
+  })
 }
 
 export const actions = {
@@ -126,6 +145,13 @@ export const actions = {
     const res = pasteClips(at, mode)
     if (!res.ok) return void toast(res.error)
     ui().select(res.ids)
+  },
+
+  /** Copies one clip's attributes (the clip given, else the first selected) for Paste attributes. The clips on the clipboard stay. */
+  copyAttributes(clipId?: string) {
+    const clip = getProject().clips[clipId ?? ui().selection[0] ?? '']
+    if (!clip || !copyAttributesOf(getProject(), clip.id)) return void toast(tt('Select a clip to copy its attributes'))
+    toast(tt('Copied the attributes of “{0}”', clip.name))
   },
 
   pasteAttributes() {
@@ -184,6 +210,69 @@ export const actions = {
     useEditor.getState().transaction(clips.length > 1 ? tt('Add crossfades') : tt('Add crossfade'), 'user', () => {
       for (const c of clips) dispatch('clip.setTransition', { id: c.id, transition: c.transitionIn ?? { kind: 'dissolve', duration: Math.max(2, Math.min(duration, c.duration)) } })
     })
+  },
+
+  // ── The picture ──
+
+  /**
+   * Mirrors the selected clips left to right. The clip is turned half-way round its upright axis (Turn Y in the
+   * inspector), so what faces the viewer is its mirror image; doing it again turns it back.
+   */
+  mirror() {
+    turnClips('rotateY', 180, tt('Mirror'), tt('Select a video, image or title clip to mirror'))
+  },
+
+  /** Turns the selected clips a quarter turn clockwise. */
+  rotate() {
+    turnClips('rotation', 90, tt('Rotate'), tt('Select a video, image or title clip to rotate'))
+  },
+
+  /** Crops a clip on the canvas: it is selected, shown in the viewer, and its edges can be dragged there. */
+  cropOnCanvas(clipId?: string) {
+    const clip = clipId ? getProject().clips[clipId] : targetClips(['video', 'image'])[0]
+    if (!clip || (clip.kind !== 'video' && clip.kind !== 'image')) return void toast(tt('Select a video or image clip to crop'))
+    const f = frame()
+    if (f < clip.start || f >= clipEnd(clip)) {
+      playback.pause()
+      playback.seek(clip.start)
+    }
+    // Selecting leaves crop mode, so the clip is selected first.
+    ui().select([clip.id])
+    ui().setRightTab('inspector')
+    ui().setInspectorTab('video')
+    ui().setCropMode(true)
+  },
+
+  /** A clip in the inspector, on one of its panes (where its effects are, or its speed ramp). */
+  showInInspector(clipId: string, tab: InspectorTab) {
+    if (!getProject().clips[clipId]) return
+    ui().select([clipId])
+    ui().setRightTab('inspector')
+    ui().setInspectorTab(tab)
+  },
+
+  /** Exports the stretch the selected clips cover: marks in and out around them and opens Export, which offers that range. */
+  exportSelection() {
+    if (!ui().selection.some((id) => getProject().clips[id])) return void toast(tt('Select the clips to export first'))
+    actions.markSelection()
+    ui().setExportOpen(true)
+  },
+
+  /**
+   * Cuts the long pauses out of the speech in the selected clips. The whole timeline closes up around each one,
+   * so captions and B-roll stay in step, and music plays on through the joins.
+   */
+  async removePauses() {
+    const clips = targetClips(['video', 'audio']).filter((c) => c.assetId && !c.freeze)
+    if (!clips.length) return void toast(tt('Select a clip with speech first'))
+    const id = toast.loading(tt('Listening for pauses…'))
+    try {
+      const r = await removePauses({ clipIds: clips.map((c) => c.id) })
+      if (r.removed) toast.success(tt('Removed {0} pauses ({1}s)', r.removed, r.seconds.toFixed(1)), { id })
+      else toast(tt('No long pauses to remove'), { id, description: tt('Pauses shorter than 0.6 s are left as they are.') })
+    } catch (err) {
+      toast.error(tt('Couldn’t remove the pauses'), { id, description: err instanceof Error ? err.message : String(err) })
+    }
   },
 
   // ── Timelines & multicam ──

@@ -16,6 +16,8 @@ import { enterTrim, exitTrim, trimming } from '@/editor/trim-session'
 import type { Clip } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { useMediaSelection } from '@/features/assets/media-selection'
+import { pickAndImport } from '@/project/media-import'
+import { desktop } from '@/lib/platform'
 import { formatDuration } from '@/lib/time'
 import { counted, tt } from '@/lib/i18n'
 
@@ -219,5 +221,24 @@ export const timelineActions = {
     if (!added) return void toast(error ?? tt('Nothing was added'))
     ui().select([clip.id])
     toast.success(tt('Added {0}', plural(added, 'take')), { description: (last && takeNote(last, p.settings.fps)) ?? (error ? tt('One was left out: {0}', error) : tt('Alt+T shows the next one, Alt+Shift+T the one before.')) })
+  },
+
+  /**
+   * Replaces what a clip plays, where it is, with files picked from disk. They go in as takes (the last one
+   * showing), so what played before is still there to go back to.
+   */
+  async replaceClip(clipId: string) {
+    const clip = getProject().clips[clipId]
+    if (!clip || !canHaveTakes(clip)) return void toast(tt('Select a video, image or audio clip first'))
+    // Without the desktop app there are no files to pick: the media selected in the Media panel is used, or asked for.
+    if (!desktop) return timelineActions.addTakes(clipId)
+    const picked = (await pickAndImport()).map((a) => a.id).filter((id) => id !== clip.assetId)
+    if (picked.length) timelineActions.addTakes(clipId, picked)
+  },
+
+  /** The slip tool, to choose another stretch of a clip's footage for the place it has. */
+  reselectFootage() {
+    ui().setTool('slip')
+    toast(tt('Slip tool'), { description: tt('Drag the clip sideways to play another part of its footage. V brings back the select tool.'), duration: 4500 })
   },
 }

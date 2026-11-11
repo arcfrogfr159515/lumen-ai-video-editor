@@ -18,7 +18,11 @@ export interface ClipboardData {
   end: number
 }
 
-export const useClipboard = create<{ data: ClipboardData | null }>(() => ({ data: null }))
+export const useClipboard = create<{
+  data: ClipboardData | null
+  /** A clip whose attributes were copied on their own: paste attributes takes from it, and paste still pastes `data`. */
+  attributes: Clip | null
+}>(() => ({ data: null, attributes: null }))
 
 /** Copies clips (sorted by time). Returns how many were copied. */
 export function copyClips(project: Project, ids: string[]): number {
@@ -35,8 +39,18 @@ export function copyClips(project: Project, ids: string[]): number {
       start: Math.min(...clips.map((c) => c.start)),
       end: Math.max(...clips.map(clipEnd)),
     },
+    // What was copied last is what attributes are pasted from.
+    attributes: null,
   })
   return clips.length
+}
+
+/** Copies one clip's attributes, leaving the clips on the clipboard as they are. False when there is no such clip. */
+export function copyAttributesOf(project: Project, id: string): boolean {
+  const clip = project.clips[id]
+  if (!clip) return false
+  useClipboard.setState({ attributes: structuredClone(clip) })
+  return true
 }
 
 /**
@@ -60,5 +74,10 @@ export function pasteClips(at: number, mode: EditMode = 'free'): { ok: true; ids
   return result
 }
 
-/** The one clip on the clipboard that attributes can be pasted from. */
-export const attributeSource = () => useClipboard.getState().data?.clips[0] ?? null
+const sourceOf = (s: { data: ClipboardData | null; attributes: Clip | null }) => s.attributes ?? s.data?.clips[0] ?? null
+
+/** The one clip that attributes can be pasted from: the one they were copied from, else the first clip copied. */
+export const attributeSource = () => sourceOf(useClipboard.getState())
+
+/** The same, for a component: it draws again when the source changes. */
+export const useAttributeSource = () => useClipboard(sourceOf)

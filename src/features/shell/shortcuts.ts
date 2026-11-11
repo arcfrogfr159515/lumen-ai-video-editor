@@ -53,6 +53,7 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'cut', label: tt('Cut'), group: 'Editing', keys: ['mod+x'], run: actions.cut },
   { id: 'paste', label: tt('Paste at playhead'), group: 'Editing', keys: ['mod+v'], run: () => actions.paste('free') },
   { id: 'paste-insert', label: tt('Paste insert (push clips later)'), group: 'Editing', keys: ['mod+shift+v'], run: () => actions.paste('insert') },
+  { id: 'copy-attributes', label: tt('Copy attributes'), group: 'Editing', keys: ['mod+shift+c'], run: () => actions.copyAttributes() },
   { id: 'paste-attributes', label: tt('Paste attributes…'), group: 'Editing', keys: ['mod+alt+v'], run: actions.pasteAttributes },
   { id: 'mark-in', label: tt('Mark in'), group: 'Editing', keys: ['i'], run: actions.markIn },
   { id: 'mark-out', label: tt('Mark out'), group: 'Editing', keys: ['o'], run: actions.markOut },

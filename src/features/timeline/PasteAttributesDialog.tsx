@@ -2,7 +2,7 @@ import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
-import { attributeSource, useClipboard } from '@/editor/clipboard'
+import { useAttributeSource } from '@/editor/clipboard'
 import { ATTRIBUTES, type Attribute, type ClipSnapshot } from '@/editor/commands'
 import { dispatch, getProject } from '@/editor/store'
 import { isRamped } from '@/editor/timing'
@@ -53,8 +53,7 @@ function available(c: Clip): Attribute[] {
 /** Paste attributes: pick what to copy from the clip on the clipboard onto the selected clips. */
 export function PasteAttributesDialog() {
   const open = useUI((s) => s.pasteAttributesOpen)
-  const data = useClipboard((s) => s.data)
-  const source = attributeSource()
+  const source = useAttributeSource()
   const choices = source ? available(source) : []
   const [picked, setPicked] = useState<Attribute[]>([])
   useEffect(() => {
@@ -81,7 +80,7 @@ export function PasteAttributesDialog() {
       className="w-[min(440px,calc(100vw-32px))]"
     >
       <div className="space-y-1 px-5 pb-4">
-        {!data && <p className="py-6 text-center text-sm text-fg-3">{tt('Copy a clip (Ctrl+C) to paste its attributes.')}</p>}
+        {!source && <p className="py-6 text-center text-sm text-fg-3">{tt('Copy a clip (Ctrl+C) to paste its attributes.')}</p>}
         {source && !choices.length && <p className="py-6 text-center text-sm text-fg-3">{ttx('“{0}” has nothing beyond the defaults to paste.', source.name)}</p>}
         {choices.map((a) => {
           const on = picked.includes(a)

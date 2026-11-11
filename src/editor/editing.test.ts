@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { copyClips, pasteClips } from './clipboard'
+import { attributeSource, copyAttributesOf, copyClips, pasteClips, useClipboard } from './clipboard'
 import { createEmptyProject } from './new-project'
 import { clipEnd, clipsOnTrack } from './ops'
 import { dispatch, getProject, useEditor } from './store'
@@ -237,6 +237,27 @@ describe('clipboard', () => {
     expect(clip(b).transform.scale).toBe(0.5)
     expect(clip(b).crop).toMatchObject({ left: 0.1 })
     expect(clip(b).color.exposure).toBe(0)
+  })
+
+  it('keeps a clip copied for its attributes apart from the clips copied to paste', () => {
+    useClipboard.setState({ data: null, attributes: null })
+    const a = add('Overlay', 0, 30, { assetId: 'long' })
+    const b = add('Overlay', 60, 30, { assetId: 'long' })
+    expect(attributeSource()).toBeNull()
+    copyClips(getProject(), [a])
+    expect(attributeSource()?.id).toBe(a)
+    // Copying b's attributes leaves a on the clipboard to paste.
+    expect(copyAttributesOf(getProject(), b)).toBe(true)
+    expect(attributeSource()?.id).toBe(b)
+    expect(useClipboard.getState().data?.clips.map((c) => c.id)).toEqual([a])
+    // It is a copy: what is done to the clip afterwards isn't in it.
+    dispatch('clip.update', { ids: [b], patch: { transform: { scale: 0.5 } } })
+    expect(attributeSource()?.transform.scale).toBe(1)
+    // The clips copied last are what attributes come from.
+    copyClips(getProject(), [a])
+    expect(attributeSource()?.id).toBe(a)
+    expect(copyAttributesOf(getProject(), 'gone')).toBe(false)
+    expect(attributeSource()?.id).toBe(a)
   })
 })
 

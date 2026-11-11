@@ -6,6 +6,8 @@ import { tt } from '@/lib/i18n'
 
 export type LeftTab = 'media' | 'audio' | 'text' | 'effects' | 'transitions' | 'looks' | 'script' | 'notes' | 'generate'
 export type RightTab = 'inspector' | 'mixer' | 'copilot'
+/** The panes of a clip's inspector. */
+export type InspectorTab = 'video' | 'text' | 'color' | 'audio' | 'speed' | 'animate'
 /** select: move and trim · blade: cut · roll: move a cut · slip: change the footage in place · slide: move a clip between its neighbours */
 export type Tool = 'select' | 'blade' | 'roll' | 'slip' | 'slide'
 export type SelectMode = 'replace' | 'toggle' | 'add'
@@ -74,6 +76,8 @@ interface UIState {
   cropMode: boolean
   /** The mask being edited on the canvas (on the selected clip). */
   maskEdit: string | null
+  /** A pane of the clip inspector asked for from elsewhere (a clip's menu): the inspector goes there, and clears this. */
+  inspectorTab: InspectorTab | null
   pasteAttributesOpen: boolean
   versionsOpen: boolean
   queueOpen: boolean
@@ -114,6 +118,7 @@ interface UIState {
   setUsePreviews: (v: boolean) => void
   setCropMode: (v: boolean) => void
   setMaskEdit: (id: string | null) => void
+  setInspectorTab: (tab: InspectorTab | null) => void
   setPasteAttributesOpen: (v: boolean) => void
   setVersionsOpen: (v: boolean) => void
   setQueueOpen: (v: boolean) => void
@@ -153,6 +158,7 @@ export const useUI = create<UIState>()(
       usePreviews: true,
       cropMode: false,
       maskEdit: null,
+      inspectorTab: null,
       pasteAttributesOpen: false,
       versionsOpen: false,
       queueOpen: false,
@@ -196,6 +202,7 @@ export const useUI = create<UIState>()(
       setUsePreviews: (usePreviews) => set({ usePreviews }),
       setCropMode: (cropMode) => set({ cropMode, ...(cropMode ? { maskEdit: null } : {}) }),
       setMaskEdit: (maskEdit) => set({ maskEdit, ...(maskEdit ? { cropMode: false } : {}) }),
+      setInspectorTab: (inspectorTab) => set({ inspectorTab }),
       setPasteAttributesOpen: (pasteAttributesOpen) => set({ pasteAttributesOpen }),
       setVersionsOpen: (versionsOpen) => set({ versionsOpen }),
       setQueueOpen: (queueOpen) => set({ queueOpen }),

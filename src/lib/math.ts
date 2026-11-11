@@ -2,6 +2,11 @@ export const clamp = (v: number, min: number, max: number) => Math.min(max, Math
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 export const invLerp = (a: number, b: number, v: number) => (b === a ? 0 : (v - a) / (b - a))
 export const round = (v: number, step = 1) => Math.round(v / step) * step
+/** An angle in degrees brought into (−180, 180] — the range the inspector's angle sliders work in. */
+export const wrapDegrees = (deg: number) => {
+  const turn = ((deg % 360) + 360) % 360
+  return turn > 180 ? turn - 360 : turn
+}
 
 export const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
 export const easeInCubic = (t: number) => t * t * t

@@ -13,7 +13,7 @@ import { clipEnd, projectDuration } from '@/editor/ops'
 import { openSequenceName } from '@/editor/sequences'
 import { dispatch, useEditor } from '@/editor/store'
 import type { Clip, ClipKind } from '@/editor/types'
-import { useUI } from '@/editor/ui-store'
+import { useUI, type InspectorTab as Tab } from '@/editor/ui-store'
 import { assetThumb } from '@/features/assets/shared'
 import { sendPrompt } from '@/features/copilot/store'
 import { actions } from '@/features/shell/actions'
@@ -44,8 +44,6 @@ export function Inspector() {
 
 // ─── Single clip ─────────────────────────────────────────────────────────
 
-type Tab = 'video' | 'text' | 'color' | 'audio' | 'speed' | 'animate'
-
 const TABS: Record<ClipKind, Tab[]> = {
   video: ['video', 'color', 'audio', 'speed', 'animate'],
   image: ['video', 'color', 'animate'],
@@ -70,6 +68,13 @@ function ClipInspector({ clip }: { clip: Clip }) {
   useEffect(() => {
     lastTab[clip.kind] = tab
   }, [clip.kind, tab])
+  // A pane asked for from elsewhere (the clip's menu → “Edit effects”): go there once, if this kind of clip has it.
+  const asked = useUI((s) => s.inspectorTab)
+  useEffect(() => {
+    if (!asked) return
+    if (tabs.includes(asked)) setTab(asked)
+    useUI.getState().setInspectorTab(null)
+  }, [asked, tabs])
   const Icon = KIND_ICON[clip.kind]
   const thumb = asset && asset.kind !== 'audio' ? assetThumb(asset, clip.inPoint / fps + 0.5) : undefined
   const [name, setName] = useState(clip.name)
