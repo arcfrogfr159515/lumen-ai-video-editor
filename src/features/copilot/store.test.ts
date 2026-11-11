@@ -22,10 +22,12 @@ const onRejection = (err: unknown) => void rejections.push(err)
 process.on('unhandledRejection', onRejection)
 afterAll(() => void process.off('unhandledRejection', onRejection))
 
+// Loaded here rather than in the test: the store brings half the editor with it, and that isn't what is being timed.
+const { useEditor } = await import('@/editor/store')
+const { useAttachments, useCopilot } = await import('./store')
+
 describe('the Copilot’s chats', () => {
   it('are opened for the project that is there when the app starts', async () => {
-    const { useEditor } = await import('@/editor/store')
-    const { useAttachments, useCopilot } = await import('./store')
     await new Promise((r) => setTimeout(r, 20))
     // Opening the first project's chats used to stop at a store that wasn't made yet: nothing was opened, and the
     // error went unhandled on every start.
