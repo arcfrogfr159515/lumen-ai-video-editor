@@ -133,7 +133,7 @@ export function LinkRow({ link, provenance }: { link: McpLink; provenance: Gener
   const importIt = async () => {
     setState('busy')
     try {
-      await importLink(link.url, link.name, provenance)
+      await importLink(link.url, link.name, provenance, true)
       setState('done')
       toast.success('Added to your media')
     } catch (err) {

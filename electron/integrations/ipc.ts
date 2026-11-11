@@ -48,7 +48,9 @@ export function registerIntegrationIpc(isTrustedUrl: (url: string) => boolean) {
   handle(IPC.mcpCall, async (id: string, tool: string, args: Record<string, unknown>) => (await startToolCall(String(id), String(tool), args && typeof args === 'object' ? args : {})).job)
   handle(IPC.mcpCallForAgent, (id: string, tool: string, args: Record<string, unknown>) => callToolForAgent(String(id), String(tool), args && typeof args === 'object' ? args : {}))
 
-  handle(IPC.mediaImportUrl, (url: string, name?: string, provenance?: Provenance) => importUrl(String(url), name, provenance ?? { integration: 'web', tool: 'download' }))
+  handle(IPC.mediaImportUrl, (url: string, name?: string, provenance?: Provenance, opts?: { local?: boolean }) =>
+    importUrl(String(url), name, provenance ?? { integration: 'web', tool: 'download' }, { local: opts?.local === true }),
+  )
   handle(IPC.mediaReveal, (url: string) => reveal(String(url)))
   handle(IPC.jobsList, () => listJobs())
   handle(IPC.jobsCancel, (id: string) => cancelJob(String(id)))

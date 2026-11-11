@@ -311,8 +311,11 @@ export interface IntegrationsAPI {
     callForAgent(serverId: string, tool: string, args: Record<string, unknown>): Promise<McpAgentResult>
   }
   media: {
-    /** Downloads remote media into Lumen's library folder. */
-    importUrl(url: string, name?: string, provenance?: Provenance): Promise<GeneratedAsset>
+    /**
+     * Downloads remote media into Lumen's library folder. `local` lets the link lead to this computer or the local
+     * network: for a link the user picked themselves, never for one the Copilot or an agent chose.
+     */
+    importUrl(url: string, name?: string, provenance?: Provenance, opts?: { local?: boolean }): Promise<GeneratedAsset>
     reveal(url: string): Promise<void>
   }
   jobs: {

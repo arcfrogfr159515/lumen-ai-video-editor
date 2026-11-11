@@ -36,7 +36,7 @@ const integrations: IntegrationsAPI = {
     callForAgent: (serverId, tool, args) => invoke(IPC.mcpCallForAgent, serverId, tool, args),
   },
   media: {
-    importUrl: (url, name, provenance) => invoke(IPC.mediaImportUrl, url, name, provenance),
+    importUrl: (url, name, provenance, opts) => invoke(IPC.mediaImportUrl, url, name, provenance, opts),
     reveal: (url) => invoke(IPC.mediaReveal, url),
   },
   jobs: {
