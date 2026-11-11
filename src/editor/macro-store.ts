@@ -7,8 +7,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { uid } from '@/lib/id'
+import { each, kept } from '@/lib/persisted'
 import type { CommandName } from './commands'
-import { generalize, instantiate, MacroError, madeBy, recordable, touches, type Macro, type MacroStep } from './macros'
+import { generalize, instantiate, MacroError, madeBy, recordable, touches, wellFormed, type Macro, type MacroStep } from './macros'
 import { beginTransaction, dispatch, endTransaction, getProject, onDispatch, rollbackTo, savepoint, useEditor, type DispatchEvent } from './store'
 import type { Project } from './types'
 
@@ -43,7 +44,12 @@ interface MacroState {
 export const useMacros = create<MacroState>()(
   persist(
     (): MacroState => ({ macros: [], lastId: null, recording: null }),
-    { name: 'lumen.macros.v1', partialize: (s) => ({ macros: s.macros, lastId: s.lastId }) },
+    {
+      name: 'lumen.macros.v1',
+      // A macro that can't be read is left out; the others are still there.
+      merge: kept<Pick<MacroState, 'macros' | 'lastId'>>({ macros: each((m) => (wellFormed(m) ? m : undefined)), lastId: (v) => (typeof v === 'string' || v === null ? v : undefined) }),
+      partialize: (s) => ({ macros: s.macros, lastId: s.lastId }),
+    },
   ),
 )
 

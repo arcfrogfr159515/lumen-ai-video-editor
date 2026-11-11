@@ -4,7 +4,8 @@
  */
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { MarkerFilter } from '@/editor/markers'
+import { MARKER_KINDS, type MarkerFilter } from '@/editor/markers'
+import { choice, each, flag, kept } from '@/lib/persisted'
 
 /** The pane of the clean-up dialog. */
 export type CleanupTab = 'gaps' | 'reuse' | 'rates'
@@ -45,6 +46,9 @@ interface TimelineViewState {
   /** Sets (or with null clears) a source mark; marks the wrong way round push the other one out of the way. */
   markSource: (assetId: string, patch: { in?: number | null; out?: number | null }) => void
 }
+
+/** What is remembered between sessions. */
+type KeptView = Pick<TimelineViewState, 'storyboard' | 'minimap' | 'pauseGuides' | 'cutGuides' | 'showReuse' | 'showNotes' | 'markerKinds' | 'hideDone' | 'fourPoint'>
 
 export const useTimelineView = create<TimelineViewState>()(
   persist(
@@ -88,7 +92,18 @@ export const useTimelineView = create<TimelineViewState>()(
     }),
     {
       name: 'lumen.timeline-view.v1',
-      partialize: (s) => ({
+      merge: kept<KeptView>({
+        storyboard: flag,
+        minimap: flag,
+        pauseGuides: flag,
+        cutGuides: flag,
+        showReuse: flag,
+        showNotes: flag,
+        markerKinds: each(choice(...MARKER_KINDS.map((k) => k.id))),
+        hideDone: flag,
+        fourPoint: choice('fit', 'source', 'timeline'),
+      }),
+      partialize: (s): KeptView => ({
         storyboard: s.storyboard,
         minimap: s.minimap,
         pauseGuides: s.pauseGuides,

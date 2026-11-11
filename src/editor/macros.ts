@@ -342,13 +342,14 @@ export function importMacros(text: string): Macro[] {
     throw new MacroError('That file isn’t a macro file (it isn’t JSON).')
   }
   if (!isPlain(data) || data.format !== FORMAT || !Array.isArray(data.macros)) throw new MacroError('That file isn’t a macro file.')
-  return data.macros.filter(
-    (m): m is Macro =>
-      isPlain(m) &&
-      typeof m.id === 'string' &&
-      typeof m.name === 'string' &&
-      (m.fps === undefined || (typeof m.fps === 'number' && m.fps > 0)) &&
-      Array.isArray(m.steps) &&
-      m.steps.every((s) => isPlain(s) && typeof s.command === 'string' && recordable(s.command) && typeof s.title === 'string' && 'input' in s),
-  )
+  return data.macros.filter(wellFormed)
 }
+
+/** Whether something read back — from a file, from this profile — is a macro that can be shown and run. */
+export const wellFormed = (m: unknown): m is Macro =>
+  isPlain(m) &&
+  typeof m.id === 'string' &&
+  typeof m.name === 'string' &&
+  (m.fps === undefined || (typeof m.fps === 'number' && m.fps > 0)) &&
+  Array.isArray(m.steps) &&
+  m.steps.every((s) => isPlain(s) && typeof s.command === 'string' && recordable(s.command) && typeof s.title === 'string' && 'input' in s)
