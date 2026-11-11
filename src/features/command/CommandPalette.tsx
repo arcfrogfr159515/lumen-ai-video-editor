@@ -71,6 +71,8 @@ import { SHORTCUTS, shortcutFor } from '@/features/shell/shortcuts'
 import { timelineActions } from '@/features/timeline/timeline-actions'
 import { collectProject } from '@/project/session'
 import { pickSubtitles, saveSubtitles } from '@/project/subtitle-files'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 /** Shortcuts already offered above under a friendlier name. */
 const LISTED = new Set(['split', 'duplicate', 'delete', 'ripple', 'marker', 'undo', 'redo', 'import', 'play', 'start', 'end', 'zoom-fit', 'guides', 'snapping', 'export', 'queue', 'save', 'save-as', 'open', 'new', 'help', 'palette', 'nest', 'storyboard', 'trim-mode', 'next-take', 'macro-record', 'macro-run'])
@@ -102,7 +104,7 @@ export function CommandPalette() {
         setOpen(o)
         if (!o) setQuery('')
       }}
-      label="Command palette"
+      label={tt('Command palette')}
       loop
       overlayClassName="fixed inset-0 z-[90] bg-black/45 backdrop-blur-[2px] data-[state=open]:animate-fade-in"
       contentClassName="popover fixed top-[13%] left-1/2 z-[95] w-[min(640px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-2xl data-[state=open]:animate-pop-in"
@@ -112,7 +114,7 @@ export function CommandPalette() {
         <Command.Input
           value={query}
           onValueChange={setQuery}
-          placeholder="Search actions — or describe an edit for Copilot…"
+          placeholder={tt('Search actions — or describe an edit for Copilot…')}
           className="h-14 min-w-0 flex-1 bg-transparent text-md text-fg outline-none placeholder:text-fg-4"
         />
         <Kbd combo="esc" />
@@ -120,15 +122,15 @@ export function CommandPalette() {
 
       <Command.List className="max-h-[min(440px,58vh)] overflow-y-auto overscroll-contain p-2 [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-2.5 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-fg-4 [&_[cmdk-group-heading]]:uppercase">
         {query.trim() && (
-          <Command.Group heading="Copilot" forceMount>
+          <Command.Group heading={tt('Copilot')} forceMount>
             <Item forceMount value={`ask-copilot ${query}`} icon={<AiSparkle />} onSelect={run(() => void sendPrompt(query))} hint="↵">
-              <span className="text-fg-3">Ask Copilot:</span> <span className="text-fg">“{query}”</span>
+              <span className="text-fg-3">{tt('Ask Copilot:')}</span> <span className="text-fg">“{query}”</span>
             </Item>
           </Command.Group>
         )}
 
         {!query.trim() && (
-          <Command.Group heading="Suggested">
+          <Command.Group heading={tt('Suggested')}>
             {STARTERS.slice(0, 4).map((s) => (
               <Item key={s.title} value={s.title} icon={<AiSparkle />} onSelect={run(() => void sendPrompt(s.prompt))}>
                 {s.title}
@@ -138,33 +140,33 @@ export function CommandPalette() {
           </Command.Group>
         )}
 
-        <Command.Group heading="Edit">
+        <Command.Group heading={tt('Edit')}>
           <Item icon={<Scissors />} shortcut={shortcutFor('split')} onSelect={run(actions.split)}>
-            Split at playhead
+            {tt('Split at playhead')}
           </Item>
           <Item icon={<Copy />} shortcut={shortcutFor('duplicate')} onSelect={run(actions.duplicateSelection)}>
-            Duplicate selection
+            {tt('Duplicate selection')}
           </Item>
           <Item icon={<Trash />} shortcut={shortcutFor('delete')} onSelect={run(() => actions.deleteSelection(false))}>
-            Delete selection
+            {tt('Delete selection')}
           </Item>
           <Item icon={<Trash />} shortcut={shortcutFor('ripple')} keywords={['close gap']} onSelect={run(() => actions.deleteSelection(true))}>
-            Ripple delete
+            {tt('Ripple delete')}
           </Item>
           <Item icon={<Flag />} shortcut={shortcutFor('marker')} onSelect={run(actions.addMarker)}>
-            Add marker
+            {tt('Add marker')}
           </Item>
           <Item icon={<Undo2 />} shortcut={shortcutFor('undo')} onSelect={run(actions.undo)}>
-            Undo
+            {tt('Undo')}
           </Item>
           <Item icon={<Redo2 />} shortcut={shortcutFor('redo')} onSelect={run(actions.redo)}>
-            Redo
+            {tt('Redo')}
           </Item>
         </Command.Group>
 
-        <Command.Group heading="Insert">
+        <Command.Group heading={tt('Insert')}>
           <Item icon={<Upload />} shortcut={shortcutFor('import')} onSelect={run(actions.importMedia)}>
-            Import media…
+            {tt('Import media…')}
           </Item>
           {TITLE_PRESETS.slice(0, 4).map((p) => (
             <Item
@@ -176,186 +178,186 @@ export function CommandPalette() {
                 if (id) ui().select([id])
               })}
             >
-              Add {p.name.toLowerCase()} title
+              {ttx('Add {0} title', p.name.toLowerCase())}
             </Item>
           ))}
           <Item icon={<Film />} onSelect={run(() => dispatch('track.add', { kind: 'video' }))}>
-            Add video track
+            {tt('Add video track')}
           </Item>
           <Item icon={<AudioLines />} onSelect={run(() => dispatch('track.add', { kind: 'audio' }))}>
-            Add audio track
+            {tt('Add audio track')}
           </Item>
         </Command.Group>
 
-        <Command.Group heading="Timelines & footage">
+        <Command.Group heading={tt('Timelines & footage')}>
           <Item icon={<Layers />} keywords={['sequence', 'timeline', 'new', 'version', 'cut']} onSelect={run(() => dispatch('sequence.create', {}))}>
-            New timeline
+            {tt('New timeline')}
           </Item>
           {timelines
             .filter((t) => t.id !== openId)
             .map((t) => (
               <Item key={t.id} icon={t.multicam ? <Video /> : <Layers />} keywords={['timeline', 'sequence', 'open', 'switch']} onSelect={run(() => openTimeline(t.id))}>
-                Open timeline “{t.name}”
+                {ttx('Open timeline “{0}”', t.name)}
               </Item>
             ))}
           <Item icon={<Layers />} shortcut={shortcutFor('nest')} keywords={['compound', 'group', 'precompose', 'sequence']} onSelect={run(actions.nestSelection)}>
-            Nest selection into a timeline
+            {tt('Nest selection into a timeline')}
           </Item>
           <Item icon={<Video />} keywords={['multicam', 'multi-camera', 'angles', 'sync', 'cameras', 'podcast', 'interview']} onSelect={run(() => ui().setMulticam({ assetIds: [] }))}>
-            Make a multicam clip…
+            {tt('Make a multicam clip…')}
           </Item>
           <Item icon={<ScanLine />} keywords={['scene', 'shot', 'detect', 'cuts', 'split']} onSelect={run(() => void actions.detectScenes('split'))}>
-            Split clip at scene cuts
+            {tt('Split clip at scene cuts')}
           </Item>
           <Item icon={<ScanLine />} keywords={['scene', 'shot', 'detect', 'markers']} onSelect={run(() => void actions.detectScenes('markers'))}>
-            Mark scene cuts
+            {tt('Mark scene cuts')}
           </Item>
           <Item icon={<Move />} keywords={['stabilize', 'stabilise', 'shake', 'steady', 'warp']} onSelect={run(() => void actions.stabilize())}>
-            Stabilize clip
+            {tt('Stabilize clip')}
           </Item>
           <Item icon={<Crosshair />} keywords={['track', 'tracking', 'follow', 'pin', 'motion']} onSelect={run(() => actions.trackMotion())}>
-            Track motion…
+            {tt('Track motion…')}
           </Item>
         </Command.Group>
 
-        <Command.Group heading="Timeline craft">
+        <Command.Group heading={tt('Timeline craft')}>
           <Item icon={<FileText />} keywords={['transcript', 'text', 'words', 'delete', 'filler', 'um', 'paper edit', 'text-based']} onSelect={panel('script')}>
-            Edit by the script: cut words to cut the film
+            {tt('Edit by the script: cut words to cut the film')}
           </Item>
           <Item icon={<LayoutGrid />} shortcut={shortcutFor('storyboard')} keywords={['cards', 'reorder', 'sections', 'chapters', 'board']} onSelect={run(() => view().set({ storyboard: !view().storyboard }))}>
-            Storyboard: the film as cards
+            {tt('Storyboard: the film as cards')}
           </Item>
           <Item icon={<MonitorPlay />} keywords={['source', 'viewer', 'in', 'out', 'three-point', 'four-point', 'insert', 'overwrite']} onSelect={run(() => timelineActions.openSourceMonitor())}>
-            Source monitor for the selected media
+            {tt('Source monitor for the selected media')}
           </Item>
           <Item icon={<SeparatorVertical />} shortcut={shortcutFor('trim-mode')} keywords={['trim', 'jkl', 'dynamic', 'roll', 'ripple', 'cut point']} onSelect={run(() => timelineActions.toggleTrimMode())}>
-            Trim mode on the nearest cut
+            {tt('Trim mode on the nearest cut')}
           </Item>
           <Item icon={<Layers />} shortcut={shortcutFor('next-take')} keywords={['takes', 'alternate', 'audition', 'candidate', 'swap', 'stack']} onSelect={run(() => timelineActions.switchTake(1))}>
-            Show the next take of the clip
+            {tt('Show the next take of the clip')}
           </Item>
           <Item icon={<Clapperboard />} keywords={['multicam', 'auto', 'director', 'switch', 'cameras', 'speaker', 'podcast']} onSelect={run(() => view().set({ directorOpen: true }))}>
-            Auto-direct a multicam clip…
+            {tt('Auto-direct a multicam clip…')}
           </Item>
           <Item icon={<CircleDot />} shortcut={shortcutFor('macro-record')} keywords={['macro', 'record', 'repeat', 'replay', 'automate']} onSelect={run(() => void timelineActions.toggleRecording())}>
-            Record a macro on the selected clip / stop
+            {tt('Record a macro on the selected clip / stop')}
           </Item>
           <Item icon={<CircleDot />} shortcut={shortcutFor('macro-run')} keywords={['macro', 'run', 'replay', 'repeat', 'apply']} onSelect={run(() => timelineActions.runMacro())}>
-            Run the last macro on the selection
+            {tt('Run the last macro on the selection')}
           </Item>
           <Item icon={<CircleDot />} keywords={['macro', 'list', 'import', 'export']} onSelect={run(() => view().set({ macrosOpen: true }))}>
-            Macros…
+            {tt('Macros…')}
           </Item>
           <Item icon={<Wand />} keywords={['batch', 'bulk', 'many', 'speed', 'volume', 'effects', 'rename', 'all']} onSelect={run(() => timelineActions.openBatch())}>
-            Batch-edit the selected clips
+            {tt('Batch-edit the selected clips')}
           </Item>
           <Item icon={<GitBranch />} keywords={['branch', 'version', 'alternative', 'copy', 'try', 'variant']} onSelect={run(() => timelineActions.branch())}>
-            Branch this timeline
+            {tt('Branch this timeline')}
           </Item>
           <Item icon={<GitCompare />} keywords={['compare', 'diff', 'versions', 'side by side', 'merge', 'branch']} onSelect={run(() => view().set({ compareOpen: true }))}>
-            Compare versions side by side…
+            {tt('Compare versions side by side…')}
           </Item>
           <Item icon={<Eraser />} keywords={['gaps', 'holes', 'flash frames', 'black', 'clean', 'close']} onSelect={run(() => view().set({ cleanup: 'gaps' }))}>
-            Clean up gaps and flash frames…
+            {tt('Clean up gaps and flash frames…')}
           </Item>
           <Item icon={<Gauge />} keywords={['vfr', 'variable frame rate', 'constant', 'conform', 'fps', 'drift', 'sync']} onSelect={run(() => view().set({ cleanup: 'rates' }))}>
-            Frame rates of the footage…
+            {tt('Frame rates of the footage…')}
           </Item>
           <Item icon={<Palette />} keywords={['color', 'colour', 'label', 'rules', 'speaker', 'camera', 'source']} onSelect={run(() => view().set({ colorsOpen: true }))}>
-            Clip colours…
+            {tt('Clip colours…')}
           </Item>
           <Item icon={<ListChecks />} keywords={['markers', 'chapters', 'todo', 'to-do', 'comments', 'notes', 'tasks', 'export', 'youtube']} onSelect={panel('notes')}>
-            Markers, chapters and clip notes
+            {tt('Markers, chapters and clip notes')}
           </Item>
           <Item icon={<GalleryHorizontalEnd />} keywords={['minimap', 'overview', 'navigator', 'whole timeline']} onSelect={run(() => view().set({ minimap: !view().minimap }))}>
-            Toggle the overview strip
+            {tt('Toggle the overview strip')}
           </Item>
           <Item icon={<AudioLines />} keywords={['snap', 'guides', 'pauses', 'silence', 'speech']} onSelect={run(() => view().set({ pauseGuides: !view().pauseGuides }))}>
-            Toggle guides where speech pauses
+            {tt('Toggle guides where speech pauses')}
           </Item>
           <Item icon={<ScanLine />} keywords={['snap', 'guides', 'shot', 'scene', 'cuts']} onSelect={run(() => view().set({ cutGuides: !view().cutGuides }))}>
-            Toggle guides at shot cuts
+            {tt('Toggle guides at shot cuts')}
           </Item>
           <Item icon={<Copy />} keywords={['duplicate', 'reused', 'twice', 'repeat', 'footage', 'used']} onSelect={run(() => view().set({ showReuse: !view().showReuse }))}>
-            Toggle marking footage used more than once
+            {tt('Toggle marking footage used more than once')}
           </Item>
         </Command.Group>
 
-        <Command.Group heading="Playback">
+        <Command.Group heading={tt('Playback')}>
           <Item icon={<Play />} shortcut={shortcutFor('play')} onSelect={run(() => playback.toggle())}>
-            Play / pause
+            {tt('Play / pause')}
           </Item>
           <Item icon={<SkipBack />} shortcut={shortcutFor('start')} onSelect={run(actions.goToStart)}>
-            Go to start
+            {tt('Go to start')}
           </Item>
           <Item icon={<SkipForward />} shortcut={shortcutFor('end')} onSelect={run(actions.goToEnd)}>
-            Go to end
+            {tt('Go to end')}
           </Item>
           <Item icon={<VolumeX />} keywords={['volume', 'sound', 'silence', 'speaker', 'monitor']} shortcut={shortcutFor('mute-preview')} onSelect={run(() => playback.toggleMute())}>
-            Mute / unmute the preview
+            {tt('Mute / unmute the preview')}
           </Item>
         </Command.Group>
 
-        <Command.Group heading="View">
+        <Command.Group heading={tt('View')}>
           <Item icon={<UnfoldHorizontal />} shortcut={shortcutFor('zoom-fit')} onSelect={run(actions.zoomToFit)}>
-            Zoom timeline to fit
+            {tt('Zoom timeline to fit')}
           </Item>
           <Item icon={<Grid3x3 />} shortcut={shortcutFor('guides')} onSelect={run(() => ui().setShowGuides(!ui().showGuides))}>
-            Toggle safe-area guides
+            {tt('Toggle safe-area guides')}
           </Item>
           <Item icon={<Magnet />} shortcut={shortcutFor('snapping')} onSelect={run(() => ui().toggleSnapping())}>
-            Toggle snapping
+            {tt('Toggle snapping')}
           </Item>
           <Item icon={<Clapperboard />} onSelect={panel('media')}>
-            Show media
+            {tt('Show media')}
           </Item>
           <Item icon={<Music />} onSelect={panel('audio')}>
-            Show music & sound effects
+            {tt('Show music & sound effects')}
           </Item>
           <Item icon={<Sparkles />} onSelect={panel('effects')}>
-            Show effects
+            {tt('Show effects')}
           </Item>
           <Item icon={<Blend />} onSelect={panel('transitions')}>
             Show transitions
           </Item>
           <Item icon={<Aperture />} onSelect={panel('looks')}>
-            Show color looks
+            {tt('Show color looks')}
           </Item>
           <Item icon={<AiSparkle />} onSelect={panel('generate')}>
-            Generate with AI
+            {tt('Generate with AI')}
           </Item>
         </Command.Group>
 
-        <Command.Group heading="Project">
+        <Command.Group heading={tt('Project')}>
           <Item icon={<Upload />} shortcut={shortcutFor('export')} onSelect={run(() => ui().setExportOpen(true))}>
-            Export…
+            {tt('Export…')}
           </Item>
           <Item icon={<ListVideo />} shortcut={shortcutFor('queue')} keywords={['batch', 'render', 'queue', 'exports']} onSelect={run(() => ui().setQueueOpen(true))}>
-            Render queue…
+            {tt('Render queue…')}
           </Item>
           <Item icon={<Save />} shortcut={shortcutFor('save')} onSelect={run(() => void actions.save())}>
-            Save
+            {tt('Save')}
           </Item>
           <Item icon={<Save />} shortcut={shortcutFor('save-as')} onSelect={run(actions.saveAs)}>
-            Save as…
+            {tt('Save as…')}
           </Item>
           <Item icon={<FolderOpen />} shortcut={shortcutFor('open')} onSelect={run(actions.open)}>
-            Open project…
+            {tt('Open project…')}
           </Item>
           <Item icon={<FilePlus />} shortcut={shortcutFor('new')} onSelect={run(actions.home)}>
-            New project…
+            {tt('New project…')}
           </Item>
           <Item icon={<Download />} shortcut={shortcutFor('import')} onSelect={run(actions.importMedia)}>
-            Import media…
+            {tt('Import media…')}
           </Item>
           <Item icon={<Captions />} keywords={['srt', 'vtt', 'captions', 'subtitles']} onSelect={run(pickSubtitles)}>
-            Import subtitles (SRT / VTT)…
+            {tt('Import subtitles (SRT / VTT)…')}
           </Item>
           <Item icon={<Captions />} keywords={['srt', 'captions', 'subtitles', 'export']} onSelect={run(() => void saveSubtitles('srt'))}>
-            Export captions as SRT…
+            {tt('Export captions as SRT…')}
           </Item>
           <Item icon={<Captions />} keywords={['vtt', 'webvtt', 'captions', 'subtitles', 'export']} onSelect={run(() => void saveSubtitles('vtt'))}>
-            Export captions as WebVTT…
+            {tt('Export captions as WebVTT…')}
           </Item>
           <Item
             icon={<Settings2 />}
@@ -364,27 +366,27 @@ export function CommandPalette() {
               ui().setRightTab('inspector')
             })}
           >
-            Project settings
+            {tt('Project settings')}
           </Item>
           <Item icon={<Keyboard />} shortcut={shortcutFor('help')} onSelect={run(() => ui().setShortcutsOpen(true))}>
-            Keyboard shortcuts
+            {tt('Keyboard shortcuts')}
           </Item>
           <Item icon={<Plus />} onSelect={run(() => ui().setLeftTab('generate'))} keywords={['ai', 'b-roll', 'image', 'voice']}>
-            Generate B-roll, voice or music
+            {tt('Generate B-roll, voice or music')}
           </Item>
           <Item icon={<History />} keywords={['backup', 'restore', 'undo', 'autosave']} onSelect={run(() => ui().setVersionsOpen(true))}>
-            Version history…
+            {tt('Version history…')}
           </Item>
           <Item icon={<FolderArchive />} keywords={['consolidate', 'package', 'archive', 'move', 'backup']} onSelect={run(() => void collectProject())}>
-            Collect project and media…
+            {tt('Collect project and media…')}
           </Item>
           <Item icon={<SlidersVertical />} keywords={['audio', 'volume', 'eq', 'compressor', 'meters']} onSelect={run(() => ui().setRightTab('mixer'))}>
-            Open the mixer
+            {tt('Open the mixer')}
           </Item>
         </Command.Group>
 
         {/* Everything with a shortcut, so every command can be found by name. */}
-        <Command.Group heading="More commands">
+        <Command.Group heading={tt('More commands')}>
           {SHORTCUTS.filter((s) => !LISTED.has(s.id)).map((s) => (
             <Item key={s.id} icon={<Keyboard />} shortcut={s.keys[0]} keywords={[s.group]} onSelect={run(s.run)}>
               {s.label}
@@ -397,13 +399,13 @@ export function CommandPalette() {
       <div className="flex items-center gap-4 border-t border-line px-4 py-2.5 text-2xs text-fg-4">
         <span className="flex items-center gap-1.5">
           <Kbd combo="up" />
-          <Kbd combo="down" /> navigate
+          <Kbd combo="down" />{' '}{tt('navigate')}
         </span>
         <span className="flex items-center gap-1.5">
-          <Kbd combo="enter" /> run
+          <Kbd combo="enter" />{' '}{tt('run')}
         </span>
         <span className="ml-auto flex items-center gap-1.5">
-          <AiSparkle className="size-3" /> Type any edit in plain words
+          <AiSparkle className="size-3" />{' '}{tt('Type any edit in plain words')}
         </span>
       </div>
     </Command.Dialog>

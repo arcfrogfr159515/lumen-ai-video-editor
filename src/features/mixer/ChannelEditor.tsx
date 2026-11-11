@@ -17,6 +17,7 @@ import { eqResponse, logFrequencies } from '@/engine/eq-response'
 import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
 import { Slider } from '@/components/ui/slider'
+import { tt } from '@/lib/i18n'
 
 type Target = 'master' | string
 
@@ -35,7 +36,7 @@ const PRESETS: { id: string; name: string; description: string; patch: Patch }[]
   {
     id: 'voice',
     name: 'Clear voice',
-    description: 'Cuts rumble and mud, adds presence, evens out the level',
+    description: tt('Cuts rumble and mud, adds presence, evens out the level'),
     patch: {
       eq: { enabled: true, lowCut: 80, lowFreq: 220, lowGain: -2.5, midFreq: 3200, midGain: 2.5, midQ: 1, highFreq: 10000, highGain: 2 },
       compressor: { enabled: true, threshold: -22, ratio: 3, attack: 6, release: 120, makeup: 3 },
@@ -45,7 +46,7 @@ const PRESETS: { id: string; name: string; description: string; patch: Patch }[]
   {
     id: 'music',
     name: 'Music under voice',
-    description: 'Scoops the speech range so words sit on top, glues the bed',
+    description: tt('Scoops the speech range so words sit on top, glues the bed'),
     patch: {
       eq: { enabled: true, lowCut: 30, lowFreq: 120, lowGain: 0, midFreq: 2500, midGain: -4, midQ: 0.9, highFreq: 9000, highGain: 0 },
       compressor: { enabled: true, threshold: -24, ratio: 2, attack: 25, release: 300, makeup: 1.5 },
@@ -55,10 +56,10 @@ const PRESETS: { id: string; name: string; description: string; patch: Patch }[]
   {
     id: 'master',
     name: 'Finished master',
-    description: 'Gentle glue compression and a −1 dB ceiling',
+    description: tt('Gentle glue compression and a −1 dB ceiling'),
     patch: { compressor: { enabled: true, threshold: -14, ratio: 2, attack: 30, release: 250, makeup: 1 }, limiter: { enabled: true, ceiling: -1 } },
   },
-  { id: 'flat', name: 'Flat', description: 'No processing', patch: { eq: null, compressor: null, limiter: null } },
+  { id: 'flat', name: 'Flat', description: tt('No processing'), patch: { eq: null, compressor: null, limiter: null } },
 ]
 
 export function ChannelEditor({ target }: { target: Target }) {
@@ -70,11 +71,11 @@ export function ChannelEditor({ target }: { target: Target }) {
       <div className="flex h-11 items-center gap-2 px-4">
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-fg">{name}</div>
-          <div className="text-2xs text-fg-4">{target === 'master' ? 'Everything you hear and export passes through here' : 'EQ → compressor → limiter → fader → pan'}</div>
+          <div className="text-2xs text-fg-4">{target === 'master' ? tt('Everything you hear and export passes through here') : tt('EQ → compressor → limiter → fader → pan')}</div>
         </div>
         <Menu>
           <MenuTrigger asChild>
-            <IconButton size="sm" label="Channel presets">
+            <IconButton size="sm" label={tt('Channel presets')}>
               <Wand />
             </IconButton>
           </MenuTrigger>
@@ -92,7 +93,7 @@ export function ChannelEditor({ target }: { target: Target }) {
       </div>
 
       <Processor
-        title="EQ"
+        title={tt('EQ')}
         present={Boolean(mix.eq)}
         enabled={Boolean(mix.eq?.enabled)}
         onAdd={() => update(target, { eq: { ...DEFAULT_EQ } }, undefined, `Add EQ · ${name}`)}
@@ -103,7 +104,7 @@ export function ChannelEditor({ target }: { target: Target }) {
       </Processor>
 
       <Processor
-        title="Compressor"
+        title={tt('Compressor')}
         present={Boolean(mix.compressor)}
         enabled={Boolean(mix.compressor?.enabled)}
         onAdd={() => update(target, { compressor: { ...DEFAULT_COMPRESSOR } }, undefined, `Add compressor · ${name}`)}
@@ -113,17 +114,17 @@ export function ChannelEditor({ target }: { target: Target }) {
       >
         {mix.compressor && (
           <div className="space-y-1">
-            <Param label="Threshold" value={mix.compressor.threshold} min={-60} max={0} step={0.5} unit="dB" defaultValue={DEFAULT_COMPRESSOR.threshold} onChange={(v) => update(target, { compressor: { threshold: v } }, `comp:t:${target}`)} />
-            <Param label="Ratio" value={mix.compressor.ratio} min={1} max={20} step={0.1} unit=":1" defaultValue={DEFAULT_COMPRESSOR.ratio} onChange={(v) => update(target, { compressor: { ratio: v } }, `comp:r:${target}`)} />
-            <Param label="Attack" value={mix.compressor.attack} min={0.1} max={200} step={0.1} unit="ms" defaultValue={DEFAULT_COMPRESSOR.attack} onChange={(v) => update(target, { compressor: { attack: v } }, `comp:a:${target}`)} />
-            <Param label="Release" value={mix.compressor.release} min={10} max={2000} step={5} unit="ms" precision={0} defaultValue={DEFAULT_COMPRESSOR.release} onChange={(v) => update(target, { compressor: { release: v } }, `comp:rel:${target}`)} />
-            <Param label="Make-up" value={mix.compressor.makeup} min={0} max={24} step={0.5} unit="dB" defaultValue={0} onChange={(v) => update(target, { compressor: { makeup: v } }, `comp:m:${target}`)} />
+            <Param label={tt('Threshold')} value={mix.compressor.threshold} min={-60} max={0} step={0.5} unit={tt('dB')} defaultValue={DEFAULT_COMPRESSOR.threshold} onChange={(v) => update(target, { compressor: { threshold: v } }, `comp:t:${target}`)} />
+            <Param label={tt('Ratio')} value={mix.compressor.ratio} min={1} max={20} step={0.1} unit=":1" defaultValue={DEFAULT_COMPRESSOR.ratio} onChange={(v) => update(target, { compressor: { ratio: v } }, `comp:r:${target}`)} />
+            <Param label={tt('Attack')} value={mix.compressor.attack} min={0.1} max={200} step={0.1} unit={tt('ms')} defaultValue={DEFAULT_COMPRESSOR.attack} onChange={(v) => update(target, { compressor: { attack: v } }, `comp:a:${target}`)} />
+            <Param label={tt('Release')} value={mix.compressor.release} min={10} max={2000} step={5} unit={tt('ms')} precision={0} defaultValue={DEFAULT_COMPRESSOR.release} onChange={(v) => update(target, { compressor: { release: v } }, `comp:rel:${target}`)} />
+            <Param label={tt('Make-up')} value={mix.compressor.makeup} min={0} max={24} step={0.5} unit={tt('dB')} defaultValue={0} onChange={(v) => update(target, { compressor: { makeup: v } }, `comp:m:${target}`)} />
           </div>
         )}
       </Processor>
 
       <Processor
-        title="Limiter"
+        title={tt('Limiter')}
         present={Boolean(mix.limiter)}
         enabled={Boolean(mix.limiter?.enabled)}
         onAdd={() => update(target, { limiter: { ...DEFAULT_LIMITER } }, undefined, `Add limiter · ${name}`)}
@@ -132,7 +133,7 @@ export function ChannelEditor({ target }: { target: Target }) {
         meter={<Reduction target={target} which="limiter" />}
       >
         {mix.limiter && (
-          <Param label="Ceiling" value={mix.limiter.ceiling} min={-12} max={0} step={0.1} unit="dB" defaultValue={DEFAULT_LIMITER.ceiling} onChange={(v) => update(target, { limiter: { ceiling: v } }, `lim:${target}`)} />
+          <Param label={tt('Ceiling')} value={mix.limiter.ceiling} min={-12} max={0} step={0.1} unit={tt('dB')} defaultValue={DEFAULT_LIMITER.ceiling} onChange={(v) => update(target, { limiter: { ceiling: v } }, `lim:${target}`)} />
         )}
       </Processor>
     </div>
@@ -177,14 +178,14 @@ function Processor({
         <span className="flex-1" />
         {present ? (
           <>
-            <IconButton size="xs" label={`Remove ${title.toLowerCase()}`} onClick={onRemove}>
+            <IconButton size="xs" label={tt('Remove {0}', title.toLowerCase())} onClick={onRemove}>
               <Trash />
             </IconButton>
-            <Switch aria-label={`${title} on`} checked={enabled} onChange={onToggle} />
+            <Switch aria-label={tt('{0} on', title)} checked={enabled} onChange={onToggle} />
           </>
         ) : (
           <button type="button" onClick={onAdd} className="flex h-6 items-center gap-1 rounded-md bg-white/[0.05] px-2 text-xs font-medium text-fg-2 transition-colors hover:bg-white/[0.09] hover:text-fg">
-            <Plus className="size-3" /> Add
+            <Plus className="size-3" />{' '}{tt('Add')}
           </button>
         )}
       </div>
@@ -208,7 +209,7 @@ function Reduction({ target, which }: { target: Target; which: 'compressor' | 'l
     [target, which],
   )
   return (
-    <span className="flex items-center gap-1.5" title="Gain reduction">
+    <span className="flex items-center gap-1.5" title={tt('Gain reduction')}>
       <span className="relative h-1.5 w-16 overflow-hidden rounded-full bg-black/50">
         <span ref={bar} className="absolute inset-y-0 right-0 w-0 rounded-full bg-warn" />
       </span>
@@ -263,10 +264,10 @@ function EqEditor({ target, eq }: { target: Target; eq: EqSettings }) {
   }
 
   const handles: { band: Band; f: number; db: number; label: string }[] = [
-    { band: 'lowCut', f: eq.lowCut || 20, db: eq.lowCut ? -3 : -18, label: eq.lowCut ? `Low cut ${eq.lowCut} Hz` : 'Low cut off — drag right' },
-    { band: 'low', f: eq.lowFreq, db: eq.lowGain, label: `Low ${eq.lowGain > 0 ? '+' : ''}${eq.lowGain} dB · ${eq.lowFreq} Hz` },
-    { band: 'mid', f: eq.midFreq, db: eq.midGain, label: `Mid ${eq.midGain > 0 ? '+' : ''}${eq.midGain} dB · ${eq.midFreq} Hz · Q ${eq.midQ} (wheel)` },
-    { band: 'high', f: eq.highFreq, db: eq.highGain, label: `High ${eq.highGain > 0 ? '+' : ''}${eq.highGain} dB · ${eq.highFreq} Hz` },
+    { band: 'lowCut', f: eq.lowCut || 20, db: eq.lowCut ? -3 : -18, label: eq.lowCut ? tt('Low cut {0} Hz', eq.lowCut) : tt('Low cut off — drag right') },
+    { band: 'low', f: eq.lowFreq, db: eq.lowGain, label: tt('Low {0}{1} dB · {2} Hz', eq.lowGain > 0 ? '+' : '', eq.lowGain, eq.lowFreq) },
+    { band: 'mid', f: eq.midFreq, db: eq.midGain, label: tt('Mid {0}{1} dB · {2} Hz · Q {3} (wheel)', eq.midGain > 0 ? '+' : '', eq.midGain, eq.midFreq, eq.midQ) },
+    { band: 'high', f: eq.highFreq, db: eq.highGain, label: tt('High {0}{1} dB · {2} Hz', eq.highGain > 0 ? '+' : '', eq.highGain, eq.highFreq) },
   ]
 
   return (
@@ -306,23 +307,23 @@ function EqEditor({ target, eq }: { target: Target; eq: EqSettings }) {
         </div>
       </div>
       <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-2xs text-fg-3">
-        <Field label="Low cut">
-          <ScrubInput aria-label="Low cut" value={eq.lowCut} onChange={(v) => set({ lowCut: Math.round(v) }, 'lc')} min={0} max={1000} step={5} unit="Hz" className="w-full" />
+        <Field label={tt('Low cut')}>
+          <ScrubInput aria-label={tt('Low cut')} value={eq.lowCut} onChange={(v) => set({ lowCut: Math.round(v) }, 'lc')} min={0} max={1000} step={5} unit={tt('Hz')} className="w-full" />
         </Field>
-        <Field label="Mid Q">
-          <ScrubInput aria-label="Mid Q" value={eq.midQ} onChange={(v) => set({ midQ: v }, 'q')} min={0.1} max={12} step={0.05} precision={2} className="w-full" />
+        <Field label={tt('Mid Q')}>
+          <ScrubInput aria-label={tt('Mid Q')} value={eq.midQ} onChange={(v) => set({ midQ: v }, 'q')} min={0.1} max={12} step={0.05} precision={2} className="w-full" />
         </Field>
-        <Field label="Low">
-          <ScrubInput aria-label="Low gain" value={eq.lowGain} onChange={(v) => set({ lowGain: v }, 'lg')} min={-24} max={24} step={0.5} precision={1} unit="dB" className="w-full" />
-          <ScrubInput aria-label="Low frequency" value={eq.lowFreq} onChange={(v) => set({ lowFreq: Math.round(v) }, 'lf')} min={20} max={1000} step={5} unit="Hz" className="w-full" />
+        <Field label={tt('Low')}>
+          <ScrubInput aria-label={tt('Low gain')} value={eq.lowGain} onChange={(v) => set({ lowGain: v }, 'lg')} min={-24} max={24} step={0.5} precision={1} unit={tt('dB')} className="w-full" />
+          <ScrubInput aria-label={tt('Low frequency')} value={eq.lowFreq} onChange={(v) => set({ lowFreq: Math.round(v) }, 'lf')} min={20} max={1000} step={5} unit={tt('Hz')} className="w-full" />
         </Field>
-        <Field label="Mid">
-          <ScrubInput aria-label="Mid gain" value={eq.midGain} onChange={(v) => set({ midGain: v }, 'mg')} min={-24} max={24} step={0.5} precision={1} unit="dB" className="w-full" />
-          <ScrubInput aria-label="Mid frequency" value={eq.midFreq} onChange={(v) => set({ midFreq: Math.round(v) }, 'mf')} min={100} max={10000} step={10} unit="Hz" className="w-full" />
+        <Field label={tt('Mid')}>
+          <ScrubInput aria-label={tt('Mid gain')} value={eq.midGain} onChange={(v) => set({ midGain: v }, 'mg')} min={-24} max={24} step={0.5} precision={1} unit={tt('dB')} className="w-full" />
+          <ScrubInput aria-label={tt('Mid frequency')} value={eq.midFreq} onChange={(v) => set({ midFreq: Math.round(v) }, 'mf')} min={100} max={10000} step={10} unit={tt('Hz')} className="w-full" />
         </Field>
-        <Field label="High">
-          <ScrubInput aria-label="High gain" value={eq.highGain} onChange={(v) => set({ highGain: v }, 'hg')} min={-24} max={24} step={0.5} precision={1} unit="dB" className="w-full" />
-          <ScrubInput aria-label="High frequency" value={eq.highFreq} onChange={(v) => set({ highFreq: Math.round(v) }, 'hf')} min={1000} max={20000} step={50} unit="Hz" className="w-full" />
+        <Field label={tt('High')}>
+          <ScrubInput aria-label={tt('High gain')} value={eq.highGain} onChange={(v) => set({ highGain: v }, 'hg')} min={-24} max={24} step={0.5} precision={1} unit={tt('dB')} className="w-full" />
+          <ScrubInput aria-label={tt('High frequency')} value={eq.highFreq} onChange={(v) => set({ highFreq: Math.round(v) }, 'hf')} min={1000} max={20000} step={50} unit={tt('Hz')} className="w-full" />
         </Field>
       </div>
     </div>

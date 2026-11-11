@@ -24,6 +24,8 @@ import { AngleViewer } from './AngleViewer'
 import { PreviewStage } from './PreviewStage'
 import { PreviewVolume } from './PreviewVolume'
 import { Scopes } from './Scopes'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const RES_SHORT: Record<string, string> = { '1': 'Full', '0.5': '½', '0.25': '¼', '0.125': '⅛' }
 
@@ -35,7 +37,7 @@ function ResolutionMenu() {
   const label = playbackRes === 'auto' ? `Auto${auto < 1 ? ` · ${RES_SHORT[String(auto)]}` : ''}` : RES_SHORT[String(playbackRes)]
   return (
     <Menu>
-      <Tip content="Preview resolution — lower plays heavy timelines smoothly">
+      <Tip content={tt('Preview resolution — lower plays heavy timelines smoothly')}>
         <MenuTrigger asChild>
           <button
             type="button"
@@ -48,7 +50,7 @@ function ResolutionMenu() {
         </MenuTrigger>
       </Tip>
       <MenuContent align="end" className="w-72">
-        <MenuLabel>While playing</MenuLabel>
+        <MenuLabel>{tt('While playing')}</MenuLabel>
         {PREVIEW_RES.map((r) => (
           <MenuItem key={String(r.value)} icon={playbackRes === r.value ? <Check /> : <span className="size-4" />} onSelect={() => useUI.getState().setPlaybackRes(r.value)}>
             <span className="flex flex-col py-0.5 leading-tight">
@@ -58,7 +60,7 @@ function ResolutionMenu() {
           </MenuItem>
         ))}
         <MenuSeparator />
-        <MenuLabel>While paused</MenuLabel>
+        <MenuLabel>{tt('While paused')}</MenuLabel>
         {PREVIEW_RES.filter((r) => r.value !== 'auto').map((r) => (
           <MenuItem key={String(r.value)} icon={pausedRes === r.value ? <Check /> : <span className="size-4" />} onSelect={() => useUI.getState().setPausedRes(r.value as 1)}>
             {r.label}
@@ -96,7 +98,7 @@ export function PreviewPanel() {
     try {
       ;[canvas] = await timelineStills(project, [frame], project.settings.width)
     } catch (err) {
-      toast.error('Couldn’t capture the frame', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t capture the frame'), { description: err instanceof Error ? err.message : String(err) })
       return
     }
     canvas.toBlob(async (blob) => {
@@ -105,9 +107,9 @@ export function PreviewPanel() {
       try {
         const file = await desktop.files.saveMedia('snapshots', name, new Uint8Array(await blob.arrayBuffer()))
         await importMediaFiles([file])
-        toast.success('Frame saved to Media', { description: name, action: { label: 'Show', onClick: () => void desktop!.files.reveal(file.path) } })
+        toast.success(tt('Frame saved to Media'), { description: name, action: { label: tt('Show'), onClick: () => void desktop!.files.reveal(file.path) } })
       } catch (err) {
-        toast.error('Couldn’t save the frame', { description: err instanceof Error ? err.message : String(err) })
+        toast.error(tt('Couldn’t save the frame'), { description: err instanceof Error ? err.message : String(err) })
       }
     }, 'image/png')
   }
@@ -115,7 +117,7 @@ export function PreviewPanel() {
   return (
     <div className={cn('panel flex h-full flex-col overflow-hidden', fullscreen && 'fixed inset-0 z-[70] rounded-none border-0')}>
       <div className="flex h-11 shrink-0 items-center gap-2 border-b border-line pr-2 pl-4">
-        <span className="text-sm font-semibold text-fg">Program</span>
+        <span className="text-sm font-semibold text-fg">{tt('Program')}</span>
         <button
           type="button"
           onClick={() => {
@@ -124,30 +126,30 @@ export function PreviewPanel() {
           }}
           className="rounded-md bg-white/[0.05] px-1.5 py-0.5 font-mono text-2xs text-fg-3 tabular transition-colors hover:bg-white/[0.08] hover:text-fg-2"
         >
-          {settings.width}×{settings.height} · {settings.fps} fps
+          {ttx('{0}×{1} · {2} fps', settings.width, settings.height, settings.fps)}
         </button>
         <div className="ml-auto flex items-center gap-0.5">
           <ResolutionMenu />
           {hasProxies && (
-            <IconButton label={useProxies ? 'Playing proxies — click for the originals' : 'Playing originals — click for the proxies'} active={useProxies} onClick={() => useUI.getState().setUseProxies(!useProxies)}>
+            <IconButton label={useProxies ? tt('Playing proxies — click for the originals') : tt('Playing originals — click for the proxies')} active={useProxies} onClick={() => useUI.getState().setUseProxies(!useProxies)}>
               <Gauge />
             </IconButton>
           )}
           {hasMulticam && (
-            <IconButton label="Camera angles" active={angleViewer} onClick={() => useUI.getState().setAngleViewer(!angleViewer)}>
+            <IconButton label={tt('Camera angles')} active={angleViewer} onClick={() => useUI.getState().setAngleViewer(!angleViewer)}>
               <Video />
             </IconButton>
           )}
-          <IconButton label="Scopes" active={scopes} onClick={() => setScopes(!scopes)}>
+          <IconButton label={tt('Scopes')} active={scopes} onClick={() => setScopes(!scopes)}>
             <Activity />
           </IconButton>
-          <IconButton label="Safe-area guides" shortcut="g" active={showGuides} onClick={() => setShowGuides(!showGuides)}>
+          <IconButton label={tt('Safe-area guides')} shortcut="g" active={showGuides} onClick={() => setShowGuides(!showGuides)}>
             <Grid3x3 />
           </IconButton>
-          <IconButton label="Save this frame to Media" onClick={snapshot}>
+          <IconButton label={tt('Save this frame to Media')} onClick={snapshot}>
             <Camera />
           </IconButton>
-          <IconButton label={fullscreen ? 'Exit full screen' : 'Full screen'} active={fullscreen} onClick={toggleFullscreen}>
+          <IconButton label={fullscreen ? tt('Exit full screen') : tt('Full screen')} active={fullscreen} onClick={toggleFullscreen}>
             {fullscreen ? <Minimize2 /> : <Maximize2 />}
           </IconButton>
         </div>
@@ -191,16 +193,16 @@ function Transport() {
           <span className="text-xs text-fg-4">/ {formatTimecode(duration, fps)}</span>
         </div>
         <div className="flex items-center gap-1">
-          <IconButton label="Go to start" shortcut="home" onClick={actions.goToStart}>
+          <IconButton label={tt('Go to start')} shortcut="home" onClick={actions.goToStart}>
             <SkipBack />
           </IconButton>
-          <IconButton label="Previous frame" shortcut="left" onClick={() => playback.step(-1)}>
+          <IconButton label={tt('Previous frame')} shortcut="left" onClick={() => playback.step(-1)}>
             <StepBack />
           </IconButton>
-          <Tip content={playing ? 'Pause' : 'Play'} shortcut="space">
+          <Tip content={playing ? tt('Pause') : tt('Play')} shortcut="space">
             <button
               type="button"
-              aria-label={playing ? 'Pause' : 'Play'}
+              aria-label={playing ? tt('Pause') : tt('Play')}
               onClick={() => playback.toggle()}
               className="relative mx-1.5 grid size-10 place-items-center rounded-full bg-white text-black shadow-[0_4px_18px_-4px_rgb(255_255_255/0.45),inset_0_-2px_0_rgb(0_0_0/0.12)] outline-none transition-transform duration-150 hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-accent/70"
             >
@@ -210,17 +212,17 @@ function Transport() {
               )}
             </button>
           </Tip>
-          <IconButton label="Next frame" shortcut="right" onClick={() => playback.step(1)}>
+          <IconButton label={tt('Next frame')} shortcut="right" onClick={() => playback.step(1)}>
             <StepForward />
           </IconButton>
-          <IconButton label="Go to end" shortcut="end" onClick={actions.goToEnd}>
+          <IconButton label={tt('Go to end')} shortcut="end" onClick={actions.goToEnd}>
             <SkipForward />
           </IconButton>
         </div>
         <div className="flex items-center justify-end gap-1">
           <PreviewVolume />
           <MasterMeter />
-          <IconButton label={loop ? 'Loop on' : 'Loop off'} active={loop} onClick={() => playback.toggleLoop()}>
+          <IconButton label={loop ? tt('Loop on') : tt('Loop off')} active={loop} onClick={() => playback.toggleLoop()}>
             <Repeat />
           </IconButton>
         </div>
@@ -247,8 +249,8 @@ function MasterMeter() {
     })
   }, [])
   return (
-    <Tip content="Master level — open the mixer">
-      <button type="button" aria-label="Open the mixer" onClick={() => useUI.getState().setRightTab('mixer')} className="mr-1 flex w-16 flex-col gap-[3px] rounded-md px-1 py-1.5 outline-none hover:bg-white/[0.05] focus-visible:ring-2 focus-visible:ring-accent/60">
+    <Tip content={tt('Master level — open the mixer')}>
+      <button type="button" aria-label={tt('Open the mixer')} onClick={() => useUI.getState().setRightTab('mixer')} className="mr-1 flex w-16 flex-col gap-[3px] rounded-md px-1 py-1.5 outline-none hover:bg-white/[0.05] focus-visible:ring-2 focus-visible:ring-accent/60">
         {[left, right].map((ref, i) => (
           <span key={i} className="relative h-[4px] w-full overflow-hidden rounded-full bg-white/[0.07]">
             <span ref={ref} className="absolute inset-0 bg-[linear-gradient(to_right,#2fcf7e_0%,#2fcf7e_62%,#e6e238_76%,#f5a524_88%,#ef4444_96%)]" style={{ clipPath: 'inset(0 100% 0 0)' }} />

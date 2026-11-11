@@ -16,6 +16,8 @@ import { formatSeconds } from '@/lib/time'
 import { auditionSfx, cancelRecording, finishRecording, inputLevel, sfxAsset, startRecording, stopAudition, type Recording } from '@/project/audio-library'
 import { useGenerate } from './generate-store'
 import { PanelHeader, scrollArea, SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const CATEGORIES: SfxDef['category'][] = ['Transitions', 'Impacts', 'UI & accents', 'Atmosphere']
 
@@ -24,12 +26,12 @@ export function AudioPanel() {
   const items = SFX.filter((s) => !query || `${s.name} ${s.description} ${s.category}`.toLowerCase().includes(query.toLowerCase()))
   return (
     <>
-      <PanelHeader title="Audio" />
+      <PanelHeader title={tt('Audio')} />
       <div className={scrollArea}>
         <RecordCard />
         <GenerateCards />
-        <SectionLabel right={<span className="text-2xs text-fg-4">Made in Lumen · free to use</span>}>Sound effects</SectionLabel>
-        <SearchInput value={query} onChange={setQuery} placeholder="Search sounds…" />
+        <SectionLabel right={<span className="text-2xs text-fg-4">{tt('Made in Lumen · free to use')}</span>}>{tt('Sound effects')}</SectionLabel>
+        <SearchInput value={query} onChange={setQuery} placeholder={tt('Search sounds…')} />
         {CATEGORIES.map((cat) => {
           const list = items.filter((s) => s.category === cat)
           if (!list.length) return null
@@ -44,7 +46,7 @@ export function AudioPanel() {
             </div>
           )
         })}
-        {!items.length && <p className="mt-6 text-center text-sm text-fg-4">No sounds match “{query}”.</p>}
+        {!items.length && <p className="mt-6 text-center text-sm text-fg-4">{ttx('No sounds match “{0}”.', query)}</p>}
       </div>
     </>
   )
@@ -86,7 +88,7 @@ function SfxRow({ sfx }: { sfx: SfxDef }) {
       const id = placeAsset(assetId, usePlayback.getState().frame)
       if (id) useUI.getState().select([id])
     } catch (err) {
-      toast.error(`Couldn’t add ${sfx.name}`, { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t add {0}', sfx.name), { description: err instanceof Error ? err.message : String(err) })
     } finally {
       setAdding(false)
     }
@@ -102,7 +104,7 @@ function SfxRow({ sfx }: { sfx: SfxDef }) {
     >
       <button
         type="button"
-        aria-label={playing ? `Stop ${sfx.name}` : `Play ${sfx.name}`}
+        aria-label={playing ? tt('Stop {0}', sfx.name) : tt('Play {0}', sfx.name)}
         onClick={toggle}
         className={cn('grid size-9 shrink-0 place-items-center rounded-lg transition-colors', playing ? 'bg-accent text-accent-fg' : 'bg-white/[0.05] text-fg-2 hover:bg-white/[0.1] hover:text-fg')}
       >
@@ -115,7 +117,7 @@ function SfxRow({ sfx }: { sfx: SfxDef }) {
       <span className="shrink-0 font-mono text-2xs text-fg-4 tabular">{formatSeconds(sfx.duration)}</span>
       <button
         type="button"
-        aria-label={`Add ${sfx.name} at playhead`}
+        aria-label={tt('Add {0} at playhead', sfx.name)}
         onClick={() => void add()}
         disabled={adding || !desktop}
         className="grid size-7 shrink-0 place-items-center rounded-full bg-white/[0.06] text-fg-2 opacity-0 transition-[opacity,background-color] group-hover/row:opacity-100 hover:bg-white hover:text-black disabled:opacity-40"
@@ -134,13 +136,13 @@ function GenerateCards() {
     useUI.getState().setLeftTab('generate')
   }
   const cards = [
-    { mode: 'music' as const, icon: <Music />, title: 'Music', hint: 'Score from a prompt' },
-    { mode: 'sfx' as const, icon: <Sparkles />, title: 'Sound effect', hint: 'Describe any sound' },
-    { mode: 'voice' as const, icon: <AudioLines />, title: 'Voiceover', hint: 'Text to speech' },
+    { mode: 'music' as const, icon: <Music />, title: tt('Music'), hint: tt('Score from a prompt') },
+    { mode: 'sfx' as const, icon: <Sparkles />, title: tt('Sound effect'), hint: tt('Describe any sound') },
+    { mode: 'voice' as const, icon: <AudioLines />, title: tt('Voiceover'), hint: tt('Text to speech') },
   ]
   return (
     <>
-      <SectionLabel>Generate with AI</SectionLabel>
+      <SectionLabel>{tt('Generate with AI')}</SectionLabel>
       <div className="grid grid-cols-3 gap-1.5">
         {cards.map((c) => (
           <button
@@ -194,7 +196,7 @@ function RecordCard() {
       setRec(r)
       if (playAlong) playback.play()
     } catch {
-      toast.error('Microphone unavailable', { description: 'Allow Lumen to use the microphone in your system settings, then try again.' })
+      toast.error(tt('Microphone unavailable'), { description: tt('Allow Lumen to use the microphone in your system settings, then try again.') })
     }
   }
 
@@ -208,10 +210,10 @@ function RecordCard() {
       if (asset) {
         const id = placeAsset(asset.id, startFrame.current, { trackId: voiceTrack() })
         if (id) useUI.getState().select([id])
-        toast.success('Voiceover recorded', { description: `${formatSeconds(asset.duration ?? 0)} · added at the playhead` })
+        toast.success(tt('Voiceover recorded'), { description: tt('{0} · added at the playhead', formatSeconds(asset.duration ?? 0)) })
       }
     } catch (err) {
-      toast.error('Couldn’t save the recording', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t save the recording'), { description: err instanceof Error ? err.message : String(err) })
     } finally {
       setRec(null)
       setSaving(false)
@@ -230,7 +232,7 @@ function RecordCard() {
       <div className="mt-1 rounded-xl bg-danger/[0.07] p-3 shadow-[inset_0_0_0_1px_rgb(255_93_93/0.25)]">
         <div className="flex items-center gap-2">
           <Circle className="size-2.5 animate-pulse-soft text-danger" fill="currentColor" />
-          <span className="text-sm font-medium text-fg">Recording</span>
+          <span className="text-sm font-medium text-fg">{tt('Recording')}</span>
           <span className="ml-auto font-mono text-sm text-fg tabular">{formatSeconds(elapsed)}</span>
         </div>
         <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
@@ -238,10 +240,10 @@ function RecordCard() {
         </div>
         <div className="mt-3 flex gap-2">
           <Button variant="primary" size="sm" className="flex-1" onClick={() => void stop()} disabled={saving}>
-            <Square className="size-3" fill="currentColor" /> Stop & add
+            <Square className="size-3" fill="currentColor" />{' '}{tt('Stop & add')}
           </Button>
           <Button variant="ghost" size="sm" onClick={cancel} disabled={saving}>
-            <X /> Discard
+            <X />{' '}{tt('Discard')}
           </Button>
         </div>
       </div>
@@ -255,16 +257,16 @@ function RecordCard() {
           <Mic className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium text-fg">Record a voiceover</div>
-          <div className="text-2xs text-fg-4">Lands at the playhead on your voice track</div>
+          <div className="text-sm font-medium text-fg">{tt('Record a voiceover')}</div>
+          <div className="text-2xs text-fg-4">{tt('Lands at the playhead on your voice track')}</div>
         </div>
         <Button variant="secondary" size="sm" onClick={() => void start()} disabled={!desktop}>
-          <Circle className="size-2.5 text-danger" fill="currentColor" /> Record
+          <Circle className="size-2.5 text-danger" fill="currentColor" />{' '}{tt('Record')}
         </Button>
       </div>
       <label className="mt-2.5 flex items-center justify-between gap-2 text-2xs text-fg-3">
-        Play the timeline while recording
-        <Switch aria-label="Play the timeline while recording" checked={playAlong} onChange={setPlayAlong} />
+        {tt('Play the timeline while recording')}
+        <Switch aria-label={tt('Play the timeline while recording')} checked={playAlong} onChange={setPlayAlong} />
       </label>
     </div>
   )

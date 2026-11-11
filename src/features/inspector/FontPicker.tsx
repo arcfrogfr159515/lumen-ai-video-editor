@@ -14,6 +14,7 @@ import { dispatch, getProject, useEditor } from '@/editor/store'
 import type { FontId, FontRef } from '@/editor/types'
 import { bytesToBase64, fontCss, fontLabel, localFonts, registerProjectFonts, uniqueFamily, type LocalFont } from '@/engine/fonts'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 /** Embeds a font file in the project and returns its reference. */
 async function embedFont(bytes: Uint8Array, fallbackName: string, fileName: string): Promise<FontRef | null> {
@@ -29,7 +30,7 @@ async function embedFont(bytes: Uint8Array, fallbackName: string, fileName: stri
   const id = uid('font')
   const res = dispatch('font.add', { font: { id, name, family: uniqueFamily(name, id), fileName, data: bytesToBase64(bytes) } })
   if (!res.ok) {
-    toast.error('Couldn’t add the font', { description: res.error })
+    toast.error(tt('Couldn’t add the font'), { description: res.error })
     return null
   }
   registerProjectFonts(getProject())
@@ -72,7 +73,7 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
       const ref = await embedFont(new Uint8Array(await blob.arrayBuffer()), f.fullName, `${f.postscriptName}.ttf`)
       if (ref) pick(ref)
     } catch (err) {
-      toast.error('Couldn’t read that font', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t read that font'), { description: err instanceof Error ? err.message : String(err) })
     } finally {
       setBusy(null)
     }
@@ -107,13 +108,13 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
       <PopoverContent side="bottom" align="start" className="w-72 p-1.5">
         {view === 'list' ? (
           <div className="max-h-80 overflow-y-auto">
-            <Heading>Built in</Heading>
+            <Heading>{tt('Built in')}</Heading>
             {(Object.keys(FONTS) as FontId[]).map((f) => (
               <Item key={f} active={value === f} onClick={() => pick(f)} family={FONTS[f].css}>
                 {FONTS[f].label}
               </Item>
             ))}
-            {Object.values(projectFonts ?? {}).length > 0 && <Heading>In this project</Heading>}
+            {Object.values(projectFonts ?? {}).length > 0 && <Heading>{tt('In this project')}</Heading>}
             {Object.values(projectFonts ?? {}).map((f) => (
               <Item key={f.id} active={value === `custom:${f.id}`} onClick={() => pick(`custom:${f.id}`)} family={fontCss(`custom:${f.id}`, project)}>
                 {f.name}
@@ -121,10 +122,10 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
             ))}
             <div className="mx-1 my-1.5 h-px bg-line" />
             <button type="button" onClick={() => void showSystem()} className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-fg-2 hover:bg-white/[0.06] hover:text-fg">
-              <HardDrive className="size-4 text-fg-3" /> Fonts on this computer…
+              <HardDrive className="size-4 text-fg-3" />{' '}{tt('Fonts on this computer…')}
             </button>
             <button type="button" onClick={() => file.current?.click()} className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-fg-2 hover:bg-white/[0.06] hover:text-fg">
-              <FileUp className="size-4 text-fg-3" /> Import a font file…
+              <FileUp className="size-4 text-fg-3" />{' '}{tt('Import a font file…')}
             </button>
             <input ref={file} type="file" accept=".ttf,.otf,.woff,.woff2,font/*" className="hidden" onChange={(e) => void addFile(e.target.files).finally(() => (e.target.value = ''))} />
           </div>
@@ -132,15 +133,15 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
           <div>
             <div className="mb-1.5 flex items-center gap-1.5 rounded-md bg-white/[0.05] px-2">
               <Search className="size-3.5 text-fg-4" />
-              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.stopPropagation()} placeholder="Search fonts" className="h-8 min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-4" />
+              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.stopPropagation()} placeholder={tt('Search fonts')} className="h-8 min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-4" />
             </div>
             <div className="max-h-72 overflow-y-auto">
               {system === 'loading' && (
                 <p className="flex items-center gap-2 px-2 py-4 text-sm text-fg-3">
-                  <LoaderCircle className="size-4 animate-spin" /> Reading your fonts…
+                  <LoaderCircle className="size-4 animate-spin" />{' '}{tt('Reading your fonts…')}
                 </p>
               )}
-              {system === null && <p className="px-2 py-4 text-sm text-fg-3">This browser can’t list installed fonts — import a font file instead.</p>}
+              {system === null && <p className="px-2 py-4 text-sm text-fg-3">{tt('This browser can’t list installed fonts — import a font file instead.')}</p>}
               {families.map((f) => (
                 <button
                   key={f.postscriptName}
@@ -157,7 +158,7 @@ export function FontPicker({ value, onChange }: { value: FontRef; onChange: (fon
               ))}
             </div>
             <button type="button" onClick={() => setView('list')} className="mt-1 h-7 w-full rounded-md text-xs text-fg-3 hover:bg-white/[0.05] hover:text-fg">
-              Back
+              {tt('Back')}
             </button>
           </div>
         )}

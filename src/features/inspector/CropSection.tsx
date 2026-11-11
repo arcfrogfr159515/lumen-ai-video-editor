@@ -6,17 +6,18 @@ import type { Clip, Crop } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
 import { ValueSlider } from './controls'
+import { tt } from '@/lib/i18n'
 
 const NO_CROP: Crop = { left: 0, right: 0, top: 0, bottom: 0, radius: 0 }
 
 /** Aspect presets: the crop that keeps the most picture at that shape, centered. */
 const SHAPES = [
-  { id: 'free', label: 'Free', ratio: 0 },
+  { id: 'free', label: tt('Free'), ratio: 0 },
   { id: '16:9', label: '16:9', ratio: 16 / 9 },
   { id: '1:1', label: '1:1', ratio: 1 },
   { id: '9:16', label: '9:16', ratio: 9 / 16 },
   { id: '4:5', label: '4:5', ratio: 4 / 5 },
-  { id: 'circle', label: 'Circle', ratio: 1 },
+  { id: 'circle', label: tt('Circle'), ratio: 1 },
 ] as const
 
 function cropFor(ratio: number, srcW: number, srcH: number): Pick<Crop, 'left' | 'right' | 'top' | 'bottom'> {
@@ -34,7 +35,7 @@ export function CropSection({ clip }: { clip: Clip }) {
   const asset = useEditor((s) => (clip.assetId ? s.project.assets[clip.assetId] : undefined))
   const cropMode = useUI((s) => s.cropMode)
   const crop = clip.crop ?? NO_CROP
-  const set = (patch: Partial<Crop>, key?: string) => dispatch('clip.update', { ids: [clip.id], patch: { crop: patch } }, { coalesce: key, label: 'Crop' })
+  const set = (patch: Partial<Crop>, key?: string) => dispatch('clip.update', { ids: [clip.id], patch: { crop: patch } }, { coalesce: key, label: tt('Crop') })
   const pct = (v: number) => Math.round(v * 1000) / 10
   const edge = (side: 'left' | 'right' | 'top' | 'bottom', label: string, opposite: 'left' | 'right' | 'top' | 'bottom') => (
     <ValueSlider
@@ -58,12 +59,12 @@ export function CropSection({ clip }: { clip: Clip }) {
 
   return (
     <Section
-      title="Crop"
+      title={tt('Crop')}
       icon={<CropIcon />}
       defaultOpen={Boolean(clip.crop)}
       actions={
         clip.crop && (
-          <IconButton size="xs" label="Reset crop" onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { crop: null } }, { label: 'Reset crop' })}>
+          <IconButton size="xs" label={tt('Reset crop')} onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { crop: null } }, { label: tt('Reset crop') })}>
             <RotateCcw />
           </IconButton>
         )
@@ -96,11 +97,11 @@ export function CropSection({ clip }: { clip: Clip }) {
           {edge('right', 'Right', 'left')}
           {edge('top', 'Top', 'bottom')}
           {edge('bottom', 'Bottom', 'top')}
-          <ValueSlider label="Corners" value={Math.round(crop.radius * 100)} min={0} max={100} unit="%" onChange={(v) => set({ radius: v / 100 }, `crop:${clip.id}:radius`)} />
+          <ValueSlider label={tt('Corners')} value={Math.round(crop.radius * 100)} min={0} max={100} unit="%" onChange={(v) => set({ radius: v / 100 }, `crop:${clip.id}:radius`)} />
         </div>
         <Button size="sm" variant={cropMode ? 'primary' : 'secondary'} className="w-full" onClick={() => useUI.getState().setCropMode(!cropMode)}>
           <Scan className="size-3.5" />
-          {cropMode ? 'Done cropping' : 'Crop on the canvas'}
+          {cropMode ? tt('Done cropping') : tt('Crop on the canvas')}
         </Button>
       </div>
     </Section>

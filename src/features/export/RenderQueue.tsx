@@ -6,16 +6,17 @@ import { useUI } from '@/editor/ui-store'
 import { cancelJob, clearFinished, queueCounts, removeJob, retryJob, startQueue, stopQueue, useRenderQueue, type QueueJob } from '@/engine/render-queue'
 import { cn } from '@/lib/cn'
 import { desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
 
 const fmtBytes = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`)
 const fmtTime = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${Math.max(1, Math.round(s))}s`)
 
 const STATUS: Record<QueueJob['status'], { label: string; className: string }> = {
-  queued: { label: 'Waiting', className: 'bg-white/[0.07] text-fg-3' },
-  running: { label: 'Rendering', className: 'bg-ai/15 text-ai-2' },
-  done: { label: 'Done', className: 'bg-ok/15 text-ok' },
-  failed: { label: 'Failed', className: 'bg-danger/15 text-danger' },
-  cancelled: { label: 'Cancelled', className: 'bg-white/[0.07] text-fg-4' },
+  queued: { label: tt('Waiting'), className: 'bg-white/[0.07] text-fg-3' },
+  running: { label: tt('Rendering'), className: 'bg-ai/15 text-ai-2' },
+  done: { label: tt('Done'), className: 'bg-ok/15 text-ok' },
+  failed: { label: tt('Failed'), className: 'bg-danger/15 text-danger' },
+  cancelled: { label: tt('Cancelled'), className: 'bg-white/[0.07] text-fg-4' },
 }
 
 /** Every queued export: start them, watch them render one after another, open what's done. */
@@ -26,13 +27,13 @@ export function RenderQueueDialog() {
   const counts = queueCounts(jobs)
   const close = () => useUI.getState().setQueueOpen(false)
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && close()} title="Render queue" description="Exports wait here with their files already chosen, then render one after another — keep editing meanwhile." className="w-[min(640px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={(o) => !o && close()} title={tt('Render queue')} description={tt('Exports wait here with their files already chosen, then render one after another — keep editing meanwhile.')} className="w-[min(640px,calc(100vw-32px))]">
       <div className="max-h-[min(460px,58vh)] space-y-2 overflow-y-auto px-5 pb-4">
         {!jobs.length && (
           <div className="flex flex-col items-center gap-2 py-10 text-center">
             <ListVideo className="size-6 text-fg-4" />
-            <p className="text-sm text-fg-2">Nothing queued</p>
-            <p className="max-w-xs text-xs text-fg-4">In the Export dialog, choose “Add to queue” to line up several exports — other timelines, sizes or formats — and render them in one go.</p>
+            <p className="text-sm text-fg-2">{tt('Nothing queued')}</p>
+            <p className="max-w-xs text-xs text-fg-4">{tt('In the Export dialog, choose “Add to queue” to line up several exports — other timelines, sizes or formats — and render them in one go.')}</p>
           </div>
         )}
         {jobs.map((job) => (
@@ -41,20 +42,20 @@ export function RenderQueueDialog() {
       </div>
       <div className="flex items-center gap-2 border-t border-line bg-black/15 px-5 py-3.5">
         <div className="flex-1 text-xs text-fg-4">
-          {counts.running ? `Rendering · ${counts.queued} waiting` : counts.queued ? `${counts.queued} waiting` : jobs.length ? `${counts.done} done${counts.failed ? ` · ${counts.failed} failed` : ''}` : ''}
+          {counts.running ? tt('Rendering · {0} waiting', counts.queued) : counts.queued ? tt('{0} waiting', counts.queued) : jobs.length ? tt('{0} done{1}', counts.done, counts.failed ? (' ' + tt('· {0} failed', counts.failed)) : '') : ''}
         </div>
         {jobs.some((j) => j.status !== 'queued' && j.status !== 'running') && (
           <Button variant="ghost" onClick={clearFinished}>
-            Clear finished
+            {tt('Clear finished')}
           </Button>
         )}
         {active ? (
-          <Button variant="secondary" onClick={() => stopQueue(false)} title="Finish the export that's rendering, then stop">
-            <CircleStop /> Stop after this one
+          <Button variant="secondary" onClick={() => stopQueue(false)} title={tt('Finish the export that\'s rendering, then stop')}>
+            <CircleStop />{' '}{tt('Stop after this one')}
           </Button>
         ) : (
           <Button variant="primary" disabled={!counts.queued || !desktop} onClick={() => void startQueue()}>
-            <Play /> Start rendering
+            <Play />{' '}{tt('Start rendering')}
           </Button>
         )}
       </div>
@@ -92,7 +93,7 @@ function JobRow({ job }: { job: QueueJob }) {
             {fmtBytes(job.result.size)} · {fmtTime(job.result.seconds)}
             {job.result.sidecar && (
               <span className="flex items-center gap-0.5" title={job.result.sidecar}>
-                <Captions className="size-3" /> captions
+                <Captions className="size-3" />{' '}{tt('captions')}
               </span>
             )}
           </div>
@@ -107,16 +108,16 @@ function JobRow({ job }: { job: QueueJob }) {
       <div className="flex shrink-0 flex-col items-end justify-center gap-1">
         {job.status === 'running' && (
           <Button size="xs" variant="ghost" onClick={() => cancelJob(job.id)}>
-            Cancel
+            {tt('Cancel')}
           </Button>
         )}
         {job.status === 'done' && job.result && (
           <div className="flex gap-0.5">
-            <IconButton size="xs" label="Show in folder" onClick={() => void desktop?.files.reveal(job.result!.path)}>
+            <IconButton size="xs" label={tt('Show in folder')} onClick={() => void desktop?.files.reveal(job.result!.path)}>
               <FolderSearch />
             </IconButton>
             {job.settings.format !== 'png' && (
-              <IconButton size="xs" label="Play" onClick={() => void desktop?.files.open(job.result!.path)}>
+              <IconButton size="xs" label={tt('Play')} onClick={() => void desktop?.files.open(job.result!.path)}>
                 <Play />
               </IconButton>
             )}
@@ -124,11 +125,11 @@ function JobRow({ job }: { job: QueueJob }) {
         )}
         {(job.status === 'failed' || job.status === 'cancelled') && (
           <Button size="xs" variant="ghost" onClick={() => void retryJob(job.id)}>
-            <RotateCcw /> Retry
+            <RotateCcw />{' '}{tt('Retry')}
           </Button>
         )}
         {job.status !== 'running' && (
-          <IconButton size="xs" label={job.status === 'queued' ? 'Remove from the queue' : 'Remove'} onClick={() => removeJob(job.id)}>
+          <IconButton size="xs" label={job.status === 'queued' ? tt('Remove from the queue') : tt('Remove')} onClick={() => removeJob(job.id)}>
             <X />
           </IconButton>
         )}
@@ -155,11 +156,11 @@ export function QueueIndicator() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={() => useUI.getState().setQueueOpen(true)}
-          title="Render queue"
+          title={tt('Render queue')}
           className="no-drag flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-fg-3 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           {running ? <LoaderCircle className="size-3.5 animate-spin text-ai-2" /> : <ListVideo className="size-3.5" />}
-          <span className="tabular">{running ? `${index}/${total} · ${Math.round(running.progress * 100)}%` : counts.queued ? `Queue · ${counts.queued}` : `Queue · ${counts.done} done`}</span>
+          <span className="tabular">{running ? `${index}/${total} · ${Math.round(running.progress * 100)}%` : counts.queued ? tt('Queue · {0}', counts.queued) : tt('Queue · {0} done', counts.done)}</span>
         </motion.button>
       )}
     </AnimatePresence>

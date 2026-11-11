@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 /**
  * A form for any MCP tool, generated from its JSON Schema: strings, enums,
@@ -66,7 +67,7 @@ export function SchemaForm({ schema, values, onChange, className }: { schema: Js
     else next[key] = value
     onChange(next)
   }
-  if (!props.length) return <p className="text-sm text-fg-3">This tool takes no input.</p>
+  if (!props.length) return <p className="text-sm text-fg-3">{tt('This tool takes no input.')}</p>
   return (
     <div className={cn('space-y-3.5', className)}>
       {props.map(([key, prop]) => (
@@ -92,7 +93,7 @@ function Field({ name, schema, required, value, onChange }: { name: string; sche
         aria-label={label}
         value={value === undefined ? (required ? String(options[0]) : UNSET) : String(value)}
         onChange={(v) => onChange(v === UNSET ? undefined : type === 'number' || type === 'integer' ? Number(v) : v)}
-        options={required ? opts : [{ value: UNSET, label: <span className="text-fg-3">Default</span> }, ...opts]}
+        options={required ? opts : [{ value: UNSET, label: <span className="text-fg-3">{tt('Default')}</span> }, ...opts]}
         className="w-full"
         size="md"
       />
@@ -118,7 +119,7 @@ function Field({ name, schema, required, value, onChange }: { name: string; sche
       <Input
         id={id}
         value={Array.isArray(value) ? value.join(', ') : ''}
-        placeholder="Comma-separated"
+        placeholder={tt('Comma-separated')}
         onChange={(e) => onChange(e.target.value ? e.target.value.split(',').map((s) => s.trim()).filter(Boolean) : undefined)}
       />
     )
@@ -181,7 +182,7 @@ function JsonField({ id, value, onChange }: { id: string; value: unknown; onChan
         }
       }}
       onKeyDown={(e) => e.stopPropagation()}
-      placeholder="JSON"
+      placeholder={tt('JSON')}
       className="w-full resize-y rounded-control bg-white/[0.045] px-2.5 py-2 font-mono text-xs leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none placeholder:text-fg-4 focus:bg-white/[0.07]"
     />
   )

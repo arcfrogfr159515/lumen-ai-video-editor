@@ -26,6 +26,8 @@ import { FrameCanvas, stripFrame, useFilmstrip } from './frames'
 import { addMediaAtPlayhead, clearMediaSelection, pickMedia, removeMedia, setMediaSelection, toggleFavorite, useMediaSelection } from './media-selection'
 import { assetThumb, Chip, MiniWave, PanelHeader, scrollArea, SectionLabel } from './shared'
 import { TimelinesSection } from './TimelinesSection'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 type Filter = 'all' | AssetKind
 
@@ -87,26 +89,26 @@ export function MediaPanel() {
       }}
       onDrop={onDrop}
     >
-      <PanelHeader title="Media">
+      <PanelHeader title={tt('Media')}>
         <Button size="sm" variant="secondary" onClick={actions.importMedia}>
           <Upload />
-          Import
+          {tt('Import')}
         </Button>
       </PanelHeader>
       <div className="space-y-2.5 px-3.5 pb-2">
-        <SearchInput value={query} onChange={setQuery} placeholder="Search media, tags…" />
+        <SearchInput value={query} onChange={setQuery} placeholder={tt('Search media, tags…')} />
         <div className="scrollbar-none flex gap-1 overflow-x-auto">
           <Chip active={filter === 'all'} onClick={() => setFilter('all')} count={counts.all}>
-            All
+            {tt('All')}
           </Chip>
           <Chip active={filter === 'video'} onClick={() => setFilter('video')} count={counts.video}>
-            Video
+            {tt('Video')}
           </Chip>
           <Chip active={filter === 'image'} onClick={() => setFilter('image')} count={counts.image}>
-            Images
+            {tt('Images')}
           </Chip>
           <Chip active={filter === 'audio'} onClick={() => setFilter('audio')} count={counts.audio}>
-            Audio
+            {tt('Audio')}
           </Chip>
         </div>
       </div>
@@ -116,7 +118,7 @@ export function MediaPanel() {
         {!assets.length && <EmptyDrop />}
         {visual.length > 0 && (
           <>
-            <SectionLabel>Footage & photos</SectionLabel>
+            <SectionLabel>{tt('Footage & photos')}</SectionLabel>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(122px,1fr))] gap-x-2.5 gap-y-3">
               {visual.map((a) => (
                 <MediaCard key={a.id} asset={a} used={used.includes(a.id)} order={order} />
@@ -126,7 +128,7 @@ export function MediaPanel() {
         )}
         {audio.length > 0 && (
           <>
-            <SectionLabel>Audio</SectionLabel>
+            <SectionLabel>{tt('Audio')}</SectionLabel>
             <div className="space-y-1">
               {audio.map((a) => (
                 <AudioRow key={a.id} asset={a} used={used.includes(a.id)} order={order} />
@@ -134,7 +136,7 @@ export function MediaPanel() {
             </div>
           </>
         )}
-        {assets.length > 0 && !visible.length && <p className="mt-10 text-center text-sm text-fg-4">No media matches “{query}”.</p>}
+        {assets.length > 0 && !visible.length && <p className="mt-10 text-center text-sm text-fg-4">{ttx('No media matches “{0}”.', query)}</p>}
         {marquee.box && (
           <div
             className="pointer-events-none absolute z-20 rounded-[3px] border border-accent/70 bg-accent/10"
@@ -154,8 +156,8 @@ export function MediaPanel() {
           >
             <div className="text-center">
               <Upload className="mx-auto mb-2 size-6 text-accent-2" />
-              <p className="text-sm font-medium text-fg">Drop to import</p>
-              <p className="text-xs text-fg-3">Video, audio and images</p>
+              <p className="text-sm font-medium text-fg">{tt('Drop to import')}</p>
+              <p className="text-xs text-fg-3">{tt('Video, audio and images')}</p>
             </div>
           </motion.div>
         )}
@@ -217,27 +219,27 @@ function SelectionBar({ ids }: { ids: string[] }) {
   const allFavorite = list.every((a) => a.favorite)
   return (
     <div className="flex shrink-0 items-center gap-0.5 border-t border-line bg-surface px-3 py-1.5">
-      <span className="mr-auto text-xs font-medium text-fg-2 tabular">{list.length} selected</span>
-      <IconButton label="Add to the timeline at the playhead, one after another" onClick={() => addMediaAtPlayhead(ids)}>
+      <span className="mr-auto text-xs font-medium text-fg-2 tabular">{ttx('{0} selected', list.length)}</span>
+      <IconButton label={tt('Add to the timeline at the playhead, one after another')} onClick={() => addMediaAtPlayhead(ids)}>
         <Plus />
       </IconButton>
-      <IconButton label={allFavorite ? 'Remove from favorites' : 'Add to favorites'} active={allFavorite} onClick={() => toggleFavorite(ids)}>
+      <IconButton label={allFavorite ? tt('Remove from favorites') : tt('Add to favorites')} active={allFavorite} onClick={() => toggleFavorite(ids)}>
         <Heart />
       </IconButton>
       {proxyable.length > 0 && (
-        <IconButton label={`Make proxies for smooth playback (${proxyable.length})`} onClick={() => proxyable.forEach((a) => makeProxy(a.id))}>
+        <IconButton label={tt('Make proxies for smooth playback ({0})', proxyable.length)} onClick={() => proxyable.forEach((a) => makeProxy(a.id))}>
           <Gauge />
         </IconButton>
       )}
       {transcribable.length > 0 && (
-        <IconButton label={`Transcribe (${transcribable.length})`} onClick={() => void ensureTranscripts(transcribable.map((a) => a.id))}>
+        <IconButton label={tt('Transcribe ({0})', transcribable.length)} onClick={() => void ensureTranscripts(transcribable.map((a) => a.id))}>
           <Captions />
         </IconButton>
       )}
-      <IconButton label="Remove from project" shortcut="delete" onClick={() => removeMedia(ids)} className="hover:text-danger">
+      <IconButton label={tt('Remove from project')} shortcut="delete" onClick={() => removeMedia(ids)} className="hover:text-danger">
         <Trash />
       </IconButton>
-      <IconButton label="Clear selection" shortcut="esc" onClick={clearMediaSelection}>
+      <IconButton label={tt('Clear selection')} shortcut="esc" onClick={clearMediaSelection}>
         <X />
       </IconButton>
     </div>
@@ -273,8 +275,8 @@ function EmptyDrop() {
       <span className="grid size-10 place-items-center rounded-full bg-white/[0.06]">
         <Upload className="size-4 text-fg-2" />
       </span>
-      <span className="text-sm font-medium text-fg">Import your media</span>
-      <span className="text-xs text-fg-4">Drag files here, or click to browse</span>
+      <span className="text-sm font-medium text-fg">{tt('Import your media')}</span>
+      <span className="text-xs text-fg-4">{tt('Drag files here, or click to browse')}</span>
     </button>
   )
 }
@@ -313,59 +315,59 @@ function AssetMenu({ asset, children }: { asset: Asset; children: ReactNode }) {
       <ContextContent>
         {!missing(asset) && (
           <ContextItem icon={<Plus />} onSelect={add}>
-            Add at playhead
+            {tt('Add at playhead')}
           </ContextItem>
         )}
         {!missing(asset) && (
           <ContextItem icon={<MonitorPlay />} onSelect={() => timelineActions.openSourceMonitor(asset.id)}>
-            Open in the source monitor
+            {tt('Open in the source monitor')}
           </ContextItem>
         )}
         {asset.source.type === 'file' && (
           <ContextItem icon={<Link2 />} onSelect={() => void relinkAsset(asset.id)}>
-            {missing(asset) ? 'Locate file…' : 'Replace file…'}
+            {missing(asset) ? tt('Locate file…') : tt('Replace file…')}
           </ContextItem>
         )}
         {canTranscribe(asset) && (
           <ContextItem icon={<Captions />} onSelect={transcribe}>
-            {asset.transcript?.length ? 'Transcribe again' : 'Transcribe'} · {TRANSCRIBER_NAMES[transcribers()[0]]}
+            {asset.transcript?.length ? tt('Transcribe again') : tt('Transcribe')} · {TRANSCRIBER_NAMES[transcribers()[0]]}
           </ContextItem>
         )}
         {asset.kind === 'video' && !missing(asset) && (
           <ContextItem icon={<Video />} onSelect={() => useUI.getState().setMulticam({ assetIds: [asset.id] })}>
-            Make a multicam clip…
+            {tt('Make a multicam clip…')}
           </ContextItem>
         )}
         {path && desktop && !missing(asset) && (
           <ContextItem icon={<FolderSearch />} onSelect={() => void desktop!.files.reveal(path)}>
-            Show in folder
+            {tt('Show in folder')}
           </ContextItem>
         )}
         {canProxy(asset) &&
           (making !== undefined ? (
             <ContextItem icon={<Gauge />} onSelect={() => cancelProxy(asset.id)}>
-              Stop making the proxy ({Math.round(making * 100)}%)
+              {ttx('Stop making the proxy ({0}%)', Math.round(making * 100))}
             </ContextItem>
           ) : asset.proxy ? (
             <ContextItem icon={<Gauge />} onSelect={() => removeProxy(asset.id)}>
-              Remove proxy ({asset.proxy.height}p)
+              {ttx('Remove proxy ({0}p)', asset.proxy.height)}
             </ContextItem>
           ) : (
             <ContextItem icon={<Gauge />} onSelect={() => makeProxy(asset.id)}>
-              Make a proxy for smooth playback
+              {tt('Make a proxy for smooth playback')}
             </ContextItem>
           ))}
         {asset.kind === 'video' && asset.source.type === 'file' && !missing(asset) && (
           <ContextItem icon={<Gauge />} onSelect={() => useTimelineView.getState().set({ cleanup: 'rates' })}>
-            Frame rate: {asset.conformedFrom ? 'a constant-rate copy' : describeTiming(asset.frameTiming).toLowerCase()}…
+            {ttx('Frame rate: {0}…', asset.conformedFrom ? tt('a constant-rate copy') : describeTiming(asset.frameTiming).toLowerCase())}
           </ContextItem>
         )}
         <ContextItem icon={<Heart />} onSelect={() => dispatch('asset.update', { id: asset.id, patch: { favorite: !asset.favorite } })}>
-          {asset.favorite ? 'Remove from favorites' : 'Add to favorites'}
+          {asset.favorite ? tt('Remove from favorites') : tt('Add to favorites')}
         </ContextItem>
         <ContextSeparator />
         <ContextItem icon={<Trash />} danger onSelect={() => removeMedia([asset.id])}>
-          Remove from project
+          {tt('Remove from project')}
         </ContextItem>
       </ContextContent>
     </ContextRoot>
@@ -381,24 +383,24 @@ function BulkMenu({ ids }: { ids: string[] }) {
   return (
     <ContextContent>
       <ContextItem icon={<Plus />} onSelect={() => addMediaAtPlayhead(ids)}>
-        Add {list.length} at the playhead
+        {ttx('Add {0} at the playhead', list.length)}
       </ContextItem>
       {proxyable.length > 0 && (
         <ContextItem icon={<Gauge />} onSelect={() => proxyable.forEach((a) => makeProxy(a.id))}>
-          Make proxies ({proxyable.length})
+          {ttx('Make proxies ({0})', proxyable.length)}
         </ContextItem>
       )}
       {transcribable.length > 0 && (
         <ContextItem icon={<Captions />} onSelect={() => void ensureTranscripts(transcribable.map((a) => a.id))}>
-          Transcribe ({transcribable.length})
+          {ttx('Transcribe ({0})', transcribable.length)}
         </ContextItem>
       )}
       <ContextItem icon={<Heart />} onSelect={() => toggleFavorite(ids)}>
-        {list.every((a) => a.favorite) ? 'Remove from favorites' : 'Add to favorites'}
+        {list.every((a) => a.favorite) ? tt('Remove from favorites') : tt('Add to favorites')}
       </ContextItem>
       <ContextSeparator />
       <ContextItem icon={<Trash />} danger onSelect={() => removeMedia(ids)}>
-        Remove {list.length} from project
+        {ttx('Remove {0} from project', list.length)}
       </ContextItem>
     </ContextContent>
   )
@@ -409,18 +411,18 @@ function ProxyBadge({ asset }: { asset: Asset }) {
   const making = useProxyJobs((s) => s.jobs[asset.id])
   if (making !== undefined)
     return (
-      <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9px] font-semibold text-white/85 backdrop-blur-sm" title="Making a proxy">
+      <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9px] font-semibold text-white/85 backdrop-blur-sm" title={tt('Making a proxy')}>
         <svg viewBox="0 0 16 16" className="size-2.5 -rotate-90">
           <circle cx="8" cy="8" r="6" fill="none" stroke="rgb(255 255 255 / 0.25)" strokeWidth="3" />
           <circle cx="8" cy="8" r="6" fill="none" stroke="var(--color-accent)" strokeWidth="3" strokeDasharray={`${making * 37.7} 37.7`} />
         </svg>
-        PROXY
+        {tt('PROXY')}
       </span>
     )
   if (!asset.proxy) return null
   return (
-    <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-accent-2 backdrop-blur-sm" title={`Plays a ${asset.proxy.height}p proxy in the preview; exports use the original`}>
-      PROXY
+    <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-accent-2 backdrop-blur-sm" title={tt('Plays a {0}p proxy in the preview; exports use the original', asset.proxy.height)}>
+      {tt('PROXY')}
     </span>
   )
 }
@@ -432,20 +434,20 @@ function RateBadge({ asset }: { asset: Asset }) {
   const place = cn('absolute left-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-semibold backdrop-blur-sm', asset.proxy || asset.alpha ? 'bottom-6' : 'bottom-1.5')
   if (making !== undefined)
     return (
-      <span className={cn(place, 'bg-black/65 text-white/85')} title="Making a constant-frame-rate copy">
-        CFR {Math.round(making * 100)}%
+      <span className={cn(place, 'bg-black/65 text-white/85')} title={tt('Making a constant-frame-rate copy')}>
+        {ttx('CFR {0}%', Math.round(making * 100))}
       </span>
     )
   if (asset.conformedFrom)
     return (
-      <button type="button" onClick={open} className={cn(place, 'bg-black/60 text-ok')} title={`Plays a constant-frame-rate copy (was: ${describeTiming(asset.conformedFrom.frameTiming).toLowerCase()})`}>
-        CFR
+      <button type="button" onClick={open} className={cn(place, 'bg-black/60 text-ok')} title={tt('Plays a constant-frame-rate copy (was: {0})', describeTiming(asset.conformedFrom.frameTiming).toLowerCase())}>
+        {tt('CFR')}
       </button>
     )
   if (!isUneven(asset.frameTiming)) return null
   return (
-    <button type="button" onClick={open} className={cn(place, 'bg-warn text-black')} title={`${describeTiming(asset.frameTiming)} — click to make a constant-frame-rate copy`}>
-      VFR
+    <button type="button" onClick={open} className={cn(place, 'bg-warn text-black')} title={tt('{0} — click to make a constant-frame-rate copy', describeTiming(asset.frameTiming))}>
+      {tt('VFR')}
     </button>
   )
 }
@@ -511,7 +513,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
             >
               <span className="flex flex-col items-center gap-1">
                 <TriangleAlert className="size-4" />
-                Media offline · Locate…
+                {tt('Media offline · Locate…')}
               </span>
             </button>
           )}
@@ -521,7 +523,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
               <div className="h-full bg-white" style={{ width: `${(skim / (asset.duration ?? 1)) * 100}%` }} />
             </div>
           )}
-          {asset.alpha && <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-white/80 backdrop-blur-sm">ALPHA</span>}
+          {asset.alpha && <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-white/80 backdrop-blur-sm">{tt('ALPHA')}</span>}
           <ProxyBadge asset={asset} />
           <RateBadge asset={asset} />
           {asset.kind === 'image' && (
@@ -529,7 +531,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
               <ImageIcon className="size-3" />
             </span>
           )}
-          {asset.generated && <span className="absolute top-1.5 left-1.5 rounded-md bg-ai px-1.5 py-0.5 text-[9px] font-bold text-accent-fg shadow">AI</span>}
+          {asset.generated && <span className="absolute top-1.5 left-1.5 rounded-md bg-ai px-1.5 py-0.5 text-[9px] font-bold text-accent-fg shadow">{tt('AI')}</span>}
           {selected && (
             <span className="absolute top-1.5 left-1.5 grid size-5 place-items-center rounded-full bg-accent text-accent-fg shadow-[0_0_0_2px_rgb(0_0_0/0.35)]">
               <Check className="size-3" strokeWidth={3} />
@@ -540,10 +542,10 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
               {skim !== null && canSkim ? formatSeconds(skim) : formatSeconds(asset.duration)}
             </span>
           )}
-          {used && <span className="absolute top-2 right-2 size-1.5 rounded-full bg-ok shadow-[0_0_0_2px_rgb(0_0_0/0.4)]" title="Used in timeline" />}
+          {used && <span className="absolute top-2 right-2 size-1.5 rounded-full bg-ok shadow-[0_0_0_2px_rgb(0_0_0/0.4)]" title={tt('Used in timeline')} />}
           <button
             type="button"
-            aria-label={`Add ${asset.name} at playhead`}
+            aria-label={tt('Add {0} at playhead', asset.name)}
             onClick={add}
             className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-white text-black opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/card:scale-100 group-hover/card:opacity-100 hover:bg-accent-2 hover:text-accent-fg"
           >
@@ -552,7 +554,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
         </div>
         <div className="mt-1.5 px-0.5">
           <div className="truncate text-xs font-medium text-fg-2 group-hover/card:text-fg">{asset.name}</div>
-          <div className="text-2xs text-fg-4">{[asset.kind === 'image' ? 'Photo' : res, asset.fps ? `${asset.fps} fps` : null].filter(Boolean).join(' · ') || 'Media'}</div>
+          <div className="text-2xs text-fg-4">{[asset.kind === 'image' ? 'Photo' : res, asset.fps ? `${asset.fps} fps` : null].filter(Boolean).join(' · ') || tt('Media')}</div>
         </div>
       </div>
     </AssetMenu>
@@ -614,7 +616,7 @@ function AudioRow({ asset, used, order }: { asset: Asset; used: boolean; order: 
       >
         <button
           type="button"
-          aria-label={preview.playing ? `Stop ${asset.name}` : `Play ${asset.name}`}
+          aria-label={preview.playing ? tt('Stop {0}', asset.name) : tt('Play {0}', asset.name)}
           disabled={!url}
           onClick={preview.toggle}
           className={cn(
@@ -636,7 +638,7 @@ function AudioRow({ asset, used, order }: { asset: Asset; used: boolean; order: 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="truncate text-xs font-medium text-fg-2 group-hover/row:text-fg">{asset.name}</span>
-            {used && <span className="size-1.5 shrink-0 rounded-full bg-ok" title="Used in timeline" />}
+            {used && <span className="size-1.5 shrink-0 rounded-full bg-ok" title={tt('Used in timeline')} />}
           </div>
           <div className="mt-1 h-3 text-clip-audio/50">
             {offline ? <span className="text-2xs text-warn">Offline — right-click to locate</span> : <MiniWave peaks={asset.peaks} bars={34} />}
@@ -645,7 +647,7 @@ function AudioRow({ asset, used, order }: { asset: Asset; used: boolean; order: 
         <span className="shrink-0 font-mono text-2xs text-fg-4 tabular">{formatSeconds(asset.duration ?? 0)}</span>
         <button
           type="button"
-          aria-label={`Add ${asset.name} at playhead`}
+          aria-label={tt('Add {0} at playhead', asset.name)}
           onClick={add}
           className="grid size-6 shrink-0 place-items-center rounded-full text-fg-3 opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-white/[0.1] hover:text-fg"
         >

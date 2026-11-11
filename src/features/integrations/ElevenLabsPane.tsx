@@ -7,6 +7,8 @@ import { useUI } from '@/editor/ui-store'
 import { useGenerate } from '@/features/assets/generate-store'
 import { setElevenLabsKey, useIntegrations } from '@/integrations/store'
 import { Card, IconTile, StatusDot } from './parts'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 function Feature({ title, children }: { title: string; children: string }) {
   return (
@@ -27,7 +29,7 @@ export function ElevenLabsPane() {
     try {
       await setElevenLabsKey(value)
       setKey('')
-      if (value) toast.success('ElevenLabs connected')
+      if (value) toast.success(tt('ElevenLabs connected'))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     } finally {
@@ -41,8 +43,8 @@ export function ElevenLabsPane() {
           <AudioLines />
         </IconTile>
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-semibold tracking-tight text-fg">ElevenLabs</h2>
-          <p className="mt-0.5 text-sm leading-relaxed text-fg-3">Voiceovers that come with word timings, transcription of your own recordings, sound effects and music — straight into your media.</p>
+          <h2 className="text-xl font-semibold tracking-tight text-fg">{tt('ElevenLabs')}</h2>
+          <p className="mt-0.5 text-sm leading-relaxed text-fg-3">{tt('Voiceovers that come with word timings, transcription of your own recordings, sound effects and music — straight into your media.')}</p>
         </div>
       </div>
 
@@ -51,39 +53,39 @@ export function ElevenLabsPane() {
           <div className="flex items-center gap-3">
             <StatusDot status="ready" className="size-2" />
             <div className="flex-1">
-              <div className="text-sm font-medium text-fg">Connected</div>
+              <div className="text-sm font-medium text-fg">{tt('Connected')}</div>
               <div className="text-2xs text-fg-4">
-                Key {state.keyHint} · {voices.length} voices
+                {ttx('Key {0} · {1} voices', state.keyHint, voices.length)}
               </div>
             </div>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => void save(null)}>
-              <Trash /> Remove key
+              <Trash />{' '}{tt('Remove key')}
             </Button>
           </div>
         ) : (
           <div className="space-y-2">
-            <div className="text-sm font-medium text-fg">Add your API key</div>
+            <div className="text-sm font-medium text-fg">{tt('Add your API key')}</div>
             <div className="flex gap-2">
-              <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk_…" className="font-mono text-xs" autoComplete="off" />
+              <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={tt('sk_…')} className="font-mono text-xs" autoComplete="off" />
               <Button size="md" variant="primary" disabled={busy || !key.trim()} onClick={() => void save(key.trim())}>
-                {busy ? <LoaderCircle className="animate-spin" /> : <Check />} Connect
+                {busy ? <LoaderCircle className="animate-spin" /> : <Check />}{' '}{tt('Connect')}
               </Button>
             </div>
             <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-2xs text-accent-2 hover:underline">
-              Get a key <ExternalLink className="size-3" />
+              {tt('Get a key')}{' '}<ExternalLink className="size-3" />
             </a>
           </div>
         )}
       </Card>
 
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <Feature title="Voiceovers">Any ElevenLabs voice. Each line comes back with timings, so captions and pause removal work instantly.</Feature>
-        <Feature title="Transcription">Scribe transcribes your real recordings — right-click audio or video in Media.</Feature>
-        <Feature title="Sound effects">Describe a sound, get an effect up to 30 seconds long, optionally looping.</Feature>
-        <Feature title="Music">Full tracks from a prompt, with or without vocals (paid ElevenLabs plans).</Feature>
+        <Feature title={tt('Voiceovers')}>{tt('Any ElevenLabs voice. Each line comes back with timings, so captions and pause removal work instantly.')}</Feature>
+        <Feature title={tt('Transcription')}>{tt('Scribe transcribes your real recordings — right-click audio or video in Media.')}</Feature>
+        <Feature title={tt('Sound effects')}>{tt('Describe a sound, get an effect up to 30 seconds long, optionally looping.')}</Feature>
+        <Feature title={tt('Music')}>{tt('Full tracks from a prompt, with or without vocals (paid ElevenLabs plans).')}</Feature>
       </div>
       <p className="mt-4 text-2xs leading-relaxed text-fg-4">
-        ElevenLabs’ hosted MCP server only accepts apps that publish a client ID document on a public website, so Lumen connects through the API with your key for now. Usage is billed to your ElevenLabs account.
+        {tt('ElevenLabs’ hosted MCP server only accepts apps that publish a client ID document on a public website, so Lumen connects through the API with your key for now. Usage is billed to your ElevenLabs account.')}
       </p>
       {state?.configured && (
         <Button
@@ -96,7 +98,7 @@ export function ElevenLabsPane() {
             useIntegrations.setState({ hubOpen: false })
           }}
         >
-          Make a voiceover
+          {tt('Make a voiceover')}
         </Button>
       )}
     </div>

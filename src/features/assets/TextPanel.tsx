@@ -11,26 +11,27 @@ import { drawTitlePreview } from '@/engine/three/previews'
 import { dnd } from '@/features/dnd'
 import { actions } from '@/features/shell/actions'
 import { PanelHeader, scrollArea, SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
 
 export function TextPanel() {
   return (
     <>
-      <PanelHeader title="Text" />
+      <PanelHeader title={tt('Text')} />
       <div className={scrollArea}>
-        <SectionLabel>3D titles</SectionLabel>
+        <SectionLabel>{tt('3D titles')}</SectionLabel>
         <div className="grid grid-cols-2 gap-2.5">
           {TITLE_PRESETS.filter((p) => p.is3d).map((p) => (
             <TitleCard key={p.id} preset={p} />
           ))}
         </div>
-        <SectionLabel>Title styles</SectionLabel>
+        <SectionLabel>{tt('Title styles')}</SectionLabel>
         <div className="grid grid-cols-2 gap-2.5">
           {TITLE_PRESETS.filter((p) => !p.is3d).map((p) => (
             <TitleCard key={p.id} preset={p} />
           ))}
         </div>
-        <p className="mt-4 px-1 text-2xs leading-relaxed text-fg-4">Click to add at the playhead, or drag onto the timeline. Every style is fully editable — font, color, animation and position.</p>
-        <SectionLabel>Auto captions</SectionLabel>
+        <p className="mt-4 px-1 text-2xs leading-relaxed text-fg-4">{tt('Click to add at the playhead, or drag onto the timeline. Every style is fully editable — font, color, animation and position.')}</p>
+        <SectionLabel>{tt('Auto captions')}</SectionLabel>
         <CaptionStyles />
       </div>
     </>
@@ -63,7 +64,7 @@ function CaptionStyles() {
           <CaptionCard key={s.id} spec={s} busy={busy === s.id} disabled={busy !== null && busy !== s.id} onPick={() => void run(s.id)} />
         ))}
       </div>
-      <p className="mt-4 px-1 text-2xs leading-relaxed text-fg-4">Transcribes the speech on the timeline, then lays timed captions on their own track — replacing earlier ones. Each caption is a title you can restyle.</p>
+      <p className="mt-4 px-1 text-2xs leading-relaxed text-fg-4">{tt('Transcribes the speech on the timeline, then lays timed captions on their own track — replacing earlier ones. Each caption is a title you can restyle.')}</p>
     </>
   )
 }

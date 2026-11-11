@@ -16,6 +16,8 @@ import { assetThumb } from '@/features/assets/shared'
 import { cn } from '@/lib/cn'
 import { formatSeconds } from '@/lib/time'
 import { multicamFromAssets } from '@/project/analysis-actions'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 type SyncBy = 'sound' | 'start'
 
@@ -57,28 +59,28 @@ export function MulticamDialog() {
         const r = await multicamFromAssets(ids, { name, audio: audioIndex }, (p) => setBusy(p))
         if (r.clipId) useUI.getState().select([r.clipId])
         const weak = r.sync.filter((s) => Number.isFinite(s.confidence) && s.confidence < 6)
-        if (weak.length) toast.warning(`Synced — but ${weak.map((w) => `“${w.name}”`).join(', ')} barely matched`, { description: 'Their sound didn’t line up clearly. Check them in the multicam timeline, or sync by the start of each file.' })
-        else toast.success(`Synced ${plural(ids.length)} by their sound`, { description: 'Press 1–9 while it plays to cut between cameras.' })
+        if (weak.length) toast.warning(tt('Synced — but {0} barely matched', weak.map((w) => `“${w.name}”`).join(', ')), { description: tt('Their sound didn’t line up clearly. Check them in the multicam timeline, or sync by the start of each file.') })
+        else toast.success(tt('Synced {0} by their sound', plural(ids.length)), { description: tt('Press 1–9 while it plays to cut between cameras.') })
       }
       useUI.getState().setAngleViewer(true)
       setBusy(null)
       useUI.getState().setMulticam(null)
     } catch (err) {
       setBusy(null)
-      toast.error('Couldn’t make the multicam clip', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t make the multicam clip'), { description: err instanceof Error ? err.message : String(err) })
     }
   }
 
   return (
-    <Dialog open={Boolean(request)} onOpenChange={(o) => !o && close()} title="New multicam clip" description="Several cameras filming the same moment, lined up so you can cut between them as it plays." className="w-[min(620px,calc(100vw-32px))]">
+    <Dialog open={Boolean(request)} onOpenChange={(o) => !o && close()} title={tt('New multicam clip')} description={tt('Several cameras filming the same moment, lined up so you can cut between them as it plays.')} className="w-[min(620px,calc(100vw-32px))]">
       <div className="space-y-3 px-5 pb-2">
         <div>
           <div className="mb-1.5 flex items-baseline justify-between">
-            <span className="text-xs font-medium text-fg-2">Cameras</span>
-            <span className="text-2xs text-fg-4">{angles.length} chosen · at least 2</span>
+            <span className="text-xs font-medium text-fg-2">{tt('Cameras')}</span>
+            <span className="text-2xs text-fg-4">{ttx('{0} chosen · at least 2', angles.length)}</span>
           </div>
           <div className="max-h-[260px] space-y-1 overflow-y-auto rounded-xl bg-black/20 p-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
-            {!videos.length && <p className="py-6 text-center text-xs text-fg-4">Import the camera recordings first.</p>}
+            {!videos.length && <p className="py-6 text-center text-xs text-fg-4">{tt('Import the camera recordings first.')}</p>}
             {videos.map((v) => {
               const on = chosen.includes(v.id)
               const n = chosen.indexOf(v.id)
@@ -99,11 +101,11 @@ export function MulticamDialog() {
                       {formatSeconds(v.duration ?? 0)}
                       {v.hasAudio === false ? (
                         <span className="flex items-center gap-0.5 text-warn">
-                          <VolumeX className="size-3" /> no sound
+                          <VolumeX className="size-3" />{' '}{tt('no sound')}
                         </span>
                       ) : (
                         <span className="flex items-center gap-0.5">
-                          <AudioLines className="size-3" /> sound
+                          <AudioLines className="size-3" />{' '}{tt('sound')}
                         </span>
                       )}
                     </span>
@@ -114,32 +116,32 @@ export function MulticamDialog() {
             })}
           </div>
         </div>
-        <Row label="Name">
+        <Row label={tt('Name')}>
           <Input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.stopPropagation()} disabled={busy !== null} />
         </Row>
-        <Row label="Line up by">
+        <Row label={tt('Line up by')}>
           <Segmented
             value={sync}
             onChange={setSync}
             options={[
-              { value: 'sound', label: 'Their sound' },
-              { value: 'start', label: 'Start of each file' },
+              { value: 'sound', label: tt('Their sound') },
+              { value: 'start', label: tt('Start of each file') },
             ]}
           />
         </Row>
-        <Row label="Sound from">
+        <Row label={tt('Sound from')}>
           <Select
-            aria-label="Sound from"
+            aria-label={tt('Sound from')}
             value={audio}
             onChange={setAudio}
             className="w-full"
-            options={[{ value: 'auto', label: 'The longest recording with sound' }, ...angles.filter((a) => a.hasAudio !== false).map((a) => ({ value: a.id, label: a.name }))]}
+            options={[{ value: 'auto', label: tt('The longest recording with sound') }, ...angles.filter((a) => a.hasAudio !== false).map((a) => ({ value: a.id, label: a.name }))]}
           />
         </Row>
         <p className="text-2xs leading-relaxed text-fg-4">
           {sync === 'sound'
-            ? 'Lumen listens to every recording and lines them up by what they heard — claps, speech, music — to about a millisecond. Each camera’s sound is kept (muted) in the multicam timeline.'
-            : 'Every file starts at the same moment — for recorders started together or with matching timecode.'}
+            ? tt('Lumen listens to every recording and lines them up by what they heard — claps, speech, music — to about a millisecond. Each camera’s sound is kept (muted) in the multicam timeline.')
+            : tt('Every file starts at the same moment — for recorders started together or with matching timecode.')}
         </p>
       </div>
       <div className="flex items-center gap-3 border-t border-line bg-black/15 px-5 py-3.5">
@@ -149,17 +151,17 @@ export function MulticamDialog() {
               <div className="h-full rounded-full bg-gradient-to-r from-accent to-ai-2 transition-[width] duration-150" style={{ width: `${Math.max(4, busy * 100)}%` }} />
             </div>
             <div className="mt-1.5 flex items-center gap-1.5 text-2xs text-fg-4">
-              <LoaderCircle className="size-3 animate-spin" /> Listening to the recordings…
+              <LoaderCircle className="size-3 animate-spin" />{' '}{tt('Listening to the recordings…')}
             </div>
           </div>
         ) : (
-          <div className="flex-1 text-xs text-fg-4">{angles.length >= 2 ? `${plural(angles.length)} → one clip on the main track at the playhead` : 'Choose two or more cameras'}</div>
+          <div className="flex-1 text-xs text-fg-4">{angles.length >= 2 ? tt('{0} → one clip on the main track at the playhead', plural(angles.length)) : tt('Choose two or more cameras')}</div>
         )}
         <Button variant="ghost" onClick={close} disabled={busy !== null}>
-          Cancel
+          {tt('Cancel')}
         </Button>
         <Button variant="primary" onClick={() => void create()} disabled={angles.length < 2 || busy !== null || !name.trim()}>
-          <Video /> Create
+          <Video />{' '}{tt('Create')}
         </Button>
       </div>
     </Dialog>

@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider'
 import { clipClicks, highlightClicks, zoomOnClicks } from '@/capture/click-actions'
 import { useEditor } from '@/editor/store'
 import type { Clip } from '@/editor/types'
+import { tt } from '@/lib/i18n'
 
 /** A screen recording's clicks: zoom in on them, or draw a pulse on each. Shown for clips whose recording kept click data. */
 export function ClicksSection({ clip }: { clip: Clip }) {
@@ -23,27 +24,27 @@ export function ClicksSection({ clip }: { clip: Clip }) {
     }
   }
   return (
-    <Section title="Clicks" icon={<MousePointerClick />} defaultOpen>
+    <Section title={tt('Clicks')} icon={<MousePointerClick />} defaultOpen>
       <div className="space-y-2">
         <p className="text-2xs leading-relaxed text-fg-4">
-          {clicks ? `This recording kept ${clicks} click${clicks === 1 ? '' : 's'} inside this clip. Zoom in on them, or draw a pulse where each landed.` : 'This recording kept its clicks, but none fall inside this clip.'}
+          {clicks ? tt('This recording kept {0} click{1} inside this clip. Zoom in on them, or draw a pulse where each landed.', clicks, clicks === 1 ? '' : 's') : tt('This recording kept its clicks, but none fall inside this clip.')}
         </p>
-        <Row label="Zoom">
+        <Row label={tt('Zoom')}>
           <Slider value={zoom} min={1.2} max={4} step={0.1} onChange={setZoom} disabled={!clicks} />
           <span className="w-9 shrink-0 text-right text-xs font-medium text-fg-2 tabular">{zoom.toFixed(1)}×</span>
         </Row>
         <div className="flex items-center gap-1.5">
           <Button size="xs" variant="secondary" disabled={!clicks} className="flex-1 justify-center" onClick={() => run('Couldn’t zoom on the clicks', () => zoomOnClicks(clip.id, { zoom }))}>
-            <ZoomIn /> {zoomed ? 'Zoom again' : 'Zoom on clicks'}
+            <ZoomIn /> {zoomed ? tt('Zoom again') : tt('Zoom on clicks')}
           </Button>
           {zoomed && (
-            <IconButton size="xs" label="Remove the zooms" onClick={() => run('Couldn’t remove the zooms', () => zoomOnClicks(clip.id, { clear: true }))}>
+            <IconButton size="xs" label={tt('Remove the zooms')} onClick={() => run('Couldn’t remove the zooms', () => zoomOnClicks(clip.id, { clear: true }))}>
               <X />
             </IconButton>
           )}
         </div>
         <Button size="xs" variant="secondary" disabled={!clicks} className="w-full justify-center" onClick={() => run('Couldn’t highlight the clicks', () => highlightClicks(clip.id))}>
-          <Sparkles /> Highlight clicks
+          <Sparkles />{' '}{tt('Highlight clicks')}
         </Button>
       </div>
     </Section>

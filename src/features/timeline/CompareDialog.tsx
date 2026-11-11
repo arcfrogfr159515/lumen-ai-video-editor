@@ -25,6 +25,8 @@ import { clamp } from '@/lib/math'
 import { formatDuration, formatTimecode } from '@/lib/time'
 import { CLIP_COLOR } from './model'
 import { cssColor } from './strips'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const HUNK_COLOR: Record<Hunk['kind'], string> = { changed: 'var(--color-warn)', added: 'var(--color-ok)', removed: 'var(--color-danger)' }
 const HUNK_WORD: Record<Hunk['kind'], string> = { changed: 'Different', added: 'Only there', removed: 'Only here' }
@@ -33,7 +35,7 @@ export function CompareDialog() {
   const open = useTimelineView((s) => s.compareOpen)
   const set = useTimelineView((s) => s.set)
   return (
-    <Dialog open={open} onOpenChange={(o) => set({ compareOpen: o })} title="Compare versions" description="This timeline beside another: where they differ, and what to take from it." className="w-[min(1040px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={(o) => set({ compareOpen: o })} title={tt('Compare versions')} description={tt('This timeline beside another: where they differ, and what to take from it.')} className="w-[min(1040px,calc(100vw-32px))]">
       {open && <Body />}
     </Dialog>
   )
@@ -87,7 +89,7 @@ function Body() {
     if (!res.ok) return void toast(res.error)
     // The branch opens: what it is compared with is where it came from.
     setOtherId(openId)
-    toast.success('Branched', { description: 'You are now on the branch. Edit it, then compare to take back what works.' })
+    toast.success(tt('Branched'), { description: tt('You are now on the branch. Edit it, then compare to take back what works.') })
   }
   const take = (hunks: Hunk[]) => {
     if (!other) return
@@ -100,7 +102,7 @@ function Body() {
       }
     })
     if (failed) toast.error(failed)
-    else toast.success(hunks.length === 1 ? 'Taken into this timeline' : `Took ${hunks.length} stretches`, { description: 'One undo step.' })
+    else toast.success(hunks.length === 1 ? tt('Taken into this timeline') : tt('Took {0} stretches', hunks.length), { description: tt('One undo step.') })
   }
   const jump = (dir: 1 | -1) => {
     if (!diff) return
@@ -114,10 +116,10 @@ function Body() {
       <div className="px-5 pb-6">
         <div className="rounded-xl bg-white/[0.03] p-5 text-center">
           <GitBranch className="mx-auto size-6 text-fg-3" />
-          <p className="mt-2 text-sm font-medium text-fg">There is only one version of this timeline</p>
-          <p className="mx-auto mt-1 max-w-[440px] text-xs leading-relaxed text-fg-3">A branch is a full copy to try another cut on. Edit the branch freely; then compare the two here and take back the stretches that work better.</p>
+          <p className="mt-2 text-sm font-medium text-fg">{tt('There is only one version of this timeline')}</p>
+          <p className="mx-auto mt-1 max-w-[440px] text-xs leading-relaxed text-fg-3">{tt('A branch is a full copy to try another cut on. Edit the branch freely; then compare the two here and take back the stretches that work better.')}</p>
           <Button variant="primary" className="mt-4" onClick={branch}>
-            <GitBranch /> Branch this timeline
+            <GitBranch />{' '}{tt('Branch this timeline')}
           </Button>
         </div>
       </div>
@@ -126,22 +128,22 @@ function Body() {
   return (
     <div className="max-h-[calc(100vh-130px)] space-y-3 overflow-y-auto px-5 pb-5" data-compare>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-fg-3">Compare with</span>
+        <span className="text-xs text-fg-3">{tt('Compare with')}</span>
         <Select
-          aria-label="The version to compare with"
+          aria-label={tt('The version to compare with')}
           className="w-[260px]"
           value={otherId ?? ''}
           onChange={(v) => (setOtherId(v), setPlaying(false))}
-          options={others.map((s) => ({ value: s.id, label: s.name, hint: s.branchOf?.sequenceId === openId ? 'A branch of this timeline' : project.sequence?.branchOf?.sequenceId === s.id ? 'Where this branch came from' : undefined }))}
+          options={others.map((s) => ({ value: s.id, label: s.name, hint: s.branchOf?.sequenceId === openId ? tt('A branch of this timeline') : project.sequence?.branchOf?.sequenceId === s.id ? tt('Where this branch came from') : undefined }))}
         />
         <Button size="sm" variant="secondary" className="ml-auto" onClick={branch}>
-          <GitBranch /> Branch this timeline
+          <GitBranch />{' '}{tt('Branch this timeline')}
         </Button>
       </div>
 
       {!other ? null : !comparable ? (
         <p className="rounded-lg bg-warn/10 px-3 py-2 text-sm text-fg-2">
-          “{other.name}” runs at {other.settings.fps} fps and this timeline at {fps}. Their frames don’t line up, so they can’t be compared stretch by stretch.
+          {ttx('“{0}” runs at {1} fps and this timeline at {2}. Their frames don’t line up, so they can’t be compared stretch by stretch.', other.name, other.settings.fps, fps)}
         </p>
       ) : diff ? (
         <>
@@ -153,23 +155,23 @@ function Body() {
           <Strips mine={mine} other={other} diff={diff} at={at} there={there} onSeek={(f) => (setPlaying(false), setPos(f))} />
 
           <div className="flex items-center gap-1">
-            <IconButton size="sm" label="Previous difference" onClick={() => jump(-1)} disabled={!diff.hunks.length}>
+            <IconButton size="sm" label={tt('Previous difference')} onClick={() => jump(-1)} disabled={!diff.hunks.length}>
               <SkipBack />
             </IconButton>
-            <IconButton size="sm" label={playing ? 'Pause' : 'Play both in step (pictures only)'} onClick={() => (at >= length - 1 && !playing ? (setPos(0), setPlaying(true)) : setPlaying(!playing))}>
+            <IconButton size="sm" label={playing ? tt('Pause') : tt('Play both in step (pictures only)')} onClick={() => (at >= length - 1 && !playing ? (setPos(0), setPlaying(true)) : setPlaying(!playing))}>
               {playing ? <Pause /> : <Play />}
             </IconButton>
-            <IconButton size="sm" label="Next difference" onClick={() => jump(1)} disabled={!diff.hunks.length}>
+            <IconButton size="sm" label={tt('Next difference')} onClick={() => jump(1)} disabled={!diff.hunks.length}>
               <SkipForward />
             </IconButton>
             <span className="ml-2 text-xs text-fg-3" data-compare-summary>
               {diff.hunks.length === 0
-                ? 'The two play exactly the same.'
-                : `${diff.hunks.length} stretch${diff.hunks.length === 1 ? '' : 'es'} differ: ${formatDuration(diff.framesA, fps)} here, ${formatDuration(diff.framesB, fps)} there.`}
+                ? tt('The two play exactly the same.')
+                : tt('{0} stretch{1} differ: {2} here, {3} there.', diff.hunks.length, diff.hunks.length === 1 ? '' : tt('es'), formatDuration(diff.framesA, fps), formatDuration(diff.framesB, fps))}
             </span>
             {diff.hunks.length > 1 && (
               <Button size="sm" variant="secondary" className="ml-auto" onClick={() => take(diff.hunks)}>
-                <ArrowDownToLine /> Take all {diff.hunks.length}
+                <ArrowDownToLine />{' '}{ttx('Take all {0}', diff.hunks.length)}
               </Button>
             )}
           </div>
@@ -182,16 +184,16 @@ function Body() {
                 return (
                   <li key={`${h.a[0]}:${h.b[0]}:${h.kind}`} className={cn('flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]', inHunk === h && 'bg-white/[0.07]')}>
                     <span className="h-6 w-1 shrink-0 rounded-full" style={{ background: HUNK_COLOR[h.kind] }} />
-                    <button type="button" onClick={() => (setPlaying(false), setPos(h.a[0]))} title="Show this stretch" className="min-w-0 flex-1 rounded text-left outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60">
+                    <button type="button" onClick={() => (setPlaying(false), setPos(h.a[0]))} title={tt('Show this stretch')} className="min-w-0 flex-1 rounded text-left outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60">
                       <span className="block truncate text-sm text-fg-2">
                         {HUNK_WORD[h.kind]} <span className="text-fg-4">·</span> <span className="font-mono text-xs tabular">{here}</span>
                       </span>
                       <span className="block truncate text-2xs text-fg-4">
-                        There: <span className="font-mono tabular">{thereText}</span>
+                        {tt('There:')}{' '}<span className="font-mono tabular">{thereText}</span>
                       </span>
                     </button>
-                    <Button size="xs" variant="secondary" onClick={() => take([h])} title={h.kind === 'removed' ? 'Take this stretch out of this timeline, as the other version has' : 'Make this timeline play what the other version plays here'}>
-                      <ArrowDownToLine /> {h.kind === 'removed' ? 'Remove here too' : 'Take theirs'}
+                    <Button size="xs" variant="secondary" onClick={() => take([h])} title={h.kind === 'removed' ? tt('Take this stretch out of this timeline, as the other version has') : tt('Make this timeline play what the other version plays here')}>
+                      <ArrowDownToLine /> {h.kind === 'removed' ? tt('Remove here too') : tt('Take theirs')}
                     </Button>
                   </li>
                 )

@@ -12,6 +12,8 @@ import { renderMotion, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
 import { Unavailable } from './Generate3D'
 import { Chip, SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 type Template = Exclude<MotionTemplate, 'custom'>
 
@@ -24,16 +26,16 @@ const PREVIEWS: Record<Template, ReactNode> = {
   'lower-third': (
     <div className="absolute bottom-[16%] left-[9%] text-white">
       <span className="block text-[13px] leading-none" style={serif}>
-        Ada Lovelace
+        {tt('Ada Lovelace')}
       </span>
       <span className="my-[4px] block h-px w-5 bg-accent" />
-      <span className="block text-[5px] font-semibold tracking-[0.22em] text-white/70 uppercase">Mathematician</span>
+      <span className="block text-[5px] font-semibold tracking-[0.22em] text-white/70 uppercase">{tt('Mathematician')}</span>
     </div>
   ),
   'title-card': (
     <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
       <span className="text-[17px] leading-none font-light" style={serif}>
-        The <em className="text-accent">quiet</em> hour
+        {tt('The')}{' '}<em className="text-accent">{tt('quiet')}</em>{' '}{tt('hour')}
       </span>
       <span className="mt-1.5 h-px w-4 bg-accent" />
     </div>
@@ -41,7 +43,7 @@ const PREVIEWS: Record<Template, ReactNode> = {
   kinetic: (
     <div className="absolute inset-0 grid place-items-center">
       <span className="text-[21px] leading-none font-extrabold tracking-tighter text-accent uppercase" style={{ fontFamily: '"Archivo Variable"', fontStretch: '125%' }}>
-        Loud
+        {tt('Loud')}
       </span>
     </div>
   ),
@@ -62,7 +64,7 @@ const PREVIEWS: Record<Template, ReactNode> = {
         “
       </span>
       <span className="text-[8px] leading-tight" style={serif}>
-        Simplicity is the ultimate sophistication.
+        {tt('Simplicity is the ultimate sophistication.')}
       </span>
     </div>
   ),
@@ -71,19 +73,19 @@ const PREVIEWS: Record<Template, ReactNode> = {
       <span className="block font-mono text-[5px] tracking-[0.2em] text-accent">02</span>
       <span className="my-[3px] block h-px w-8 bg-white/80" />
       <span className="block text-[11px] leading-none font-semibold tracking-tight" style={art}>
-        The Build
+        {tt('The Build')}
       </span>
     </div>
   ),
 }
 
 const TEMPLATES: { id: Template; label: string }[] = [
-  { id: 'lower-third', label: 'Lower third' },
-  { id: 'title-card', label: 'Title card' },
-  { id: 'kinetic', label: 'Kinetic type' },
-  { id: 'counter', label: 'Counter' },
-  { id: 'quote', label: 'Pull quote' },
-  { id: 'chapter', label: 'Chapter' },
+  { id: 'lower-third', label: tt('Lower third') },
+  { id: 'title-card', label: tt('Title card') },
+  { id: 'kinetic', label: tt('Kinetic type') },
+  { id: 'counter', label: tt('Counter') },
+  { id: 'quote', label: tt('Pull quote') },
+  { id: 'chapter', label: tt('Chapter') },
 ]
 
 const STYLES: Partial<Record<Template, string[]>> = {
@@ -93,13 +95,13 @@ const STYLES: Partial<Record<Template, string[]>> = {
 }
 
 const FONTS: { id: string; label: string; css: string }[] = [
-  { id: 'editorial', label: 'Fraunces', css: '"Fraunces Variable", serif' },
-  { id: 'serif', label: 'Instrument', css: '"Instrument Serif", serif' },
-  { id: 'display', label: 'Bricolage', css: '"Bricolage Grotesque Variable", sans-serif' },
-  { id: 'art', label: 'Syne', css: '"Syne Variable", sans-serif' },
-  { id: 'wide', label: 'Archivo', css: '"Archivo Variable", sans-serif' },
-  { id: 'tech', label: 'Space Grotesk', css: '"Space Grotesk Variable", sans-serif' },
-  { id: 'sans', label: 'Geist', css: '"Geist Variable", sans-serif' },
+  { id: 'editorial', label: tt('Fraunces'), css: '"Fraunces Variable", serif' },
+  { id: 'serif', label: tt('Instrument'), css: '"Instrument Serif", serif' },
+  { id: 'display', label: tt('Bricolage'), css: '"Bricolage Grotesque Variable", sans-serif' },
+  { id: 'art', label: tt('Syne'), css: '"Syne Variable", sans-serif' },
+  { id: 'wide', label: tt('Archivo'), css: '"Archivo Variable", sans-serif' },
+  { id: 'tech', label: tt('Space Grotesk'), css: '"Space Grotesk Variable", sans-serif' },
+  { id: 'sans', label: tt('Geist'), css: '"Geist Variable", sans-serif' },
 ]
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
@@ -135,12 +137,12 @@ export function GenerateMotion() {
   const settings = useEditor((s) => s.project.settings)
   const [template, setTemplate] = useState<Template>('lower-third')
   const [values, setValues] = useState<Record<Template, Record<string, unknown>>>({
-    'lower-third': { name: 'Your Name', title: 'Your role', accent: '#d6ee00', style: 'editorial' },
-    'title-card': { title: 'Your *title*', subtitle: '', eyebrow: '', accent: '#d6ee00', style: 'editorial', font: 'editorial' },
+    'lower-third': { name: 'Your Name', title: tt('Your role'), accent: '#d6ee00', style: 'editorial' },
+    'title-card': { title: tt('Your *title*'), subtitle: '', eyebrow: '', accent: '#d6ee00', style: 'editorial', font: 'editorial' },
     kinetic: { text: 'Say it *loud*', style: 'punch', accent: '#d6ee00' },
     counter: { value: 100, suffix: '%', label: '', accent: '#d6ee00' },
     quote: { text: 'Simplicity is the ultimate sophistication.', author: '', accent: '#d6ee00', font: 'editorial' },
-    chapter: { number: '01', title: 'Chapter title', accent: '#d6ee00', font: 'display' },
+    chapter: { number: '01', title: tt('Chapter title'), accent: '#d6ee00', font: 'display' },
   })
   const [busy, setBusy] = useState(false)
   const v = values[template]
@@ -156,7 +158,7 @@ export function GenerateMotion() {
     try {
       await renderMotion({ template, params: v, name: nameFor(template, v).slice(0, 60), prompt: JSON.stringify(v) })
     } catch (err) {
-      toast.error('Couldn’t start the render', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t start the render'), { description: err instanceof Error ? err.message : String(err) })
     } finally {
       setBusy(false)
     }
@@ -187,8 +189,8 @@ export function GenerateMotion() {
 
         {template === 'lower-third' && (
           <>
-            <Labeled label="Name">{text('name', 'Name')}</Labeled>
-            <Labeled label="Title">{text('title', 'Role or title')}</Labeled>
+            <Labeled label={tt('Name')}>{text('name', 'Name')}</Labeled>
+            <Labeled label={tt('Title')}>{text('title', 'Role or title')}</Labeled>
             <div className="flex gap-1">
               {(['left', 'right'] as const).map((a) => (
                 <Chip key={a} active={(v.align ?? 'left') === a} onClick={() => set('align', a)}>
@@ -200,45 +202,45 @@ export function GenerateMotion() {
         )}
         {template === 'title-card' && (
           <>
-            <Labeled label="Title">{text('title', 'Title — | breaks a line, *word* for emphasis')}</Labeled>
-            <Labeled label="Subtitle">{text('subtitle', 'Optional')}</Labeled>
-            <Labeled label="Eyebrow">{text('eyebrow', 'Optional small line above')}</Labeled>
+            <Labeled label={tt('Title')}>{text('title', 'Title — | breaks a line, *word* for emphasis')}</Labeled>
+            <Labeled label={tt('Subtitle')}>{text('subtitle', 'Optional')}</Labeled>
+            <Labeled label={tt('Eyebrow')}>{text('eyebrow', 'Optional small line above')}</Labeled>
           </>
         )}
         {template === 'kinetic' && (
           <>
-            <Labeled label="Words">{text('text', 'Words, *emphasis* in stars')}</Labeled>
-            <p className="-mt-2 text-2xs text-fg-4">Wrap a word in *stars* to highlight it.</p>
+            <Labeled label={tt('Words')}>{text('text', 'Words, *emphasis* in stars')}</Labeled>
+            <p className="-mt-2 text-2xs text-fg-4">{tt('Wrap a word in *stars* to highlight it.')}</p>
           </>
         )}
         {template === 'counter' && (
           <>
             <div className="grid grid-cols-[1fr_64px_64px] gap-2">
-              <Labeled label="Value">
+              <Labeled label={tt('Value')}>
                 <Input type="number" value={String(v.value ?? '')} onChange={(e) => set('value', Number(e.target.value))} />
               </Labeled>
-              <Labeled label="Prefix">{text('prefix', '$')}</Labeled>
-              <Labeled label="Suffix">{text('suffix', '%')}</Labeled>
+              <Labeled label={tt('Prefix')}>{text('prefix', '$')}</Labeled>
+              <Labeled label={tt('Suffix')}>{text('suffix', '%')}</Labeled>
             </div>
-            <Labeled label="Label">{text('label', 'What the number means')}</Labeled>
+            <Labeled label={tt('Label')}>{text('label', 'What the number means')}</Labeled>
           </>
         )}
         {template === 'quote' && (
           <>
-            <Labeled label="Quote">{text('text', 'The words')}</Labeled>
-            <Labeled label="Who said it">{text('author', 'Optional')}</Labeled>
+            <Labeled label={tt('Quote')}>{text('text', 'The words')}</Labeled>
+            <Labeled label={tt('Who said it')}>{text('author', 'Optional')}</Labeled>
           </>
         )}
         {template === 'chapter' && (
           <div className="grid grid-cols-[64px_1fr] gap-2">
-            <Labeled label="No.">{text('number', '01')}</Labeled>
-            <Labeled label="Title">{text('title', 'Chapter title')}</Labeled>
+            <Labeled label={tt('No.')}>{text('number', '01')}</Labeled>
+            <Labeled label={tt('Title')}>{text('title', 'Chapter title')}</Labeled>
           </div>
         )}
 
         {styles && (
           <div>
-            <span className="mb-1.5 block text-2xs font-semibold tracking-wider text-fg-4 uppercase">Style</span>
+            <span className="mb-1.5 block text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('Style')}</span>
             <div className="flex flex-wrap gap-1">
               {styles.map((s) => (
                 <Chip key={s} active={(v.style ?? styles[0]) === s} onClick={() => set('style', s)}>
@@ -250,7 +252,7 @@ export function GenerateMotion() {
         )}
         {template !== 'kinetic' || v.style !== 'stretch' ? (
           <div>
-            <span className="mb-1.5 block text-2xs font-semibold tracking-wider text-fg-4 uppercase">Typeface</span>
+            <span className="mb-1.5 block text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('Typeface')}</span>
             <div className="flex flex-wrap gap-1">
               {FONTS.map((f) => (
                 <Chip key={f.id} active={v.font === f.id} onClick={() => set('font', v.font === f.id ? undefined : f.id)}>
@@ -261,27 +263,27 @@ export function GenerateMotion() {
           </div>
         ) : null}
         {usesBpm && (
-          <Labeled label="Tempo (BPM) — words land on the beat">
-            <Input type="number" min={40} max={240} value={v.bpm === undefined ? '' : String(v.bpm)} onChange={(e) => set('bpm', e.target.value ? Number(e.target.value) : undefined)} placeholder="Optional, e.g. 120" />
+          <Labeled label={tt('Tempo (BPM) — words land on the beat')}>
+            <Input type="number" min={40} max={240} value={v.bpm === undefined ? '' : String(v.bpm)} onChange={(e) => set('bpm', e.target.value ? Number(e.target.value) : undefined)} placeholder={tt('Optional, e.g. 120')} />
           </Labeled>
         )}
         <div>
-          <span className="mb-1.5 block text-2xs font-semibold tracking-wider text-fg-4 uppercase">Accent</span>
+          <span className="mb-1.5 block text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('Accent')}</span>
           <ColorSwatches value={String(v.accent ?? '#d6ee00')} onChange={(c) => c && set('accent', c)} />
         </div>
 
         <Button variant="ai" size="lg" className="w-full" disabled={busy} onClick={render}>
           {busy ? <LoaderCircle className="animate-spin" /> : <Clapperboard />}
-          Render motion graphic
+          {tt('Render motion graphic')}
         </Button>
         <p className="-mt-2 text-center text-2xs text-fg-4">
-          HyperFrames · {settings.width}×{settings.height} · transparent
+          {ttx('HyperFrames · {0}×{1} · transparent', settings.width, settings.height)}
         </p>
       </div>
 
       <div className="px-3.5 pb-4">
-        <SectionLabel>Renders</SectionLabel>
-        {!list.length && <p className="rounded-xl border border-dashed border-line-2 px-4 py-6 text-center text-xs leading-relaxed text-fg-4">Motion graphics render in a few seconds and drop into your media, ready to layer over footage.</p>}
+        <SectionLabel>{tt('Renders')}</SectionLabel>
+        {!list.length && <p className="rounded-xl border border-dashed border-line-2 px-4 py-6 text-center text-xs leading-relaxed text-fg-4">{tt('Motion graphics render in a few seconds and drop into your media, ready to layer over footage.')}</p>}
         <div className="space-y-2.5">
           <AnimatePresence initial={false}>
             {list.map((job) => (

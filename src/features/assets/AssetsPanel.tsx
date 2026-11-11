@@ -14,16 +14,17 @@ import { NotesPanel } from '@/features/notes/NotesPanel'
 import { ScriptPanel } from '@/features/script/ScriptPanel'
 import { TextPanel } from './TextPanel'
 import { TransitionsPanel } from './TransitionsPanel'
+import { tt } from '@/lib/i18n'
 
 const TABS: { id: LeftTab; label: string; icon: ReactNode; hint: string }[] = [
-  { id: 'media', label: 'Media', icon: <Clapperboard />, hint: 'Your footage, photos & audio' },
-  { id: 'audio', label: 'Audio', icon: <Music />, hint: 'Music & sound effects' },
-  { id: 'text', label: 'Text', icon: <Type />, hint: 'Titles & captions' },
-  { id: 'effects', label: 'Effects', icon: <Sparkles />, hint: 'Blur, glow, grain & more' },
-  { id: 'transitions', label: 'Transitions', icon: <Blend />, hint: 'Between shots' },
-  { id: 'looks', label: 'Looks', icon: <Aperture />, hint: 'One-click color grades' },
-  { id: 'script', label: 'Script', icon: <ScrollText />, hint: 'What is said — delete words to cut the film' },
-  { id: 'notes', label: 'Notes', icon: <ListChecks />, hint: 'Markers, to-dos & clip notes' },
+  { id: 'media', label: tt('Media'), icon: <Clapperboard />, hint: tt('Your footage, photos & audio') },
+  { id: 'audio', label: tt('Audio'), icon: <Music />, hint: tt('Music & sound effects') },
+  { id: 'text', label: tt('Text'), icon: <Type />, hint: tt('Titles & captions') },
+  { id: 'effects', label: tt('Effects'), icon: <Sparkles />, hint: tt('Blur, glow, grain & more') },
+  { id: 'transitions', label: tt('Transitions'), icon: <Blend />, hint: tt('Between shots') },
+  { id: 'looks', label: tt('Looks'), icon: <Aperture />, hint: tt('One-click color grades') },
+  { id: 'script', label: tt('Script'), icon: <ScrollText />, hint: tt('What is said — delete words to cut the film') },
+  { id: 'notes', label: tt('Notes'), icon: <ListChecks />, hint: tt('Markers, to-dos & clip notes') },
 ]
 
 export function AssetsPanel() {
@@ -41,7 +42,7 @@ export function AssetsPanel() {
       {/* The rail is as tall as the panel, and the panel as short as the window makes it: where the tabs don't fit
           with their names, they are drawn without (the name is in the tip and read out), and where they still don't
           fit, they scroll. Generate keeps its place at the foot either way. */}
-      <nav aria-label="Library" className="flex w-rail shrink-0 flex-col items-center gap-0.5 border-r border-line py-2 [container-type:size]">
+      <nav aria-label={tt('Library')} className="flex w-rail shrink-0 flex-col items-center gap-0.5 border-r border-line py-2 [container-type:size]">
         <div ref={tabs} className="scrollbar-none flex min-h-0 flex-1 flex-col items-center gap-0.5 overflow-y-auto">
           {TABS.map((t) => (
             <RailButton key={t.id} active={tab === t.id} onClick={() => setTab(t.id)} label={t.label} hint={t.hint}>
@@ -49,7 +50,7 @@ export function AssetsPanel() {
             </RailButton>
           ))}
         </div>
-        <RailButton active={tab === 'generate'} onClick={() => setTab('generate')} label="Generate" hint="AI images, video, voice & music" ai>
+        <RailButton active={tab === 'generate'} onClick={() => setTab('generate')} label={tt('Generate')} hint={tt('AI images, video, voice & music')} ai>
           {tab === 'generate' ? <WandSparkles /> : <AiSparkle className="!size-[18px]" />}
         </RailButton>
       </nav>

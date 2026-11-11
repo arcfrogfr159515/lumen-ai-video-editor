@@ -1,6 +1,7 @@
 import { Search, X } from 'lucide-react'
 import { forwardRef, type InputHTMLAttributes } from 'react'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {
   return (
@@ -29,7 +30,7 @@ export function SearchInput({ value, onChange, className, ...props }: SearchInpu
       {value && (
         <button
           type="button"
-          aria-label="Clear search"
+          aria-label={tt('Clear search')}
           onClick={() => onChange('')}
           className="absolute top-1/2 right-1.5 grid size-5 -translate-y-1/2 place-items-center rounded-md text-fg-4 hover:bg-white/[0.08] hover:text-fg-2"
         >

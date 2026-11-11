@@ -30,6 +30,8 @@ import { Generate3D } from './Generate3D'
 import { GenerateMotion } from './GenerateMotion'
 import { useGenerate, type GenerateMode } from './generate-store'
 import { Chip, PanelHeader, SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 type Mode = GenerateMode
 
@@ -52,8 +54,8 @@ export function GeneratePanel() {
   const engine = useGenerate((s) => s.engine)
   return (
     <>
-      <PanelHeader title="Generate" accent>
-        <IconButton label="Integrations" onClick={() => openIntegrations()}>
+      <PanelHeader title={tt('Generate')} accent>
+        <IconButton label={tt('Integrations')} onClick={() => openIntegrations()}>
           <Plug />
         </IconButton>
       </PanelHeader>
@@ -64,9 +66,9 @@ export function GeneratePanel() {
           value={engine}
           onChange={(e) => useGenerate.setState({ engine: e })}
           options={[
-            { value: 'media', icon: <Sparkles />, label: 'Media' },
+            { value: 'media', icon: <Sparkles />, label: tt('Media') },
             { value: '3d', icon: <Box />, label: '3D' },
-            { value: 'motion', icon: <Clapperboard />, label: 'Motion' },
+            { value: 'motion', icon: <Clapperboard />, label: tt('Motion') },
           ]}
         />
       </div>
@@ -95,7 +97,7 @@ function useGenerators(mode: Mode): Generator[] {
       if (!(provider === 'openai' ? openai : gemini)) continue
       for (const model of models[provider]?.[mode] ?? []) out.push({ id: `${provider}/${model}`, type: 'model', provider, model, label: `${PROVIDER_NAME[provider]} · ${model}` })
     }
-  } else if (eleven) out.push({ id: 'elevenlabs', type: 'elevenlabs', label: 'ElevenLabs' })
+  } else if (eleven) out.push({ id: 'elevenlabs', type: 'elevenlabs', label: tt('ElevenLabs') })
   const media = mode === 'voice' ? /speech|voice|tts|narrat/ : mode === 'music' ? /music|song|audio/ : mode === 'sfx' ? /sound|sfx|audio|effect/ : mode === 'image' ? /image|picture|photo|flux|still/ : /video|animate|clip|motion|kling|veo|sora|runway|luma|hailuo/
   for (const t of generatorTools(servers)) {
     const text = `${t.tool.name} ${t.tool.title ?? ''} ${t.tool.description ?? ''}`.toLowerCase()
@@ -165,7 +167,7 @@ function MediaGenerator() {
       else await elevenSfx({ prompt: text, durationSeconds: sfxLength || undefined, loop })
       if (gen.type !== 'mcp') setPrompt('')
     } catch (err) {
-      toast.error('Couldn’t start the generation', { description: err instanceof Error ? err.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(err) })
+      toast.error(tt('Couldn’t start the generation'), { description: err instanceof Error ? err.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(err) })
     } finally {
       setBusy(false)
     }
@@ -184,18 +186,18 @@ function MediaGenerator() {
           value={mode}
           onChange={setMode}
           options={[
-            { value: 'video', label: 'Video' },
-            { value: 'image', label: 'Image' },
-            { value: 'voice', label: 'Voice' },
-            { value: 'music', label: 'Music' },
-            { value: 'sfx', label: 'SFX' },
+            { value: 'video', label: tt('Video') },
+            { value: 'image', label: tt('Image') },
+            { value: 'voice', label: tt('Voice') },
+            { value: 'music', label: tt('Music') },
+            { value: 'sfx', label: tt('SFX') },
           ]}
         />
 
         {generators.length > 0 ? (
-          <Select aria-label="Generator" value={gen?.id ?? ''} onChange={pick} size="md" className="w-full" options={generators.map((g) => ({ value: g.id, label: g.label }))} />
+          <Select aria-label={tt('Generator')} value={gen?.id ?? ''} onChange={pick} size="md" className="w-full" options={generators.map((g) => ({ value: g.id, label: g.label }))} />
         ) : loading ? (
-          <div className="rounded-xl bg-white/[0.025] px-3 py-3 text-xs text-fg-4">Looking up the models your keys can use…</div>
+          <div className="rounded-xl bg-white/[0.025] px-3 py-3 text-xs text-fg-4">{tt('Looking up the models your keys can use…')}</div>
         ) : (
           <ConnectCards mode={mode} />
         )}
@@ -225,16 +227,16 @@ function MediaGenerator() {
             </div>
 
             {(mode === 'image' || mode === 'video') && (
-              <Options label="Shape">
+              <Options label={tt('Shape')}>
                 {(mode === 'image' ? (['16:9', '9:16', '1:1'] as const) : (['16:9', '9:16'] as const)).map((a) => (
                   <Chip key={a} active={aspect === a} onClick={() => setAspect(a)}>
-                    {a === '16:9' ? 'Landscape' : a === '9:16' ? 'Vertical' : 'Square'}
+                    {a === '16:9' ? tt('Landscape') : a === '9:16' ? tt('Vertical') : tt('Square')}
                   </Chip>
                 ))}
               </Options>
             )}
             {mode === 'video' && (
-              <Options label="Length">
+              <Options label={tt('Length')}>
                 {durations.map((d) => (
                   <Chip key={d} active={seconds === d} onClick={() => setSeconds(d)}>
                     {d}s
@@ -243,7 +245,7 @@ function MediaGenerator() {
               </Options>
             )}
             {mode === 'video' && gen.type === 'model' && gen.provider === 'gemini' && (
-              <Options label="Quality">
+              <Options label={tt('Quality')}>
                 {(['720p', '1080p'] as const).map((r) => (
                   <Chip key={r} active={resolution === r} onClick={() => setResolution(r)}>
                     {r}
@@ -253,15 +255,15 @@ function MediaGenerator() {
             )}
             {mode === 'voice' && (
               <div className="grid grid-cols-[1fr_auto] gap-2">
-                <Select aria-label="Voice" value={voice?.id ?? ''} onChange={setVoiceId} size="md" options={voices.map((v) => ({ value: v.id, label: `${v.name}${v.labels?.accent ? ` · ${v.labels.accent}` : ''}` }))} />
+                <Select aria-label={tt('Voice')} value={voice?.id ?? ''} onChange={setVoiceId} size="md" options={voices.map((v) => ({ value: v.id, label: `${v.name}${v.labels?.accent ? ` · ${v.labels.accent}` : ''}` }))} />
                 <Select
-                  aria-label="Voice model"
+                  aria-label={tt('Voice model')}
                   value={voiceModel}
                   onChange={setVoiceModel}
                   size="md"
                   options={[
-                    { value: 'eleven_multilingual_v2', label: 'Multilingual v2' },
-                    { value: 'eleven_flash_v2_5', label: 'Flash v2.5' },
+                    { value: 'eleven_multilingual_v2', label: tt('Multilingual v2') },
+                    { value: 'eleven_flash_v2_5', label: tt('Flash v2.5') },
                   ]}
                 />
               </div>
@@ -271,12 +273,12 @@ function MediaGenerator() {
                 <div className="flex gap-1">
                   {[30, 60, 120].map((d) => (
                     <Chip key={d} active={musicLength === d} onClick={() => setMusicLength(d)}>
-                      {d < 60 ? `${d}s` : `${d / 60} min`}
+                      {d < 60 ? `${d}s` : tt('{0} min', d / 60)}
                     </Chip>
                   ))}
                 </div>
                 <label className="flex items-center gap-2 text-xs text-fg-3">
-                  Instrumental <Switch aria-label="Instrumental" checked={instrumental} onChange={setInstrumental} />
+                  {tt('Instrumental')}{' '}<Switch aria-label={tt('Instrumental')} checked={instrumental} onChange={setInstrumental} />
                 </label>
               </div>
             )}
@@ -285,12 +287,12 @@ function MediaGenerator() {
                 <div className="flex gap-1">
                   {[0, 2, 5, 10].map((d) => (
                     <Chip key={d} active={sfxLength === d} onClick={() => setSfxLength(d)}>
-                      {d ? `${d}s` : 'Auto'}
+                      {d ? `${d}s` : tt('Auto')}
                     </Chip>
                   ))}
                 </div>
                 <label className="flex items-center gap-2 text-xs text-fg-3">
-                  Loop <Switch aria-label="Loop" checked={loop} onChange={setLoop} />
+                  {tt('Loop')}{' '}<Switch aria-label={tt('Loop')} checked={loop} onChange={setLoop} />
                 </label>
               </div>
             )}
@@ -300,12 +302,12 @@ function MediaGenerator() {
         {gen && (
           <Button variant="ai" size="lg" className="w-full" disabled={!canSubmit} onClick={() => void submit()}>
             <AiSparkle className="!size-4 [&_path]:fill-current" />
-            Generate {mode === 'voice' ? 'voiceover' : mode === 'sfx' ? 'sound effect' : mode}
+            {ttx('Generate {0}', mode === 'voice' ? tt('voiceover') : mode === 'sfx' ? tt('sound effect') : mode)}
           </Button>
         )}
         {gen && generators.length > 0 && (
           <button type="button" onClick={() => openIntegrations(mode === 'image' || mode === 'video' ? 'ai-models' : 'elevenlabs')} className="px-1 text-2xs text-fg-4 hover:text-fg-2">
-            Uses your own account · manage in Integrations
+            {tt('Uses your own account · manage in Integrations')}
           </button>
         )}
       </div>
@@ -314,19 +316,19 @@ function MediaGenerator() {
         <SectionLabel
           right={
             jobs.some((j) => j.status !== 'running') ? (
-              <IconButton size="xs" label="Clear finished" onClick={clearFinishedJobs}>
+              <IconButton size="xs" label={tt('Clear finished')} onClick={clearFinishedJobs}>
                 <Trash />
               </IconButton>
             ) : undefined
           }
         >
-          Generations
+          {tt('Generations')}
         </SectionLabel>
         {!jobs.length && (
           <div className="rounded-xl border border-dashed border-line-2 px-4 py-8 text-center">
             <AiSparkle className="mx-auto mb-2 size-6 opacity-80" />
-            <p className="text-sm font-medium text-fg-2">Describe it, and it appears in your media</p>
-            <p className="mt-1 text-xs text-fg-4">Finished generations land in Media, ready to drag onto the timeline.</p>
+            <p className="text-sm font-medium text-fg-2">{tt('Describe it, and it appears in your media')}</p>
+            <p className="mt-1 text-xs text-fg-4">{tt('Finished generations land in Media, ready to drag onto the timeline.')}</p>
           </div>
         )}
         <div className="space-y-2.5">
@@ -355,17 +357,17 @@ function ConnectCards({ mode }: { mode: Mode }) {
   const visual = mode === 'image' || mode === 'video'
   const cards: { icon: ReactNode; title: string; hint: string; focus: string }[] = visual
     ? [
-        { icon: <KeyRound />, title: 'OpenAI key', hint: mode === 'video' ? 'Video models' : 'GPT Image', focus: 'ai-models' },
-        { icon: <KeyRound />, title: 'Google Gemini key', hint: mode === 'video' ? 'Veo video' : 'Gemini image (Nano Banana)', focus: 'ai-models' },
-        { icon: <Plug />, title: 'An MCP generator', hint: 'Higgsfield, fal.ai, Replicate, Runway…', focus: 'catalog:higgsfield' },
+        { icon: <KeyRound />, title: tt('OpenAI key'), hint: mode === 'video' ? tt('Video models') : tt('GPT Image'), focus: 'ai-models' },
+        { icon: <KeyRound />, title: tt('Google Gemini key'), hint: mode === 'video' ? tt('Veo video') : tt('Gemini image (Nano Banana)'), focus: 'ai-models' },
+        { icon: <Plug />, title: tt('An MCP generator'), hint: tt('Higgsfield, fal.ai, Replicate, Runway…'), focus: 'catalog:higgsfield' },
       ]
     : [
-        { icon: <AudioLines />, title: 'ElevenLabs', hint: mode === 'voice' ? 'Voices in any language' : mode === 'music' ? 'Music from a prompt' : 'Sound effects from text', focus: 'elevenlabs' },
-        { icon: <Plug />, title: 'An MCP generator', hint: 'Any server with audio tools', focus: 'catalog:fal' },
+        { icon: <AudioLines />, title: tt('ElevenLabs'), hint: mode === 'voice' ? tt('Voices in any language') : mode === 'music' ? tt('Music from a prompt') : tt('Sound effects from text'), focus: 'elevenlabs' },
+        { icon: <Plug />, title: tt('An MCP generator'), hint: tt('Any server with audio tools'), focus: 'catalog:fal' },
       ]
   return (
     <div className="space-y-1.5">
-      <p className="px-1 text-xs text-fg-3">Connect a service to generate {mode === 'sfx' ? 'sound effects' : mode === 'voice' ? 'voiceovers' : mode}:</p>
+      <p className="px-1 text-xs text-fg-3">{ttx('Connect a service to generate {0}:', mode === 'sfx' ? tt('sound effects') : mode === 'voice' ? tt('voiceovers') : mode)}</p>
       {cards.map((c) => (
         <button
           key={c.title}

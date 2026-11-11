@@ -9,6 +9,7 @@ import { drawEffectPreview } from '@/engine/three/previews'
 import { dnd } from '@/features/dnd'
 import { cn } from '@/lib/cn'
 import { PanelHeader, scrollArea, SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
 
 const NOISE = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="120" height="120" filter="url(#n)" opacity="0.9"/></svg>')}")`
 
@@ -105,11 +106,11 @@ export function EffectsPanel() {
 
   return (
     <>
-      <PanelHeader title="Effects" />
+      <PanelHeader title={tt('Effects')} />
       <div className={scrollArea}>
-        <SectionLabel right={<span className="text-2xs text-fg-4">{selection.length ? `${selection.length} selected` : 'Select a clip'}</span>}>3D</SectionLabel>
+        <SectionLabel right={<span className="text-2xs text-fg-4">{selection.length ? tt('{0} selected', selection.length) : tt('Select a clip')}</span>}>3D</SectionLabel>
         <div className="grid grid-cols-2 gap-x-2.5 gap-y-3">{EFFECTS.filter((e) => e.is3d).map(card)}</div>
-        <SectionLabel>Stylize</SectionLabel>
+        <SectionLabel>{tt('Stylize')}</SectionLabel>
         <div className="grid grid-cols-2 gap-x-2.5 gap-y-3">{EFFECTS.filter((e) => !e.is3d).map(card)}</div>
       </div>
     </>

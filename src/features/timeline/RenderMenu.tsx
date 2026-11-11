@@ -7,6 +7,8 @@ import { RENDER_RES, useUI } from '@/editor/ui-store'
 import { cancelRender, useRenders } from '@/engine/render-cache'
 import { actions } from '@/features/shell/actions'
 import { desktop } from '@/lib/platform'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const blank = <span className="size-4" />
 
@@ -45,18 +47,18 @@ export function RenderMenu() {
           title={job.label}
         >
           <LoaderCircle className="size-3 animate-spin" />
-          <span>Rendering {Math.min(job.done + 1, job.total)}/{job.total}</span>
-          <button type="button" aria-label="Stop rendering" onClick={cancelRender} className="grid size-5 place-items-center rounded-full opacity-80 hover:bg-white/[0.08] hover:opacity-100">
+          <span>{ttx('Rendering {0}/{1}', Math.min(job.done + 1, job.total), job.total)}</span>
+          <button type="button" aria-label={tt('Stop rendering')} onClick={cancelRender} className="grid size-5 place-items-center rounded-full opacity-80 hover:bg-white/[0.08] hover:opacity-100">
             <X className="size-3" />
           </button>
         </div>
       )}
       <Menu onOpenChange={onOpen}>
-        <Tip content="Render previews — heavy stretches then play smoothly">
+        <Tip content={tt('Render previews — heavy stretches then play smoothly')}>
           <MenuTrigger asChild>
             <button
               type="button"
-              aria-label="Render previews"
+              aria-label={tt('Render previews')}
               className="flex h-7 items-center gap-1 rounded-lg px-1.5 text-fg-3 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.08] data-[state=open]:text-fg"
             >
               <Zap className="size-4" />
@@ -65,20 +67,20 @@ export function RenderMenu() {
           </MenuTrigger>
         </Tip>
         <MenuContent align="end" className="w-80">
-          <MenuLabel>Render previews</MenuLabel>
+          <MenuLabel>{tt('Render previews')}</MenuLabel>
           <MenuItem icon={<Zap />} shortcut="enter" onSelect={actions.renderPreviews}>
-            {hasRange ? 'Render in to out' : 'Render the timeline'}
+            {hasRange ? tt('Render in to out') : tt('Render the timeline')}
           </MenuItem>
           {hasRange && (
             <MenuItem icon={blank} onSelect={actions.renderTimeline}>
-              Render the whole timeline
+              {tt('Render the whole timeline')}
             </MenuItem>
           )}
           <MenuItem icon={blank} disabled={!hasSelection} onSelect={actions.renderSelection}>
-            Render the selected clips
+            {tt('Render the selected clips')}
           </MenuItem>
           <MenuSeparator />
-          <MenuLabel>Resolution</MenuLabel>
+          <MenuLabel>{tt('Resolution')}</MenuLabel>
           {RENDER_RES.map((r) => (
             <MenuItem key={r.value} icon={renderRes === r.value ? <Check /> : blank} onSelect={() => useUI.getState().setRenderRes(r.value)}>
               <span className="flex flex-col py-0.5 leading-tight">
@@ -88,31 +90,31 @@ export function RenderMenu() {
             </MenuItem>
           ))}
           <MenuSeparator />
-          <MenuLabel>Scaling up to the viewer</MenuLabel>
+          <MenuLabel>{tt('Scaling up to the viewer')}</MenuLabel>
           <MenuItem icon={upscale === 'sharp' ? <Check /> : blank} onSelect={() => useUI.getState().setUpscale('sharp')}>
             <span className="flex flex-col py-0.5 leading-tight">
-              <span>Sharp</span>
-              <span className="truncate text-2xs text-fg-4">Contrast-adaptive sharpening on the GPU</span>
+              <span>{tt('Sharp')}</span>
+              <span className="truncate text-2xs text-fg-4">{tt('Contrast-adaptive sharpening on the GPU')}</span>
             </span>
           </MenuItem>
           <MenuItem icon={upscale === 'smooth' ? <Check /> : blank} onSelect={() => useUI.getState().setUpscale('smooth')}>
-            Smooth
+            {tt('Smooth')}
           </MenuItem>
           <MenuSeparator />
           <MenuItem icon={backgroundRender ? <Check /> : blank} onSelect={() => useUI.getState().setBackgroundRender(!backgroundRender)}>
-            Render heavy stretches when idle
+            {tt('Render heavy stretches when idle')}
           </MenuItem>
           <MenuItem icon={usePreviews ? <Check /> : blank} onSelect={() => useUI.getState().setUsePreviews(!usePreviews)}>
-            Play rendered previews
+            {tt('Play rendered previews')}
           </MenuItem>
           <MenuSeparator />
           {hasRange && (
             <MenuItem icon={<Trash />} onSelect={() => void actions.deleteRenders(true)}>
-              Delete renders in to out
+              {tt('Delete renders in to out')}
             </MenuItem>
           )}
           <MenuItem icon={<Trash />} danger onSelect={() => void actions.deleteRenders(false)}>
-            Delete all of this project’s renders
+            {tt('Delete all of this project’s renders')}
           </MenuItem>
           {usage && <div className="px-2 pt-1 pb-1.5 text-2xs text-fg-4">{usage}</div>}
         </MenuContent>

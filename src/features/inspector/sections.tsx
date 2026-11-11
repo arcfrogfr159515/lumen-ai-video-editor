@@ -56,6 +56,8 @@ import { playback } from '@/editor/playback'
 import { CurvesSection, HslSection, LutSection, WheelsSection } from './GradeSections'
 import { FontPicker } from './FontPicker'
 import { fontCss } from '@/engine/fonts'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const update = (ids: string[], patch: ClipPatch, key?: string) =>
   dispatch('clip.update', { ids, patch }, { coalesce: key })
@@ -69,19 +71,19 @@ export function TransformSection({ clip }: { clip: Clip }) {
   }
   return (
     <Section
-      title="Transform"
+      title={tt('Transform')}
       icon={<Move />}
       actions={
-        <IconButton size="xs" label="Reset transform" onClick={reset}>
+        <IconButton size="xs" label={tt('Reset transform')} onClick={reset}>
           <RotateCcw />
         </IconButton>
       }
     >
       <div className="space-y-1">
         <PositionRow clip={clip} />
-        <PropSlider clip={clip} prop="scale" label="Scale" min={0.05} max={4} step={1} display={(v) => Math.round(v * 100)} fromDisplay={(v) => v / 100} unit="%" defaultValue={1} />
-        <PropSlider clip={clip} prop="rotation" label="Rotation" min={-180} max={180} step={1} unit="°" defaultValue={0} bipolar />
-        <PropSlider clip={clip} prop="opacity" label="Opacity" min={0} max={1} step={1} display={(v) => Math.round(v * 100)} fromDisplay={(v) => v / 100} unit="%" defaultValue={1} />
+        <PropSlider clip={clip} prop="scale" label={tt('Scale')} min={0.05} max={4} step={1} display={(v) => Math.round(v * 100)} fromDisplay={(v) => v / 100} unit="%" defaultValue={1} />
+        <PropSlider clip={clip} prop="rotation" label={tt('Rotation')} min={-180} max={180} step={1} unit="°" defaultValue={0} bipolar />
+        <PropSlider clip={clip} prop="opacity" label={tt('Opacity')} min={0} max={1} step={1} display={(v) => Math.round(v * 100)} fromDisplay={(v) => v / 100} unit="%" defaultValue={1} />
       </div>
     </Section>
   )
@@ -96,22 +98,22 @@ export function Space3DSection({ clip }: { clip: Clip }) {
   }
   return (
     <Section
-      title="3D space"
+      title={tt('3D space')}
       icon={<Rotate3d />}
       actions={
         active ? (
-          <IconButton size="xs" label="Flatten" onClick={reset}>
+          <IconButton size="xs" label={tt('Flatten')} onClick={reset}>
             <RotateCcw />
           </IconButton>
         ) : undefined
       }
     >
       <div className="space-y-1">
-        <PropSlider clip={clip} prop="rotateX" label="Tilt X" min={-180} max={180} unit="°" defaultValue={0} bipolar />
-        <PropSlider clip={clip} prop="rotateY" label="Turn Y" min={-180} max={180} unit="°" defaultValue={0} bipolar />
-        <PropSlider clip={clip} prop="z" label="Depth" min={-3000} max={900} step={5} unit="px" defaultValue={0} bipolar />
+        <PropSlider clip={clip} prop="rotateX" label={tt('Tilt X')} min={-180} max={180} unit="°" defaultValue={0} bipolar />
+        <PropSlider clip={clip} prop="rotateY" label={tt('Turn Y')} min={-180} max={180} unit="°" defaultValue={0} bipolar />
+        <PropSlider clip={clip} prop="z" label={tt('Depth')} min={-3000} max={900} step={5} unit={tt('px')} defaultValue={0} bipolar />
       </div>
-      {!active && <p className="mt-2 text-2xs leading-relaxed text-fg-4">Tilt or turn to place this clip in real 3D perspective. Keyframe it for camera-style moves.</p>}
+      {!active && <p className="mt-2 text-2xs leading-relaxed text-fg-4">{tt('Tilt or turn to place this clip in real 3D perspective. Keyframe it for camera-style moves.')}</p>}
     </Section>
   )
 }
@@ -121,7 +123,7 @@ function PositionRow({ clip }: { clip: Clip }) {
   const y = usePropValue(clip, 'y')
   return (
     <>
-      <Row label="Position" trailing={<KeyframeButton clip={clip} prop="x" />}>
+      <Row label={tt('Position')} trailing={<KeyframeButton clip={clip} prop="x" />}>
         <ScrubInput prefix="X" value={x} onChange={(v) => setAnimatable(clip.id, 'x', Math.round(v), `insp:${clip.id}:x`)} step={1} className="flex-1" />
         <ScrubInput prefix="Y" value={y} onChange={(v) => setAnimatable(clip.id, 'y', Math.round(v), `insp:${clip.id}:y`)} step={1} className="flex-1" />
       </Row>
@@ -135,22 +137,22 @@ function PositionRow({ clip }: { clip: Clip }) {
 }
 
 const BLENDS: { value: BlendMode; label: string }[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'screen', label: 'Screen' },
-  { value: 'multiply', label: 'Multiply' },
-  { value: 'overlay', label: 'Overlay' },
-  { value: 'soft-light', label: 'Soft light' },
-  { value: 'lighten', label: 'Lighten' },
-  { value: 'darken', label: 'Darken' },
-  { value: 'color-dodge', label: 'Color dodge' },
-  { value: 'difference', label: 'Difference' },
+  { value: 'normal', label: tt('Normal') },
+  { value: 'screen', label: tt('Screen') },
+  { value: 'multiply', label: tt('Multiply') },
+  { value: 'overlay', label: tt('Overlay') },
+  { value: 'soft-light', label: tt('Soft light') },
+  { value: 'lighten', label: tt('Lighten') },
+  { value: 'darken', label: tt('Darken') },
+  { value: 'color-dodge', label: tt('Color dodge') },
+  { value: 'difference', label: tt('Difference') },
 ]
 
 export function CompositingSection({ clip }: { clip: Clip }) {
   return (
-    <Section title="Compositing" icon={<Blend />} defaultOpen={false}>
-      <Row label="Blend mode">
-        <Select aria-label="Blend mode" value={clip.blend} onChange={(v) => update([clip.id], { blend: v })} options={BLENDS} className="w-full" />
+    <Section title={tt('Compositing')} icon={<Blend />} defaultOpen={false}>
+      <Row label={tt('Blend mode')}>
+        <Select aria-label={tt('Blend mode')} value={clip.blend} onChange={(v) => update([clip.id], { blend: v })} options={BLENDS} className="w-full" />
       </Row>
     </Section>
   )
@@ -165,12 +167,12 @@ export function EffectsSection({ clip }: { clip: Clip }) {
   const preview = { a: (asset && asset.kind !== 'audio' ? assetThumb(asset) : undefined) ?? art.a }
   return (
     <Section
-      title="Effects"
+      title={tt('Effects')}
       icon={<Sparkles />}
       actions={
         <Menu>
           <MenuTrigger asChild>
-            <IconButton size="xs" label="Add effect" disabled={!available.length}>
+            <IconButton size="xs" label={tt('Add effect')} disabled={!available.length}>
               <Plus />
             </IconButton>
           </MenuTrigger>
@@ -191,7 +193,7 @@ export function EffectsSection({ clip }: { clip: Clip }) {
           className="flex w-full items-center gap-2.5 rounded-lg border border-dashed border-line-2 px-3 py-2.5 text-left text-xs text-fg-3 transition-colors hover:border-line-3 hover:text-fg-2"
         >
           <Sparkles className="size-3.5" />
-          Drag effects onto clips, or browse the Effects library
+          {tt('Drag effects onto clips, or browse the Effects library')}
         </button>
       ) : (
         <div className="space-y-2">
@@ -202,8 +204,8 @@ export function EffectsSection({ clip }: { clip: Clip }) {
                 <div className="flex items-center gap-2">
                   <EffectPreview kind={fx.kind} src={preview.a} className="h-7 w-12 shrink-0 rounded-md" />
                   <span className="min-w-0 flex-1 truncate text-xs font-medium text-fg">{meta.name}</span>
-                  <Switch aria-label={`Toggle ${meta.name}`} checked={fx.enabled} onChange={(v) => dispatch('effect.update', { clipId: clip.id, effectId: fx.id, patch: { enabled: v } })} />
-                  <IconButton size="xs" label="Remove effect" onClick={() => dispatch('effect.remove', { clipId: clip.id, effectId: fx.id })}>
+                  <Switch aria-label={tt('Toggle {0}', meta.name)} checked={fx.enabled} onChange={(v) => dispatch('effect.update', { clipId: clip.id, effectId: fx.id, patch: { enabled: v } })} />
+                  <IconButton size="xs" label={tt('Remove effect')} onClick={() => dispatch('effect.remove', { clipId: clip.id, effectId: fx.id })}>
                     <X />
                   </IconButton>
                 </div>
@@ -239,37 +241,37 @@ export function ColorSections({ clips }: { clips: Clip[] }) {
   return (
     <>
       <Section
-        title="Look"
+        title={tt('Look')}
         icon={<Aperture />}
         actions={
-          <IconButton size="xs" label="Reset color" onClick={() => update(ids, { color: { ...DEFAULT_COLOR, curves: null, wheels: null, hsl: null, lut: null }, look: null })}>
+          <IconButton size="xs" label={tt('Reset color')} onClick={() => update(ids, { color: { ...DEFAULT_COLOR, curves: null, wheels: null, hsl: null, lut: null }, look: null })}>
             <RotateCcw />
           </IconButton>
         }
       >
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-fg">{look?.name ?? 'Custom'}</div>
-            <div className="text-2xs text-fg-4">{look ? 'Preset look — tweak it below' : 'Hand-graded'}</div>
+            <div className="text-sm font-medium text-fg">{look?.name ?? tt('Custom')}</div>
+            <div className="text-2xs text-fg-4">{look ? tt('Preset look — tweak it below') : tt('Hand-graded')}</div>
           </div>
           <Button size="sm" variant="secondary" onClick={() => useUI.getState().setLeftTab('looks')}>
             <Palette />
-            Browse looks
+            {tt('Browse looks')}
           </Button>
         </div>
       </Section>
-      <Section title="Light" icon={<Aperture />}>
+      <Section title={tt('Light')} icon={<Aperture />}>
         <div className="space-y-1">
-          <ValueSlider label="Exposure" value={g.exposure} onChange={set('exposure')} min={-100} max={100} bipolar />
-          <ValueSlider label="Contrast" value={g.contrast} onChange={set('contrast')} min={-100} max={100} bipolar />
-          <ValueSlider label="Vignette" value={g.vignette} onChange={set('vignette')} min={0} max={100} />
+          <ValueSlider label={tt('Exposure')} value={g.exposure} onChange={set('exposure')} min={-100} max={100} bipolar />
+          <ValueSlider label={tt('Contrast')} value={g.contrast} onChange={set('contrast')} min={-100} max={100} bipolar />
+          <ValueSlider label={tt('Vignette')} value={g.vignette} onChange={set('vignette')} min={0} max={100} />
         </div>
       </Section>
-      <Section title="Color" icon={<Palette />}>
+      <Section title={tt('Color')} icon={<Palette />}>
         <div className="space-y-1">
-          <ValueSlider label="Saturation" value={g.saturation} onChange={set('saturation')} min={-100} max={100} gradient={GRADIENTS.saturation} />
-          <ValueSlider label="Temperature" value={g.temperature} onChange={set('temperature')} min={-100} max={100} gradient={GRADIENTS.temperature} />
-          <ValueSlider label="Tint" value={g.tint} onChange={set('tint')} min={-100} max={100} gradient={GRADIENTS.tint} />
+          <ValueSlider label={tt('Saturation')} value={g.saturation} onChange={set('saturation')} min={-100} max={100} gradient={GRADIENTS.saturation} />
+          <ValueSlider label={tt('Temperature')} value={g.temperature} onChange={set('temperature')} min={-100} max={100} gradient={GRADIENTS.temperature} />
+          <ValueSlider label={tt('Tint')} value={g.tint} onChange={set('tint')} min={-100} max={100} gradient={GRADIENTS.tint} />
         </div>
       </Section>
       <WheelsSection clips={clips} />
@@ -293,27 +295,27 @@ export function AudioSection({ clip, fps }: { clip: Clip; fps: number }) {
         text="This clip’s sound is on its own audio clip, linked to it — select that clip to mix it, or trim it separately for J- and L-cuts."
         action={
           <Button size="sm" variant="secondary" onClick={() => dispatch('clip.reattachAudio', { ids: [clip.id] })}>
-            Reattach audio
+            {tt('Reattach audio')}
           </Button>
         }
       />
     )
   return (
     <>
-      <Section title="Volume" icon={<AudioLines />}>
+      <Section title={tt('Volume')} icon={<AudioLines />}>
         <div className="space-y-1">
-          <PropSlider clip={clip} prop="volume" label="Level" min={-60} max={12} step={0.5} precision={1} unit="dB" defaultValue={0} />
-          <ValueSlider label="Fade in" value={a.fadeIn} onChange={(v) => update([clip.id], { audio: { fadeIn: Math.round(v) } }, `fin:${clip.id}`)} min={0} max={maxFade} unit="f" />
-          <ValueSlider label="Fade out" value={a.fadeOut} onChange={(v) => update([clip.id], { audio: { fadeOut: Math.round(v) } }, `fout:${clip.id}`)} min={0} max={maxFade} unit="f" />
+          <PropSlider clip={clip} prop="volume" label={tt('Level')} min={-60} max={12} step={0.5} precision={1} unit={tt('dB')} defaultValue={0} />
+          <ValueSlider label={tt('Fade in')} value={a.fadeIn} onChange={(v) => update([clip.id], { audio: { fadeIn: Math.round(v) } }, `fin:${clip.id}`)} min={0} max={maxFade} unit="f" />
+          <ValueSlider label={tt('Fade out')} value={a.fadeOut} onChange={(v) => update([clip.id], { audio: { fadeOut: Math.round(v) } }, `fout:${clip.id}`)} min={0} max={maxFade} unit="f" />
           <p className="pl-[84px] text-2xs text-fg-4">
-            {formatDuration(a.fadeIn, fps)} in · {formatDuration(a.fadeOut, fps)} out
+            {ttx('{0} in · {1} out', formatDuration(a.fadeIn, fps), formatDuration(a.fadeOut, fps))}
           </p>
         </div>
       </Section>
-      <Section title="Enhance" icon={<WandSparkles />}>
+      <Section title={tt('Enhance')} icon={<WandSparkles />}>
         <div className="space-y-2.5">
-          <AiToggle label="Studio voice" description="Cut rumble and mud, add presence, even out levels" checked={a.enhance} onChange={(v) => update([clip.id], { audio: { enhance: v } })} />
-          <AiToggle label="Reduce noise" description="Neural noise suppression for fans, traffic, hiss and wind" checked={a.denoise} onChange={(v) => update([clip.id], { audio: { denoise: v } })} />
+          <AiToggle label={tt('Studio voice')} description={tt('Cut rumble and mud, add presence, even out levels')} checked={a.enhance} onChange={(v) => update([clip.id], { audio: { enhance: v } })} />
+          <AiToggle label={tt('Reduce noise')} description={tt('Neural noise suppression for fans, traffic, hiss and wind')} checked={a.denoise} onChange={(v) => update([clip.id], { audio: { denoise: v } })} />
         </div>
       </Section>
     </>
@@ -357,7 +359,7 @@ export function SpeedSection({ clips, fps }: { clips: Clip[]; fps: number }) {
     return <Note icon={<Snowflake />} text={`Freeze frame — holds one picture for ${formatDuration(clip.duration, fps)}. Trim it to hold longer or shorter.`} />
   return (
     <>
-    <Section title="Speed" icon={<Gauge />}>
+    <Section title={tt('Speed')} icon={<Gauge />}>
       <div className="space-y-3">
         <div className="grid grid-cols-6 gap-1">
           {SPEED_PRESETS.map((s) => (
@@ -374,22 +376,22 @@ export function SpeedSection({ clips, fps }: { clips: Clip[]; fps: number }) {
             </button>
           ))}
         </div>
-        <Row label="Custom">
+        <Row label={tt('Custom')}>
           <Slider value={Math.log2(clip.speed)} min={-2} max={3} step={0.01} defaultValue={0} onChange={(v) => update(ids, { speed: Math.round(Math.pow(2, v) * 100) / 100 }, `speed:${ids.join()}`)} />
           <ScrubInput value={clip.speed} onChange={(v) => update(ids, { speed: v }, `speed:${ids.join()}`)} min={0.1} max={16} step={0.05} precision={2} unit="×" className="w-[64px] shrink-0" />
         </Row>
-        <Row label="Reverse">
-          <Switch aria-label="Reverse" checked={clip.reverse} onChange={(v) => update(ids, { reverse: v })} />
+        <Row label={tt('Reverse')}>
+          <Switch aria-label={tt('Reverse')} checked={clip.reverse} onChange={(v) => update(ids, { reverse: v })} />
         </Row>
         {clips.length === 1 && (
           <p className="text-2xs text-fg-4">
-            Clip length {formatDuration(clip.duration, fps)} · {ramped ? 'a constant speed replaces the ramp' : 'changing speed keeps the same footage and adjusts the length'}.
+            {ttx('Clip length {0} · {1}.', formatDuration(clip.duration, fps), ramped ? tt('a constant speed replaces the ramp') : tt('changing speed keeps the same footage and adjusts the length'))}
           </p>
         )}
       </div>
     </Section>
     {clips.length === 1 && (
-      <Section title="Speed ramp" icon={<Gauge />} defaultOpen={ramped}>
+      <Section title={tt('Speed ramp')} icon={<Gauge />} defaultOpen={ramped}>
         <SpeedRamp clip={clip} />
       </Section>
     )}
@@ -406,7 +408,7 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
     const spec = clip.animation[dir]
     return (
       <div className="space-y-2">
-        <div className="text-xs font-medium text-fg-2">{dir === 'in' ? 'In' : 'Out'}</div>
+        <div className="text-xs font-medium text-fg-2">{dir === 'in' ? tt('In') : tt('Out')}</div>
         <div className="grid grid-cols-3 gap-1">
           {presets.map((a) => (
             <button
@@ -423,7 +425,7 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
           ))}
         </div>
         {spec.preset !== 'none' && (
-          <Row label="Duration">
+          <Row label={tt('Duration')}>
             <Slider value={spec.duration} min={2} max={Math.max(4, Math.min(clip.duration, fps * 3))} onChange={(v) => update([clip.id], { animation: { [dir]: { duration: Math.round(v) } } }, `anim:${clip.id}:${dir}`)} />
             <span className="w-12 shrink-0 text-right text-xs text-fg-3 tabular">{formatDuration(spec.duration, fps)}</span>
           </Row>
@@ -433,14 +435,14 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
   }
   return (
     <>
-      <Section title="Animation" icon={<Sparkles />}>
+      <Section title={tt('Animation')} icon={<Sparkles />}>
         <div className="space-y-4">
           <Picker dir="in" />
           <Picker dir="out" />
         </div>
       </Section>
       {clip.kind !== 'audio' && <MotionPresetsSection clip={clip} />}
-      <Section title="Keyframes" icon={<Diamond />}>
+      <Section title={tt('Keyframes')} icon={<Diamond />}>
         {animated.length ? (
           <div className="space-y-2.5">
             {animated.map((p) => (
@@ -448,8 +450,8 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
                 <div className="flex h-7 items-center gap-2 px-1 text-sm">
                   <Diamond className="size-3 fill-accent-2 text-accent-2" />
                   <span className="flex-1 text-fg-2 capitalize">{p}</span>
-                  <span className="text-xs text-fg-4 tabular">{clip.keyframes[p]!.length} keys</span>
-                  <IconButton size="xs" label={`Clear ${p} animation`} onClick={() => dispatch('keyframe.clear', { clipId: clip.id, prop: p })}>
+                  <span className="text-xs text-fg-4 tabular">{ttx('{0} keys', clip.keyframes[p]!.length)}</span>
+                  <IconButton size="xs" label={tt('Clear {0} animation', p)} onClick={() => dispatch('keyframe.clear', { clipId: clip.id, prop: p })}>
                     <X />
                   </IconButton>
                 </div>
@@ -457,19 +459,19 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
                 <div className="space-y-0.5 pl-6">
                   {clip.keyframes[p]!.map((k, i, all) => (
                     <div key={k.frame} className="flex h-7 items-center gap-2 text-xs">
-                      <button type="button" onClick={() => playback.seek(clip.start + k.frame)} className="w-14 shrink-0 text-left font-mono text-fg-3 tabular hover:text-fg" title="Go to this keyframe">
+                      <button type="button" onClick={() => playback.seek(clip.start + k.frame)} className="w-14 shrink-0 text-left font-mono text-fg-3 tabular hover:text-fg" title={tt('Go to this keyframe')}>
                         {formatDuration(k.frame, fps)}
                       </button>
                       <span className="w-14 shrink-0 truncate text-fg-4 tabular">{Math.round(k.value * 100) / 100}</span>
                       {i < all.length - 1 ? (
                         <EasingMenu value={k.easing} onChange={(e) => e && dispatch('keyframe.set', { clipId: clip.id, prop: p, frame: k.frame, value: k.value, easing: e })}>
-                          <button type="button" className="flex h-6 min-w-0 flex-1 items-center gap-1.5 rounded-md px-1.5 text-fg-3 hover:bg-white/[0.06] hover:text-fg" title="The curve to the next keyframe">
+                          <button type="button" className="flex h-6 min-w-0 flex-1 items-center gap-1.5 rounded-md px-1.5 text-fg-3 hover:bg-white/[0.06] hover:text-fg" title={tt('The curve to the next keyframe')}>
                             <CurveIcon easing={k.easing} className="size-4" />
                             <span className="truncate">{easingLabel(k.easing)}</span>
                           </button>
                         </EasingMenu>
                       ) : (
-                        <span className="flex-1 px-1.5 text-fg-4">end</span>
+                        <span className="flex-1 px-1.5 text-fg-4">{tt('end')}</span>
                       )}
                     </div>
                   ))}
@@ -479,7 +481,7 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
           </div>
         ) : (
           <p className="text-xs leading-relaxed text-fg-4">
-            Click the <Diamond className="inline size-3 align-[-2px]" /> next to any property to start animating it. Move the playhead and change the value — a keyframe is added automatically.
+            {tt('Click the')}{' '}<Diamond className="inline size-3 align-[-2px]" />{' '}{tt('next to any property to start animating it. Move the playhead and change the value — a keyframe is added automatically.')}
           </p>
         )}
       </Section>
@@ -490,19 +492,19 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
 // ─── Text ────────────────────────────────────────────────────────────────
 
 const MATERIALS: { id: Material3D; label: string; swatch: string }[] = [
-  { id: 'chrome', label: 'Chrome', swatch: 'linear-gradient(135deg,#fdfdff,#8d93a3 55%,#e9ecf3)' },
-  { id: 'gold', label: 'Gold', swatch: 'linear-gradient(135deg,#fff1c1,#c8912f 55%,#f7d27b)' },
-  { id: 'matte', label: 'Matte', swatch: 'linear-gradient(135deg,#e5f75c,#a8bc00)' },
-  { id: 'neon', label: 'Neon', swatch: 'radial-gradient(circle,#ffffff 20%,#d6ee00 60%,#5c6b00)' },
+  { id: 'chrome', label: tt('Chrome'), swatch: 'linear-gradient(135deg,#fdfdff,#8d93a3 55%,#e9ecf3)' },
+  { id: 'gold', label: tt('Gold'), swatch: 'linear-gradient(135deg,#fff1c1,#c8912f 55%,#f7d27b)' },
+  { id: 'matte', label: tt('Matte'), swatch: 'linear-gradient(135deg,#e5f75c,#a8bc00)' },
+  { id: 'neon', label: tt('Neon'), swatch: 'radial-gradient(circle,#ffffff 20%,#d6ee00 60%,#5c6b00)' },
 ]
 
 const WEIGHTS = [
-  { value: '300', label: 'Light' },
-  { value: '400', label: 'Regular' },
-  { value: '500', label: 'Medium' },
-  { value: '600', label: 'Semibold' },
-  { value: '700', label: 'Bold' },
-  { value: '800', label: 'Heavy' },
+  { value: '300', label: tt('Light') },
+  { value: '400', label: tt('Regular') },
+  { value: '500', label: tt('Medium') },
+  { value: '600', label: tt('Semibold') },
+  { value: '700', label: tt('Bold') },
+  { value: '800', label: tt('Heavy') },
 ]
 
 export function TextSection({ clip }: { clip: Clip }) {
@@ -511,7 +513,7 @@ export function TextSection({ clip }: { clip: Clip }) {
   const set = (patch: Partial<TextStyle>, key?: string) => update([clip.id], { text: patch, ...(patch.content !== undefined && { name: patch.content.split('\n')[0] || 'Title' }) }, key)
   return (
     <>
-      <Section title="Text" icon={<Type />}>
+      <Section title={tt('Text')} icon={<Type />}>
         <div className="space-y-3">
           <textarea
             value={t.content}
@@ -521,54 +523,54 @@ export function TextSection({ clip }: { clip: Clip }) {
             className="w-full resize-none rounded-lg bg-white/[0.045] px-2.5 py-2 text-sm leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none focus:shadow-[inset_0_0_0_1px_rgb(214_238_0/0.5),0_0_0_3px_rgb(214_238_0/0.12)]"
             style={{ fontFamily: fontCss(t.font, projectFonts) }}
           />
-          <Row label="Font">
+          <Row label={tt('Font')}>
             <FontPicker value={t.font} onChange={(font) => set({ font })} />
           </Row>
-          <Row label="Weight">
-            <Select aria-label="Weight" value={String(t.weight)} onChange={(w) => set({ weight: Number(w) })} options={WEIGHTS} className="w-full" />
+          <Row label={tt('Weight')}>
+            <Select aria-label={tt('Weight')} value={String(t.weight)} onChange={(w) => set({ weight: Number(w) })} options={WEIGHTS} className="w-full" />
           </Row>
-          <Row label="Size">
+          <Row label={tt('Size')}>
             <Slider value={t.size} min={12} max={300} defaultValue={96} onChange={(size) => set({ size: Math.round(size) }, `tsize:${clip.id}`)} />
-            <ScrubInput value={t.size} onChange={(size) => set({ size: Math.round(size) }, `tsize:${clip.id}`)} min={4} max={800} unit="px" className="w-[64px] shrink-0" />
+            <ScrubInput value={t.size} onChange={(size) => set({ size: Math.round(size) }, `tsize:${clip.id}`)} min={4} max={800} unit={tt('px')} className="w-[64px] shrink-0" />
           </Row>
-          <Row label="Style">
+          <Row label={tt('Style')}>
             <Segmented
               value={t.align}
               onChange={(align) => set({ align })}
               options={[
-                { value: 'left', icon: <TextAlignStart />, title: 'Align left' },
-                { value: 'center', icon: <TextAlignCenter />, title: 'Center' },
-                { value: 'right', icon: <TextAlignEnd />, title: 'Align right' },
+                { value: 'left', icon: <TextAlignStart />, title: tt('Align left') },
+                { value: 'center', icon: <TextAlignCenter />, title: tt('Center') },
+                { value: 'right', icon: <TextAlignEnd />, title: tt('Align right') },
               ]}
             />
             <div className="flex gap-0.5">
-              <IconButton size="xs" label="Uppercase" active={t.uppercase} onClick={() => set({ uppercase: !t.uppercase })}>
+              <IconButton size="xs" label={tt('Uppercase')} active={t.uppercase} onClick={() => set({ uppercase: !t.uppercase })}>
                 <CaseUpper />
               </IconButton>
-              <IconButton size="xs" label="Italic" active={t.italic} onClick={() => set({ italic: !t.italic })}>
+              <IconButton size="xs" label={tt('Italic')} active={t.italic} onClick={() => set({ italic: !t.italic })}>
                 <Italic />
               </IconButton>
-              <IconButton size="xs" label="Bold" active={t.weight >= 700} onClick={() => set({ weight: t.weight >= 700 ? 500 : 700 })}>
+              <IconButton size="xs" label={tt('Bold')} active={t.weight >= 700} onClick={() => set({ weight: t.weight >= 700 ? 500 : 700 })}>
                 <Bold />
               </IconButton>
             </div>
           </Row>
-          <Row label="Tracking">
+          <Row label={tt('Tracking')}>
             <Slider value={t.letterSpacing * 100} min={-10} max={80} bipolar defaultValue={0} onChange={(v) => set({ letterSpacing: Math.round(v) / 100 }, `track:${clip.id}`)} />
             <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{Math.round(t.letterSpacing * 100)}</span>
           </Row>
-          <Row label="Color">
+          <Row label={tt('Color')}>
             <ColorSwatches value={t.color} onChange={(c) => c && set({ color: c })} />
           </Row>
         </div>
       </Section>
-      <Section title="3D extrusion" icon={<Box />} defaultOpen={t.extrude > 0}>
+      <Section title={tt('3D extrusion')} icon={<Box />} defaultOpen={t.extrude > 0}>
         <div className="space-y-3">
-          <Row label="Depth">
+          <Row label={tt('Depth')}>
             <Slider value={t.extrude * 100} min={0} max={80} defaultValue={0} onChange={(v) => set({ extrude: Math.round(v) / 100 }, `extrude:${clip.id}`)} />
-            <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{t.extrude ? Math.round(t.extrude * 100) : 'Flat'}</span>
+            <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{t.extrude ? Math.round(t.extrude * 100) : tt('Flat')}</span>
           </Row>
-          <Row label="Material">
+          <Row label={tt('Material')}>
             <div className="grid flex-1 grid-cols-4 gap-1">
               {MATERIALS.map((m) => (
                 <button
@@ -586,30 +588,30 @@ export function TextSection({ clip }: { clip: Clip }) {
               ))}
             </div>
           </Row>
-          <Row label="Bevel">
-            <Switch aria-label="Bevel" checked={t.bevel} onChange={(bevel) => set({ bevel })} />
+          <Row label={tt('Bevel')}>
+            <Switch aria-label={tt('Bevel')} checked={t.bevel} onChange={(bevel) => set({ bevel })} />
           </Row>
-          {t.extrude === 0 && <p className="text-2xs leading-relaxed text-fg-4">Give the title depth to render it as real 3D geometry — lit, reflective, and animatable in 3D.</p>}
+          {t.extrude === 0 && <p className="text-2xs leading-relaxed text-fg-4">{tt('Give the title depth to render it as real 3D geometry — lit, reflective, and animatable in 3D.')}</p>}
         </div>
       </Section>
-      <Section title="Outline, box & glow" icon={<Palette />} defaultOpen={Boolean(t.background || t.glow || t.outline)}>
+      <Section title={tt('Outline, box & glow')} icon={<Palette />} defaultOpen={Boolean(t.background || t.glow || t.outline)}>
         <div className="space-y-3">
-          <Row label="Outline">
+          <Row label={tt('Outline')}>
             <ColorSwatches allowNone value={t.outline?.color ?? null} onChange={(c) => set({ outline: c ? { color: c, width: t.outline?.width ?? 0.06 } : null })} />
           </Row>
           {t.outline && (
-            <Row label="Thickness">
+            <Row label={tt('Thickness')}>
               <Slider value={t.outline.width * 100} min={1} max={30} defaultValue={6} onChange={(v) => set({ outline: { color: t.outline!.color, width: Math.round(v) / 100 } }, `outline:${clip.id}`)} />
               <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{Math.round(t.outline.width * 100)}</span>
             </Row>
           )}
-          <Row label="Box">
+          <Row label={tt('Box')}>
             <ColorSwatches allowNone value={t.background} onChange={(c) => set({ background: c ? `${c}cc` : null })} />
           </Row>
-          <Row label="Glow">
+          <Row label={tt('Glow')}>
             <ColorSwatches allowNone value={t.glow} onChange={(c) => set({ glow: c })} />
           </Row>
-          <Row label="Shadow">
+          <Row label={tt('Shadow')}>
             <Slider value={t.shadow * 100} min={0} max={100} onChange={(v) => set({ shadow: v / 100 }, `shadow:${clip.id}`)} />
             <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{Math.round(t.shadow * 100)}</span>
           </Row>

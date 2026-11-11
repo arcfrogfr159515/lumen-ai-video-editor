@@ -11,6 +11,7 @@ import { usePreviewArt } from '@/engine/preview-art'
 import { dnd } from '@/features/dnd'
 import { cn } from '@/lib/cn'
 import { assetThumb, PanelHeader, scrollArea, SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
 
 /** The same grade pipeline the compositor uses, expressed as CSS. */
 export function GradedImage({ src, grade, className }: { src?: string; grade: ColorGrade; className?: string }) {
@@ -42,15 +43,15 @@ export function LooksPanel() {
 
   return (
     <>
-      <PanelHeader title="Looks" />
+      <PanelHeader title={tt('Looks')} />
       <div className={scrollArea}>
-        <SectionLabel right={<span className="max-w-[140px] truncate text-2xs text-fg-4">{visual ? `Previewing ${clip.name}` : 'Select a clip'}</span>}>Color looks</SectionLabel>
+        <SectionLabel right={<span className="max-w-[140px] truncate text-2xs text-fg-4">{visual ? tt('Previewing {0}', clip.name) : tt('Select a clip')}</span>}>{tt('Color looks')}</SectionLabel>
         <div className="grid grid-cols-2 gap-x-2.5 gap-y-3">
           {LOOKS.map((look) => (
             <LookCard key={look.id} look={look} src={src} active={clip?.look === look.id} />
           ))}
         </div>
-        <p className="mt-4 px-1 text-2xs leading-relaxed text-fg-4">Looks set the clip’s color controls — fine-tune them anytime in the inspector’s Color tab.</p>
+        <p className="mt-4 px-1 text-2xs leading-relaxed text-fg-4">{tt('Looks set the clip’s color controls — fine-tune them anytime in the inspector’s Color tab.')}</p>
       </div>
     </>
   )

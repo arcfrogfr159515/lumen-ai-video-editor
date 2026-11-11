@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Segmented } from '@/components/ui/segmented'
 import { drawScope, type ScopeKind } from '@/engine/scopes'
 import { onPreviewFrame } from './PreviewStage'
+import { tt } from '@/lib/i18n'
 
 const SAMPLE_W = 256
 
@@ -58,10 +59,10 @@ export function Scopes() {
         value={kind}
         onChange={setKind}
         options={[
-          { value: 'waveform', label: 'Wave' },
-          { value: 'parade', label: 'RGB' },
-          { value: 'vectorscope', label: 'Vector' },
-          { value: 'histogram', label: 'Histo' },
+          { value: 'waveform', label: tt('Wave') },
+          { value: 'parade', label: tt('RGB') },
+          { value: 'vectorscope', label: tt('Vector') },
+          { value: 'histogram', label: tt('Histo') },
         ]}
       />
       <canvas ref={out} width={276} height={200} className="w-full rounded-md shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]" />

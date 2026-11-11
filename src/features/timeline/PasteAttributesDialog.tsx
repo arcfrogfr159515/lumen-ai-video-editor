@@ -9,17 +9,19 @@ import { isRamped } from '@/editor/timing'
 import type { Clip } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const LABEL: Record<Attribute, { name: string; detail: string }> = {
   transform: { name: 'Transform', detail: 'Position, scale, rotation, opacity, 3D — with keyframes' },
   crop: { name: 'Crop', detail: 'Edges and rounded corners' },
-  color: { name: 'Color', detail: 'Grade and look' },
-  effects: { name: 'Effects', detail: 'Every effect and its amount' },
-  audio: { name: 'Audio', detail: 'Volume (with keyframes), fades, voice clean-up' },
-  speed: { name: 'Speed', detail: 'Speed, ramp and reverse' },
-  animation: { name: 'Animation', detail: 'In and out animations' },
+  color: { name: 'Color', detail: tt('Grade and look') },
+  effects: { name: 'Effects', detail: tt('Every effect and its amount') },
+  audio: { name: 'Audio', detail: tt('Volume (with keyframes), fades, voice clean-up') },
+  speed: { name: 'Speed', detail: tt('Speed, ramp and reverse') },
+  animation: { name: 'Animation', detail: tt('In and out animations') },
   text: { name: 'Text style', detail: 'Font, size, color, shadow — not the words' },
-  blend: { name: 'Blend mode', detail: 'How the clip mixes with what’s below' },
+  blend: { name: 'Blend mode', detail: tt('How the clip mixes with what’s below') },
 }
 
 /** The attributes a clip actually has worth copying, so the list only offers real choices. */
@@ -74,13 +76,13 @@ export function PasteAttributesDialog() {
     <Dialog
       open={open}
       onOpenChange={(o) => !o && close()}
-      title="Paste attributes"
-      description={source ? `From “${source.name}” onto ${targets === 1 ? 'the selected clip' : `${targets} selected clips`}.` : 'Copy a clip first.'}
+      title={tt('Paste attributes')}
+      description={source ? tt('From “{0}” onto {1}.', source.name, targets === 1 ? tt('the selected clip') : tt('{0} selected clips', targets)) : tt('Copy a clip first.')}
       className="w-[min(440px,calc(100vw-32px))]"
     >
       <div className="space-y-1 px-5 pb-4">
-        {!data && <p className="py-6 text-center text-sm text-fg-3">Copy a clip (Ctrl+C) to paste its attributes.</p>}
-        {source && !choices.length && <p className="py-6 text-center text-sm text-fg-3">“{source.name}” has nothing beyond the defaults to paste.</p>}
+        {!data && <p className="py-6 text-center text-sm text-fg-3">{tt('Copy a clip (Ctrl+C) to paste its attributes.')}</p>}
+        {source && !choices.length && <p className="py-6 text-center text-sm text-fg-3">{ttx('“{0}” has nothing beyond the defaults to paste.', source.name)}</p>}
         {choices.map((a) => {
           const on = picked.includes(a)
           return (
@@ -103,10 +105,10 @@ export function PasteAttributesDialog() {
       </div>
       <div className="flex items-center justify-end gap-2 border-t border-line bg-black/15 px-5 py-3.5">
         <Button variant="ghost" onClick={close}>
-          Cancel
+          {tt('Cancel')}
         </Button>
         <Button variant="primary" disabled={!picked.length || !source} onClick={apply}>
-          Paste {picked.length > 0 && picked.length < choices.length ? `${picked.length} of ${choices.length}` : 'all'}
+          {ttx('Paste {0}', picked.length > 0 && picked.length < choices.length ? tt('{0} of {1}', picked.length, choices.length) : tt('all'))}
         </Button>
       </div>
     </Dialog>

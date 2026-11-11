@@ -20,6 +20,8 @@ import { cn } from '@/lib/cn'
 import { formatDuration, formatTimecode } from '@/lib/time'
 import { copyText } from '@/project/text-files'
 import { ensureTranscripts } from '@/project/transcribe'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const SPEAKER_COLORS: LabelColor[] = ['blue', 'orange', 'green', 'purple', 'teal', 'pink', 'yellow', 'red']
 const UNSPACED = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
@@ -69,8 +71,8 @@ export function ScriptPanel() {
   const cut = (indexes: number[], what: string) => {
     if (!indexes.length) return
     const removed = cutWords(indexes, what)
-    if (removed) toast.success(what, { description: `${formatDuration(removed, fps)} taken out of the film. Ctrl+Z brings it back.`, duration: 2600 })
-    else toast('Nothing to cut there')
+    if (removed) toast.success(what, { description: tt('{0} taken out of the film. Ctrl+Z brings it back.', formatDuration(removed, fps)), duration: 2600 })
+    else toast(tt('Nothing to cut there'))
     setSelection(null)
   }
   const deleteSelection = () => cut([...selected], `Delete ${selected.size} word${selected.size === 1 ? '' : 's'}`)
@@ -138,24 +140,24 @@ export function ScriptPanel() {
   return (
     <div className="flex h-full min-h-0 flex-col" data-script-panel>
       <div className="shrink-0 space-y-2 px-3 pt-3 pb-2">
-        <SearchInput value={query} onChange={setQuery} placeholder="Find words in the script" aria-label="Find words in the script" />
+        <SearchInput value={query} onChange={setQuery} placeholder={tt('Find words in the script')} aria-label={tt('Find words in the script')} />
         <div className="flex flex-wrap items-center gap-1">
           {query.trim() ? (
-            <Button size="xs" variant="secondary" disabled={!matches.length} onClick={() => cut(matches.flat(), `Delete “${query.trim()}” (${matches.length}×)`)} title="Cut every place this is said">
-              <Trash /> Cut {matches.length} match{matches.length === 1 ? '' : 'es'}
+            <Button size="xs" variant="secondary" disabled={!matches.length} onClick={() => cut(matches.flat(), `Delete “${query.trim()}” (${matches.length}×)`)} title={tt('Cut every place this is said')}>
+              <Trash />{' '}{ttx('Cut {0} match{1}', matches.length, matches.length === 1 ? '' : tt('es'))}
             </Button>
           ) : (
             <>
-              <Button size="xs" variant="secondary" disabled={!fillers.length} onClick={() => cut(fillers, `Remove ${fillers.length} hesitation${fillers.length === 1 ? '' : 's'}`)} title="Um, uh, er… — every word that is only a hesitation">
-                <Eraser /> Hesitations {fillers.length || ''}
+              <Button size="xs" variant="secondary" disabled={!fillers.length} onClick={() => cut(fillers, `Remove ${fillers.length} hesitation${fillers.length === 1 ? '' : 's'}`)} title={tt('Um, uh, er… — every word that is only a hesitation')}>
+                <Eraser />{' '}{ttx('Hesitations {0}', fillers.length || '')}
               </Button>
-              <Button size="xs" variant="secondary" disabled={!repeats.length} onClick={() => cut(repeats, 'Remove stumbles')} title="Words said twice in a row: the first saying goes">
-                <Repeat2 /> Stumbles {repeats.length || ''}
+              <Button size="xs" variant="secondary" disabled={!repeats.length} onClick={() => cut(repeats, 'Remove stumbles')} title={tt('Words said twice in a row: the first saying goes')}>
+                <Repeat2 />{' '}{ttx('Stumbles {0}', repeats.length || '')}
               </Button>
             </>
           )}
           <Button size="xs" variant="ghost" className="ml-auto" disabled={!words.length} onClick={() => void copyText(scriptText(lines), 'Script copied')}>
-            Copy
+            {tt('Copy')}
           </Button>
         </div>
       </div>
@@ -163,10 +165,10 @@ export function ScriptPanel() {
       {pending.length > 0 && (
         <div className="mx-3 mb-2 flex shrink-0 items-center gap-2 rounded-lg bg-white/[0.04] px-2.5 py-2 text-xs text-fg-3">
           <span className="min-w-0 flex-1">
-            {pending.length === 1 ? 'One clip with speech has' : `${pending.length} clips with speech have`} no transcript yet.
+            {ttx('{0} no transcript yet.', pending.length === 1 ? tt('One clip with speech has') : tt('{0} clips with speech have', pending.length))}
           </span>
           <Button size="xs" variant="primary" disabled={busy} onClick={() => void transcribe()}>
-            Transcribe
+            {tt('Transcribe')}
           </Button>
         </div>
       )}
@@ -176,8 +178,8 @@ export function ScriptPanel() {
           <span className="grid size-10 place-items-center rounded-xl bg-white/[0.04] text-fg-3">
             <ScrollText className="size-5" />
           </span>
-          <div className="text-sm font-medium text-fg-2">No words on the timeline yet</div>
-          <p className="text-xs leading-relaxed text-fg-4">Put a clip of someone talking on the timeline and transcribe it. Its words appear here; deleting words deletes that part of the film.</p>
+          <div className="text-sm font-medium text-fg-2">{tt('No words on the timeline yet')}</div>
+          <p className="text-xs leading-relaxed text-fg-4">{tt('Put a clip of someone talking on the timeline and transcribe it. Its words appear here; deleting words deletes that part of the film.')}</p>
         </div>
       ) : (
         <div
@@ -197,15 +199,15 @@ export function ScriptPanel() {
         {selected.size > 0 ? (
           <>
             <span className="text-fg-3">
-              {selected.size} word{selected.size === 1 ? '' : 's'} · {formatDuration(selectedFrames, fps)}
+              {ttx('{0} word{1} · {2}', selected.size, selected.size === 1 ? '' : 's', formatDuration(selectedFrames, fps))}
             </span>
             <Button size="xs" variant="danger" className="ml-auto" onClick={deleteSelection}>
-              <Trash /> Delete from the film
+              <Trash />{' '}{tt('Delete from the film')}
             </Button>
           </>
         ) : (
           <span>
-            {words.length} word{words.length === 1 ? '' : 's'} · click one to go there, drag to select, Delete to cut
+            {ttx('{0} word{1} · click one to go there, drag to select, Delete to cut', words.length, words.length === 1 ? '' : 's')}
           </span>
         )}
       </div>
@@ -231,7 +233,7 @@ function Line({ line, fps, head, speakers, selected, matched }: { line: ScriptLi
         <Word key={w.index} word={w} selected={selected.has(w.index)} matched={matched.has(w.index)} />
       ))}
       {line.partial && (
-        <span className="text-fg-4" title="A cut runs through this phrase: some of its words are not on the timeline">
+        <span className="text-fg-4" title={tt('A cut runs through this phrase: some of its words are not on the timeline')}>
           {' '}
           …
         </span>

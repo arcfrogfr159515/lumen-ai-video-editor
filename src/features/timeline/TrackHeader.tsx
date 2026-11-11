@@ -8,6 +8,7 @@ import type { Track } from '@/editor/types'
 import { cn } from '@/lib/cn'
 import { useLayout } from './layout'
 import { HEADER_W, useDrag } from './model'
+import { tt } from '@/lib/i18n'
 
 const trackColor = (t: Track) =>
   t.role === 'titles' ? 'var(--color-clip-text)' : t.kind === 'video' ? 'var(--color-clip-video)' : 'var(--color-clip-audio)'
@@ -81,8 +82,8 @@ export function TrackHeader({ track }: { track: Track }) {
       <span
         onPointerDown={startReorder}
         className="absolute inset-y-0 left-0 z-10 flex w-3 cursor-grab items-center justify-center text-fg-4 opacity-0 transition-opacity group-hover/track:opacity-100 [&_svg]:size-3"
-        aria-label="Drag to reorder"
-        title="Drag to reorder"
+        aria-label={tt('Drag to reorder')}
+        title={tt('Drag to reorder')}
       >
         <GripVertical />
       </span>
@@ -111,23 +112,23 @@ export function TrackHeader({ track }: { track: Track }) {
               <span className={cn('truncate text-sm font-medium', visibilityOn ? 'text-fg-4' : 'text-fg-2')}>{track.name}</span>
               {/* At rest, just the states that are on — the full controls appear on hover. */}
               <span className="flex shrink-0 items-center gap-0.5 transition-opacity group-hover/track:opacity-0 [&_svg]:size-3">
-                {track.solo && <Headphones className="text-accent-2" aria-label="Soloed" />}
-                {track.muted && <VolumeX className="text-warn" aria-label="Muted" />}
-                {track.hidden && <EyeOff className="text-warn" aria-label="Hidden" />}
-                {track.locked && <Lock className="text-warn" aria-label="Locked" />}
+                {track.solo && <Headphones className="text-accent-2" aria-label={tt('Soloed')} />}
+                {track.muted && <VolumeX className="text-warn" aria-label={tt('Muted')} />}
+                {track.hidden && <EyeOff className="text-warn" aria-label={tt('Hidden')} />}
+                {track.locked && <Lock className="text-warn" aria-label={tt('Locked')} />}
                 {!inSync && (
-                  <span title="Sync lock off: edits that ripple the timeline leave this track where it is">
-                    <Link2Off className="text-fg-3" aria-label="Sync lock off" />
+                  <span title={tt('Sync lock off: edits that ripple the timeline leave this track where it is')}>
+                    <Link2Off className="text-fg-3" aria-label={tt('Sync lock off')} />
                   </span>
                 )}
                 {track.rippleLock && (
-                  <span title="Ripple lock: clips on this track hold their place in time">
-                    <Anchor className="text-snap" aria-label="Ripple-locked" />
+                  <span title={tt('Ripple lock: clips on this track hold their place in time')}>
+                    <Anchor className="text-snap" aria-label={tt('Ripple-locked')} />
                   </span>
                 )}
               </span>
             </div>
-            {!compact && track.role === 'main' && <div className="text-2xs text-fg-4">Main track</div>}
+            {!compact && track.role === 'main' && <div className="text-2xs text-fg-4">{tt('Main track')}</div>}
           </>
         )}
       </div>
@@ -141,7 +142,7 @@ export function TrackHeader({ track }: { track: Track }) {
         {track.kind === 'video' && (
           <IconButton
             size="xs"
-            label={track.muted ? 'Unmute track sound' : 'Mute track sound'}
+            label={track.muted ? tt('Unmute track sound') : tt('Mute track sound')}
             className={cn(track.muted && 'text-warn')}
             onClick={() => update({ muted: !track.muted })}
           >
@@ -150,7 +151,7 @@ export function TrackHeader({ track }: { track: Track }) {
         )}
         <IconButton
           size="xs"
-          label={track.solo ? 'Unsolo' : 'Solo (hear only soloed tracks)'}
+          label={track.solo ? tt('Unsolo') : tt('Solo (hear only soloed tracks)')}
           className={cn(track.solo && 'text-accent-2')}
           onClick={() => update({ solo: !track.solo })}
         >
@@ -158,7 +159,7 @@ export function TrackHeader({ track }: { track: Track }) {
         </IconButton>
         <IconButton
           size="xs"
-          label={track.kind === 'video' ? (track.hidden ? 'Show track' : 'Hide track') : track.muted ? 'Unmute track' : 'Mute track'}
+          label={track.kind === 'video' ? (track.hidden ? tt('Show track') : tt('Hide track')) : track.muted ? tt('Unmute track') : tt('Mute track')}
           className={cn(visibilityOn && 'text-warn')}
           onClick={() => (track.kind === 'video' ? update({ hidden: !track.hidden }) : update({ muted: !track.muted }))}
         >
@@ -166,7 +167,7 @@ export function TrackHeader({ track }: { track: Track }) {
         </IconButton>
         <IconButton
           size="xs"
-          label={track.locked ? 'Unlock track' : 'Lock track'}
+          label={track.locked ? tt('Unlock track') : tt('Lock track')}
           className={cn(track.locked && 'text-warn')}
           onClick={() => update({ locked: !track.locked })}
         >
@@ -174,31 +175,31 @@ export function TrackHeader({ track }: { track: Track }) {
         </IconButton>
         <Menu>
           <MenuTrigger asChild>
-            <IconButton size="xs" label="Track options">
+            <IconButton size="xs" label={tt('Track options')}>
               <Ellipsis />
             </IconButton>
           </MenuTrigger>
           <MenuContent align="start" className="min-w-[250px]">
             <MenuItem icon={<PencilLine />} onSelect={() => (setDraft(track.name), setRenaming(true))}>
-              Rename
+              {tt('Rename')}
             </MenuItem>
             <MenuItem icon={<ArrowUp />} disabled={index <= first} onSelect={() => dispatch('track.move', { id: track.id, index: index - 1 })}>
-              Move up
+              {tt('Move up')}
             </MenuItem>
             <MenuItem icon={<ArrowDown />} disabled={index >= last} onSelect={() => dispatch('track.move', { id: track.id, index: index + 1 })}>
-              Move down
+              {tt('Move down')}
             </MenuItem>
             <MenuSeparator />
-            <MenuLabel>When the timeline ripples</MenuLabel>
+            <MenuLabel>{tt('When the timeline ripples')}</MenuLabel>
             <MenuItem icon={inSync ? <Link2 /> : <Link2Off />} checked={inSync} onSelect={() => update({ syncLock: !inSync })}>
-              Sync lock: follow the edit
+              {tt('Sync lock: follow the edit')}
             </MenuItem>
             <MenuItem icon={<Anchor />} checked={Boolean(track.rippleLock)} disabled={track.role === 'main'} onSelect={() => update({ rippleLock: !track.rippleLock })}>
-              Ripple lock: hold clips in place
+              {tt('Ripple lock: hold clips in place')}
             </MenuItem>
             <MenuSeparator />
             <MenuItem icon={<Trash />} danger onSelect={() => dispatch('track.remove', { id: track.id })}>
-              Delete track
+              {tt('Delete track')}
             </MenuItem>
           </MenuContent>
         </Menu>

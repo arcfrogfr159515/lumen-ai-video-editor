@@ -20,6 +20,7 @@ import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
 import { formatTimecode } from '@/lib/time'
 import { timelineActions } from './timeline-actions'
+import { tt } from '@/lib/i18n'
 
 export function SourceMonitor() {
   const open = useTimelineView((s) => s.sourceMonitor)
@@ -188,7 +189,7 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
       ref={rootRef}
       tabIndex={-1}
       data-source-monitor
-      aria-label={`Source monitor: ${asset.name}`}
+      aria-label={tt('Source monitor: {0}', asset.name)}
       onKeyDown={onKeyDown}
       // A press anywhere in the monitor gives it the keyboard (its scrubber and video don't take focus themselves).
       onPointerDownCapture={(e) => {
@@ -198,9 +199,9 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
       style={{ left: pos.x, top: pos.y }}
     >
       <div onPointerDown={drag} className="flex h-10 shrink-0 cursor-grab items-center gap-2 border-b border-line pr-1.5 pl-3 active:cursor-grabbing">
-        <span className="text-2xs font-semibold tracking-wider text-fg-4 uppercase">Source</span>
+        <span className="text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('Source')}</span>
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{asset.name}</span>
-        <IconButton size="xs" label="Close the source monitor" shortcut="esc" onClick={onClose}>
+        <IconButton size="xs" label={tt('Close the source monitor')} shortcut="esc" onClick={onClose}>
           <X />
         </IconButton>
       </div>
@@ -239,12 +240,12 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
             />
-            <button type="button" onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} className="flex h-full w-full items-center px-8 outline-none">
+            <button type="button" onClick={toggle} aria-label={playing ? tt('Pause') : tt('Play')} className="flex h-full w-full items-center px-8 outline-none">
               <MiniWave peaks={asset.peaks} bars={96} className="h-24 w-full text-clip-audio" />
             </button>
           </>
         )}
-        {still && (thumb ? <img src={thumb} alt="" className="h-full w-full object-contain" /> : <span className="text-sm text-fg-4">{file ? 'A still: it plays as long as the edit needs' : 'This media can’t be played here'}</span>)}
+        {still && (thumb ? <img src={thumb} alt="" className="h-full w-full object-contain" /> : <span className="text-sm text-fg-4">{file ? tt('A still: it plays as long as the edit needs') : tt('This media can’t be played here')}</span>)}
         {playable && !playing && asset.kind === 'video' && (
           <span className="pointer-events-none absolute grid size-12 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm">
             <Play className="size-5 translate-x-px" />
@@ -256,15 +257,15 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
 
       {playable && (
         <div className="flex items-center gap-1 px-3 pb-2">
-          <IconButton size="sm" label={playing ? 'Pause' : 'Play'} shortcut="space" onClick={toggle}>
+          <IconButton size="sm" label={playing ? tt('Pause') : tt('Play')} shortcut="space" onClick={toggle}>
             {playing ? <Pause /> : <Play />}
           </IconButton>
           <span className="ml-1 font-mono text-[13px] font-medium text-fg tabular">{tc(time)}</span>
           <span className="font-mono text-2xs text-fg-4 tabular">/ {tc(duration)}</span>
           <div className="ml-auto flex items-center gap-1">
-            <Mark label="In" shortcut="i" value={marks?.in} tc={tc} onSet={() => markSource(asset.id, { in: time })} onClear={() => markSource(asset.id, { in: null })} onGo={() => seek(marks?.in ?? 0)} icon={<ChevronFirst />} />
+            <Mark label={tt('In')} shortcut="i" value={marks?.in} tc={tc} onSet={() => markSource(asset.id, { in: time })} onClear={() => markSource(asset.id, { in: null })} onGo={() => seek(marks?.in ?? 0)} icon={<ChevronFirst />} />
             <Mark
-              label="Out"
+              label={tt('Out')}
               shortcut="o"
               value={marks?.out}
               tc={tc}
@@ -280,35 +281,35 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
       <div className="space-y-2 border-t border-line px-3 py-2.5">
         <p className="text-xs leading-relaxed text-fg-3" data-edit-summary>
           {describeEdit(edit, fps, (f) => formatTimecode(f, fps))}
-          {!range && edit.points < 3 && <span className="text-fg-4"> — mark in and out on the timeline (I and O there) to say where it goes exactly.</span>}
+          {!range && edit.points < 3 && <span className="text-fg-4">{' '}{tt('— mark in and out on the timeline (I and O there) to say where it goes exactly.')}</span>}
         </p>
         <div className="flex flex-wrap items-center gap-1.5">
           <Select
-            aria-label="Track the edit goes on"
+            aria-label={tt('Track the edit goes on')}
             className="w-[150px]"
             value={trackId}
             onChange={setTrackId}
-            options={[{ value: 'auto', label: asset.kind === 'audio' ? 'Its own track' : 'Main track', hint: 'Where Lumen would put it' }, ...targets.map((t) => ({ value: t.id, label: t.name }))]}
+            options={[{ value: 'auto', label: asset.kind === 'audio' ? tt('Its own track') : tt('Main track'), hint: tt('Where Lumen would put it') }, ...targets.map((t) => ({ value: t.id, label: t.name }))]}
           />
           {conflict && (
             <Select
-              aria-label="When the marked lengths differ"
+              aria-label={tt('When the marked lengths differ')}
               className="w-[170px]"
               value={fourPoint}
               onChange={(v) => setView({ fourPoint: v })}
               options={[
-                { value: 'source', label: 'Use the source marks', hint: 'The timeline out point is ignored' },
-                { value: 'timeline', label: 'Fill the timeline marks', hint: 'The source out point is ignored' },
-                { value: 'fit', label: 'Fit to fill', hint: 'The speed changes so the source fills the stretch' },
+                { value: 'source', label: tt('Use the source marks'), hint: tt('The timeline out point is ignored') },
+                { value: 'timeline', label: tt('Fill the timeline marks'), hint: tt('The source out point is ignored') },
+                { value: 'fit', label: tt('Fit to fill'), hint: tt('The speed changes so the source fills the stretch') },
               ]}
             />
           )}
           <div className="ml-auto flex items-center gap-1.5">
-            <Button size="sm" variant="secondary" onClick={() => put('insert')} title="Insert: everything after the point moves later, on every track in sync">
-              <CornerDownRight /> Insert <Kbd combo="," />
+            <Button size="sm" variant="secondary" onClick={() => put('insert')} title={tt('Insert: everything after the point moves later, on every track in sync')}>
+              <CornerDownRight />{' '}{tt('Insert')}{' '}<Kbd combo="," />
             </Button>
-            <Button size="sm" variant="primary" onClick={() => put('overwrite')} title="Overwrite: covers what is on the track there; nothing moves">
-              <ArrowDownToLine /> Overwrite <Kbd combo="." />
+            <Button size="sm" variant="primary" onClick={() => put('overwrite')} title={tt('Overwrite: covers what is on the track there; nothing moves')}>
+              <ArrowDownToLine />{' '}{tt('Overwrite')}{' '}<Kbd combo="." />
             </Button>
           </div>
         </div>
@@ -320,16 +321,16 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
 function Mark({ label, shortcut, value, tc, onSet, onClear, onGo, icon }: { label: string; shortcut: string; value: number | undefined; tc: (sec: number) => string; onSet: () => void; onClear: () => void; onGo: () => void; icon: ReactNode }) {
   return (
     <span className={cn('flex h-7 items-center rounded-lg text-2xs', value !== undefined ? 'bg-accent/12 text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]' : 'bg-white/[0.05] text-fg-3')}>
-      <button type="button" onClick={onSet} title={`Mark ${label.toLowerCase()} here (${shortcut.toUpperCase()})`} className="flex h-full items-center gap-1 rounded-l-lg pr-1 pl-1.5 font-medium outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60 [&_svg]:size-3.5">
+      <button type="button" onClick={onSet} title={tt('Mark {0} here ({1})', label.toLowerCase(), shortcut.toUpperCase())} className="flex h-full items-center gap-1 rounded-l-lg pr-1 pl-1.5 font-medium outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60 [&_svg]:size-3.5">
         {icon}
         {label}
       </button>
       {value !== undefined && (
         <>
-          <button type="button" onClick={onGo} title={`Go to the ${label.toLowerCase()} point (Shift+${shortcut.toUpperCase()})`} className="h-full px-1 font-mono tabular outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60">
+          <button type="button" onClick={onGo} title={tt('Go to the {0} point (Shift+{1})', label.toLowerCase(), shortcut.toUpperCase())} className="h-full px-1 font-mono tabular outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60">
             {tc(value)}
           </button>
-          <button type="button" onClick={onClear} aria-label={`Clear the ${label.toLowerCase()} point`} className="grid h-full w-5 place-items-center rounded-r-lg outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60">
+          <button type="button" onClick={onClear} aria-label={tt('Clear the {0} point', label.toLowerCase())} className="grid h-full w-5 place-items-center rounded-r-lg outline-none hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-accent/60">
             <X className="size-3" />
           </button>
         </>
@@ -366,8 +367,8 @@ function Scrubber({ time, duration, marks, onSeek, onMark }: { time: number; dur
       <div ref={ref} data-source-scrubber onPointerDown={(e) => drag(e, 'seek')} className="relative h-5 cursor-pointer touch-none">
         <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-white/[0.09]" />
         {(marks?.in !== undefined || marks?.out !== undefined) && <div className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-accent/60" style={{ left: pct(a), width: `calc(${pct(b)} - ${pct(a)})` }} />}
-        {marks?.in !== undefined && <span data-mark="in" onPointerDown={(e) => drag(e, 'in')} className="absolute top-0 h-5 w-2 -translate-x-full cursor-ew-resize rounded-l-[3px] border-y-2 border-l-2 border-accent" style={{ left: pct(a) }} aria-label="In point" />}
-        {marks?.out !== undefined && <span data-mark="out" onPointerDown={(e) => drag(e, 'out')} className="absolute top-0 h-5 w-2 cursor-ew-resize rounded-r-[3px] border-y-2 border-r-2 border-accent" style={{ left: pct(b) }} aria-label="Out point" />}
+        {marks?.in !== undefined && <span data-mark="in" onPointerDown={(e) => drag(e, 'in')} className="absolute top-0 h-5 w-2 -translate-x-full cursor-ew-resize rounded-l-[3px] border-y-2 border-l-2 border-accent" style={{ left: pct(a) }} aria-label={tt('In point')} />}
+        {marks?.out !== undefined && <span data-mark="out" onPointerDown={(e) => drag(e, 'out')} className="absolute top-0 h-5 w-2 cursor-ew-resize rounded-r-[3px] border-y-2 border-r-2 border-accent" style={{ left: pct(b) }} aria-label={tt('Out point')} />}
         <span className="pointer-events-none absolute top-0 h-5 w-[2px] -translate-x-1/2 rounded-full bg-white shadow-[0_0_6px_rgb(255_255_255/0.6)]" style={{ left: pct(time) }} />
       </div>
     </div>

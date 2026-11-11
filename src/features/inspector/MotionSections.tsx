@@ -12,6 +12,7 @@ import type { Clip } from '@/editor/types'
 import { actions } from '@/features/shell/actions'
 import { cn } from '@/lib/cn'
 import { formatDuration } from '@/lib/time'
+import { tt } from '@/lib/i18n'
 
 /** A nested or multicam clip: what it plays, a way in, and (multicam) which camera it shows. */
 export function NestSection({ clip }: { clip: Clip }) {
@@ -20,9 +21,9 @@ export function NestSection({ clip }: { clip: Clip }) {
   const angles = seq?.multicam ? angleTracks(seq) : []
   const active = clip.angle ?? angles[0]?.id
   return (
-    <Section title={seq?.multicam ? 'Multicam' : 'Nested timeline'} icon={seq?.multicam ? <Video /> : <Layers />}>
+    <Section title={seq?.multicam ? tt('Multicam') : tt('Nested timeline')} icon={seq?.multicam ? <Video /> : <Layers />}>
       {!seq ? (
-        <p className="text-2xs text-danger">Its timeline is missing from the project.</p>
+        <p className="text-2xs text-danger">{tt('Its timeline is missing from the project.')}</p>
       ) : (
         <div className="space-y-2.5">
           <div className="flex items-center gap-2 rounded-lg bg-white/[0.035] px-2.5 py-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
@@ -30,11 +31,11 @@ export function NestSection({ clip }: { clip: Clip }) {
               <div className="truncate text-xs font-medium text-fg">{seq.name}</div>
               <div className="text-2xs text-fg-4 tabular">
                 {seq.settings.width}×{seq.settings.height} · {formatDuration(clipsLength(seq.clips), seq.settings.fps)}
-                {seq.multicam ? ` · ${angles.length} cameras` : ` · ${Object.keys(seq.clips).length} clips`}
+                {seq.multicam ? (' ' + tt('· {0} cameras', angles.length)) : (' ' + tt('· {0} clips', Object.keys(seq.clips).length))}
               </div>
             </div>
             <Button size="xs" variant="secondary" onClick={() => openTimeline(seq.id, true)}>
-              <FolderOpen /> Open
+              <FolderOpen />{' '}{tt('Open')}
             </Button>
           </div>
           {angles.length > 0 && (
@@ -55,11 +56,11 @@ export function NestSection({ clip }: { clip: Clip }) {
                   </button>
                 ))}
               </div>
-              <p className="text-2xs leading-relaxed text-fg-4">Press a camera’s number while it plays to cut to it at the playhead. The camera angle strip under the preview shows them all.</p>
+              <p className="text-2xs leading-relaxed text-fg-4">{tt('Press a camera’s number while it plays to cut to it at the playhead. The camera angle strip under the preview shows them all.')}</p>
             </>
           )}
           <Button size="xs" variant="ghost" onClick={actions.unnestSelection} className="w-full justify-center">
-            <Split /> Break apart onto this timeline
+            <Split />{' '}{tt('Break apart onto this timeline')}
           </Button>
         </div>
       )}
@@ -77,26 +78,26 @@ export function MotionSection({ clip }: { clip: Clip }) {
   const setStab = (patch: Partial<NonNullable<Clip['stabilize']>>, key?: string) => dispatch('clip.update', { ids: [clip.id], patch: { stabilize: patch } }, key ? { coalesce: `stab:${clip.id}:${key}` } : undefined)
   const followFrames = clip.follow ? clip.follow.points.length / 2 : 0
   return (
-    <Section title="Motion" icon={<Crosshair />} defaultOpen={Boolean(clip.follow || s)}>
+    <Section title={tt('Motion')} icon={<Crosshair />} defaultOpen={Boolean(clip.follow || s)}>
       <div className="space-y-3">
         {canFollow && (
           <div>
             <div className="mb-1.5 flex items-center gap-1.5">
               <Crosshair className="size-3.5 text-fg-3" />
-              <span className="flex-1 text-xs font-medium text-fg">Follow something</span>
+              <span className="flex-1 text-xs font-medium text-fg">{tt('Follow something')}</span>
               {clip.follow && (
-                <IconButton size="xs" label="Stop following" onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { follow: null } })}>
+                <IconButton size="xs" label={tt('Stop following')} onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { follow: null } })}>
                   <X />
                 </IconButton>
               )}
             </div>
             <p className="mb-2 text-2xs leading-relaxed text-fg-4">
               {clip.follow
-                ? `Moves with a point tracked over ${followFrames} frames. Drag it on the canvas to change where it sits relative to the point.`
-                : 'Pin this clip to something moving in the footage below it — a title to a car, a sticker to a face.'}
+                ? tt('Moves with a point tracked over {0} frames. Drag it on the canvas to change where it sits relative to the point.', followFrames)
+                : tt('Pin this clip to something moving in the footage below it — a title to a car, a sticker to a face.')}
             </p>
             <Button size="xs" variant="secondary" onClick={() => actions.trackMotion(clip.id)} className="w-full justify-center">
-              <Crosshair /> {clip.follow ? 'Track again…' : 'Track motion…'}
+              <Crosshair /> {clip.follow ? tt('Track again…') : tt('Track motion…')}
             </Button>
           </div>
         )}
@@ -104,42 +105,42 @@ export function MotionSection({ clip }: { clip: Clip }) {
           <div className="border-t border-line pt-3">
             <div className="mb-1.5 flex items-center gap-1.5">
               <Move className="size-3.5 text-fg-3" />
-              <span className="flex-1 text-xs font-medium text-fg">Stabilize</span>
+              <span className="flex-1 text-xs font-medium text-fg">{tt('Stabilize')}</span>
               {s && (
-                <IconButton size="xs" label="Remove stabilization" onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { stabilize: null } })}>
+                <IconButton size="xs" label={tt('Remove stabilization')} onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { stabilize: null } })}>
                   <X />
                 </IconButton>
               )}
             </div>
             {!s ? (
               <>
-                <p className="mb-2 text-2xs leading-relaxed text-fg-4">Measures the camera shake in this clip and smooths it away, zooming in just enough to hide the moving edges.</p>
+                <p className="mb-2 text-2xs leading-relaxed text-fg-4">{tt('Measures the camera shake in this clip and smooths it away, zooming in just enough to hide the moving edges.')}</p>
                 <Button size="xs" variant="secondary" onClick={() => void actions.stabilize(clip.id)} className="w-full justify-center">
-                  <Move /> Stabilize
+                  <Move />{' '}{tt('Stabilize')}
                 </Button>
               </>
             ) : (
               <div className="space-y-0.5">
-                <Row label="Smoothness">
+                <Row label={tt('Smoothness')}>
                   <Slider value={s.smooth} min={0.2} max={4} step={0.1} defaultValue={1} onChange={(v) => setStab({ smooth: Math.round(v * 10) / 10 }, 'smooth')} />
                   <span className="w-10 text-right text-xs text-fg-3 tabular">{s.smooth.toFixed(1)}s</span>
                 </Row>
-                <Row label="Zoom">
+                <Row label={tt('Zoom')}>
                   <Slider value={s.zoom} min={1} max={1.6} step={0.005} defaultValue={1} onChange={(v) => setStab({ zoom: Math.round(v * 1000) / 1000 }, 'zoom')} />
                   <span className="w-10 text-right text-xs text-fg-3 tabular">{Math.round((s.zoom - 1) * 100)}%</span>
                 </Row>
-                <Row label="Level">
-                  <span className="flex-1 text-2xs text-fg-4">Hold the horizon steady</span>
-                  <Switch aria-label="Stabilize rotation" checked={s.rotation} onChange={(v) => setStab({ rotation: v })} />
+                <Row label={tt('Level')}>
+                  <span className="flex-1 text-2xs text-fg-4">{tt('Hold the horizon steady')}</span>
+                  <Switch aria-label={tt('Stabilize rotation')} checked={s.rotation} onChange={(v) => setStab({ rotation: v })} />
                 </Row>
                 <div className="flex justify-end pt-1">
                   <Button
                     size="xs"
                     variant="ghost"
                     onClick={() => setStab({ zoom: autoZoom(s, (asset?.width ?? 16) / (asset?.height ?? 9)) })}
-                    title="The least zoom that hides the edges at this smoothness"
+                    title={tt('The least zoom that hides the edges at this smoothness')}
                   >
-                    <RotateCcw /> Fit zoom
+                    <RotateCcw />{' '}{tt('Fit zoom')}
                   </Button>
                 </div>
               </div>

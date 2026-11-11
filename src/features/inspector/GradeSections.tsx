@@ -20,6 +20,7 @@ import { bytesToBase64 } from '@/engine/fonts'
 import { uid } from '@/lib/id'
 import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
+import { tt } from '@/lib/i18n'
 
 type Patch = Parameters<typeof dispatch<'clip.update'>>[1]['patch']
 const update = (ids: string[], color: NonNullable<Patch>['color'], key?: string, label?: string) =>
@@ -28,9 +29,9 @@ const update = (ids: string[], color: NonNullable<Patch>['color'], key?: string,
 // ─── Wheels ──────────────────────────────────────────────────────────────
 
 const WHEELS: { key: keyof Wheels; label: string; hint: string }[] = [
-  { key: 'lift', label: 'Lift', hint: 'Shadows' },
-  { key: 'gamma', label: 'Gamma', hint: 'Midtones' },
-  { key: 'gain', label: 'Gain', hint: 'Highlights' },
+  { key: 'lift', label: tt('Lift'), hint: tt('Shadows') },
+  { key: 'gamma', label: tt('Gamma'), hint: tt('Midtones') },
+  { key: 'gain', label: tt('Gain'), hint: tt('Highlights') },
 ]
 
 export function WheelsSection({ clips }: { clips: Clip[] }) {
@@ -40,12 +41,12 @@ export function WheelsSection({ clips }: { clips: Clip[] }) {
   const set = (key: keyof Wheels, w: Partial<Wheel>, coalesce: string) => update(ids, { wheels: { [key]: { ...wheels[key], ...w } } }, `wheel:${ids.join()}:${key}:${coalesce}`, 'Colour wheels')
   return (
     <Section
-      title="Colour wheels"
+      title={tt('Colour wheels')}
       icon={<Circle />}
       defaultOpen={active}
       actions={
         active && (
-          <IconButton size="xs" label="Reset wheels" onClick={() => update(ids, { wheels: null }, undefined, 'Reset colour wheels')}>
+          <IconButton size="xs" label={tt('Reset wheels')} onClick={() => update(ids, { wheels: null }, undefined, 'Reset colour wheels')}>
             <RotateCcw />
           </IconButton>
         )
@@ -56,7 +57,7 @@ export function WheelsSection({ clips }: { clips: Clip[] }) {
           <div key={w.key} className="flex min-w-0 flex-col items-center gap-1.5">
             <ColorWheel value={wheels[w.key]} onChange={(v, k) => set(w.key, v, k)} />
             <Slider
-              aria-label={`${w.label} brightness`}
+              aria-label={tt('{0} brightness', w.label)}
               value={wheels[w.key].luma * 100}
               min={-100}
               max={100}
@@ -134,7 +135,7 @@ function ColorWheel({ value, onChange }: { value: Wheel; onChange: (w: Partial<W
 
 type Channel = keyof Curves
 const CHANNELS: { value: Channel; label: string; color: string }[] = [
-  { value: 'master', label: 'RGB', color: '#f4f4f5' },
+  { value: 'master', label: tt('RGB'), color: '#f4f4f5' },
   { value: 'red', label: 'R', color: '#ff5a5a' },
   { value: 'green', label: 'G', color: '#4ade6a' },
   { value: 'blue', label: 'B', color: '#5a8cff' },
@@ -208,12 +209,12 @@ export function CurvesSection({ clips }: { clips: Clip[] }) {
 
   return (
     <Section
-      title="Curves"
+      title={tt('Curves')}
       icon={<Spline />}
       defaultOpen={active}
       actions={
         active && (
-          <IconButton size="xs" label="Reset curves" onClick={() => update(ids, { curves: null }, undefined, 'Reset curves')}>
+          <IconButton size="xs" label={tt('Reset curves')} onClick={() => update(ids, { curves: null }, undefined, 'Reset curves')}>
             <RotateCcw />
           </IconButton>
         )
@@ -245,7 +246,7 @@ export function CurvesSection({ clips }: { clips: Clip[] }) {
             />
           ))}
         </div>
-        <p className="text-2xs text-fg-4">Click the curve to add a point, drag to shape it, double-click a point (or drag it out) to remove it.</p>
+        <p className="text-2xs text-fg-4">{tt('Click the curve to add a point, drag to shape it, double-click a point (or drag it out) to remove it.')}</p>
       </div>
     </Section>
   )
@@ -263,12 +264,12 @@ export function HslSection({ clips }: { clips: Clip[] }) {
   const info = HSL_BANDS.find((b) => b.band === band)!
   return (
     <Section
-      title="HSL"
+      title={tt('HSL')}
       icon={<SwatchBook />}
       defaultOpen={active}
       actions={
         active && (
-          <IconButton size="xs" label="Reset HSL" onClick={() => update(ids, { hsl: null }, undefined, 'Reset HSL')}>
+          <IconButton size="xs" label={tt('Reset HSL')} onClick={() => update(ids, { hsl: null }, undefined, 'Reset HSL')}>
             <RotateCcw />
           </IconButton>
         )
@@ -293,15 +294,15 @@ export function HslSection({ clips }: { clips: Clip[] }) {
           })}
         </div>
         <div className="space-y-1">
-          <Row label={`${info.label} hue`}>
+          <Row label={tt('{0} hue', info.label)}>
             <Slider value={v.hue} min={-60} max={60} bipolar defaultValue={0} onChange={(hue) => set({ hue: Math.round(hue) }, 'h')} />
             <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{v.hue}°</span>
           </Row>
-          <Row label="Saturation">
+          <Row label={tt('Saturation')}>
             <Slider value={v.saturation} min={-100} max={100} bipolar defaultValue={0} onChange={(s) => set({ saturation: Math.round(s) }, 's')} />
             <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{v.saturation}</span>
           </Row>
-          <Row label="Luminance">
+          <Row label={tt('Luminance')}>
             <Slider value={v.luminance} min={-100} max={100} bipolar defaultValue={0} onChange={(l) => set({ luminance: Math.round(l) }, 'l')} />
             <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{v.luminance}</span>
           </Row>
@@ -321,10 +322,10 @@ export async function importLutFile(file: File): Promise<string | null> {
     const name = parsed.title ?? file.name.replace(/\.cube$/i, '')
     const res = dispatch('lut.add', { lut: { id: lutId, name, size: parsed.size, data: bytesToBase64(parsed.data) } })
     if (!res.ok) throw new Error(res.error)
-    toast.success(`Imported LUT “${name}”`)
+    toast.success(tt('Imported LUT “{0}”', name))
     return lutId
   } catch (err) {
-    toast.error('Couldn’t import that LUT', { description: err instanceof Error ? err.message : String(err) })
+    toast.error(tt('Couldn’t import that LUT'), { description: err instanceof Error ? err.message : String(err) })
     return null
   }
 }
@@ -337,11 +338,11 @@ export function LutSection({ clips }: { clips: Clip[] }) {
   const list = Object.values(luts ?? {})
   return (
     <Section
-      title="LUT"
+      title={tt('LUT')}
       icon={<Blend />}
       defaultOpen={Boolean(lut)}
       actions={
-        <IconButton size="xs" label="Import a .cube LUT" onClick={() => file.current?.click()}>
+        <IconButton size="xs" label={tt('Import a .cube LUT')} onClick={() => file.current?.click()}>
           <FileUp />
         </IconButton>
       }
@@ -360,30 +361,30 @@ export function LutSection({ clips }: { clips: Clip[] }) {
         />
         {list.length ? (
           <>
-            <Row label="LUT">
+            <Row label={tt('LUT')}>
               <Select
-                aria-label="LUT"
+                aria-label={tt('LUT')}
                 value={lut?.id ?? ''}
                 onChange={(v) => update(ids, { lut: v ? { id: v, amount: lut?.amount ?? 1 } : null }, undefined, v ? 'Apply LUT' : 'Remove LUT')}
-                options={[{ value: '', label: 'None' }, ...list.map((l) => ({ value: l.id, label: `${l.name} · ${l.size}³` }))]}
+                options={[{ value: '', label: tt('None') }, ...list.map((l) => ({ value: l.id, label: `${l.name} · ${l.size}³` }))]}
                 className="w-full"
               />
             </Row>
             {lut && (
-              <Row label="Amount">
+              <Row label={tt('Amount')}>
                 <Slider value={lut.amount * 100} min={0} max={100} defaultValue={100} onChange={(v) => update(ids, { lut: { amount: Math.round(v) / 100 } }, `lut:${ids.join()}`)} />
                 <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{Math.round(lut.amount * 100)}%</span>
               </Row>
             )}
             {lut && (
               <button type="button" onClick={() => dispatch('lut.remove', { id: lut.id })} className="flex items-center gap-1.5 text-2xs text-fg-4 hover:text-danger">
-                <Trash className="size-3" /> Remove this LUT from the project
+                <Trash className="size-3" />{' '}{tt('Remove this LUT from the project')}
               </button>
             )}
           </>
         ) : (
           <button type="button" onClick={() => file.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-line-2 py-4 text-sm text-fg-3 hover:border-accent/50 hover:text-fg">
-            <Plus className="size-4" /> Import a .cube LUT
+            <Plus className="size-4" />{' '}{tt('Import a .cube LUT')}
           </button>
         )}
       </div>

@@ -8,6 +8,7 @@ import { LOCAL_AGENT_NAMES, loadModels, refreshLocalAgents, setProviderBaseURL, 
 import { useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
 import { Card, IconTile, StatusDot } from './parts'
+import { tt } from '@/lib/i18n'
 
 const fail = (err: unknown) => toast.error(err instanceof Error ? err.message : String(err))
 
@@ -34,8 +35,8 @@ export function ModelsPane() {
             <Sparkles />
           </IconTile>
         }
-        title="AI models"
-        subtitle="Bring your own model for Copilot. Keys are encrypted with your OS keychain and only used by Lumen on this computer; usage is billed to your own account with each provider."
+        title={tt('AI models')}
+        subtitle={tt('Bring your own model for Copilot. Keys are encrypted with your OS keychain and only used by Lumen on this computer; usage is billed to your own account with each provider.')}
       />
       <div className="space-y-2.5">
         {PROVIDERS.map((p) => (
@@ -43,7 +44,7 @@ export function ModelsPane() {
         ))}
       </div>
       <p className="mt-5 text-2xs leading-relaxed text-fg-4">
-        Claude and Gemini subscriptions can’t be used by other apps under Anthropic’s and Google’s terms — use an API key, OpenRouter, or your own Claude Code install (see Local agents).
+        {tt('Claude and Gemini subscriptions can’t be used by other apps under Anthropic’s and Google’s terms — use an API key, OpenRouter, or your own Claude Code install (see Local agents).')}
       </p>
     </div>
   )
@@ -73,9 +74,9 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
 
   const useFirstModel = () => {
     const m = models?.models[0]
-    if (!m) return toast('No models found yet — check the key or server.')
+    if (!m) return toast(tt('No models found yet — check the key or server.'))
     setTarget({ kind: 'model', provider: spec.id, model: m.id })
-    toast.success(`Copilot now uses ${m.name}`)
+    toast.success(tt('Copilot now uses {0}', m.name))
   }
 
   return (
@@ -101,17 +102,17 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
         <div className="flex shrink-0 items-center gap-1">
           {spec.oauth && !connected && (
             <Button size="sm" variant="primary" disabled={signingIn} onClick={act(signInOpenRouter)}>
-              {signingIn ? <LoaderCircle className="animate-spin" /> : <LogIn />} {signingIn ? 'Waiting…' : 'Sign in'}
+              {signingIn ? <LoaderCircle className="animate-spin" /> : <LogIn />} {signingIn ? tt('Waiting…') : tt('Sign in')}
             </Button>
           )}
           {connected && (
-            <Button size="sm" variant="ghost" disabled={busy || models?.loading} onClick={act(() => loadModels(spec.id, true))} title="Refresh models">
+            <Button size="sm" variant="ghost" disabled={busy || models?.loading} onClick={act(() => loadModels(spec.id, true))} title={tt('Refresh models')}>
               <RefreshCw className={cn(models?.loading && 'animate-spin')} />
             </Button>
           )}
           {connected && models?.models.length ? (
             <Button size="sm" variant="outline" onClick={useFirstModel}>
-              Use in Copilot
+              {tt('Use in Copilot')}
             </Button>
           ) : null}
           <Button
@@ -122,7 +123,7 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
               setUrl(state?.baseURL ?? spec.defaultBaseURL ?? '')
             }}
           >
-            {connected ? 'Edit' : needsUrl ? 'Set up' : 'Add key'}
+            {connected ? tt('Edit') : needsUrl ? tt('Set up') : tt('Add key')}
           </Button>
         </div>
       </div>
@@ -139,11 +140,11 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
                 onClick={act(async () => {
                   await setProviderBaseURL(spec.id, url.trim())
                   const res = await loadModels(spec.id, true)
-                  if (res?.error) toast.error(`Couldn’t reach it: ${res.error}`)
+                  if (res?.error) toast.error(tt('Couldn’t reach it: {0}', res.error))
                   else setEditing(false)
                 })}
               >
-                Connect
+                {tt('Connect')}
               </Button>
             </div>
           )}
@@ -153,7 +154,7 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
                 type="password"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
-                placeholder={spec.needsBaseURL ? 'API key (optional)' : (spec.keyPlaceholder ?? 'API key')}
+                placeholder={spec.needsBaseURL ? tt('API key (optional)') : (spec.keyPlaceholder ?? tt('API key'))}
                 className="font-mono text-xs"
                 autoComplete="off"
               />
@@ -169,21 +170,21 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
                   else setEditing(false)
                 })}
               >
-                <Check /> Save
+                <Check />{' '}{tt('Save')}
               </Button>
             </div>
           )}
           <div className="flex items-center justify-between gap-3">
             {spec.keyUrl ? (
               <a href={spec.keyUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-2xs text-accent-2 hover:underline">
-                Get a key <ExternalLink className="size-3" />
+                {tt('Get a key')}{' '}<ExternalLink className="size-3" />
               </a>
             ) : (
-              <span className="text-2xs text-fg-4">{spec.local ? 'Start the server on this computer, then connect.' : ''}</span>
+              <span className="text-2xs text-fg-4">{spec.local ? tt('Start the server on this computer, then connect.') : ''}</span>
             )}
             {connected && !spec.local && state?.keyHint && (
               <button type="button" onClick={act(() => setProviderKey(spec.id, null))} className="inline-flex items-center gap-1 text-2xs text-fg-4 hover:text-danger">
-                <Trash className="size-3" /> Remove key
+                <Trash className="size-3" />{' '}{tt('Remove key')}
               </button>
             )}
           </div>
@@ -208,8 +209,8 @@ export function LocalAgentsPane() {
             <Terminal />
           </IconTile>
         }
-        title="Claude Code & Codex"
-        subtitle="Use the Claude Code or Codex already installed on this computer as Copilot’s brain, signed in with your own account. Lumen runs the official tool and gives it only Lumen’s editing tools."
+        title={tt('Claude Code & Codex')}
+        subtitle={tt('Use the Claude Code or Codex already installed on this computer as Copilot’s brain, signed in with your own account. Lumen runs the official tool and gives it only Lumen’s editing tools.')}
       />
       <div className="space-y-2.5">
         {(['claude-code', 'codex'] as const).map((id) => (
@@ -217,11 +218,11 @@ export function LocalAgentsPane() {
         ))}
       </div>
       <Card className="mt-4">
-        <div className="text-sm font-medium text-fg">How it works</div>
+        <div className="text-sm font-medium text-fg">{tt('How it works')}</div>
         <ul className="mt-1.5 space-y-1 text-xs leading-relaxed text-fg-3">
-          <li>• Each Copilot message runs the tool in its headless mode, connected to Lumen’s MCP server — the same tools any MCP client gets.</li>
-          <li>• Claude Code runs with no shell, file or web tools; Codex runs in its read-only sandbox in an empty folder.</li>
-          <li>• Sign-in happens in the tool’s own login flow. Lumen never sees or stores your credentials; usage counts toward your own plan.</li>
+          <li>{tt('• Each Copilot message runs the tool in its headless mode, connected to Lumen’s MCP server — the same tools any MCP client gets.')}</li>
+          <li>{tt('• Claude Code runs with no shell, file or web tools; Codex runs in its read-only sandbox in an empty folder.')}</li>
+          <li>{tt('• Sign-in happens in the tool’s own login flow. Lumen never sees or stores your credentials; usage counts toward your own plan.')}</li>
         </ul>
       </Card>
       <Button
@@ -238,7 +239,7 @@ export function LocalAgentsPane() {
           }
         }}
       >
-        <RefreshCw className={cn(checking && 'animate-spin')} /> Check again
+        <RefreshCw className={cn(checking && 'animate-spin')} />{' '}{tt('Check again')}
       </Button>
     </div>
   )
@@ -266,29 +267,29 @@ function LocalAgentCard({ id }: { id: LocalAgentId }) {
             {a && <StatusDot status={a.found && a.signedIn ? 'ready' : a.found ? 'needs-auth' : 'disconnected'} />}
           </div>
           <div className="truncate text-2xs text-fg-4">
-            {!a ? 'Checking…' : !a.found ? 'Not installed' : `${a.signedIn ? `Signed in · ${a.account ?? 'your account'}` : 'Not signed in'}${a.version ? ` · v${a.version}` : ''}`}
+            {!a ? tt('Checking…') : !a.found ? tt('Not installed') : `${a.signedIn ? `Signed in · ${a.account ?? 'your account'}` : 'Not signed in'}${a.version ? ` · v${a.version}` : ''}`}
           </div>
           {a?.path && <div className="truncate font-mono text-[10px] text-fg-4/80">{a.path}</div>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {a && !a.found && (
             <a href={INSTALL[id]} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-2 hover:underline">
-              Install <ExternalLink className="size-3" />
+              {tt('Install')}{' '}<ExternalLink className="size-3" />
             </a>
           )}
           {a?.found && !a.signedIn && (
             <Button size="sm" variant="primary" disabled={signingIn} onClick={() => void signInLocal(id).catch(fail)}>
-              {signingIn ? <LoaderCircle className="animate-spin" /> : <LogIn />} {signingIn ? 'Finish in the window…' : 'Sign in'}
+              {signingIn ? <LoaderCircle className="animate-spin" /> : <LogIn />} {signingIn ? tt('Finish in the window…') : tt('Sign in')}
             </Button>
           )}
           {a?.found && a.signedIn && (
             <Button size="sm" variant={active ? 'ghost' : 'outline'} disabled={active} onClick={() => setTarget({ kind: 'local', agent: id })}>
               {active ? (
                 <>
-                  <Check /> In use
+                  <Check />{' '}{tt('In use')}
                 </>
               ) : (
-                'Use in Copilot'
+                tt('Use in Copilot')
               )}
             </Button>
           )}

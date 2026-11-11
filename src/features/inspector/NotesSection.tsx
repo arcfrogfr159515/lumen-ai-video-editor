@@ -11,6 +11,8 @@ import { addTask, openTasks, removeTask, renameTask, toggleTask } from '@/editor
 import { dispatch, useEditor } from '@/editor/store'
 import type { Clip, ClipTask, LabelColor } from '@/editor/types'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 type NotePatch = { label?: LabelColor | null; speaker?: string | null; note?: string | null; tasks?: ClipTask[] | null }
 
@@ -20,8 +22,8 @@ export function LabelSwatches({ value, hint, onChange }: { value: LabelColor | u
     <div className="flex flex-wrap items-center gap-1.5">
       <button
         type="button"
-        aria-label="No label"
-        title="No label — coloured by the project’s rules"
+        aria-label={tt('No label')}
+        title={tt('No label — coloured by the project’s rules')}
         onClick={() => onChange(null)}
         className={cn('grid size-5 place-items-center rounded-full text-fg-4 ring-1 ring-white/15 transition-transform hover:scale-110 hover:text-fg-2', !value && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
       >
@@ -33,7 +35,7 @@ export function LabelSwatches({ value, hint, onChange }: { value: LabelColor | u
           type="button"
           aria-label={c.name}
           aria-pressed={value === c.id}
-          title={hint === c.id && value !== c.id ? `${c.name} — what the colour rules give it now` : c.name}
+          title={hint === c.id && value !== c.id ? tt('{0} — what the colour rules give it now', c.name) : c.name}
           onClick={() => onChange(value === c.id ? null : c.id)}
           className={cn('relative size-5 rounded-full ring-1 ring-white/15 transition-transform hover:scale-110', value === c.id && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
           style={{ background: c.css }}
@@ -68,19 +70,19 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
 
   return (
     <Section
-      title={single && (clip.note || tasks.length) ? `Notes & tasks${open ? ` · ${open} open` : ''}` : 'Notes & tasks'}
+      title={single && (clip.note || tasks.length) ? tt('Notes & tasks{0}', open ? (' ' + tt('· {0} open', open)) : '') : tt('Notes & tasks')}
       icon={<StickyNote />}
       defaultOpen={Boolean(clip.note || tasks.length || clip.label || clip.speaker)}
     >
       <div className="space-y-2.5">
-        <Row label="Label">
+        <Row label={tt('Label')}>
           <LabelSwatches value={sameLabel} hint={ruleColor} onChange={(color) => update({ label: color }, color ? 'Label clip' : 'Remove label')} />
         </Row>
-        <Row label="Speaker">
+        <Row label={tt('Speaker')}>
           <input
             value={speaker}
-            placeholder={heard && !clip.speaker ? `${heard} (from the media)` : 'Who is talking'}
-            aria-label="Speaker"
+            placeholder={heard && !clip.speaker ? tt('{0} (from the media)', heard) : tt('Who is talking')}
+            aria-label={tt('Speaker')}
             onChange={(e) => setSpeaker(e.target.value)}
             onBlur={() => speaker.trim() !== sameSpeaker && update({ speaker: speaker.trim() || null }, 'Set speaker')}
             onKeyDown={(e) => {
@@ -95,8 +97,8 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
             <textarea
               value={note}
               rows={Math.min(8, Math.max(2, note.split('\n').length))}
-              placeholder="A note about this clip…"
-              aria-label="Clip note"
+              placeholder={tt('A note about this clip…')}
+              aria-label={tt('Clip note')}
               onChange={(e) => setNote(e.target.value)}
               onBlur={() => note.trim() !== (clip.note ?? '') && update({ note: note.trim() || null }, note.trim() ? 'Edit note' : 'Remove note')}
               onKeyDown={(e) => e.stopPropagation()}
@@ -125,8 +127,8 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
               <Plus className="size-3.5 shrink-0 text-fg-4" />
               <input
                 value={draft}
-                placeholder="Add a task and press Enter"
-                aria-label="New task"
+                placeholder={tt('Add a task and press Enter')}
+                aria-label={tt('New task')}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
                 className="h-7 min-w-0 flex-1 rounded-md bg-transparent px-1.5 text-sm text-fg outline-none placeholder:text-fg-4 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-accent/60"
@@ -134,7 +136,7 @@ export function NotesSection({ clips }: { clips: Clip[] }) {
             </form>
           </>
         ) : (
-          <p className="text-2xs text-fg-4">Notes and tasks are written one clip at a time. Label and speaker apply to all {clips.length}.</p>
+          <p className="text-2xs text-fg-4">{ttx('Notes and tasks are written one clip at a time. Label and speaker apply to all {0}.', clips.length)}</p>
         )}
       </div>
     </Section>
@@ -146,10 +148,10 @@ function TaskRow({ task, onToggle, onRename, onRemove }: { task: ClipTask; onTog
   useEffect(() => setText(task.text), [task.text])
   return (
     <li className="group/task flex items-center gap-2">
-      <input type="checkbox" checked={task.done} onChange={onToggle} aria-label={task.done ? 'Reopen task' : 'Tick off task'} className="size-3.5 shrink-0 accent-[var(--color-accent)]" />
+      <input type="checkbox" checked={task.done} onChange={onToggle} aria-label={task.done ? tt('Reopen task') : tt('Tick off task')} className="size-3.5 shrink-0 accent-[var(--color-accent)]" />
       <input
         value={text}
-        aria-label="Task"
+        aria-label={tt('Task')}
         onChange={(e) => setText(e.target.value)}
         onBlur={() => text.trim() !== task.text && onRename(text.trim())}
         onKeyDown={(e) => {
@@ -159,7 +161,7 @@ function TaskRow({ task, onToggle, onRename, onRemove }: { task: ClipTask; onTog
         }}
         className={cn('h-6 min-w-0 flex-1 rounded bg-transparent px-1 text-sm text-fg-2 outline-none hover:bg-white/[0.04] focus:bg-white/[0.07] focus:text-fg focus:ring-1 focus:ring-accent/60', task.done && 'text-fg-4 line-through')}
       />
-      <button type="button" aria-label="Remove task" onClick={onRemove} className="grid size-5 shrink-0 place-items-center rounded text-fg-4 opacity-0 outline-none hover:bg-white/[0.08] hover:text-fg-2 group-hover/task:opacity-100 focus-visible:opacity-100">
+      <button type="button" aria-label={tt('Remove task')} onClick={onRemove} className="grid size-5 shrink-0 place-items-center rounded text-fg-4 opacity-0 outline-none hover:bg-white/[0.08] hover:text-fg-2 group-hover/task:opacity-100 focus-visible:opacity-100">
         <X className="size-3" />
       </button>
     </li>

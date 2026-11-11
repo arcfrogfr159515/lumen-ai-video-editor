@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { chooseTarget, LOCAL_AGENT_NAMES, loadModels, signInLocal, targetLabel, targetReady, useAi } from '@/integrations/ai'
 import { openIntegrations, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 /** Same brain and model — effort aside. */
 function same(a: CopilotTarget | null, b: CopilotTarget | null) {
@@ -69,16 +70,16 @@ export function BrainPicker() {
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[340px] p-0">
         <Command loop className="flex flex-col">
-          <Command.Input placeholder="Search models…" className="h-10 border-b border-line bg-transparent px-3.5 text-sm text-fg outline-none placeholder:text-fg-4" />
+          <Command.Input placeholder={tt('Search models…')} className="h-10 border-b border-line bg-transparent px-3.5 text-sm text-fg outline-none placeholder:text-fg-4" />
           <Command.List className="max-h-[420px] overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-fg-4 [&_[cmdk-group-heading]]:uppercase">
-            <Command.Empty className="px-3 py-6 text-center text-xs text-fg-4">No models match.</Command.Empty>
+            <Command.Empty className="px-3 py-6 text-center text-xs text-fg-4">{tt('No models match.')}</Command.Empty>
 
-            <Command.Group heading="Default">
+            <Command.Group heading={tt('Default')}>
               <Row
                 value="Automatic best available"
                 icon={<Sparkles className="size-3.5" />}
-                title="Automatic"
-                hint={targetLabel(null).subtitle === 'automatic' ? `Uses ${targetLabel(null).title}` : 'Uses the first brain you connect'}
+                title={tt('Automatic')}
+                hint={targetLabel(null).subtitle === 'automatic' ? tt('Uses {0}', targetLabel(null).title) : tt('Uses the first brain you connect')}
                 selected={target === null}
                 onSelect={() => choose(null)}
               />
@@ -86,7 +87,7 @@ export function BrainPicker() {
 
             {available &&
               (['claude-code', 'codex'] as const).map((id) => (
-                <Command.Group key={id} heading={`${LOCAL_AGENT_NAMES[id]} · your account`}>
+                <Command.Group key={id} heading={tt('{0} · your account', LOCAL_AGENT_NAMES[id])}>
                   <AgentRows
                     id={id}
                     agent={localAgents[id]}
@@ -102,7 +103,7 @@ export function BrainPicker() {
               const list = models[p.id]
               return (
                 <Command.Group key={p.id} heading={p.name}>
-                  {list?.loading && !list.models.length && <div className="px-2 py-1.5 text-xs text-fg-4">Loading models…</div>}
+                  {list?.loading && !list.models.length && <div className="px-2 py-1.5 text-xs text-fg-4">{tt('Loading models…')}</div>}
                   {list?.error && !list.models.length && <div className="px-2 py-1.5 text-xs text-danger/80">{list.error}</div>}
                   {(list?.models ?? []).slice(0, 400).map((m) => {
                     const t: CopilotTarget = { kind: 'model', provider: p.id, model: m.id }
@@ -121,7 +122,7 @@ export function BrainPicker() {
             className="flex items-center gap-2 border-t border-line px-3.5 py-2.5 text-xs text-fg-3 transition-colors hover:bg-white/[0.04] hover:text-fg"
           >
             <Settings2 className="size-3.5" />
-            {configured.length ? 'Add or manage models…' : 'Add a model — Claude, GPT, Gemini, OpenRouter…'}
+            {configured.length ? tt('Add or manage models…') : tt('Add a model — Claude, GPT, Gemini, OpenRouter…')}
           </button>
         </Command>
       </PopoverContent>
@@ -152,7 +153,7 @@ function AgentRows({
         value={`${name} local agent`}
         icon={<Terminal className="size-3.5" />}
         title={name}
-        hint={!agent ? 'Checking…' : !agent.found ? 'Not installed' : 'Not signed in'}
+        hint={!agent ? tt('Checking…') : !agent.found ? tt('Not installed') : tt('Not signed in')}
         selected={false}
         disabled={!agent?.found}
         onSelect={() => (agent?.found ? onSignIn() : openIntegrations('local-agents'))}
@@ -160,7 +161,7 @@ function AgentRows({
           agent?.found ? (
             <span className="flex items-center gap-1 rounded-md bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-medium text-fg-2">
               {signingIn ? <LoaderCircle className="size-3 animate-spin" /> : null}
-              Sign in
+              {tt('Sign in')}
             </span>
           ) : undefined
         }
@@ -173,8 +174,8 @@ function AgentRows({
     <>
       <Row
         value={`${name} default model`}
-        title="Default model"
-        hint={defaultModel ? `${defaultModel} · from your ${name} settings` : `Your ${name} setting · ${agent.account ?? 'signed in'}`}
+        title={tt('Default model')}
+        hint={defaultModel ? tt('{0} · from your {1} settings', defaultModel, name) : tt('Your {0} setting · {1}', name, agent.account ?? tt('signed in'))}
         selected={same(target, fallback)}
         onSelect={() => onChoose(fallback)}
       />

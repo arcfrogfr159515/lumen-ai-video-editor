@@ -13,6 +13,7 @@ import { ClipView } from './ClipView'
 import { useLayout } from './layout'
 import { CLIP_COLOR, useDrag } from './model'
 import { useLaneWindow } from './viewport'
+import { tt } from '@/lib/i18n'
 
 /** The clips of a track that overlap frames [f0, f1), in timeline order. */
 function clipIdsIn(project: Project, trackId: string, f0: number, f1: number) {
@@ -70,9 +71,9 @@ export function TrackLane({ track, width }: { track: Track; width: number }) {
 
 /** Where a transition can sit on its cut, as the menu and the drop preview name it. */
 const ALIGNS: { id: TransitionAlign; label: string; hint: string }[] = [
-  { id: 'before', label: 'Before', hint: 'Ends at the cut: over the end of the first clip' },
-  { id: 'center', label: 'On the cut', hint: 'Half on each clip' },
-  { id: 'after', label: 'After', hint: 'Starts at the cut: over the start of the second clip' },
+  { id: 'before', label: tt('Before'), hint: tt('Ends at the cut: over the end of the first clip') },
+  { id: 'center', label: tt('On the cut'), hint: tt('Half on each clip') },
+  { id: 'after', label: tt('After'), hint: tt('Starts at the cut: over the start of the second clip') },
 ]
 
 /** While a transition is dragged over a cut: where it would sit. */
@@ -132,8 +133,8 @@ function CrossfadeHandle({ clipId }: { clipId: string }) {
   return (
     <button
       type="button"
-      title="Add a crossfade"
-      onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: { kind: 'dissolve', duration: Math.max(2, Math.min(clip.duration, Math.round(fps / 2))) } }, { label: 'Add crossfade' })}
+      title={tt('Add a crossfade')}
+      onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: { kind: 'dissolve', duration: Math.max(2, Math.min(clip.duration, Math.round(fps / 2))) } }, { label: tt('Add crossfade') })}
       className="absolute top-1/2 z-[12] grid size-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-surface-5 text-fg-2 opacity-0 shadow-[0_0_0_1px_rgb(255_255_255/0.18),0_4px_10px_rgb(0_0_0/0.5)] outline-none transition-[opacity,transform] group-hover/lane:opacity-100 hover:scale-110 hover:text-fg focus-visible:opacity-100"
       style={{ left: (clip.start / fps) * pps }}
     >
@@ -180,8 +181,8 @@ function TransitionBadge({ clipId }: { clipId: string }) {
           </button>
         </PopoverTrigger>
         <PopoverContent side="top" className="w-64">
-          <div className="mb-2 text-xs font-semibold text-fg">{audio ? 'Crossfade' : 'Transition'}</div>
-          {audio && <p className="-mt-1 mb-1 text-2xs text-fg-4">Equal-power: the outgoing sound plays on into its handle while the next fades in.</p>}
+          <div className="mb-2 text-xs font-semibold text-fg">{audio ? tt('Crossfade') : tt('Transition')}</div>
+          {audio && <p className="-mt-1 mb-1 text-2xs text-fg-4">{tt('Equal-power: the outgoing sound plays on into its handle while the next fades in.')}</p>}
           <div className={cn('grid grid-cols-2 gap-1', audio && 'hidden')}>
             {TRANSITIONS.map((t) => (
               <button
@@ -198,7 +199,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
             ))}
           </div>
           <div className="mt-3 flex items-center gap-3">
-            <span className="w-14 text-xs text-fg-3">Position</span>
+            <span className="w-14 text-xs text-fg-3">{tt('Position')}</span>
             <div className="grid flex-1 grid-cols-3 gap-0.5 rounded-lg bg-white/[0.05] p-0.5">
               {ALIGNS.map((a) => (
                 <button
@@ -214,7 +215,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
             </div>
           </div>
           <div className="mt-3 flex items-center gap-3">
-            <span className="w-14 text-xs text-fg-3">Duration</span>
+            <span className="w-14 text-xs text-fg-3">{tt('Duration')}</span>
             <Slider
               value={tr.duration}
               min={2}
@@ -224,7 +225,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
             <span className="w-10 text-right text-xs text-fg-2 tabular">{formatDuration(tr.duration, fps)}</span>
           </div>
           <Button variant="danger" size="sm" className="mt-3 w-full" onClick={() => dispatch('clip.setTransition', { id: clip.id, transition: null })}>
-            {audio ? 'Remove crossfade' : 'Remove transition'}
+            {audio ? tt('Remove crossfade') : 'Remove transition'}
           </Button>
         </PopoverContent>
       </Popover>

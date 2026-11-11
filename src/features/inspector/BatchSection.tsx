@@ -17,6 +17,8 @@ import { dispatch, getProject, useEditor } from '@/editor/store'
 import type { Clip, EffectKind } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 type Ops = Omit<CommandInput<'clip.batch'>, 'ids'>
 type Result = { changed: number; skipped: { id: string; name: string; why: string }[] }
@@ -48,17 +50,17 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
 
   return (
     <Section
-      title="Batch"
+      title={tt('Batch')}
       icon={<Wand />}
       actions={
         <Menu>
           <MenuTrigger asChild>
-            <button type="button" className="flex h-6 items-center gap-1 rounded-md px-1.5 text-2xs text-fg-3 outline-none hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60" title="Add the clips that belong with these to the selection">
-              <ListFilter className="size-3.5" /> Select more <ChevronDown className="size-3" />
+            <button type="button" className="flex h-6 items-center gap-1 rounded-md px-1.5 text-2xs text-fg-3 outline-none hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60" title={tt('Add the clips that belong with these to the selection')}>
+              <ListFilter className="size-3.5" />{' '}{tt('Select more')}{' '}<ChevronDown className="size-3" />
             </button>
           </MenuTrigger>
           <MenuContent align="end">
-            <MenuLabel>Add to the selection every clip</MenuLabel>
+            <MenuLabel>{tt('Add to the selection every clip')}</MenuLabel>
             {SIMILAR.map((s) => (
               <MenuItem key={s.id} onSelect={() => select(similarClips(getProject(), ids, s.id))}>
                 {s.label}
@@ -69,7 +71,7 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
       }
     >
       <div className="space-y-3">
-        <Row label="Speed">
+        <Row label={tt('Speed')}>
           <div className="grid flex-1 grid-cols-4 gap-1">
             {[
               [0.5, '½×'],
@@ -77,44 +79,44 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
               [1.25, 'Faster'],
               [2, '2×'],
             ].map(([factor, label]) => (
-              <button key={label} type="button" disabled={!timed} title={`Each clip plays at ${factor} times the speed it has now`} onClick={() => run({ speed: { mode: 'scale', value: factor as number } }, `Speed × ${factor} on ${timed} clips`)} className={chip}>
+              <button key={label} type="button" disabled={!timed} title={tt('Each clip plays at {0} times the speed it has now', factor)} onClick={() => run({ speed: { mode: 'scale', value: factor as number } }, `Speed × ${factor} on ${timed} clips`)} className={chip}>
                 {label}
               </button>
             ))}
           </div>
         </Row>
-        <Row label="Volume">
+        <Row label={tt('Volume')}>
           <div className="grid flex-1 grid-cols-4 gap-1">
             {[-3, -1, 1, 3].map((db) => (
-              <button key={db} type="button" disabled={!sound} title={`Each clip ${db > 0 ? 'up' : 'down'} ${Math.abs(db)} dB from where it is`} onClick={() => run({ volume: { mode: 'offset', value: db } }, `Volume ${db > 0 ? '+' : '−'}${Math.abs(db)} dB on ${sound} clips`)} className={chip}>
+              <button key={db} type="button" disabled={!sound} title={tt('Each clip {0} {1} dB from where it is', db > 0 ? tt('up') : tt('down'), Math.abs(db))} onClick={() => run({ volume: { mode: 'offset', value: db } }, `Volume ${db > 0 ? '+' : '−'}${Math.abs(db)} dB on ${sound} clips`)} className={chip}>
                 {db > 0 ? '+' : '−'}
-                {Math.abs(db)} dB
+                {ttx('{0} dB', Math.abs(db))}
               </button>
             ))}
           </div>
         </Row>
-        <Row label="Set level">
-          <ScrubInput aria-label="Level to set" value={level} onChange={setLevel} min={-60} max={12} step={0.5} precision={1} unit="dB" className="w-[76px]" disabled={!sound} />
+        <Row label={tt('Set level')}>
+          <ScrubInput aria-label={tt('Level to set')} value={level} onChange={setLevel} min={-60} max={12} step={0.5} precision={1} unit={tt('dB')} className="w-[76px]" disabled={!sound} />
           <Button size="xs" variant="secondary" disabled={!sound} onClick={() => run({ volume: { mode: 'set', value: level } }, `Volume ${level} dB on ${sound} clips`)}>
-            Set on {sound}
+            {ttx('Set on {0}', sound)}
           </Button>
         </Row>
-        <Row label="Fades">
-          <ScrubInput aria-label="Fade in, seconds" prefix="In" value={fadeIn} onChange={setFadeIn} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[78px]" disabled={!sound} />
-          <ScrubInput aria-label="Fade out, seconds" prefix="Out" value={fadeOut} onChange={setFadeOut} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[84px]" disabled={!sound} />
+        <Row label={tt('Fades')}>
+          <ScrubInput aria-label={tt('Fade in, seconds')} prefix="In" value={fadeIn} onChange={setFadeIn} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[78px]" disabled={!sound} />
+          <ScrubInput aria-label={tt('Fade out, seconds')} prefix="Out" value={fadeOut} onChange={setFadeOut} min={0} max={10} step={0.05} precision={2} unit="s" className="w-[84px]" disabled={!sound} />
           <Button size="xs" variant="secondary" disabled={!sound} onClick={() => run({ fadeIn: Math.round(fadeIn * fps), fadeOut: Math.round(fadeOut * fps) }, `Fades on ${sound} clips`)}>
-            Set
+            {tt('Set')}
           </Button>
         </Row>
-        <Row label="Effects">
+        <Row label={tt('Effects')}>
           <Menu>
             <MenuTrigger asChild>
               <Button size="xs" variant="secondary" disabled={!picture}>
-                Add… <ChevronDown />
+                {tt('Add…')}{' '}<ChevronDown />
               </Button>
             </MenuTrigger>
             <MenuContent align="start" className="max-h-[320px] overflow-y-auto">
-              <MenuLabel>Add to {picture} clips</MenuLabel>
+              <MenuLabel>{ttx('Add to {0} clips', picture)}</MenuLabel>
               {EFFECTS.map((e) => (
                 <MenuItem key={e.kind} onSelect={() => run({ effects: { add: [e.kind as EffectKind] } }, `Add ${e.name} to ${picture} clips`)}>
                   {e.name}
@@ -125,23 +127,23 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
           <Menu>
             <MenuTrigger asChild>
               <Button size="xs" variant="ghost" disabled={!clips.some((c) => c.effects.length)}>
-                All effects <ChevronDown />
+                {tt('All effects')}{' '}<ChevronDown />
               </Button>
             </MenuTrigger>
             <MenuContent align="start">
-              <MenuItem onSelect={() => run({ effects: { enabled: false } }, 'Switch effects off')}>Switch off</MenuItem>
-              <MenuItem onSelect={() => run({ effects: { enabled: true } }, 'Switch effects on')}>Switch on</MenuItem>
+              <MenuItem onSelect={() => run({ effects: { enabled: false } }, 'Switch effects off')}>{tt('Switch off')}</MenuItem>
+              <MenuItem onSelect={() => run({ effects: { enabled: true } }, 'Switch effects on')}>{tt('Switch on')}</MenuItem>
               <MenuSeparator />
               <MenuItem danger onSelect={() => run({ effects: { remove: 'all' } }, 'Remove effects')}>
-                Remove them all
+                {tt('Remove them all')}
               </MenuItem>
             </MenuContent>
           </Menu>
         </Row>
-        <Row label="Rename">
+        <Row label={tt('Rename')}>
           <input
             value={pattern}
-            aria-label="Rename pattern"
+            aria-label={tt('Rename pattern')}
             onChange={(e) => setPattern(e.target.value)}
             onKeyDown={(e) => {
               e.stopPropagation()
@@ -151,18 +153,18 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
             className="h-7 min-w-0 flex-1 rounded-md bg-white/[0.05] px-2 text-sm text-fg outline-none placeholder:text-fg-4 focus:ring-1 focus:ring-accent/60"
           />
           <Button size="xs" variant="secondary" disabled={!pattern.trim()} onClick={() => run({ rename: pattern.trim() }, `Rename ${clips.length} clips`)}>
-            Rename
+            {tt('Rename')}
           </Button>
         </Row>
         <div className="flex flex-wrap gap-1">
           {RENAME_TOKENS.map((t) => (
-            <button key={t.token} type="button" title={`Adds ${t.means}`} onClick={() => setPattern((p) => `${p}${p && !p.endsWith(' ') ? ' ' : ''}${t.token}`)} className={cn(chip, 'h-5 px-1.5 font-mono text-[10px]')}>
+            <button key={t.token} type="button" title={tt('Adds {0}', t.means)} onClick={() => setPattern((p) => `${p}${p && !p.endsWith(' ') ? ' ' : ''}${t.token}`)} className={cn(chip, 'h-5 px-1.5 font-mono text-[10px]')}>
               {t.token}
             </button>
           ))}
         </div>
         <p className="text-2xs leading-relaxed text-fg-4">
-          Each change starts from where a clip stands and is one undo step. Clips a change can’t apply to are left as they are — {sound} of {clips.length} have sound, {timed} a speed, {picture} a picture.
+          {ttx('Each change starts from where a clip stands and is one undo step. Clips a change can’t apply to are left as they are — {0} of {1} have sound, {2} a speed, {3} a picture.', sound, clips.length, timed, picture)}
         </p>
       </div>
     </Section>

@@ -27,6 +27,8 @@ import { MotionSection, NestSection } from './MotionSections'
 import { NotesSection } from './NotesSection'
 import { TakesSection } from './TakesSection'
 import { AnimateSection, AudioSection, ColorSections, CompositingSection, EffectsSection, Space3DSection, SpeedSection, TextSection, TransformSection } from './sections'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 export function Inspector() {
   const selection = useUI((s) => s.selection)
@@ -100,20 +102,20 @@ function ClipInspector({ clip }: { clip: Clip }) {
         </div>
         <Menu>
           <MenuTrigger asChild>
-            <IconButton label="Clip actions">
+            <IconButton label={tt('Clip actions')}>
               <Ellipsis />
             </IconButton>
           </MenuTrigger>
           <MenuContent align="end">
             <MenuItem icon={<Copy />} shortcut="mod+d" onSelect={actions.duplicateSelection}>
-              Duplicate
+              {tt('Duplicate')}
             </MenuItem>
             <MenuItem icon={<AiSparkle />} onSelect={() => void sendPrompt(clip.kind === 'audio' ? 'Remove the long pauses from this' : 'Make this look cinematic')}>
-              {clip.kind === 'audio' ? 'Clean up with Copilot' : 'Grade with Copilot'}
+              {clip.kind === 'audio' ? tt('Clean up with Copilot') : tt('Grade with Copilot')}
             </MenuItem>
             <MenuSeparator />
             <MenuItem icon={<Trash />} danger shortcut="delete" onSelect={() => actions.deleteSelection(false)}>
-              Delete
+              {tt('Delete')}
             </MenuItem>
           </MenuContent>
         </Menu>
@@ -163,17 +165,17 @@ function MultiInspector({ clips }: { clips: Clip[] }) {
           <Layers className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-md font-semibold text-fg">{clips.length} clips selected</div>
-          <div className="text-2xs text-fg-4">Changes apply to every selected clip</div>
+          <div className="text-md font-semibold text-fg">{ttx('{0} clips selected', clips.length)}</div>
+          <div className="text-2xs text-fg-4">{tt('Changes apply to every selected clip')}</div>
         </div>
-        <IconButton label="Delete" shortcut="delete" onClick={() => actions.deleteSelection(false)}>
+        <IconButton label={tt('Delete')} shortcut="delete" onClick={() => actions.deleteSelection(false)}>
           <Trash />
         </IconButton>
       </div>
       <BatchSection clips={clips} />
       {visual.length > 0 && <ColorSections clips={visual} />}
       {timed.length > 0 && <SpeedSection clips={timed} fps={fps} />}
-      {!visual.length && !timed.length && <p className="px-4 py-6 text-sm text-fg-3">These clips don’t share editable properties.</p>}
+      {!visual.length && !timed.length && <p className="px-4 py-6 text-sm text-fg-3">{tt('These clips don’t share editable properties.')}</p>}
       <NotesSection clips={clips} />
     </div>
   )
@@ -182,11 +184,11 @@ function MultiInspector({ clips }: { clips: Clip[] }) {
 // ─── Project ─────────────────────────────────────────────────────────────
 
 const CANVASES = [
-  { id: '16:9', label: 'Widescreen', w: 1920, h: 1080 },
-  { id: '4k', label: '4K UHD', w: 3840, h: 2160 },
-  { id: '9:16', label: 'Vertical', w: 1080, h: 1920 },
-  { id: '1:1', label: 'Square', w: 1080, h: 1080 },
-  { id: '4:5', label: 'Portrait', w: 1080, h: 1350 },
+  { id: '16:9', label: tt('Widescreen'), w: 1920, h: 1080 },
+  { id: '4k', label: tt('4K UHD'), w: 3840, h: 2160 },
+  { id: '9:16', label: tt('Vertical'), w: 1080, h: 1920 },
+  { id: '1:1', label: tt('Square'), w: 1080, h: 1080 },
+  { id: '4:5', label: tt('Portrait'), w: 1080, h: 1350 },
 ]
 
 const BACKGROUNDS = ['#000000', '#0b0b12', '#ffffff', '#1d1b2e', '#12281f', '#2b1522']
@@ -201,7 +203,7 @@ function ProjectInspector() {
   return (
     <div>
       <div className="px-4 pt-4 pb-3">
-        <div className="text-2xs font-semibold tracking-wider text-fg-4 uppercase">Project</div>
+        <div className="text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('Project')}</div>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -214,7 +216,7 @@ function ProjectInspector() {
         />
       </div>
 
-      <Section title={project.sequences && Object.keys(project.sequences).length ? `Canvas · ${openSequenceName(project)}` : 'Canvas'}>
+      <Section title={project.sequences && Object.keys(project.sequences).length ? tt('Canvas · {0}', openSequenceName(project)) : tt('Canvas')}>
         <div className="grid grid-cols-5 gap-1.5">
           {CANVASES.map((c) => {
             const active = current?.id === c.id
@@ -239,21 +241,21 @@ function ProjectInspector() {
           })}
         </div>
         <div className="mt-3 space-y-1">
-          <Row label="Resolution">
+          <Row label={tt('Resolution')}>
             <span className="font-mono text-sm text-fg-2 tabular">
               {settings.width} × {settings.height}
             </span>
           </Row>
-          <Row label="Frame rate">
+          <Row label={tt('Frame rate')}>
             <Select
-              aria-label="Frame rate"
+              aria-label={tt('Frame rate')}
               value={String(settings.fps)}
               onChange={(v) => dispatch('project.update', { settings: { fps: Number(v) } })}
-              options={['24', '25', '30', '50', '60'].map((f) => ({ value: f, label: `${f} fps` }))}
+              options={['24', '25', '30', '50', '60'].map((f) => ({ value: f, label: tt('{0} fps', f) }))}
               className="w-full"
             />
           </Row>
-          <Row label="Background">
+          <Row label={tt('Background')}>
             <div className="flex gap-1.5">
               {BACKGROUNDS.map((c) => (
                 <button
@@ -270,12 +272,12 @@ function ProjectInspector() {
         </div>
       </Section>
 
-      <Section title="Overview">
+      <Section title={tt('Overview')}>
         <div className="grid grid-cols-2 gap-2">
-          <Stat label="Duration" value={formatDuration(projectDuration(project), settings.fps)} />
-          <Stat label="Clips" value={String(Object.keys(project.clips).length)} />
-          <Stat label="Tracks" value={String(project.tracks.length)} />
-          <Stat label="Media" value={String(Object.keys(project.assets).length)} />
+          <Stat label={tt('Duration')} value={formatDuration(projectDuration(project), settings.fps)} />
+          <Stat label={tt('Clips')} value={String(Object.keys(project.clips).length)} />
+          <Stat label={tt('Tracks')} value={String(project.tracks.length)} />
+          <Stat label={tt('Media')} value={String(Object.keys(project.assets).length)} />
         </div>
       </Section>
 
@@ -283,17 +285,17 @@ function ProjectInspector() {
         <div className="ring-ai rounded-xl bg-white/[0.03] p-3.5">
           <div className="flex items-center gap-2 text-sm font-medium text-fg">
             <AiSparkle />
-            Not sure where to start?
+            {tt('Not sure where to start?')}
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-fg-3">Ask Copilot to review your edit — it watches the timeline and suggests what to fix first.</p>
+          <p className="mt-1 text-xs leading-relaxed text-fg-3">{tt('Ask Copilot to review your edit — it watches the timeline and suggests what to fix first.')}</p>
           <Button size="sm" variant="secondary" className="mt-3" onClick={() => void sendPrompt('Review my edit and give me feedback')}>
-            Review my edit
+            {tt('Review my edit')}
           </Button>
         </div>
         <div className="mt-4 flex items-start gap-2 px-1 text-xs text-fg-4">
           <MousePointerClick className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            Select a clip to edit it. Press <Kbd combo="?" className="mx-0.5 align-middle" /> for every shortcut.
+            {tt('Select a clip to edit it. Press')}{' '}<Kbd combo="?" className="mx-0.5 align-middle" />{' '}{tt('for every shortcut.')}
           </span>
         </div>
       </div>

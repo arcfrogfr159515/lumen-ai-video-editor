@@ -12,6 +12,8 @@ import { cn } from '@/lib/cn'
 import { APP_VERSION, desktop } from '@/lib/platform'
 import { importDropped } from '@/project/media-import'
 import { discardRecovery, forgetRecent, newProject, openProject, recover, showHome, useSession } from '@/project/session'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 function timeAgo(ms: number) {
   const s = Math.max(0, (Date.now() - ms) / 1000)
@@ -88,8 +90,8 @@ export function HomeScreen() {
           <div className="flex items-center gap-3">
             <LogoMark className="size-11 drop-shadow-[0_6px_24px_rgb(214_238_0/0.28)]" />
             <div>
-              <h1 className="font-display text-2xl leading-none font-semibold tracking-tight text-fg">Lumen</h1>
-              <p className="mt-1 text-xs text-fg-4">AI-native video editor · v{APP_VERSION}</p>
+              <h1 className="font-display text-2xl leading-none font-semibold tracking-tight text-fg">{tt('Lumen')}</h1>
+              <p className="mt-1 text-xs text-fg-4">{ttx('AI-native video editor · v{0}', APP_VERSION)}</p>
             </div>
           </div>
 
@@ -99,12 +101,12 @@ export function HomeScreen() {
               onClick={() => showHome(false)}
               className="mt-8 flex items-center gap-2 self-start rounded-lg px-2 py-1.5 text-sm text-fg-3 transition-colors hover:bg-white/[0.05] hover:text-fg"
             >
-              <ArrowLeft className="size-4" /> Back to {currentName}
+              <ArrowLeft className="size-4" />{' '}{ttx('Back to {0}', currentName)}
             </button>
           )}
 
-          <h2 className={cn('text-md font-semibold text-fg', hasProject ? 'mt-6' : 'mt-10')}>New project</h2>
-          <p className="mt-1 text-xs text-fg-4">Pick a canvas. You can change it any time in Project settings.</p>
+          <h2 className={cn('text-md font-semibold text-fg', hasProject ? 'mt-6' : 'mt-10')}>{tt('New project')}</h2>
+          <p className="mt-1 text-xs text-fg-4">{tt('Pick a canvas. You can change it any time in Project settings.')}</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {CANVAS_PRESETS.map((p) => {
               const active = p.id === preset
@@ -129,21 +131,21 @@ export function HomeScreen() {
             })}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3">
-            <span className="text-xs text-fg-3">Frame rate</span>
+            <span className="text-xs text-fg-3">{tt('Frame rate')}</span>
             <Segmented value={fps} onChange={setFps} options={FRAME_RATES.map((f) => ({ value: String(f), label: `${f}` }))} />
           </div>
           <div className="mt-6 flex gap-2">
             <Button variant="primary" size="lg" className="flex-1" onClick={() => create()} disabled={busy}>
               <FilePlus2 />
-              Create {chosen.width}×{chosen.height}
+              {ttx('Create {0}×{1}', chosen.width, chosen.height)}
             </Button>
             <Button variant="secondary" size="lg" onClick={() => void openProject()} disabled={busy || !desktop}>
               <FolderOpen />
-              Open…
+              {tt('Open…')}
             </Button>
           </div>
           <div className="mt-auto flex items-center gap-2 pt-10 text-2xs text-fg-4">
-            <Upload className="size-3.5" /> Drop video, audio or images here to start a project with them · <Kbd combo="mod+o" /> open
+            <Upload className="size-3.5" />{' '}{tt('Drop video, audio or images here to start a project with them ·')}{' '}<Kbd combo="mod+o" />{' '}{tt('open')}
           </div>
         </motion.section>
 
@@ -158,17 +160,17 @@ export function HomeScreen() {
             <div className="mb-8 flex items-start gap-3 rounded-xl bg-warn/[0.07] p-4 shadow-[inset_0_0_0_1px_rgb(245_183_59/0.25)]">
               <History className="mt-0.5 size-5 shrink-0 text-warn" />
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-fg">Unsaved changes to “{recovery.name}”</div>
+                <div className="text-sm font-medium text-fg">{ttx('Unsaved changes to “{0}”', recovery.name)}</div>
                 <div className="mt-0.5 text-xs text-fg-3">
-                  Lumen closed before they were saved · {timeAgo(recovery.savedAt)}
+                  {ttx('Lumen closed before they were saved · {0}', timeAgo(recovery.savedAt))}
                   {recovery.path ? ` · ${recovery.path}` : ''}
                 </div>
                 <div className="mt-3 flex gap-2">
                   <Button variant="primary" size="sm" onClick={() => void recover()}>
-                    Recover
+                    {tt('Recover')}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => void discardRecovery()}>
-                    Discard
+                    {tt('Discard')}
                   </Button>
                 </div>
               </div>
@@ -177,14 +179,14 @@ export function HomeScreen() {
 
           <div className="flex items-center gap-2">
             <Clock className="size-4 text-fg-4" />
-            <h2 className="text-md font-semibold text-fg">Recent projects</h2>
+            <h2 className="text-md font-semibold text-fg">{tt('Recent projects')}</h2>
           </div>
           {recent.length === 0 ? (
             <div className="mt-6 grid flex-1 place-items-center rounded-2xl border border-dashed border-line-2 px-8 py-16 text-center">
               <div>
                 <FolderOpen className="mx-auto size-8 text-fg-4" />
-                <p className="mt-3 text-sm text-fg-3">Projects you save will show up here.</p>
-                <p className="mt-1 text-xs text-fg-4">Lumen projects are .lumen files — keep them next to your media.</p>
+                <p className="mt-3 text-sm text-fg-3">{tt('Projects you save will show up here.')}</p>
+                <p className="mt-1 text-xs text-fg-4">{tt('Lumen projects are .lumen files — keep them next to your media.')}</p>
               </div>
             </div>
           ) : (
@@ -206,13 +208,13 @@ export function HomeScreen() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-fg">{r.name}</span>
-                      <span className="block truncate text-2xs text-fg-4">{r.exists ? folderOf(r.path) : `Not found · ${r.path}`}</span>
+                      <span className="block truncate text-2xs text-fg-4">{r.exists ? folderOf(r.path) : tt('Not found · {0}', r.path)}</span>
                     </span>
                     <span className="shrink-0 text-2xs text-fg-4 tabular">{timeAgo(r.openedAt)}</span>
-                    <Tip content={r.exists ? 'Remove from list' : 'Remove'}>
+                    <Tip content={r.exists ? tt('Remove from list') : tt('Remove')}>
                       <button
                         type="button"
-                        aria-label="Remove from recent projects"
+                        aria-label={tt('Remove from recent projects')}
                         onClick={(e) => {
                           e.stopPropagation()
                           void forgetRecent(r.path)
@@ -233,7 +235,7 @@ export function HomeScreen() {
           <div className="pointer-events-none absolute inset-3 grid place-items-center rounded-2xl border-2 border-dashed border-accent/70 bg-accent/[0.06] backdrop-blur-[2px]">
             <div className="text-center">
               <Upload className="mx-auto size-8 text-accent" />
-              <p className="mt-2 text-sm font-medium text-fg">Drop to start a {chosen.label.toLowerCase()} project with these files</p>
+              <p className="mt-2 text-sm font-medium text-fg">{ttx('Drop to start a {0} project with these files', chosen.label.toLowerCase())}</p>
             </div>
           </div>
         )}

@@ -73,6 +73,8 @@ import {
 import { STARTERS } from './suggestions'
 import { duration, replyText, transcriptText, usageLine } from './transcript'
 import { useVoiceInput } from './voice'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 /** How close to the end counts as "at the bottom" (px). */
 const NEAR_BOTTOM = 48
@@ -151,11 +153,11 @@ export function CopilotPanel() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
               onClick={toBottom}
-              aria-label="Go to the latest"
+              aria-label={tt('Go to the latest')}
               className="popover absolute bottom-3 left-1/2 flex h-7 -translate-x-1/2 items-center gap-1.5 rounded-full pr-3 pl-2 text-2xs font-medium text-fg-2 shadow-[0_8px_24px_-8px_rgb(0_0_0/0.9)] hover:text-fg"
             >
               <ArrowDown className="size-3.5" />
-              {fresh ? 'New below' : 'Latest'}
+              {fresh ? tt('New below') : tt('Latest')}
               {fresh && <span className="size-1.5 rounded-full bg-accent" />}
             </motion.button>
           )}
@@ -180,13 +182,13 @@ function StatusBar() {
         <PopoverTrigger asChild>
           <button type="button" className="ml-auto flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 transition-colors hover:bg-white/[0.06] hover:text-fg">
             <PlugZap className="size-3" />
-            {tools.length} tools
+            {ttx('{0} tools', tools.length)}
           </button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-80 p-0">
           <div className="border-b border-line px-3.5 py-3">
-            <div className="text-sm font-semibold text-fg">Editor tools</div>
-            <p className="mt-0.5 text-xs leading-relaxed text-fg-3">Every edit in Lumen is a typed command. Copilot’s models, your local agents and any MCP client use these same tools.</p>
+            <div className="text-sm font-semibold text-fg">{tt('Editor tools')}</div>
+            <p className="mt-0.5 text-xs leading-relaxed text-fg-3">{tt('Every edit in Lumen is a typed command. Copilot’s models, your local agents and any MCP client use these same tools.')}</p>
           </div>
           <div className="max-h-72 overflow-y-auto p-1.5">
             {tools.map((t) => (
@@ -199,7 +201,7 @@ function StatusBar() {
         </PopoverContent>
       </Popover>
       <ChatsMenu />
-      <IconButton size="xs" label={busy ? 'Wait for the reply (or stop it) to start a new chat' : 'New chat'} disabled={busy || !hasMessages} onClick={newChat}>
+      <IconButton size="xs" label={busy ? tt('Wait for the reply (or stop it) to start a new chat') : tt('New chat')} disabled={busy || !hasMessages} onClick={newChat}>
         <Plus />
       </IconButton>
     </div>
@@ -226,14 +228,14 @@ function ChatsMenu() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <IconButton size="xs" label="This project’s chats">
+        <IconButton size="xs" label={tt('This project’s chats')}>
           <History />
         </IconButton>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center border-b border-line px-3.5 py-2.5">
-          <div className="text-sm font-semibold text-fg">Chats</div>
-          <span className="ml-1.5 text-2xs text-fg-4">in this project</span>
+          <div className="text-sm font-semibold text-fg">{tt('Chats')}</div>
+          <span className="ml-1.5 text-2xs text-fg-4">{tt('in this project')}</span>
           <button
             type="button"
             disabled={busy}
@@ -243,11 +245,11 @@ function ChatsMenu() {
             }}
             className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-1 text-2xs font-medium text-fg-3 hover:bg-white/[0.06] hover:text-fg disabled:opacity-40"
           >
-            <Plus className="size-3" /> New chat
+            <Plus className="size-3" />{' '}{tt('New chat')}
           </button>
         </div>
         <div className="max-h-80 overflow-y-auto p-1.5">
-          {chats.length === 0 && <div className="px-2 py-6 text-center text-xs text-fg-4">No chats yet — ask Copilot something.</div>}
+          {chats.length === 0 && <div className="px-2 py-6 text-center text-xs text-fg-4">{tt('No chats yet — ask Copilot something.')}</div>}
           {chats.map((c) => (
             <ChatRow
               key={c.id}
@@ -298,12 +300,12 @@ function ChatRow({ chat, active, disabled, onOpen }: { chat: Chat; active: boole
       <button type="button" disabled={disabled && !active} onClick={onOpen} className="min-w-0 flex-1 text-left disabled:opacity-50">
         <div className={cn('truncate text-xs', active ? 'font-medium text-fg' : 'text-fg-2')}>{chatTitle(chat)}</div>
         <div className="text-[10.5px] text-fg-4">
-          {ago(chat.updatedAt)} · {turns} {turns === 1 ? 'request' : 'requests'}
+          {ago(chat.updatedAt)} · {turns} {turns === 1 ? tt('request') : tt('requests')}
         </div>
       </button>
       <button
         type="button"
-        aria-label="Rename chat"
+        aria-label={tt('Rename chat')}
         onClick={() => {
           setName(chatTitle(chat))
           setEditing(true)
@@ -314,7 +316,7 @@ function ChatRow({ chat, active, disabled, onOpen }: { chat: Chat; active: boole
       </button>
       <button
         type="button"
-        aria-label="Delete chat"
+        aria-label={tt('Delete chat')}
         disabled={disabled && active}
         onClick={() => deleteChat(chat.id)}
         className="grid size-6 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 transition-opacity group-hover/chat:opacity-100 hover:bg-white/[0.08] hover:text-danger disabled:opacity-0"
@@ -334,8 +336,8 @@ function Welcome() {
           <AiSparkle className="size-7" />
         </div>
       </div>
-      <h3 className="text-center text-xl font-semibold tracking-tight text-fg">What should we make?</h3>
-      <p className="mx-auto mt-1.5 max-w-[250px] text-center text-sm leading-relaxed text-fg-3">Copilot edits your timeline directly. Every change is visible, and undoable in one step.</p>
+      <h3 className="text-center text-xl font-semibold tracking-tight text-fg">{tt('What should we make?')}</h3>
+      <p className="mx-auto mt-1.5 max-w-[250px] text-center text-sm leading-relaxed text-fg-3">{tt('Copilot edits your timeline directly. Every change is visible, and undoable in one step.')}</p>
       <RecentChats />
       <div className="mt-6 grid grid-cols-2 gap-2">
         {STARTERS.map((s, i) => (
@@ -366,7 +368,7 @@ function RecentChats() {
   if (!chats.length) return null
   return (
     <div className="mt-6">
-      <div className="mb-1.5 px-1 text-2xs font-semibold tracking-wider text-fg-4 uppercase">Carry on</div>
+      <div className="mb-1.5 px-1 text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('Carry on')}</div>
       <div className="space-y-1">
         {chats.map((c) => (
           <button
@@ -398,7 +400,7 @@ function FileBadge({ file }: { file: FileChip }) {
   }
   if (file.kind === 'image')
     return (
-      <button type="button" title={`${file.name} — click to enlarge`} onClick={() => void open()} className="cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-white/10 transition-shadow hover:ring-accent/60">
+      <button type="button" title={tt('{0} — click to enlarge', file.name)} onClick={() => void open()} className="cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-white/10 transition-shadow hover:ring-accent/60">
         {file.thumb ? <img src={file.thumb} alt={file.name} className="block h-16 w-auto max-w-[160px] object-cover" draggable={false} /> : <span className="grid h-16 w-20 place-items-center bg-white/[0.05] text-fg-4"><ImageIcon className="size-4" /></span>}
       </button>
     )
@@ -408,7 +410,7 @@ function FileBadge({ file }: { file: FileChip }) {
       <span className="min-w-0">
         <span className="block truncate font-medium">{file.name}</span>
         <span className="block text-[10px] text-fg-4">
-          {file.kind === 'pdf' ? 'PDF' : 'Text'} · {bytes(file.size)}
+          {file.kind === 'pdf' ? tt('PDF') : tt('Text')} · {bytes(file.size)}
         </span>
       </span>
     </span>
@@ -435,7 +437,7 @@ function UserBubble({ message }: { message: Message }) {
         </div>
       )}
       <div className="flex max-w-[88%] items-start gap-1">
-        <CopyButton text={message.text} label="Copy request" className="mt-1 opacity-0 transition-opacity group-hover/user:opacity-100" />
+        <CopyButton text={message.text} label={tt('Copy request')} className="mt-1 opacity-0 transition-opacity group-hover/user:opacity-100" />
         <div className="min-w-0 rounded-2xl rounded-br-md bg-white/[0.075] px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] [overflow-wrap:anywhere]">
           {message.text}
         </div>
@@ -475,13 +477,13 @@ function ThinkingBlock({ part, live, now }: { part: Extract<Part, { kind: 'think
         <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={shown} className="flex items-center gap-1.5 text-xs text-fg-3 transition-colors hover:text-fg-2">
           <Brain className="size-3.5" />
           {live ? (
-            <span className={SHIMMER}>Thinking…{elapsed >= 1000 ? ` ${duration(elapsed)}` : ''}</span>
+            <span className={SHIMMER}>{ttx('Thinking…{0}', elapsed >= 1000 ? ` ${duration(elapsed)}` : '')}</span>
           ) : (
-            <span>{!part.ms ? 'Thoughts' : part.ms < 1000 ? 'Thought for a moment' : `Thought for ${duration(part.ms)}`}</span>
+            <span>{!part.ms ? tt('Thoughts') : part.ms < 1000 ? tt('Thought for a moment') : tt('Thought for {0}', duration(part.ms))}</span>
           )}
           <ChevronRight className={cn('size-3 transition-transform', shown && 'rotate-90')} />
         </button>
-        {shown && !live && <CopyButton text={part.text} label="Copy thinking" className="ml-auto" />}
+        {shown && !live && <CopyButton text={part.text} label={tt('Copy thinking')} className="ml-auto" />}
       </div>
       {shown && (
         <div className="mt-1.5 border-l-2 border-line-2 pl-3">
@@ -533,15 +535,15 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
       </button>
       {open && details && (
         <div className="space-y-2 px-2 pt-0.5 pb-2 pl-[30px]">
-          {p.input && <Detail label="Sent" text={p.input} />}
-          {p.output && <Detail label={p.status === 'error' ? 'Error' : 'Came back'} text={p.output} bad={p.status === 'error'} />}
+          {p.input && <Detail label={tt('Sent')} text={p.input} />}
+          {p.output && <Detail label={p.status === 'error' ? tt('Error') : tt('Came back')} text={p.output} bad={p.status === 'error'} />}
         </div>
       )}
       {(p.images?.length || p.pictures) && (
         <div className="px-2 pb-2 pl-[30px]">
           {!p.images?.length && p.pictures ? (
             <div className="flex items-center gap-1 text-[10px] text-fg-4">
-              <ImageIcon className="size-3" /> {p.pictures} picture{p.pictures === 1 ? '' : 's'} — not kept after a restart
+              <ImageIcon className="size-3" />{' '}{ttx('{0} picture{1} — not kept after a restart', p.pictures, p.pictures === 1 ? '' : 's')}
             </div>
           ) : (
             <div className="flex flex-wrap gap-1.5">
@@ -549,7 +551,7 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
                 <button
                   key={i}
                   type="button"
-                  title="What the Copilot looked at — click to enlarge"
+                  title={tt('What the Copilot looked at — click to enlarge')}
                   onClick={() => usePicture.setState({ src })}
                   className="cursor-zoom-in overflow-hidden rounded-md ring-1 ring-white/10 transition-shadow hover:ring-accent/60"
                 >
@@ -569,7 +571,7 @@ function Detail({ label, text, bad }: { label: string; text: string; bad?: boole
     <div className="relative">
       <div className="mb-0.5 text-[10px] font-semibold tracking-wider text-fg-4 uppercase">{label}</div>
       <pre className={cn('max-h-56 overflow-auto rounded-md bg-black/30 p-2 font-mono text-[10.5px] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]', bad ? 'text-danger' : 'text-fg-3')}>{text}</pre>
-      <CopyButton text={text} label={`Copy what ${label === 'Sent' ? 'was sent' : 'came back'}`} className="absolute top-0 right-0" />
+      <CopyButton text={text} label={tt('Copy what {0}', label === 'Sent' ? tt('was sent') : tt('came back'))} className="absolute top-0 right-0" />
     </div>
   )
 }
@@ -630,14 +632,14 @@ function AssistantMessage({ message: m }: { message: Message }) {
                 {/* What the last group of steps came to, once the reply is done. */}
                 {!working && i === all.findLastIndex((x) => x.kind === 'tools') && (edited || m.undone) && (
                   <div className="flex h-7 items-center gap-2 border-t border-line px-2 text-2xs">
-                    <span className="font-medium text-fg-3">{m.undone ? 'Reverted' : 'Edited the timeline'}</span>
+                    <span className="font-medium text-fg-3">{m.undone ? tt('Reverted') : tt('Edited the timeline')}</span>
                     {canUndo && !busy && (
                       <button type="button" onClick={() => undoMessage(m.id)} className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-fg-3 transition-colors hover:bg-white/[0.07] hover:text-fg">
                         <RotateCcw className="size-3" />
-                        Undo all
+                        {tt('Undo all')}
                       </button>
                     )}
-                    {m.undone && <span className="ml-auto text-fg-4">Undone</span>}
+                    {m.undone && <span className="ml-auto text-fg-4">{tt('Undone')}</span>}
                   </div>
                 )}
               </div>
@@ -654,14 +656,14 @@ function AssistantMessage({ message: m }: { message: Message }) {
           {working && !silent && quiet > QUIET_MS && (
             <div className="flex items-center gap-2 text-[11px] text-fg-4">
               <LoaderCircle className="size-3 shrink-0 animate-spin" />
-              Still working — nothing new for {duration(quiet)}.
+              {ttx('Still working — nothing new for {0}.', duration(quiet))}
             </div>
           )}
         </div>
 
         {m.stopped && !working && (
           <div className="mt-2 flex items-center gap-1.5 text-xs text-fg-4">
-            <CircleSlash className="size-3.5" /> You stopped this reply.
+            <CircleSlash className="size-3.5" />{' '}{tt('You stopped this reply.')}
           </div>
         )}
 
@@ -671,8 +673,8 @@ function AssistantMessage({ message: m }: { message: Message }) {
 
         {!working && parts.length > 0 && (
           <div className="mt-1 -ml-1 flex h-6 items-center gap-1 opacity-0 transition-opacity group-hover/reply:opacity-100 focus-within:opacity-100">
-            {text && <CopyButton text={text} label="Copy reply" />}
-            {parts.some((p) => p.kind !== 'text') && <CopyButton text={() => transcriptText(m)} label="Copy everything it did" />}
+            {text && <CopyButton text={text} label={tt('Copy reply')} />}
+            {parts.some((p) => p.kind !== 'text') && <CopyButton text={() => transcriptText(m)} label={tt('Copy everything it did')} />}
             {usage && <span className="ml-1 truncate text-[10.5px] text-fg-4 tabular">{usage}</span>}
           </div>
         )}
@@ -750,29 +752,29 @@ function AgentError({ error }: { error: NonNullable<Message['error']> }) {
     action = (
       <span className="inline-flex flex-wrap gap-x-3">
         <button type="button" onClick={() => openIntegrations('local-agents')} className="font-medium text-fg underline-offset-2 hover:underline">
-          Use Claude Code or Codex
+          {tt('Use Claude Code or Codex')}
         </button>
         <button type="button" onClick={() => openIntegrations('ai-models')} className="font-medium text-fg underline-offset-2 hover:underline">
-          Add an API key
+          {tt('Add an API key')}
         </button>
       </span>
     )
   else if (error.code === 'no-key' || error.code === 'auth')
     action = (
       <button type="button" onClick={() => openIntegrations('ai-models')} className="font-medium text-fg underline-offset-2 hover:underline">
-        Open AI models
+        {tt('Open AI models')}
       </button>
     )
   else if (error.code === 'not-signed-in' && target?.kind === 'local')
     action = (
       <button type="button" disabled={signingIn[target.agent]} onClick={() => void signInLocal(target.agent)} className="font-medium text-fg underline-offset-2 hover:underline disabled:opacity-50">
-        {signingIn[target.agent] ? 'Waiting for sign-in…' : 'Sign in'}
+        {signingIn[target.agent] ? tt('Waiting for sign-in…') : tt('Sign in')}
       </button>
     )
   else if (error.code === 'not-installed')
     action = (
       <button type="button" onClick={() => openIntegrations('local-agents')} className="font-medium text-fg underline-offset-2 hover:underline">
-        Set up
+        {tt('Set up')}
       </button>
     )
   return (
@@ -802,7 +804,7 @@ function PictureViewer() {
       {src && (
         <motion.button
           type="button"
-          aria-label="Close picture"
+          aria-label={tt('Close picture')}
           onClick={close}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -811,7 +813,7 @@ function PictureViewer() {
         >
           <motion.img
             src={src}
-            alt="What the Copilot looked at"
+            alt={tt('What the Copilot looked at')}
             initial={{ scale: 0.96 }}
             animate={{ scale: 1 }}
             className="max-h-full max-w-full rounded-xl shadow-2xl ring-1 ring-white/10"
@@ -835,7 +837,7 @@ function QueueList() {
     <div className="mb-2 overflow-hidden rounded-xl bg-white/[0.035] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
       <div className="flex h-7 items-center gap-1.5 border-b border-line px-2.5 text-2xs text-fg-4">
         <ListPlus className="size-3" />
-        {held ? 'Waiting — the last reply failed. Send the next one when you’re ready.' : busy ? `${queue.length} queued — ${queue.length === 1 ? 'it goes' : 'they go'} when this reply is done` : `${queue.length} queued`}
+        {held ? tt('Waiting — the last reply failed. Send the next one when you’re ready.') : busy ? tt('{0} queued — {1} when this reply is done', queue.length, queue.length === 1 ? tt('it goes') : tt('they go')) : tt('{0} queued', queue.length)}
       </div>
       <div className="max-h-28 overflow-y-auto p-1">
         {queue.map((q, i) => (
@@ -843,15 +845,15 @@ function QueueList() {
             <span className="w-3 shrink-0 text-[10px] text-fg-4 tabular">{i + 1}</span>
             <span className="min-w-0 flex-1 truncate text-xs text-fg-2">
               {q.text}
-              {q.files.length + q.assets.length > 0 && <span className="ml-1.5 text-fg-4">+{q.files.length + q.assets.length} attached</span>}
+              {q.files.length + q.assets.length > 0 && <span className="ml-1.5 text-fg-4">{ttx('+{0} attached', q.files.length + q.assets.length)}</span>}
             </span>
-            <IconButton size="xs" label={busy ? 'Send now — stops the reply in progress' : 'Send now'} onClick={() => sendQueuedNow(q.id)}>
+            <IconButton size="xs" label={busy ? tt('Send now — stops the reply in progress') : tt('Send now')} onClick={() => sendQueuedNow(q.id)}>
               <ArrowUp />
             </IconButton>
-            <IconButton size="xs" label="Edit" onClick={() => editQueued(q.id)}>
+            <IconButton size="xs" label={tt('Edit')} onClick={() => editQueued(q.id)}>
               <Pencil />
             </IconButton>
-            <IconButton size="xs" label="Remove" onClick={() => removeQueued(q.id)}>
+            <IconButton size="xs" label={tt('Remove')} onClick={() => removeQueued(q.id)}>
               <X />
             </IconButton>
           </div>
@@ -927,7 +929,7 @@ function Composer() {
         className={cn('ring-ai relative rounded-2xl bg-surface-2 p-2 shadow-[0_-12px_30px_-18px_rgb(0_0_0/0.9)]', dropping && 'shadow-[0_0_0_2px_var(--color-accent)]')}
       >
         {dropping && (
-          <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-2xl bg-surface-2/90 text-xs font-medium text-accent-2">Drop to attach — pictures, PDFs, documents, video or audio</div>
+          <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-2xl bg-surface-2/90 text-xs font-medium text-accent-2">{tt('Drop to attach — pictures, PDFs, documents, video or audio')}</div>
         )}
         {attachments.length > 0 && (
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5 px-1">
@@ -943,7 +945,7 @@ function Composer() {
                   <Paperclip className="mx-0.5 size-2.5" />
                 )}
                 <span className="max-w-[150px] truncate">{a.name}</span>
-                <button type="button" aria-label={`Remove ${a.name}`} onClick={() => detach(a.id)} className="grid size-4 place-items-center rounded text-fg-4 hover:text-fg-2">
+                <button type="button" aria-label={tt('Remove {0}', a.name)} onClick={() => detach(a.id)} className="grid size-4 place-items-center rounded text-fg-4 hover:text-fg-2">
                   <X className="size-2.5" />
                 </button>
               </span>
@@ -957,8 +959,8 @@ function Composer() {
                 ◧ {n}
               </span>
             ))}
-            {selection.length > 3 && <span className="text-2xs text-fg-4">+{selection.length - 3} more</span>}
-            <button type="button" aria-label="Clear selection" onClick={() => useUI.getState().clearSelection()} className="grid size-4 place-items-center rounded text-fg-4 hover:text-fg-2">
+            {selection.length > 3 && <span className="text-2xs text-fg-4">{ttx('+{0} more', selection.length - 3)}</span>}
+            <button type="button" aria-label={tt('Clear selection')} onClick={() => useUI.getState().clearSelection()} className="grid size-4 place-items-center rounded text-fg-4 hover:text-fg-2">
               <X className="size-3" />
             </button>
           </div>
@@ -980,14 +982,14 @@ function Composer() {
             }
           }}
           rows={1}
-          placeholder={busy ? 'Add to the queue, or stop and say something else…' : names ? 'What should I do with this?' : 'Ask Copilot to edit… e.g. “make it feel warmer”'}
+          placeholder={busy ? tt('Add to the queue, or stop and say something else…') : names ? tt('What should I do with this?') : tt('Ask Copilot to edit… e.g. “make it feel warmer”')}
           className="block max-h-40 min-h-[22px] w-full resize-none bg-transparent px-1.5 py-1 text-sm leading-relaxed text-fg outline-none placeholder:text-fg-4"
         />
         <div className="mt-1 flex items-center gap-0.5">
           <AttachMenu />
           <IconButton
             size="xs"
-            label={voice.state === 'recording' ? 'Stop and transcribe' : voice.state === 'transcribing' ? 'Transcribing…' : 'Speak your request'}
+            label={voice.state === 'recording' ? tt('Stop and transcribe') : voice.state === 'transcribing' ? tt('Transcribing…') : tt('Speak your request')}
             active={voice.state === 'recording'}
             disabled={voice.state === 'transcribing'}
             onClick={voice.toggle}
@@ -996,25 +998,25 @@ function Composer() {
             {voice.state === 'transcribing' ? <LoaderCircle className="animate-spin" /> : <Mic />}
           </IconButton>
           <span className="ml-1 truncate text-2xs text-fg-4">
-            {voice.state === 'recording' ? 'Listening… click the mic to finish' : reading ? 'Reading the file…' : busy ? '↵ queue it · ⇧↵ new line · esc stops' : '↵ send · ⇧↵ new line · paste or drop files'}
+            {voice.state === 'recording' ? tt('Listening… click the mic to finish') : reading ? tt('Reading the file…') : busy ? tt('↵ queue it · ⇧↵ new line · esc stops') : tt('↵ send · ⇧↵ new line · paste or drop files')}
           </span>
           <div className="ml-auto flex shrink-0 items-center gap-1.5">
             {busy && (
               <button
                 type="button"
-                aria-label="Stop"
-                title="Stop the reply"
+                aria-label={tt('Stop')}
+                title={tt('Stop the reply')}
                 onClick={() => stopCopilot()}
                 className="flex h-7 items-center gap-1.5 rounded-full bg-white/[0.1] pr-2.5 pl-2 text-2xs font-medium text-fg transition-colors hover:bg-white/[0.16]"
               >
-                <Square className="size-2.5" fill="currentColor" /> Stop
+                <Square className="size-2.5" fill="currentColor" />{' '}{tt('Stop')}
               </button>
             )}
             {(!busy || canSend) && (
               <button
                 type="button"
-                aria-label={busy ? 'Add to the queue' : 'Send'}
-                title={busy ? 'Add to the queue — it goes when this reply is done' : 'Send'}
+                aria-label={busy ? tt('Add to the queue') : tt('Send')}
+                title={busy ? tt('Add to the queue — it goes when this reply is done') : tt('Send')}
                 onClick={submit}
                 disabled={!canSend}
                 className={cn(
@@ -1041,7 +1043,7 @@ function AttachMenu() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <IconButton size="xs" label="Attach files or media">
+        <IconButton size="xs" label={tt('Attach files or media')}>
           <Paperclip />
         </IconButton>
       </PopoverTrigger>
@@ -1062,13 +1064,13 @@ function AttachMenu() {
             <Upload className="size-3.5" />
           </span>
           <span className="min-w-0">
-            <span className="block font-medium">From your computer…</span>
-            <span className="block text-[10.5px] text-fg-4">Pictures, PDFs, Word and text files; video and audio go into Media</span>
+            <span className="block font-medium">{tt('From your computer…')}</span>
+            <span className="block text-[10.5px] text-fg-4">{tt('Pictures, PDFs, Word and text files; video and audio go into Media')}</span>
           </span>
         </button>
-        <div className="mt-1 border-t border-line px-2 pt-2 pb-1.5 text-2xs font-semibold tracking-wider text-fg-4 uppercase">From your media</div>
+        <div className="mt-1 border-t border-line px-2 pt-2 pb-1.5 text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('From your media')}</div>
         <div className="max-h-56 overflow-y-auto">
-          {list.length === 0 && <div className="px-2 py-3 text-xs text-fg-4">No media in this project yet.</div>}
+          {list.length === 0 && <div className="px-2 py-3 text-xs text-fg-4">{tt('No media in this project yet.')}</div>}
           {list.map((a) => {
             const thumb = a.kind !== 'audio' ? assetThumb(a) : undefined
             return (

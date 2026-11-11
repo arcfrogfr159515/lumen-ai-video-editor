@@ -7,11 +7,13 @@ import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
 import { desktop } from '@/lib/platform'
 import { projectVersions, restoreVersion } from '@/project/session'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const KIND: Record<ProjectVersion['kind'], { label: string; className: string }> = {
-  save: { label: 'Saved', className: 'bg-accent/15 text-accent-2' },
-  auto: { label: 'Auto', className: 'bg-white/[0.07] text-fg-3' },
-  restore: { label: 'Before restore', className: 'bg-warn/15 text-warn' },
+  save: { label: tt('Saved'), className: 'bg-accent/15 text-accent-2' },
+  auto: { label: tt('Auto'), className: 'bg-white/[0.07] text-fg-3' },
+  restore: { label: tt('Before restore'), className: 'bg-warn/15 text-warn' },
 }
 
 const time = (t: number) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -54,19 +56,19 @@ export function VersionHistoryDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && close()} title="Version history" description="Every save, plus a snapshot every ten minutes while you edit. Older versions thin out to one a day." className="w-[min(560px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={(o) => !o && close()} title={tt('Version history')} description={tt('Every save, plus a snapshot every ten minutes while you edit. Older versions thin out to one a day.')} className="w-[min(560px,calc(100vw-32px))]">
       <div className="max-h-[min(520px,62vh)] overflow-y-auto px-5 pb-5">
-        {!desktop && <p className="py-8 text-center text-sm text-fg-3">Version history needs the desktop app.</p>}
+        {!desktop && <p className="py-8 text-center text-sm text-fg-3">{tt('Version history needs the desktop app.')}</p>}
         {desktop && versions === null && (
           <p className="flex items-center justify-center gap-2 py-8 text-sm text-fg-3">
-            <LoaderCircle className="size-4 animate-spin" /> Loading versions…
+            <LoaderCircle className="size-4 animate-spin" />{' '}{tt('Loading versions…')}
           </p>
         )}
         {versions?.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-10 text-center">
             <History className="size-6 text-fg-4" />
-            <p className="text-sm text-fg-2">No versions yet</p>
-            <p className="max-w-xs text-xs text-fg-4">Save the project and it starts here — and while you edit, Lumen keeps a snapshot every ten minutes.</p>
+            <p className="text-sm text-fg-2">{tt('No versions yet')}</p>
+            <p className="max-w-xs text-xs text-fg-4">{tt('Save the project and it starts here — and while you edit, Lumen keeps a snapshot every ten minutes.')}</p>
           </div>
         )}
         {groups.map((g) => (
@@ -78,15 +80,15 @@ export function VersionHistoryDialog() {
                   <span className="w-[4.5rem] shrink-0 font-mono text-sm whitespace-nowrap text-fg tabular">{time(v.savedAt)}</span>
                   <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold', KIND[v.kind].className)}>{KIND[v.kind].label}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-fg-3">
-                    {v.name} · {length(v.seconds)} · {v.clips} clip{v.clips === 1 ? '' : 's'}
-                    {g.day === 'Today' && i === 0 && groups[0] === g && <span className="ml-1.5 text-fg-4">(latest)</span>}
+                    {ttx('{0} · {1} · {2} clip{3}', v.name, length(v.seconds), v.clips, v.clips === 1 ? '' : 's')}
+                    {g.day === 'Today' && i === 0 && groups[0] === g && <span className="ml-1.5 text-fg-4">{tt('(latest)')}</span>}
                   </span>
                   <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover/v:opacity-100 focus-within:opacity-100">
-                    <Button size="xs" variant="ghost" disabled={busy !== null} onClick={() => void act(v, true)} title="Open this version as a new, unsaved project">
-                      <CopyPlus /> Copy
+                    <Button size="xs" variant="ghost" disabled={busy !== null} onClick={() => void act(v, true)} title={tt('Open this version as a new, unsaved project')}>
+                      <CopyPlus />{' '}{tt('Copy')}
                     </Button>
                     <Button size="xs" variant="secondary" disabled={busy !== null} onClick={() => void act(v, false)}>
-                      {busy === v.id ? <LoaderCircle className="animate-spin" /> : <RotateCcw />} Restore
+                      {busy === v.id ? <LoaderCircle className="animate-spin" /> : <RotateCcw />}{' '}{tt('Restore')}
                     </Button>
                   </div>
                 </div>

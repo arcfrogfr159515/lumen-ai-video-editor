@@ -2,6 +2,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { Kbd } from '@/components/ui/kbd'
 import { useUI } from '@/editor/ui-store'
 import { SHORTCUTS, type Shortcut } from './shortcuts'
+import { tt } from '@/lib/i18n'
 
 const GROUPS: Shortcut['group'][] = ['Playback', 'Editing', 'Multicam', 'Tools', 'View', 'App']
 
@@ -9,7 +10,7 @@ export function ShortcutsDialog() {
   const open = useUI((s) => s.shortcutsOpen)
   const setOpen = useUI((s) => s.setShortcutsOpen)
   return (
-    <Dialog open={open} onOpenChange={setOpen} title="Keyboard shortcuts" description="Work at the speed of thought — every action has a key." className="w-[min(820px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={setOpen} title={tt('Keyboard shortcuts')} description={tt('Work at the speed of thought — every action has a key.')} className="w-[min(820px,calc(100vw-32px))]">
       <div className="grid max-h-[70vh] grid-cols-2 gap-x-8 gap-y-6 overflow-y-auto px-5 pt-2 pb-6">
         {GROUPS.map((group) => (
           <div key={group}>

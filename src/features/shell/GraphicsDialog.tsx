@@ -11,6 +11,8 @@ import { CODEC_NAME } from '@/engine/encoders'
 import { CHECK_CODECS, CHECK_SIZES, checkEncoders, decoderSupport, reportText, webglInfo, type EncoderCheck, type EncoderState } from '@/engine/graphics-report'
 import { APP_VERSION, desktop, platform } from '@/lib/platform'
 import { isDirty, saveProject } from '@/project/session'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 /** What Chromium calls its features, in the editor's words. */
 const FEATURES: [key: string, label: string][] = [
@@ -23,9 +25,9 @@ const FEATURES: [key: string, label: string][] = [
 const featureState = (value: string | undefined) => (!value ? 'unknown' : value.startsWith('enabled') ? 'on' : value.includes('software') ? 'software' : 'off')
 
 const GPU_CHOICES: { value: GpuChoice; label: string }[] = [
-  { value: 'system', label: 'Let Windows choose' },
-  { value: 'high-performance', label: 'Fastest card' },
-  { value: 'power-saving', label: 'Power saving' },
+  { value: 'system', label: tt('Let Windows choose') },
+  { value: 'high-performance', label: tt('Fastest card') },
+  { value: 'power-saving', label: tt('Power saving') },
 ]
 
 /** Which graphics card Lumen runs on, what works on it, and the settings to change that. */
@@ -63,7 +65,7 @@ export function GraphicsDialog() {
   const copy = async () => {
     const report = { gpu: info, webgl: webglInfo(), decoders: await decoderSupport(), encoders: rows }
     await navigator.clipboard.writeText(reportText(report, { app: APP_VERSION, electron: platform.versions?.electron, chrome: platform.versions?.chrome }))
-    toast.success('Copied the graphics report')
+    toast.success(tt('Copied the graphics report'))
   }
 
   const devices = info?.devices ?? []
@@ -74,9 +76,9 @@ export function GraphicsDialog() {
   const softwareOnly = info ? featureState(info.features.gpu_compositing) !== 'on' : false
 
   return (
-    <Dialog open={open} onOpenChange={setOpen} title="Graphics and encoding" className="w-[min(620px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={setOpen} title={tt('Graphics and encoding')} className="w-[min(620px,calc(100vw-32px))]">
       <div className="max-h-[min(72vh,720px)] space-y-5 overflow-y-auto px-5 pt-1 pb-5">
-        <Section title="Graphics card">
+        <Section title={tt('Graphics card')}>
           {devices.length ? (
             <div className="space-y-1.5">
               {devices.map((d, i) => (
@@ -85,31 +87,31 @@ export function GraphicsDialog() {
                   <span className="min-w-0 flex-1 truncate text-sm text-fg-2">
                     <span className="text-fg-4">{d.vendor}</span> {d.name}
                   </span>
-                  {d.driver && <span className="shrink-0 font-mono text-2xs text-fg-4">driver {d.driver}</span>}
-                  {d.active && <span className="shrink-0 rounded-md bg-ok/10 px-1.5 py-0.5 text-2xs font-medium text-ok">In use</span>}
+                  {d.driver && <span className="shrink-0 font-mono text-2xs text-fg-4">{ttx('driver {0}', d.driver)}</span>}
+                  {d.active && <span className="shrink-0 rounded-md bg-ok/10 px-1.5 py-0.5 text-2xs font-medium text-ok">{tt('In use')}</span>}
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-fg-3">{info ? 'No graphics card was reported — Lumen is drawing on the processor.' : 'Looking…'}</p>
+            <p className="text-sm text-fg-3">{info ? tt('No graphics card was reported — Lumen is drawing on the processor.') : tt('Looking…')}</p>
           )}
           {onSlowCard && (
             <Note>
-              Lumen is running on the power-saving card. Exports and heavy effects are faster on the {faster!.vendor} card — choose <b>Fastest card</b> below.
+              {ttx('Lumen is running on the power-saving card. Exports and heavy effects are faster on the {0} card — choose', faster!.vendor)}{' '}<b>{tt('Fastest card')}</b>{' '}{tt('below.')}
             </Note>
           )}
-          {softwareOnly && <Note>The graphics card isn’t being used, so everything runs on the processor. A newer graphics driver usually fixes this.</Note>}
+          {softwareOnly && <Note>{tt('The graphics card isn’t being used, so everything runs on the processor. A newer graphics driver usually fixes this.')}</Note>}
         </Section>
 
         {info && (
-          <Section title="What it speeds up">
+          <Section title={tt('What it speeds up')}>
             <div className="grid grid-cols-2 gap-1.5">
               {FEATURES.map(([key, label]) => {
                 const state = featureState(info.features[key])
                 return (
                   <div key={key} className="flex items-center justify-between gap-2 rounded-lg bg-white/[0.03] px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
                     <span className="text-fg-2">{label}</span>
-                    <span className={state === 'on' ? 'text-ok' : state === 'software' ? 'text-warn' : 'text-fg-4'}>{state === 'on' ? 'Graphics card' : state === 'software' ? 'Processor' : state === 'off' ? 'Off' : '—'}</span>
+                    <span className={state === 'on' ? 'text-ok' : state === 'software' ? 'text-warn' : 'text-fg-4'}>{state === 'on' ? tt('Graphics card') : state === 'software' ? tt('Processor') : state === 'off' ? tt('Off') : '—'}</span>
                   </div>
                 )
               })}
@@ -118,10 +120,10 @@ export function GraphicsDialog() {
         )}
 
         <Section
-          title="Encoders, tested"
+          title={tt('Encoders, tested')}
           right={
             <button type="button" disabled={checking} onClick={() => void check()} className="flex items-center gap-1 text-2xs text-fg-3 hover:text-fg disabled:opacity-50">
-              {checking ? <LoaderCircle className="size-3 animate-spin" /> : <RefreshCw className="size-3" />} Test again
+              {checking ? <LoaderCircle className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}{' '}{tt('Test again')}
             </button>
           }
         >
@@ -129,7 +131,7 @@ export function GraphicsDialog() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-white/[0.03] text-left text-2xs font-medium text-fg-4">
-                  <th className="px-3 py-1.5 font-medium">Codec</th>
+                  <th className="px-3 py-1.5 font-medium">{tt('Codec')}</th>
                   {CHECK_SIZES.map((s) => (
                     <th key={s.label} colSpan={2} className="px-3 py-1.5 font-medium">
                       {s.label}
@@ -153,25 +155,25 @@ export function GraphicsDialog() {
             </table>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-fg-4">
-            Each encoder is tried with real frames. Exports use the graphics card’s when it works and fall back to the processor by themselves — and to H.264 if a codec has no working encoder.
+            {tt('Each encoder is tried with real frames. Exports use the graphics card’s when it works and fall back to the processor by themselves — and to H.264 if a codec has no working encoder.')}
           </p>
         </Section>
 
         {info && desktop && (
-          <Section title="On a computer with two graphics cards">
+          <Section title={tt('On a computer with two graphics cards')}>
             <Segmented stretch value={info.settings.gpu} onChange={(gpu) => void set({ gpu })} options={GPU_CHOICES} />
             <label className="mt-3 flex items-start gap-2.5 text-sm text-fg-2">
-              <Switch aria-label="Use the graphics card even if its driver is distrusted" checked={info.settings.ignoreBlocklist} onChange={(ignoreBlocklist) => void set({ ignoreBlocklist })} />
+              <Switch aria-label={tt('Use the graphics card even if its driver is distrusted')} checked={info.settings.ignoreBlocklist} onChange={(ignoreBlocklist) => void set({ ignoreBlocklist })} />
               <span>
-                Use the graphics card even if its driver is distrusted
-                <span className="block text-xs text-fg-4">For a card that shows “Processor” or “Off” above. If Lumen misbehaves afterwards, switch this back off.</span>
+                {tt('Use the graphics card even if its driver is distrusted')}
+                <span className="block text-xs text-fg-4">{tt('For a card that shows “Processor” or “Off” above. If Lumen misbehaves afterwards, switch this back off.')}</span>
               </span>
             </label>
             {info.restartNeeded && (
               <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-accent/[0.07] px-3 py-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.18)]">
-                <span className="text-xs text-fg-2">These apply the next time Lumen starts. Your project is saved first.</span>
+                <span className="text-xs text-fg-2">{tt('These apply the next time Lumen starts. Your project is saved first.')}</span>
                 <Button size="sm" variant="primary" onClick={() => void restart()}>
-                  Restart Lumen
+                  {tt('Restart Lumen')}
                 </Button>
               </div>
             )}
@@ -180,7 +182,7 @@ export function GraphicsDialog() {
 
         <div className="flex justify-end">
           <Button size="sm" variant="ghost" onClick={() => void copy()}>
-            <Copy /> Copy report
+            <Copy />{' '}{tt('Copy report')}
           </Button>
         </div>
       </div>
@@ -233,8 +235,8 @@ function EncoderCell({ label, state, error }: { label: string; state: EncoderSta
 function EncoderCells({ row }: { row: EncoderCheck | undefined }) {
   return (
     <>
-      <EncoderCell label="Card" state={row?.hardware} error={row?.hardwareError} />
-      <EncoderCell label="Processor" state={row?.software} error={row?.softwareError} />
+      <EncoderCell label={tt('Card')} state={row?.hardware} error={row?.hardwareError} />
+      <EncoderCell label={tt('Processor')} state={row?.software} error={row?.softwareError} />
     </>
   )
 }

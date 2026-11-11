@@ -21,6 +21,8 @@ import { useTimelineView } from '@/editor/timeline-view'
 import { cn } from '@/lib/cn'
 import { formatTimecode } from '@/lib/time'
 import { copyText, saveTextFile } from '@/project/text-files'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 export const MARKER_ICON: Record<MarkerFilter, typeof Flag> = { chapter: BookMarked, todo: SquareCheck, comment: MessageSquare, plain: Flag }
 
@@ -39,8 +41,8 @@ export function NotesPanel() {
           value={view}
           onChange={setView}
           options={[
-            { value: 'markers', label: <Counted label="Markers" count={open} title="open to-dos" /> },
-            { value: 'clips', label: <Counted label="Clip notes" count={tasks} title="open tasks" /> },
+            { value: 'markers', label: <Counted label={tt('Markers')} count={open} title={tt('open to-dos')} /> },
+            { value: 'clips', label: <Counted label={tt('Clip notes')} count={tasks} title={tt('open tasks')} /> },
           ]}
         />
       </div>
@@ -93,7 +95,7 @@ function MarkerList() {
   return (
     <>
       <div className="shrink-0 space-y-2 px-3 pb-2">
-        <SearchInput value={query} onChange={setQuery} placeholder="Search markers" aria-label="Search markers" />
+        <SearchInput value={query} onChange={setQuery} placeholder={tt('Search markers')} aria-label={tt('Search markers')} />
         <div className="flex flex-wrap items-center gap-1">
           {MARKER_KINDS.map((k) => {
             const Icon = MARKER_ICON[k.id]
@@ -118,17 +120,17 @@ function MarkerList() {
           })}
         </div>
         <div className="flex items-center gap-2 text-2xs text-fg-3">
-          <Switch checked={hideDone} onChange={(v) => setView({ hideDone: v })} aria-label="Hide finished to-dos" />
-          Hide finished to-dos
+          <Switch checked={hideDone} onChange={(v) => setView({ hideDone: v })} aria-label={tt('Hide finished to-dos')} />
+          {tt('Hide finished to-dos')}
           <div className="ml-auto flex items-center gap-1">
             <Menu>
               <MenuTrigger asChild>
                 <Button size="xs" variant="secondary">
-                  <Plus /> Add
+                  <Plus />{' '}{tt('Add')}
                 </Button>
               </MenuTrigger>
               <MenuContent align="end">
-                <MenuLabel>At the playhead</MenuLabel>
+                <MenuLabel>{tt('At the playhead')}</MenuLabel>
                 {MARKER_KINDS.map((k) => {
                   const Icon = MARKER_ICON[k.id]
                   return (
@@ -144,12 +146,12 @@ function MarkerList() {
         </div>
       </div>
       {markers.length === 0 ? (
-        <Empty icon={<Flag />} title="No markers yet">
-          Press M to drop one at the playhead. Chapters divide the film into sections, to-dos keep track of what’s left to fix, comments are for whoever reads the timeline next.
+        <Empty icon={<Flag />} title={tt('No markers yet')}>
+          {tt('Press M to drop one at the playhead. Chapters divide the film into sections, to-dos keep track of what’s left to fix, comments are for whoever reads the timeline next.')}
         </Empty>
       ) : shown.length === 0 ? (
-        <Empty icon={<Flag />} title="Nothing matches">
-          {markers.length} marker{markers.length === 1 ? '' : 's'} hidden by the filter.
+        <Empty icon={<Flag />} title={tt('Nothing matches')}>
+          {ttx('{0} marker{1} hidden by the filter.', markers.length, markers.length === 1 ? '' : 's')}
         </Empty>
       ) : (
         <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
@@ -184,7 +186,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
             type="button"
             role="checkbox"
             aria-checked={Boolean(marker.done)}
-            aria-label={marker.done ? 'Reopen' : 'Tick off'}
+            aria-label={marker.done ? tt('Reopen') : tt('Tick off')}
             onClick={() => patch({ done: !marker.done })}
             className={cn('grid size-4 shrink-0 place-items-center rounded-[5px] outline-none ring-1 ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-accent/60', marker.done ? 'bg-ok text-black ring-ok' : 'ring-warn/70 hover:bg-warn/15')}
           >
@@ -195,7 +197,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
         )}
         <button
           type="button"
-          title="Go to this marker"
+          title={tt('Go to this marker')}
           onClick={() => (playback.pause(), playback.seek(marker.frame))}
           className="shrink-0 rounded px-1 font-mono text-2xs text-fg-3 tabular outline-none hover:bg-white/[0.07] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60"
         >
@@ -203,7 +205,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
         </button>
         <input
           value={label}
-          aria-label="Marker label"
+          aria-label={tt('Marker label')}
           onChange={(e) => setLabel(e.target.value)}
           onBlur={() => (label.trim() && label.trim() !== marker.label ? patch({ label: label.trim() }) : setLabel(marker.label))}
           onKeyDown={(e) => {
@@ -215,12 +217,12 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
         />
         <Menu>
           <MenuTrigger asChild>
-            <IconButton size="xs" label="Marker options" className="opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100">
+            <IconButton size="xs" label={tt('Marker options')} className="opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100">
               <Ellipsis />
             </IconButton>
           </MenuTrigger>
           <MenuContent align="end">
-            <MenuLabel>This marker is a</MenuLabel>
+            <MenuLabel>{tt('This marker is a')}</MenuLabel>
             {MARKER_KINDS.map((k) => {
               const KindIcon = MARKER_ICON[k.id]
               return (
@@ -231,10 +233,10 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
             })}
             <MenuSeparator />
             <MenuItem icon={<StickyNote />} onSelect={() => setOpen(true)}>
-              {marker.note ? 'Edit note' : 'Add a note'}
+              {marker.note ? tt('Edit note') : tt('Add a note')}
             </MenuItem>
             <MenuItem icon={<Trash />} danger onSelect={() => dispatch('marker.remove', { id: marker.id })}>
-              Remove marker
+              {tt('Remove marker')}
             </MenuItem>
           </MenuContent>
         </Menu>
@@ -243,8 +245,8 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
         <textarea
           value={note}
           rows={Math.min(5, Math.max(1, note.split('\n').length))}
-          placeholder="Note…"
-          aria-label="Marker note"
+          placeholder={tt('Note…')}
+          aria-label={tt('Marker note')}
           autoFocus={open && !marker.note}
           onChange={(e) => setNote(e.target.value)}
           onBlur={() => {
@@ -268,7 +270,7 @@ function ExportMenu() {
   const build = (format: MarkerExportFormat) => {
     const out = exportMarkers(getProject(), format, { kinds, hideDone })
     if (!out.count) {
-      toast(format === 'youtube' ? 'No chapters to export' : 'No markers to export', { description: out.warnings[0] ?? 'Nothing passes the filter.' })
+      toast(format === 'youtube' ? tt('No chapters to export') : tt('No markers to export'), { description: out.warnings[0] ?? tt('Nothing passes the filter.') })
       return null
     }
     return out
@@ -284,7 +286,7 @@ function ExportMenu() {
       )
       if (out.warnings.length) toast(out.warnings.join(' '))
     } catch (err) {
-      toast.error('Couldn’t save the file', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t save the file'), { description: err instanceof Error ? err.message : String(err) })
     }
   }
   const copyChapters = async () => {
@@ -296,15 +298,15 @@ function ExportMenu() {
     <Menu>
       <MenuTrigger asChild>
         <Button size="xs" variant="secondary">
-          <Download /> Export
+          <Download />{' '}{tt('Export')}
         </Button>
       </MenuTrigger>
       <MenuContent align="end" className="min-w-[250px]">
         <MenuItem icon={<ClipboardCopy />} onSelect={() => void copyChapters()}>
-          Copy chapter list
+          {tt('Copy chapter list')}
         </MenuItem>
         <MenuSeparator />
-        <MenuLabel>Save as a file</MenuLabel>
+        <MenuLabel>{tt('Save as a file')}</MenuLabel>
         {(Object.keys(MARKER_EXPORTS) as MarkerExportFormat[]).map((f) => (
           <MenuItem key={f} icon={<Download />} onSelect={() => void save(f)}>
             <span title={MARKER_EXPORTS[f].hint}>{MARKER_EXPORTS[f].label}</span>
@@ -339,32 +341,32 @@ function ClipNoteList() {
     try {
       await saveTextFile({ name: `${getProject().name} clip notes`, extension: 'md', filterName: 'Markdown', mime: 'text/markdown', text: notesMarkdown(getProject()) }, 'Saved the clip notes')
     } catch (err) {
-      toast.error('Couldn’t save the file', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t save the file'), { description: err instanceof Error ? err.message : String(err) })
     }
   }
 
   return (
     <>
       <div className="shrink-0 space-y-2 px-3 pb-2">
-        <SearchInput value={query} onChange={setQuery} placeholder="Search notes and tasks" aria-label="Search notes and tasks" />
+        <SearchInput value={query} onChange={setQuery} placeholder={tt('Search notes and tasks')} aria-label={tt('Search notes and tasks')} />
         <div className="flex items-center gap-2 text-2xs text-fg-3">
-          <Switch checked={openOnly} onChange={setOpenOnly} aria-label="Only clips with open tasks" />
-          Open tasks only
+          <Switch checked={openOnly} onChange={setOpenOnly} aria-label={tt('Only clips with open tasks')} />
+          {tt('Open tasks only')}
           <span className="mx-1 h-3 w-px bg-line-2" />
-          <Switch checked={showNotes} onChange={(v) => setView({ showNotes: v })} aria-label="Show notes on clips" />
-          On clips
+          <Switch checked={showNotes} onChange={(v) => setView({ showNotes: v })} aria-label={tt('Show notes on clips')} />
+          {tt('On clips')}
           <Button size="xs" variant="secondary" className="ml-auto" disabled={!all.length} onClick={() => void save()}>
-            <Download /> Export
+            <Download />{' '}{tt('Export')}
           </Button>
         </div>
       </div>
       {all.length === 0 ? (
-        <Empty icon={<ListChecks />} title="No clip notes yet">
-          Select a clip and open Notes &amp; tasks in the inspector to leave a remark or a to-do list on it. They travel with the clip and are saved with the project.
+        <Empty icon={<ListChecks />} title={tt('No clip notes yet')}>
+          {tt('Select a clip and open Notes & tasks in the inspector to leave a remark or a to-do list on it. They travel with the clip and are saved with the project.')}
         </Empty>
       ) : rows.length === 0 ? (
-        <Empty icon={<ListChecks />} title="Nothing matches">
-          {all.length} clip{all.length === 1 ? '' : 's'} with notes hidden by the filter.
+        <Empty icon={<ListChecks />} title={tt('Nothing matches')}>
+          {ttx('{0} clip{1} with notes hidden by the filter.', all.length, all.length === 1 ? '' : 's')}
         </Empty>
       ) : (
         <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
@@ -376,7 +378,7 @@ function ClipNoteList() {
                 selection.includes(row.clipId) && 'shadow-[inset_0_0_0_1px_rgb(214_238_0/0.45)]',
               )}
             >
-              <button type="button" onClick={() => go(row.clipId, row.start)} title="Select this clip and go to it" className="flex w-full min-w-0 items-baseline gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
+              <button type="button" onClick={() => go(row.clipId, row.start)} title={tt('Select this clip and go to it')} className="flex w-full min-w-0 items-baseline gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{row.name}</span>
                 <span className="shrink-0 text-2xs text-fg-4">{row.trackName}</span>
                 <span className="shrink-0 font-mono text-2xs text-fg-3 tabular">{formatTimecode(row.start, fps)}</span>
@@ -390,7 +392,7 @@ function ClipNoteList() {
                         <input
                           type="checkbox"
                           checked={t.done}
-                          onChange={() => dispatch('clip.update', { ids: [row.clipId], patch: { tasks: toggleTask(row.tasks, t.id) } }, { label: t.done ? 'Reopen task' : 'Tick off task' })}
+                          onChange={() => dispatch('clip.update', { ids: [row.clipId], patch: { tasks: toggleTask(row.tasks, t.id) } }, { label: t.done ? tt('Reopen task') : tt('Tick off task') })}
                           className="mt-0.5 size-3.5 shrink-0 accent-[var(--color-accent)]"
                         />
                         <span className={cn('min-w-0 flex-1', t.done && 'text-fg-4 line-through')}>{t.text}</span>

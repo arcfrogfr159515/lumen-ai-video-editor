@@ -9,6 +9,7 @@ import type { Clip, Mask } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { actions } from '@/features/shell/actions'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 /** Shape masks: show part of a clip (or limit where an adjustment layer grades), with soft edges. */
 export function MaskSection({ clip }: { clip: Clip }) {
@@ -25,33 +26,33 @@ export function MaskSection({ clip }: { clip: Clip }) {
 
   return (
     <Section
-      title="Masks"
+      title={tt('Masks')}
       icon={<Circle />}
       defaultOpen={masks.length > 0 || Boolean(clip.matte)}
       actions={
         <Menu>
           <MenuTrigger asChild>
-            <IconButton size="xs" label="Add a mask">
+            <IconButton size="xs" label={tt('Add a mask')}>
               <Plus />
             </IconButton>
           </MenuTrigger>
           <MenuContent align="end" className="w-48">
             <MenuItem icon={<Circle />} onSelect={() => add('ellipse')}>
-              Ellipse
+              {tt('Ellipse')}
             </MenuItem>
             <MenuItem icon={<Square />} onSelect={() => add('rectangle')}>
-              Rectangle
+              {tt('Rectangle')}
             </MenuItem>
             {canSubject && (
               <>
                 <MenuItem icon={<UserRound />} onSelect={() => void actions.cutOutSubject(clip.id)}>
-                  The person (AI)
+                  {tt('The person (AI)')}
                 </MenuItem>
                 <MenuItem icon={<UserRound />} onSelect={() => void actions.cutOutSubject(clip.id, 'any')}>
-                  The main subject (AI, GPU)
+                  {tt('The main subject (AI, GPU)')}
                 </MenuItem>
                 <MenuItem icon={<Type />} onSelect={() => void actions.textBehindSubject(clip.id)}>
-                  Text behind the person
+                  {tt('Text behind the person')}
                 </MenuItem>
               </>
             )}
@@ -63,14 +64,14 @@ export function MaskSection({ clip }: { clip: Clip }) {
         <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-white/[0.035] p-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
           <UserRound className="size-3.5 text-fg-3" />
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-fg">
-            {clip.matte.invert ? 'Everything but the ' : 'Only the '}
-            {matte?.matteOf?.subject === 'any' ? 'subject' : 'person'}
-            <span className="font-normal text-fg-4"> · AI matte</span>
+            {clip.matte.invert ? (tt('Everything but the') + ' ') : (tt('Only the') + ' ')}
+            {matte?.matteOf?.subject === 'any' ? tt('subject') : tt('person')}
+            <span className="font-normal text-fg-4">{' '}{tt('· AI matte')}</span>
           </span>
-          <IconButton size="xs" label={clip.matte.invert ? 'Show the subject instead' : 'Show everything but the subject'} active={clip.matte.invert} onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { matte: { ...clip.matte!, invert: !clip.matte!.invert } } })}>
+          <IconButton size="xs" label={clip.matte.invert ? tt('Show the subject instead') : tt('Show everything but the subject')} active={clip.matte.invert} onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { matte: { ...clip.matte!, invert: !clip.matte!.invert } } })}>
             {clip.matte.invert ? <EyeOff /> : <Eye />}
           </IconButton>
-          <IconButton size="xs" label="Show the whole picture again" onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { matte: null } })}>
+          <IconButton size="xs" label={tt('Show the whole picture again')} onClick={() => dispatch('clip.update', { ids: [clip.id], patch: { matte: null } })}>
             <Trash />
           </IconButton>
         </div>
@@ -78,10 +79,10 @@ export function MaskSection({ clip }: { clip: Clip }) {
       {!masks.length ? (
         <p className="text-2xs leading-relaxed text-fg-4">
           {clip.kind === 'adjustment'
-            ? 'Limit the grade to part of the frame — a face, the sky, a vignette of your own.'
+            ? tt('Limit the grade to part of the frame — a face, the sky, a vignette of your own.')
             : canSubject
-              ? 'Show only part of the clip — spotlight a subject, split the screen, soften an edge. + also cuts out the person with AI, or puts text behind them.'
-              : 'Show only part of the clip — spotlight a subject, split the screen, soften an edge.'}
+              ? tt('Show only part of the clip — spotlight a subject, split the screen, soften an edge. + also cuts out the person with AI, or puts text behind them.')
+              : tt('Show only part of the clip — spotlight a subject, split the screen, soften an edge.')}
         </p>
       ) : (
         <div className="space-y-2">
@@ -92,44 +93,44 @@ export function MaskSection({ clip }: { clip: Clip }) {
                 <div className="flex items-center gap-1.5">
                   {m.shape === 'ellipse' ? <Circle className="size-3.5 text-fg-3" /> : <Square className="size-3.5 text-fg-3" />}
                   <span className="min-w-0 flex-1 truncate text-xs font-medium text-fg">
-                    {m.shape === 'ellipse' ? 'Ellipse' : 'Rectangle'} {i + 1}
+                    {m.shape === 'ellipse' ? tt('Ellipse') : tt('Rectangle')} {i + 1}
                   </span>
-                  <IconButton size="xs" label={on ? 'Done editing on the canvas' : 'Edit on the canvas'} active={on} onClick={() => useUI.getState().setMaskEdit(on ? null : m.id)}>
+                  <IconButton size="xs" label={on ? tt('Done editing on the canvas') : tt('Edit on the canvas')} active={on} onClick={() => useUI.getState().setMaskEdit(on ? null : m.id)}>
                     <Move />
                   </IconButton>
-                  <IconButton size="xs" label={m.follow ? 'Follows a tracked point — track again' : 'Track motion: make this mask follow something'} active={Boolean(m.follow)} onClick={() => actions.trackMotion(clip.id, m.id)}>
+                  <IconButton size="xs" label={m.follow ? tt('Follows a tracked point — track again') : tt('Track motion: make this mask follow something')} active={Boolean(m.follow)} onClick={() => actions.trackMotion(clip.id, m.id)}>
                     <Crosshair />
                   </IconButton>
                   {m.follow && (
-                    <IconButton size="xs" label="Stop following" onClick={() => set(m, { follow: null })}>
+                    <IconButton size="xs" label={tt('Stop following')} onClick={() => set(m, { follow: null })}>
                       <Unlink />
                     </IconButton>
                   )}
-                  <IconButton size="xs" label={m.invert ? 'Showing outside — show inside' : 'Showing inside — show outside'} active={m.invert} onClick={() => set(m, { invert: !m.invert })}>
+                  <IconButton size="xs" label={m.invert ? tt('Showing outside — show inside') : tt('Showing inside — show outside')} active={m.invert} onClick={() => set(m, { invert: !m.invert })}>
                     {m.invert ? <EyeOff /> : <Eye />}
                   </IconButton>
-                  <IconButton size="xs" label="Remove mask" onClick={() => dispatch('mask.remove', { clipId: clip.id, maskId: m.id })}>
+                  <IconButton size="xs" label={tt('Remove mask')} onClick={() => dispatch('mask.remove', { clipId: clip.id, maskId: m.id })}>
                     <Trash />
                   </IconButton>
                 </div>
                 <div className="mt-1.5 space-y-0.5">
-                  <Row label="Feather">
+                  <Row label={tt('Feather')}>
                     <Slider value={m.feather * 200} min={0} max={100} defaultValue={8} onChange={(v) => set(m, { feather: Math.round(v) / 200 }, 'f')} />
                     <span className="w-8 text-right text-xs text-fg-3 tabular">{Math.round(m.feather * 200)}</span>
                   </Row>
-                  <Row label="Opacity">
+                  <Row label={tt('Opacity')}>
                     <Slider value={m.opacity * 100} min={0} max={100} defaultValue={100} onChange={(v) => set(m, { opacity: Math.round(v) / 100 }, 'o')} />
                     <span className="w-8 text-right text-xs text-fg-3 tabular">{Math.round(m.opacity * 100)}</span>
                   </Row>
                   {m.shape === 'rectangle' && (
-                    <Row label="Roundness">
+                    <Row label={tt('Roundness')}>
                       <Slider value={m.roundness * 100} min={0} max={100} defaultValue={0} onChange={(v) => set(m, { roundness: Math.round(v) / 100 }, 'r')} />
                       <span className="w-8 text-right text-xs text-fg-3 tabular">{Math.round(m.roundness * 100)}</span>
                     </Row>
                   )}
-                  <Row label="Invert">
-                    <span className="flex-1 text-2xs text-fg-4">{m.invert ? 'Hides the inside' : 'Shows the inside'}</span>
-                    <Switch aria-label="Invert mask" checked={m.invert} onChange={(v) => set(m, { invert: v })} />
+                  <Row label={tt('Invert')}>
+                    <span className="flex-1 text-2xs text-fg-4">{m.invert ? tt('Hides the inside') : tt('Shows the inside')}</span>
+                    <Switch aria-label={tt('Invert mask')} checked={m.invert} onChange={(v) => set(m, { invert: v })} />
                   </Row>
                 </div>
               </div>

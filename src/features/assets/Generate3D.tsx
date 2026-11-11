@@ -16,31 +16,33 @@ import { IconTile, RenderCard } from '@/features/integrations/parts'
 import { openIntegrations, renderBlender, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
 import { Chip, SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 type Template = 'title3d' | 'shapes' | 'script'
 
 const MATERIALS: { id: string; label: string; swatch: string; tinted?: boolean }[] = [
-  { id: 'chrome', label: 'Chrome', swatch: 'linear-gradient(165deg,#ffffff 0%,#b8c0d0 42%,#262a35 50%,#5b6172 62%,#eef2fb 100%)' },
-  { id: 'gold', label: 'Gold', swatch: 'linear-gradient(165deg,#fff6d2 0%,#f4c865 42%,#6a4510 50%,#a06d24 62%,#ffeab0 100%)' },
-  { id: 'glass', label: 'Glass', swatch: 'linear-gradient(165deg,rgb(255 255 255/0.75),rgb(170 200 255/0.18) 55%,rgb(255 255 255/0.4))' },
-  { id: 'plastic', label: 'Plastic', swatch: 'radial-gradient(circle at 32% 28%,#fff 0 8%,var(--c) 30%,color-mix(in oklab,var(--c) 55%,black) 100%)', tinted: true },
-  { id: 'neon', label: 'Neon', swatch: 'radial-gradient(circle,#fff 0 18%,var(--c) 45%,transparent 72%)', tinted: true },
-  { id: 'clay', label: 'Clay', swatch: 'radial-gradient(circle at 35% 30%,color-mix(in oklab,var(--c) 70%,white),var(--c) 55%,color-mix(in oklab,var(--c) 70%,black))', tinted: true },
+  { id: 'chrome', label: tt('Chrome'), swatch: 'linear-gradient(165deg,#ffffff 0%,#b8c0d0 42%,#262a35 50%,#5b6172 62%,#eef2fb 100%)' },
+  { id: 'gold', label: tt('Gold'), swatch: 'linear-gradient(165deg,#fff6d2 0%,#f4c865 42%,#6a4510 50%,#a06d24 62%,#ffeab0 100%)' },
+  { id: 'glass', label: tt('Glass'), swatch: 'linear-gradient(165deg,rgb(255 255 255/0.75),rgb(170 200 255/0.18) 55%,rgb(255 255 255/0.4))' },
+  { id: 'plastic', label: tt('Plastic'), swatch: 'radial-gradient(circle at 32% 28%,#fff 0 8%,var(--c) 30%,color-mix(in oklab,var(--c) 55%,black) 100%)', tinted: true },
+  { id: 'neon', label: tt('Neon'), swatch: 'radial-gradient(circle,#fff 0 18%,var(--c) 45%,transparent 72%)', tinted: true },
+  { id: 'clay', label: tt('Clay'), swatch: 'radial-gradient(circle at 35% 30%,color-mix(in oklab,var(--c) 70%,white),var(--c) 55%,color-mix(in oklab,var(--c) 70%,black))', tinted: true },
 ]
 
 const FONT_CHOICES: { id: string; label: string; css: string; italic?: boolean }[] = [
-  { id: 'sans', label: 'Sans', css: FONTS.sans.css },
-  { id: 'display', label: 'Display', css: FONTS.display.css },
-  { id: 'serif', label: 'Serif', css: FONTS.serif.css },
-  { id: 'serif-italic', label: 'Italic', css: FONTS.serif.css, italic: true },
+  { id: 'sans', label: tt('Sans'), css: FONTS.sans.css },
+  { id: 'display', label: tt('Display'), css: FONTS.display.css },
+  { id: 'serif', label: tt('Serif'), css: FONTS.serif.css },
+  { id: 'serif-italic', label: tt('Italic'), css: FONTS.serif.css, italic: true },
 ]
 
 const MOTIONS = [
-  { id: 'spin', label: 'Spin in' },
-  { id: 'rise', label: 'Rise' },
-  { id: 'slam', label: 'Slam' },
-  { id: 'orbit', label: 'Orbit' },
-  { id: 'float', label: 'Float' },
+  { id: 'spin', label: tt('Spin in') },
+  { id: 'rise', label: tt('Rise') },
+  { id: 'slam', label: tt('Slam') },
+  { id: 'orbit', label: tt('Orbit') },
+  { id: 'float', label: tt('Float') },
 ]
 
 const PALETTES: { id: string; colors: string[] }[] = [
@@ -119,7 +121,7 @@ export function Generate3D() {
       else if (template === 'shapes') await renderBlender({ template, params: { palette, style }, duration: secs, quality, transparent: false })
       else await renderBlender({ template, params: {}, script, name: 'Blender scene', duration: secs, quality, transparent })
     } catch (err) {
-      toast.error('Couldn’t start the render', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t start the render'), { description: err instanceof Error ? err.message : String(err) })
     } finally {
       setBusy(false)
     }
@@ -153,8 +155,8 @@ export function Generate3D() {
 
         {template === 'title3d' && (
           <>
-            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Title text" className="h-10 text-md font-semibold" style={{ fontFamily: FONT_CHOICES.find((f) => f.id === font)?.css, fontStyle: font === 'serif-italic' ? 'italic' : undefined }} />
-            <Field label="Material">
+            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder={tt('Title text')} className="h-10 text-md font-semibold" style={{ fontFamily: FONT_CHOICES.find((f) => f.id === font)?.css, fontStyle: font === 'serif-italic' ? 'italic' : undefined }} />
+            <Field label={tt('Material')}>
               <div className="grid grid-cols-6 gap-1">
                 {MATERIALS.map((m) => (
                   <button key={m.id} type="button" onClick={() => setMaterial(m.id)} className="group/mat flex flex-col items-center gap-1 outline-none">
@@ -171,11 +173,11 @@ export function Generate3D() {
               </div>
             </Field>
             {tinted && (
-              <Field label="Colour">
+              <Field label={tt('Colour')}>
                 <ColorSwatches value={color} onChange={(c) => c && setColor(c)} />
               </Field>
             )}
-            <Field label="Typeface">
+            <Field label={tt('Typeface')}>
               <div className="grid grid-cols-4 gap-1">
                 {FONT_CHOICES.map((f) => (
                   <button
@@ -185,12 +187,12 @@ export function Generate3D() {
                     className={cn('h-9 rounded-lg text-md outline-none transition-colors', font === f.id ? 'bg-white/[0.1] text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)]' : 'text-fg-3 hover:bg-white/[0.04]')}
                     style={{ fontFamily: f.css, fontStyle: f.italic ? 'italic' : undefined, fontWeight: f.id.startsWith('serif') ? 400 : 700 }}
                   >
-                    Aa
+                    {tt('Aa')}
                   </button>
                 ))}
               </div>
             </Field>
-            <Field label="Move">
+            <Field label={tt('Move')}>
               <div className="flex flex-wrap gap-1">
                 {MOTIONS.map((m) => (
                   <Chip key={m.id} active={motion === m.id} onClick={() => setMotion(m.id)}>
@@ -199,15 +201,15 @@ export function Generate3D() {
                 ))}
               </div>
             </Field>
-            <Field label="Depth" trailing={<span className="font-mono text-2xs text-fg-3 tabular">{depth}%</span>}>
-              <Slider value={depth} min={5} max={100} onChange={setDepth} defaultValue={35} aria-label="Depth" />
+            <Field label={tt('Depth')} trailing={<span className="font-mono text-2xs text-fg-3 tabular">{depth}%</span>}>
+              <Slider value={depth} min={5} max={100} onChange={setDepth} defaultValue={35} aria-label={tt('Depth')} />
             </Field>
           </>
         )}
 
         {template === 'shapes' && (
           <>
-            <Field label="Palette">
+            <Field label={tt('Palette')}>
               <div className="grid grid-cols-5 gap-1.5">
                 {PALETTES.map((p) => (
                   <button
@@ -226,7 +228,7 @@ export function Generate3D() {
                 ))}
               </div>
             </Field>
-            <Field label="Forms">
+            <Field label={tt('Forms')}>
               <div className="flex flex-wrap gap-1">
                 {['mix', 'blobs', 'rings', 'cubes'].map((s) => (
                   <Chip key={s} active={style === s} onClick={() => setStyle(s)}>
@@ -248,15 +250,15 @@ export function Generate3D() {
               className="w-full resize-y rounded-control bg-black/35 px-3 py-2.5 font-mono text-[11px] leading-relaxed text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none focus:shadow-[inset_0_0_0_1px_rgb(214_238_0/0.6)]"
             />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-fg-2">Transparent background</span>
-              <Switch aria-label="Transparent background" checked={transparent} onChange={setTransparent} />
+              <span className="text-xs text-fg-2">{tt('Transparent background')}</span>
+              <Switch aria-label={tt('Transparent background')} checked={transparent} onChange={setTransparent} />
             </div>
-            <p className="text-2xs leading-relaxed text-fg-4">Blender Python, run on an empty scene. Define animate(t, frame) to move things. AI agents can write these for you through Lumen’s MCP server.</p>
+            <p className="text-2xs leading-relaxed text-fg-4">{tt('Blender Python, run on an empty scene. Define animate(t, frame) to move things. AI agents can write these for you through Lumen’s MCP server.')}</p>
           </>
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <Field label="Length">
+          <Field label={tt('Length')}>
             <div className="flex gap-1">
               {(template === 'shapes' ? [6, 8, 12] : [3, 4, 6]).map((d) => (
                 <Chip key={d} active={secs === d} onClick={() => setDuration(d)}>
@@ -265,15 +267,15 @@ export function Generate3D() {
               ))}
             </div>
           </Field>
-          <Field label="Quality">
+          <Field label={tt('Quality')}>
             <Segmented
               stretch
               value={quality}
               onChange={setQuality}
               options={[
-                { value: 'draft', label: 'Draft' },
-                { value: 'standard', label: 'Std' },
-                { value: 'high', label: 'High' },
+                { value: 'draft', label: tt('Draft') },
+                { value: 'standard', label: tt('Std') },
+                { value: 'high', label: tt('High') },
               ]}
             />
           </Field>
@@ -281,16 +283,16 @@ export function Generate3D() {
 
         <Button variant="ai" size="lg" className="w-full" disabled={busy || (template === 'title3d' && !text.trim()) || (template === 'script' && !script.trim())} onClick={render}>
           {busy ? <LoaderCircle className="animate-spin" /> : <Box />}
-          Render in Blender
+          {tt('Render in Blender')}
         </Button>
         <p className="-mt-2 text-center text-2xs text-fg-4">
-          {settings.width}×{settings.height} · {frames} frames · Blender {blender.version}
+          {ttx('{0}×{1} · {2} frames · Blender {3}', settings.width, settings.height, frames, blender.version)}
         </p>
       </div>
 
       <div className="px-3.5 pb-4">
-        <SectionLabel>Renders</SectionLabel>
-        {!list.length && <p className="rounded-xl border border-dashed border-line-2 px-4 py-6 text-center text-xs leading-relaxed text-fg-4">Renders run in the background — keep editing. Finished clips land in your media with transparency.</p>}
+        <SectionLabel>{tt('Renders')}</SectionLabel>
+        {!list.length && <p className="rounded-xl border border-dashed border-line-2 px-4 py-6 text-center text-xs leading-relaxed text-fg-4">{tt('Renders run in the background — keep editing. Finished clips land in your media with transparency.')}</p>}
         <div className="space-y-2.5">
           <AnimatePresence initial={false}>
             {list.map((job) => (
@@ -312,13 +314,13 @@ function NoBlender() {
             <Box />
           </IconTile>
         </div>
-        <p className="text-sm font-medium text-fg">Blender isn’t connected</p>
-        <p className="mt-1 text-xs leading-relaxed text-fg-3">Install Blender (free) or point Lumen at it to render real 3D titles and backgrounds.</p>
+        <p className="text-sm font-medium text-fg">{tt('Blender isn’t connected')}</p>
+        <p className="mt-1 text-xs leading-relaxed text-fg-3">{tt('Install Blender (free) or point Lumen at it to render real 3D titles and backgrounds.')}</p>
         <Button size="sm" variant="primary" className="mt-3" onClick={() => openIntegrations('blender')}>
-          Set up Blender
+          {tt('Set up Blender')}
         </Button>
         <button type="button" onClick={() => useUI.getState().setLeftTab('text')} className="mt-3 block w-full text-2xs text-fg-4 hover:text-fg-2">
-          Or use Lumen’s built-in 3D titles →
+          {tt('Or use Lumen’s built-in 3D titles →')}
         </button>
       </div>
     </div>
@@ -329,8 +331,8 @@ export function Unavailable() {
   return (
     <div className="px-3.5">
       <div className="rounded-xl border border-dashed border-line-2 px-4 py-8 text-center">
-        <p className="text-sm font-medium text-fg-2">Available in the desktop app</p>
-        <p className="mt-1 text-xs leading-relaxed text-fg-4">Blender and HyperFrames renders run locally, so they need Lumen’s desktop app.</p>
+        <p className="text-sm font-medium text-fg-2">{tt('Available in the desktop app')}</p>
+        <p className="mt-1 text-xs leading-relaxed text-fg-4">{tt('Blender and HyperFrames renders run locally, so they need Lumen’s desktop app.')}</p>
       </div>
     </div>
   )

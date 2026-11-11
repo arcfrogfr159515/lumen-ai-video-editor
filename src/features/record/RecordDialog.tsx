@@ -14,6 +14,8 @@ import { CODEC_NAME, encoderSupport, videoBitrate, type CodecAvailability, type 
 import { cn } from '@/lib/cn'
 import { desktop } from '@/lib/platform'
 import { CAPTURE_FPS, CAPTURE_HOTKEYS, CAPTURE_RESOLUTIONS, captureFrame, fitRegion, type CaptureCodec, type CaptureFolderState, type CaptureResolution, type CaptureSource, type Rect } from '@shared/capture'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const fmtBytes = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(0, Math.round(n / 1e3))} KB`)
 const two = (n: number) => String(Math.floor(n)).padStart(2, '0')
@@ -170,11 +172,11 @@ function SourceCard({ source, selected, onPick }: { source: CaptureSource; selec
     >
       <div className="relative aspect-video overflow-hidden rounded-md bg-black/50">
         {source.thumbnail ? <img src={source.thumbnail} alt="" className="h-full w-full object-contain" draggable={false} /> : <div className="grid h-full place-items-center text-fg-4">{source.kind === 'screen' ? <Monitor className="size-5" /> : <AppWindow className="size-5" />}</div>}
-        {source.minimized && <span className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-center text-2xs text-fg-2">Minimized</span>}
+        {source.minimized && <span className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-center text-2xs text-fg-2">{tt('Minimized')}</span>}
       </div>
       <div className="mt-1 flex items-center gap-1 px-0.5">
         {source.icon && <img src={source.icon} alt="" className="size-3.5 shrink-0" draggable={false} />}
-        <span className={cn('truncate text-2xs', selected ? 'text-fg' : 'text-fg-2')}>{source.own ? 'Lumen (this window)' : source.name}</span>
+        <span className={cn('truncate text-2xs', selected ? 'text-fg' : 'text-fg-2')}>{source.own ? tt('Lumen (this window)') : source.name}</span>
       </div>
       {source.kind === 'screen' && source.width && source.height && <div className="px-0.5 text-2xs text-fg-4 tabular">{source.width}×{source.height}</div>}
       {source.kind === 'window' && source.process && <div className="truncate px-0.5 text-2xs text-fg-4">{source.process.replace(/\.exe$/i, '')}</div>}
@@ -291,8 +293,8 @@ export function RecordDialog() {
     <Dialog
       open={open}
       onOpenChange={(o) => !o && close()}
-      title="Record"
-      description="A screen, a window or part of one, straight into the project."
+      title={tt('Record')}
+      description={tt('A screen, a window or part of one, straight into the project.')}
       className="w-[min(1180px,calc(100vw-32px))]"
     >
       <div className="grid max-h-[calc(100vh-150px)] grid-cols-[1.32fr_1fr] gap-5 overflow-hidden px-5 pt-1 pb-4">
@@ -316,7 +318,7 @@ export function RecordDialog() {
                     <CircleAlert className="mt-0.5 size-4 shrink-0" /> {error}
                   </span>
                 ) : (
-                  'Pick a screen or a window below.'
+                  tt('Pick a screen or a window below.')
                 )}
               </div>
             )}
@@ -330,10 +332,10 @@ export function RecordDialog() {
             {rolling && (
               <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-black/70 py-1 pr-2.5 pl-2 text-xs font-medium text-white tabular">
                 <span className={cn('size-2 rounded-full bg-danger', phase === 'recording' && 'animate-pulse-soft')} />
-                {phase === 'paused' ? 'Paused' : 'Recording'} · {fmtClock(stats.seconds)}
+                {phase === 'paused' ? tt('Paused') : tt('Recording')} · {fmtClock(stats.seconds)}
               </div>
             )}
-            {drawing && idle && <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs text-white/85">Drag over the part to record · click once to clear</div>}
+            {drawing && idle && <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs text-white/85">{tt('Drag over the part to record · click once to clear')}</div>}
           </div>
 
           <div className="mt-3 flex items-center gap-2">
@@ -341,12 +343,12 @@ export function RecordDialog() {
               value={tab}
               onChange={setTab}
               options={[
-                { value: 'screen', label: `Screens · ${sources.filter((s) => s.kind === 'screen').length}`, icon: <Monitor className="size-3.5" /> },
-                { value: 'window', label: `Windows · ${sources.filter((s) => s.kind === 'window').length}`, icon: <AppWindow className="size-3.5" /> },
+                { value: 'screen', label: tt('Screens · {0}', sources.filter((s) => s.kind === 'screen').length), icon: <Monitor className="size-3.5" /> },
+                { value: 'window', label: tt('Windows · {0}', sources.filter((s) => s.kind === 'window').length), icon: <AppWindow className="size-3.5" /> },
               ]}
             />
             <IconButton
-              label="Look again"
+              label={tt('Look again')}
               size="sm"
               disabled={refreshing || !idle}
               onClick={() => {
@@ -364,16 +366,16 @@ export function RecordDialog() {
             {shown.map((s) => (
               <SourceCard key={s.id} source={s} selected={s.id === settings.sourceId} onPick={() => set({ sourceId: s.id, region: null })} />
             ))}
-            {!shown.length && <p className="col-span-4 py-6 text-center text-xs text-fg-4">{tab === 'window' ? 'No windows are open. Minimized windows can’t be recorded: bring one back first.' : 'No screens found.'}</p>}
+            {!shown.length && <p className="col-span-4 py-6 text-center text-xs text-fg-4">{tab === 'window' ? tt('No windows are open. Minimized windows can’t be recorded: bring one back first.') : tt('No screens found.')}</p>}
           </div>
         </div>
 
         {/* Settings */}
         <div className={cn('min-h-0 space-y-2.5 overflow-y-auto pr-1', !idle && 'pointer-events-none opacity-60')}>
-          <Heading icon={<Scan />}>Picture</Heading>
-          <Row label="Resolution">
+          <Heading icon={<Scan />}>{tt('Picture')}</Heading>
+          <Row label={tt('Resolution')}>
             <Select
-              aria-label="Resolution"
+              aria-label={tt('Resolution')}
               value={String(settings.resolution)}
               onChange={(v) => set({ resolution: (v === 'native' ? 'native' : Number(v)) as CaptureResolution })}
               className="w-full"
@@ -384,42 +386,42 @@ export function RecordDialog() {
               })}
             />
           </Row>
-          <Row label="Frame rate">
+          <Row label={tt('Frame rate')}>
             <Segmented value={String(settings.fps)} onChange={(v) => set({ fps: Number(v) })} options={CAPTURE_FPS.map((f) => ({ value: String(f), label: String(f) }))} stretch />
           </Row>
-          <Row label="Part">
+          <Row label={tt('Part')}>
             <Button size="sm" variant={drawing ? 'primary' : 'secondary'} onClick={() => setDrawing((d) => !d)} disabled={!stream}>
-              <Scan /> {settings.region ? 'Draw again' : 'Draw a region'}
+              <Scan /> {settings.region ? tt('Draw again') : tt('Draw a region')}
             </Button>
             {settings.region ? (
               <button type="button" onClick={() => set({ region: null })} className="flex items-center gap-1 text-xs text-fg-3 hover:text-fg">
-                <X className="size-3" /> All of it
+                <X className="size-3" />{' '}{tt('All of it')}
               </button>
             ) : (
-              <span className="text-xs text-fg-4">All of it</span>
+              <span className="text-xs text-fg-4">{tt('All of it')}</span>
             )}
           </Row>
-          <Row label="Pointer">
-            <Switch aria-label="Show the pointer" checked={settings.cursor} onChange={(cursor) => set({ cursor })} />
-            <span className="text-xs text-fg-3">{settings.cursor ? 'In the picture' : 'Left out of the picture'}</span>
+          <Row label={tt('Pointer')}>
+            <Switch aria-label={tt('Show the pointer')} checked={settings.cursor} onChange={(cursor) => set({ cursor })} />
+            <span className="text-xs text-fg-3">{settings.cursor ? tt('In the picture') : tt('Left out of the picture')}</span>
           </Row>
-          <Row label="Clicks">
-            <Switch aria-label="Record clicks and the pointer’s path" checked={settings.cursorData} onChange={(cursorData) => set({ cursorData })} />
+          <Row label={tt('Clicks')}>
+            <Switch aria-label={tt('Record clicks and the pointer’s path')} checked={settings.cursorData} onChange={(cursorData) => set({ cursorData })} />
             <span className="flex items-center gap-1 text-xs text-fg-3">
-              <MousePointer2 className="size-3.5 shrink-0" /> {settings.cursorData ? 'Kept as data, for zooms on clicks later' : 'Not kept'}
+              <MousePointer2 className="size-3.5 shrink-0" /> {settings.cursorData ? tt('Kept as data, for zooms on clicks later') : tt('Not kept')}
             </span>
           </Row>
 
-          <Heading icon={<Volume2 />}>Sound</Heading>
-          <Row label="Computer">
+          <Heading icon={<Volume2 />}>{tt('Sound')}</Heading>
+          <Row label={tt('Computer')}>
             <Segmented
               value={settings.audio}
               onChange={(audio) => set({ audio })}
               stretch
               options={[
-                { value: 'off', label: 'Off' },
-                { value: 'system', label: 'Everything', title: 'Everything the computer plays' },
-                { value: 'app', label: 'This app only', title: 'Only the sound of the window being recorded' },
+                { value: 'off', label: tt('Off') },
+                { value: 'system', label: tt('Everything'), title: tt('Everything the computer plays') },
+                { value: 'app', label: tt('This app only'), title: tt('Only the sound of the window being recorded') },
               ]}
             />
           </Row>
@@ -429,13 +431,13 @@ export function RecordDialog() {
               <Meter level={stats.levels.audio ?? 0} />
             </Row>
           )}
-          <Row label="Microphone">
+          <Row label={tt('Microphone')}>
             <Select
-              aria-label="Microphone"
+              aria-label={tt('Microphone')}
               value={settings.mic ?? NONE}
               onChange={(v) => set({ mic: v === NONE ? null : v })}
               className="w-full"
-              options={[{ value: NONE, label: 'None' }, ...mics.map((d) => ({ value: d.deviceId, label: d.label || 'Microphone' }))]}
+              options={[{ value: NONE, label: tt('None') }, ...mics.map((d) => ({ value: d.deviceId, label: d.label || tt('Microphone') }))]}
             />
           </Row>
           {settings.mic && (
@@ -445,41 +447,41 @@ export function RecordDialog() {
             </Row>
           )}
 
-          <Heading icon={<Camera />}>Camera</Heading>
-          <Row label="Camera">
+          <Heading icon={<Camera />}>{tt('Camera')}</Heading>
+          <Row label={tt('Camera')}>
             <Select
-              aria-label="Camera"
+              aria-label={tt('Camera')}
               value={settings.webcam ?? NONE}
               onChange={(v) => set({ webcam: v === NONE ? null : v })}
               className="w-full"
-              options={[{ value: NONE, label: 'None' }, ...cameras.map((d) => ({ value: d.deviceId, label: d.label || 'Camera' }))]}
+              options={[{ value: NONE, label: tt('None') }, ...cameras.map((d) => ({ value: d.deviceId, label: d.label || tt('Camera') }))]}
             />
           </Row>
           {settings.webcam && (
-            <Row label="Size">
+            <Row label={tt('Size')}>
               <Segmented value={String(settings.webcamHeight)} onChange={(v) => set({ webcamHeight: Number(v) })} options={[{ value: '720', label: '720p' }, { value: '1080', label: '1080p' }]} />
-              <span className="text-xs text-fg-4">Its own clip, in the corner of the picture</span>
+              <span className="text-xs text-fg-4">{tt('Its own clip, in the corner of the picture')}</span>
             </Row>
           )}
 
-          <Heading icon={<Cpu />}>Encoding</Heading>
-          <Row label="Codec">
+          <Heading icon={<Cpu />}>{tt('Encoding')}</Heading>
+          <Row label={tt('Codec')}>
             <Segmented
               value={settings.codec}
               onChange={(codec) => set({ codec })}
               stretch
-              options={(['avc', 'hevc', 'av1'] as CaptureCodec[]).map((c) => ({ value: c, label: CODEC_NAME[c], title: encoders[c] && !encoders[c]!.hardware && !encoders[c]!.software ? 'Not available on this computer at this size: another codec is used' : undefined }))}
+              options={(['avc', 'hevc', 'av1'] as CaptureCodec[]).map((c) => ({ value: c, label: CODEC_NAME[c], title: encoders[c] && !encoders[c]!.hardware && !encoders[c]!.software ? tt('Not available on this computer at this size: another codec is used') : undefined }))}
             />
           </Row>
-          <Row label="Encoder">
-            <Segmented value={settings.hardware ? 'gpu' : 'cpu'} onChange={(v) => set({ hardware: v === 'gpu' })} options={[{ value: 'gpu', label: 'Graphics card' }, { value: 'cpu', label: 'Processor' }]} />
+          <Row label={tt('Encoder')}>
+            <Segmented value={settings.hardware ? 'gpu' : 'cpu'} onChange={(v) => set({ hardware: v === 'gpu' })} options={[{ value: 'gpu', label: tt('Graphics card') }, { value: 'cpu', label: tt('Processor') }]} />
           </Row>
-          <p className="pl-[84px] text-2xs leading-relaxed text-fg-4">{encoderHint}. If it can’t take this size, the next one that can is used.</p>
-          <Row label="Quality">
+          <p className="pl-[84px] text-2xs leading-relaxed text-fg-4">{ttx('{0}. If it can’t take this size, the next one that can is used.', encoderHint)}</p>
+          <Row label={tt('Quality')}>
             <Segmented
               value={settings.rate.mode}
               onChange={(mode) => set({ rate: mode === 'quality' ? { mode, quality: 60 } : { mode, mbps: Math.max(1, Math.round(bitrate / 1e6)) } })}
-              options={[{ value: 'quality', label: 'Auto' }, { value: 'bitrate', label: 'Bitrate' }]}
+              options={[{ value: 'quality', label: tt('Auto') }, { value: 'bitrate', label: tt('Bitrate') }]}
             />
             {settings.rate.mode === 'quality' ? (
               <>
@@ -489,7 +491,7 @@ export function RecordDialog() {
             ) : (
               <>
                 <Input
-                  aria-label="Bitrate in megabits per second"
+                  aria-label={tt('Bitrate in megabits per second')}
                   type="number"
                   min={1}
                   max={400}
@@ -499,65 +501,65 @@ export function RecordDialog() {
                   onKeyDown={(e) => e.stopPropagation()}
                   className="w-20"
                 />
-                <span className="text-xs text-fg-3">Mbps</span>
+                <span className="text-xs text-fg-3">{tt('Mbps')}</span>
               </>
             )}
           </Row>
           <button type="button" onClick={() => setAdvanced((a) => !a)} className="pl-[84px] text-2xs font-medium text-fg-3 hover:text-fg">
-            {advanced ? 'Fewer settings' : 'More settings'}
+            {advanced ? tt('Fewer settings') : tt('More settings')}
           </button>
           {advanced && (
             <>
-              <Row label="Key frames">
+              <Row label={tt('Key frames')}>
                 <Select
-                  aria-label="Key frame interval"
+                  aria-label={tt('Key frame interval')}
                   value={String(settings.keyframeSeconds)}
                   onChange={(v) => set({ keyframeSeconds: Number(v) })}
                   className="w-full"
                   options={[
-                    { value: '1', label: 'Every second: quickest to scrub' },
-                    { value: '2', label: 'Every 2 seconds' },
-                    { value: '5', label: 'Every 5 seconds' },
-                    { value: '10', label: 'Every 10 seconds: smallest files' },
+                    { value: '1', label: tt('Every second: quickest to scrub') },
+                    { value: '2', label: tt('Every 2 seconds') },
+                    { value: '5', label: tt('Every 5 seconds') },
+                    { value: '10', label: tt('Every 10 seconds: smallest files') },
                   ]}
                 />
               </Row>
               {wideGamutDisplay() && (
-                <Row label="Colours">
+                <Row label={tt('Colours')}>
                   <Segmented
                     value={settings.colour}
                     onChange={(colour) => set({ colour })}
                     options={[
-                      { value: 'standard', label: 'Standard', title: 'sRGB: what games and most apps mean' },
-                      { value: 'display', label: 'This screen’s', title: 'This screen shows more colours than sRGB. Browsers and design apps are recorded as they looked.' },
+                      { value: 'standard', label: tt('Standard'), title: tt('sRGB: what games and most apps mean') },
+                      { value: 'display', label: tt('This screen’s'), title: tt('This screen shows more colours than sRGB. Browsers and design apps are recorded as they looked.') },
                     ]}
                   />
                 </Row>
               )}
-              <Row label="Countdown">
-                <Segmented value={String(settings.countdown)} onChange={(v) => set({ countdown: Number(v) })} options={[0, 3, 5, 10].map((n) => ({ value: String(n), label: n ? `${n} s` : 'None' }))} />
+              <Row label={tt('Countdown')}>
+                <Segmented value={String(settings.countdown)} onChange={(v) => set({ countdown: Number(v) })} options={[0, 3, 5, 10].map((n) => ({ value: String(n), label: n ? `${n} s` : tt('None') }))} />
               </Row>
-              <Row label="Lumen">
+              <Row label={tt('Lumen')}>
                 <label className="flex items-center gap-1.5 text-xs text-fg-3">
-                  <Switch aria-label="Keep Lumen out of screen recordings" checked={settings.hideLumen} onChange={(hideLumen) => set({ hideLumen })} /> Not in the picture
+                  <Switch aria-label={tt('Keep Lumen out of screen recordings')} checked={settings.hideLumen} onChange={(hideLumen) => set({ hideLumen })} />{' '}{tt('Not in the picture')}
                 </label>
                 <label className="flex items-center gap-1.5 text-xs text-fg-3">
-                  <Switch aria-label="Minimize Lumen while recording" checked={settings.minimize} onChange={(minimize) => set({ minimize })} /> Minimized
+                  <Switch aria-label={tt('Minimize Lumen while recording')} checked={settings.minimize} onChange={(minimize) => set({ minimize })} />{' '}{tt('Minimized')}
                 </label>
               </Row>
             </>
           )}
 
-          <Heading icon={<FolderOpen />}>When it ends</Heading>
-          <Row label="Clips go">
-            <Segmented value={settings.place} onChange={(place) => set({ place })} options={[{ value: 'timeline', label: 'On the timeline' }, { value: 'library', label: 'Media library only' }]} />
+          <Heading icon={<FolderOpen />}>{tt('When it ends')}</Heading>
+          <Row label={tt('Clips go')}>
+            <Segmented value={settings.place} onChange={(place) => set({ place })} options={[{ value: 'timeline', label: tt('On the timeline') }, { value: 'library', label: tt('Media library only') }]} />
           </Row>
-          <Row label="Saved in">
+          <Row label={tt('Saved in')}>
             <span className="min-w-0 flex-1 truncate text-xs text-fg-3" title={folder?.folder}>
               {folder?.folder ?? '…'}
             </span>
             <button type="button" className="shrink-0 text-xs font-medium text-fg-2 hover:text-fg" onClick={() => void desktop?.capture.pickFolder().then(setFolder)}>
-              Change…
+              {tt('Change…')}
             </button>
           </Row>
         </div>
@@ -568,40 +570,40 @@ export function RecordDialog() {
         {rolling || phase === 'finishing' ? (
           <>
             <div className="min-w-0 flex-1 text-xs text-fg-3 tabular">
-              <span className="text-fg-2">{fmtBytes(stats.bytes)}</span> · {stats.sourceFps ? `${stats.sourceFps.toFixed(0)} fps from the source` : 'nothing moving'} · {(stats.bitrate / 1e6).toFixed(1)} Mbps
-              {stats.dropped > 0 && <span className="text-warn"> · {stats.dropped} frames skipped</span>}
-              {markers.length > 0 && ` · ${markers.length} marker${markers.length > 1 ? 's' : ''}`}
-              {stats.free !== undefined && stats.free < 5e9 && <span className="text-warn"> · {fmtBytes(stats.free)} free</span>}
+              <span className="text-fg-2">{fmtBytes(stats.bytes)}</span>{' '}{ttx('· {0} · {1} Mbps', stats.sourceFps ? tt('{0} fps from the source', stats.sourceFps.toFixed(0)) : tt('nothing moving'), (stats.bitrate / 1e6).toFixed(1))}
+              {stats.dropped > 0 && <span className="text-warn">{' '}{ttx('· {0} frames skipped', stats.dropped)}</span>}
+              {markers.length > 0 && (' ' + tt('· {0} marker{1}', markers.length, markers.length > 1 ? 's' : ''))}
+              {stats.free !== undefined && stats.free < 5e9 && <span className="text-warn">{' '}{ttx('· {0} free', fmtBytes(stats.free))}</span>}
               {notes.length > 0 && <div className="truncate text-warn" title={notes.join('\n')}>{notes[notes.length - 1]}</div>}
             </div>
-            <Button variant="secondary" size="md" onClick={() => addMarker()} disabled={phase === 'finishing'} title={`Mark this moment (${CAPTURE_HOTKEYS.marker.label})`}>
-              <Flag /> Marker
+            <Button variant="secondary" size="md" onClick={() => addMarker()} disabled={phase === 'finishing'} title={tt('Mark this moment ({0})', CAPTURE_HOTKEYS.marker.label)}>
+              <Flag />{' '}{tt('Marker')}
             </Button>
             <Button variant="secondary" size="md" onClick={togglePause} disabled={phase === 'finishing'} title={CAPTURE_HOTKEYS.pause.label}>
-              {phase === 'paused' ? <Play /> : <Pause />} {phase === 'paused' ? 'Resume' : 'Pause'}
+              {phase === 'paused' ? <Play /> : <Pause />} {phase === 'paused' ? tt('Resume') : tt('Pause')}
             </Button>
             <Button variant="danger" size="md" onClick={() => void stopRecording().catch(() => {})} disabled={phase === 'finishing'} title={CAPTURE_HOTKEYS.toggle.label}>
-              <Square fill="currentColor" /> {phase === 'finishing' ? 'Finishing…' : 'Stop'}
+              <Square fill="currentColor" /> {phase === 'finishing' ? tt('Finishing…') : tt('Stop')}
             </Button>
           </>
         ) : (
           <>
             <div className="min-w-0 flex-1 text-xs leading-relaxed text-fg-3">
               <div className="truncate text-fg-2 tabular">
-                {frame.width}×{frame.height} · {fps} fps · about {(bitrate / 1e6).toFixed(0)} Mbps · {fmtBytes(perMinute)} a minute
+                {ttx('{0}×{1} · {2} fps · about {3} Mbps · {4} a minute', frame.width, frame.height, fps, (bitrate / 1e6).toFixed(0), fmtBytes(perMinute))}
               </div>
               <div className="truncate">
-                {CAPTURE_HOTKEYS.toggle.label} starts and stops · {CAPTURE_HOTKEYS.pause.label} pauses · {CAPTURE_HOTKEYS.marker.label} marks a moment
+                {ttx('{0} starts and stops · {1} pauses · {2} marks a moment', CAPTURE_HOTKEYS.toggle.label, CAPTURE_HOTKEYS.pause.label, CAPTURE_HOTKEYS.marker.label)}
               </div>
               {error && stream && <div className="truncate text-danger" title={error}>{error}</div>}
             </div>
             {phase === 'idle' ? (
               <Button variant="danger" size="lg" onClick={start} disabled={!source || !stream} className="bg-danger text-white hover:bg-danger/90">
-                <span className="size-2.5 rounded-full bg-white" /> Record
+                <span className="size-2.5 rounded-full bg-white" />{' '}{tt('Record')}
               </Button>
             ) : (
               <Button variant="secondary" size="lg" onClick={() => void stopRecording().catch(() => {})}>
-                {phase === 'countdown' ? `Starting in ${countdown}… Cancel` : 'Getting ready… Cancel'}
+                {phase === 'countdown' ? tt('Starting in {0}… Cancel', countdown) : tt('Getting ready… Cancel')}
               </Button>
             )}
           </>

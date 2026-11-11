@@ -37,6 +37,8 @@ import {
 import { queueExport, useRenderQueue } from '@/engine/render-queue'
 import { desktop } from '@/lib/platform'
 import { formatDuration } from '@/lib/time'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const QUALITY_LABEL = (q: number) => (q < 30 ? 'Draft' : q < 60 ? 'Good' : q < 85 ? 'High' : 'Master')
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2)
@@ -58,7 +60,7 @@ function sizesFor(pw: number, ph: number): Size[] {
     const height = even(ph * k)
     out.push({ value: String(s), label: `${s === 2160 ? '4K' : `${s}p`} · ${width}×${height}`, width, height })
   }
-  if (![2160, 1440, 1080, 720, 480].includes(short)) out.unshift({ value: 'project', label: `Timeline · ${even(pw)}×${even(ph)}`, width: even(pw), height: even(ph) })
+  if (![2160, 1440, 1080, 720, 480].includes(short)) out.unshift({ value: 'project', label: tt('Timeline · {0}×{1}', even(pw), even(ph)), width: even(pw), height: even(ph) })
   return out
 }
 
@@ -235,7 +237,7 @@ export function ExportDialog() {
     const controller = new AbortController()
     abort.current = controller
     const started = performance.now()
-    setState({ kind: 'running', progress: { phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: 'Starting…' } })
+    setState({ kind: 'running', progress: { phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: tt('Starting…') } })
     try {
       const { project: p, settings } = job()
       const res = await runExport(
@@ -266,9 +268,9 @@ export function ExportDialog() {
     const detail = info.video ? `${info.label} · ${out.width}×${out.height}${gif || png ? '' : ` · ${CODEC_LABEL[codec].split(' —')[0]}`}${transparent ? ' · alpha' : ''}` : `${info.label} audio`
     queueExport({ label: timelines.length > 1 ? `${name} · ${timelineName}` : name, detail, project: p, settings, target })
     // The dialog stays open, to queue another size, format or timeline.
-    toast.success('Added to the render queue', {
+    toast.success(tt('Added to the render queue'), {
       description: target.path,
-      action: { label: 'Show queue', onClick: () => (setOpen(false), useUI.getState().setQueueOpen(true)) },
+      action: { label: tt('Show queue'), onClick: () => (setOpen(false), useUI.getState().setQueueOpen(true)) },
     })
   }
 
@@ -277,7 +279,7 @@ export function ExportDialog() {
   const formats = (Object.keys(FORMAT_INFO) as ExportFormat[]).map((f) => ({ value: f, label: FORMAT_INFO[f].label }))
 
   return (
-    <Dialog open={open} onOpenChange={(o) => (running ? undefined : setOpen(o))} title="Export" description="Render your edit to a file — now, or add it to the render queue." className="w-[min(920px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={(o) => (running ? undefined : setOpen(o))} title={tt('Export')} description={tt('Render your edit to a file — now, or add it to the render queue.')} className="w-[min(920px,calc(100vw-32px))]">
       <div className="grid grid-cols-[1fr_1.15fr] gap-6 px-5 pt-1 pb-5">
         {/* Preview */}
         <div>
@@ -303,21 +305,21 @@ export function ExportDialog() {
             </AnimatePresence>
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2">
-            <Fact label="Duration" value={formatDuration(duration, projectFps)} />
-            <Fact label="Est. size" value={duration ? fmtBytes(estBytes) : '—'} />
-            <Fact label={info.video && !gif && !png ? 'Bitrate' : 'Output'} value={info.video && !gif && !png ? `${(videoBits / 1e6).toFixed(1)} Mbps` : gif || png ? `${out.width}×${out.height}` : format === 'wav' ? '48 kHz · 16-bit' : '192 kbps'} />
+            <Fact label={tt('Duration')} value={formatDuration(duration, projectFps)} />
+            <Fact label={tt('Est. size')} value={duration ? fmtBytes(estBytes) : '—'} />
+            <Fact label={info.video && !gif && !png ? tt('Bitrate') : tt('Output')} value={info.video && !gif && !png ? `${(videoBits / 1e6).toFixed(1)} Mbps` : gif || png ? `${out.width}×${out.height}` : format === 'wav' ? '48 kHz · 16-bit' : '192 kbps'} />
           </div>
         </div>
 
         {/* Settings */}
         <div className="space-y-3">
-          <Row label="File name">
+          <Row label={tt('File name')}>
             <Input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.stopPropagation()} disabled={running} />
           </Row>
           {timelines.length > 1 && (
-            <Row label="Timeline">
+            <Row label={tt('Timeline')}>
               <Select
-                aria-label="Timeline"
+                aria-label={tt('Timeline')}
                 value={timelineId}
                 onChange={setTimelineId}
                 className="w-full"
@@ -326,101 +328,101 @@ export function ExportDialog() {
             </Row>
           )}
           {marked && (
-            <Row label="Range">
+            <Row label={tt('Range')}>
               <Segmented
                 value={span}
                 onChange={(v) => setSpan(v)}
                 options={[
-                  { value: 'all', label: 'Whole timeline' },
-                  { value: 'range', label: `In to out · ${formatDuration(marked.out - marked.in, projectFps)}` },
+                  { value: 'all', label: tt('Whole timeline') },
+                  { value: 'range', label: tt('In to out · {0}', formatDuration(marked.out - marked.in, projectFps)) },
                 ]}
               />
             </Row>
           )}
-          <Row label="Format">
+          <Row label={tt('Format')}>
             <Segmented value={format} onChange={(f) => setFormat(f)} options={formats} />
           </Row>
           {codecs.length > 0 && (
-            <Row label="Codec">
+            <Row label={tt('Codec')}>
               <Select
-                aria-label="Codec"
+                aria-label={tt('Codec')}
                 value={codec}
                 onChange={(c) => setCodec(c as ExportVideoCodec)}
                 className="w-full"
                 options={codecs.map((c) => ({
                   value: c,
-                  label: support[c] === false ? `${CODEC_LABEL[c].split(' —')[0]} — not available here` : CODEC_LABEL[c],
+                  label: support[c] === false ? tt('{0} — not available here', CODEC_LABEL[c].split(' —')[0]) : CODEC_LABEL[c],
                   disabled: support[c] === false || (format === 'webm' && alpha && c !== 'vp9'),
                 }))}
               />
             </Row>
           )}
           {(png || format === 'webm') && (
-            <Row label="Background">
-              <Switch aria-label="Transparent background" checked={alpha} onChange={setAlpha} />
-              <span className="text-xs text-fg-3">{alpha ? 'Transparent — keeps the alpha channel' : 'Filled with the timeline background'}</span>
+            <Row label={tt('Background')}>
+              <Switch aria-label={tt('Transparent background')} checked={alpha} onChange={setAlpha} />
+              <span className="text-xs text-fg-3">{alpha ? tt('Transparent — keeps the alpha channel') : tt('Filled with the timeline background')}</span>
             </Row>
           )}
           {info.video && (
-            <Row label="Resolution">
-              <Select aria-label="Resolution" value={chosen.value} onChange={setSize} options={sizes.map((s) => ({ value: s.value, label: s.label }))} className="w-full" />
+            <Row label={tt('Resolution')}>
+              <Select aria-label={tt('Resolution')} value={chosen.value} onChange={setSize} options={sizes.map((s) => ({ value: s.value, label: s.label }))} className="w-full" />
             </Row>
           )}
           {info.video && (
-            <Row label="Frame rate">
+            <Row label={tt('Frame rate')}>
               <Select
-                aria-label="Frame rate"
+                aria-label={tt('Frame rate')}
                 value={rate}
                 onChange={setRate}
-                options={[...new Set([projectFps, 24, 25, 30, 50, 60])].sort((a, b) => a - b).map((f) => ({ value: String(f), label: `${f} fps${f === projectFps ? ' (timeline)' : ''}` }))}
+                options={[...new Set([projectFps, 24, 25, 30, 50, 60])].sort((a, b) => a - b).map((f) => ({ value: String(f), label: tt('{0} fps{1}', f, f === projectFps ? (' ' + tt('(timeline)')) : '') }))}
                 className="w-full"
               />
             </Row>
           )}
           {info.video && !gif && !png && (
-            <Row label="Quality">
+            <Row label={tt('Quality')}>
               <Slider value={quality} min={10} max={100} onChange={setQuality} />
               <span className="w-14 shrink-0 text-right text-xs font-medium text-fg-2">{QUALITY_LABEL(quality)}</span>
             </Row>
           )}
           {info.video && !gif && !png && (
-            <Row label="Hardware">
-              <Switch aria-label="Hardware encoding" checked={hw} onChange={setHw} />
+            <Row label={tt('Hardware')}>
+              <Switch aria-label={tt('Hardware encoding')} checked={hw} onChange={setHw} />
               <span className="flex items-center gap-1 text-xs text-fg-3">
                 <Cpu className="size-3.5 shrink-0" /> {encoderHint}
               </span>
             </Row>
           )}
           {!gif && !png && (
-            <Row label="Loudness">
-              <Select aria-label="Loudness" value={loudness} onChange={setLoudness} options={[{ value: 'off', label: 'As mixed' }, ...LOUDNESS_TARGETS.map((t) => ({ value: t.id, label: t.label }))]} className="w-full" />
+            <Row label={tt('Loudness')}>
+              <Select aria-label={tt('Loudness')} value={loudness} onChange={setLoudness} options={[{ value: 'off', label: tt('As mixed') }, ...LOUDNESS_TARGETS.map((t) => ({ value: t.id, label: t.label }))]} className="w-full" />
             </Row>
           )}
           {hasCaptions && (
-            <Row label="Captions">
+            <Row label={tt('Captions')}>
               {info.video && (
                 <label className="flex shrink-0 items-center gap-1.5 text-xs text-fg-3">
-                  <Switch aria-label="Burn captions into the picture" checked={burn} onChange={setBurn} /> In picture
+                  <Switch aria-label={tt('Burn captions into the picture')} checked={burn} onChange={setBurn} />{' '}{tt('In picture')}
                 </label>
               )}
               <Select
-                aria-label="Captions file"
+                aria-label={tt('Captions file')}
                 value={sidecar}
                 onChange={setSidecar}
                 className="w-full"
                 options={[
-                  { value: 'none', label: 'No captions file' },
-                  { value: 'srt', label: '+ SRT file next to it' },
-                  { value: 'vtt', label: '+ WebVTT file next to it' },
+                  { value: 'none', label: tt('No captions file') },
+                  { value: 'srt', label: tt('+ SRT file next to it') },
+                  { value: 'vtt', label: tt('+ WebVTT file next to it') },
                 ]}
               />
             </Row>
           )}
-          {target && !gif && !png && <p className="text-2xs leading-relaxed text-fg-4">Measures the mix first, then sets it to {target.lufs} LUFS with peaks held under {target.peak} dBFS.</p>}
-          {gif && <p className="text-2xs leading-relaxed text-fg-4">GIFs export at up to 720 px wide and 20 fps, without sound.</p>}
-          {png && <p className="text-2xs leading-relaxed text-fg-4">One numbered PNG per frame, in a folder of its own{alpha ? ', with transparency — for compositing in other apps' : ''}. No sound.</p>}
-          {format === 'webm' && alpha && <p className="text-2xs leading-relaxed text-fg-4">VP9 with an alpha channel — plays transparent in browsers and imports as an overlay.</p>}
-          {!info.video && <p className="text-2xs leading-relaxed text-fg-4">Exports the mixed audio of {useRange ? 'the marked in-to-out stretch' : 'the whole timeline'}.</p>}
+          {target && !gif && !png && <p className="text-2xs leading-relaxed text-fg-4">{ttx('Measures the mix first, then sets it to {0} LUFS with peaks held under {1} dBFS.', target.lufs, target.peak)}</p>}
+          {gif && <p className="text-2xs leading-relaxed text-fg-4">{tt('GIFs export at up to 720 px wide and 20 fps, without sound.')}</p>}
+          {png && <p className="text-2xs leading-relaxed text-fg-4">{ttx('One numbered PNG per frame, in a folder of its own{0}. No sound.', alpha ? tt(', with transparency — for compositing in other apps') : '')}</p>}
+          {format === 'webm' && alpha && <p className="text-2xs leading-relaxed text-fg-4">{tt('VP9 with an alpha channel — plays transparent in browsers and imports as an overlay.')}</p>}
+          {!info.video && <p className="text-2xs leading-relaxed text-fg-4">{ttx('Exports the mixed audio of {0}.', useRange ? tt('the marked in-to-out stretch') : tt('the whole timeline'))}</p>}
         </div>
       </div>
 
@@ -433,13 +435,13 @@ export function ExportDialog() {
             <div className="mt-1.5 flex items-center gap-1.5 text-2xs text-fg-4">
               <LoaderCircle className="size-3 animate-spin" />
               {progress?.phase === 'rendering'
-                ? `${info.video ? `${progress.speed.toFixed(1)} fps · ${(progress.speed / fps).toFixed(2)}× realtime · ` : ''}${fmtEta(progress.eta)} left`
+                ? tt('{0}{1} left', info.video ? (tt('{0} fps · {1}× realtime ·', progress.speed.toFixed(1), (progress.speed / fps).toFixed(2)) + ' ') : '', fmtEta(progress.eta))
                 : progress?.message}
             </div>
           </div>
         ) : state.kind === 'done' ? (
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-fg">Export finished</div>
+            <div className="text-sm font-medium text-fg">{tt('Export finished')}</div>
             <div className="truncate text-xs text-fg-4" title={state.result.path}>
               {fmtBytes(state.result.size)} · {fmtEta(state.seconds)} · {state.result.path}
             </div>
@@ -467,41 +469,41 @@ export function ExportDialog() {
         ) : (
           <div className="flex-1 text-xs text-fg-4">
             {!duration
-              ? 'The timeline is empty.'
+              ? tt('The timeline is empty.')
               : info.video
-                ? `${out.width}×${out.height} · ${gif ? 'GIF' : png ? 'PNG frames' : CODEC_LABEL[codec].split(' —')[0]} · ${Math.min(fps, gif ? 20 : fps)} fps${transparent ? ' · transparent' : ''}`
-                : `${info.label} audio`}
+                ? tt('{0}×{1} · {2} · {3} fps{4}', out.width, out.height, gif ? tt('GIF') : png ? tt('PNG frames') : CODEC_LABEL[codec].split(' —')[0], Math.min(fps, gif ? 20 : fps), transparent ? (' ' + tt('· transparent')) : '')
+                : tt('{0} audio', info.label)}
           </div>
         )}
         {state.kind === 'running' ? (
           <Button variant="ghost" onClick={() => abort.current?.abort()}>
-            Cancel
+            {tt('Cancel')}
           </Button>
         ) : state.kind === 'done' ? (
           <>
             <Button variant="ghost" onClick={() => void desktop?.files.reveal(state.result.path)}>
-              <FolderSearch /> Show in folder
+              <FolderSearch />{' '}{tt('Show in folder')}
             </Button>
             {!png && (
               <Button variant="secondary" onClick={() => void desktop?.files.open(state.result.path)}>
-                <Play /> Play
+                <Play />{' '}{tt('Play')}
               </Button>
             )}
             <Button variant="primary" onClick={() => setOpen(false)}>
-              Done
+              {tt('Done')}
             </Button>
           </>
         ) : (
           <>
             <Button variant="ghost" onClick={() => setOpen(false)}>
-              {state.kind === 'error' ? 'Close' : 'Cancel'}
+              {state.kind === 'error' ? tt('Close') : tt('Cancel')}
             </Button>
-            <Button variant="secondary" onClick={() => void addToQueue()} disabled={!ready || !desktop} title="Choose where it goes now, render it later with the rest of the queue">
-              <ListPlus /> Add to queue{queued ? ` (${queued})` : ''}
+            <Button variant="secondary" onClick={() => void addToQueue()} disabled={!ready || !desktop} title={tt('Choose where it goes now, render it later with the rest of the queue')}>
+              <ListPlus />{' '}{ttx('Add to queue{0}', queued ? ` (${queued})` : '')}
             </Button>
             <Button variant="primary" onClick={() => void start()} className="px-4" disabled={!ready || !desktop}>
               <Upload />
-              {state.kind === 'error' ? 'Try again' : 'Export'}
+              {state.kind === 'error' ? tt('Try again') : tt('Export')}
             </Button>
           </>
         )}

@@ -4,6 +4,7 @@ import { EFFORT_INFO, type Effort } from '@shared/ai'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { LOCAL_AGENT_NAMES, setEffort, targetEfforts, useAi } from '@/integrations/ai'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 /** How hard the chosen model thinks. Only shown when that model has an effort setting. */
 export function EffortPicker() {
@@ -29,20 +30,20 @@ export function EffortPicker() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          title="Effort — how hard the model thinks"
+          title={tt('Effort — how hard the model thinks')}
           className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.07] data-[state=open]:text-fg"
         >
           <Gauge className={cn('size-3', current && 'text-accent-2')} />
-          {current ? EFFORT_INFO[current].label : 'Default'}
+          {current ? EFFORT_INFO[current].label : tt('Default')}
           <ChevronDown className="size-3 text-fg-4" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[264px] p-1.5">
         <div className="px-2 pt-1.5 pb-2">
-          <div className="text-sm font-semibold text-fg">Effort</div>
-          <p className="mt-0.5 text-2xs leading-relaxed text-fg-4">How hard the model thinks before it edits. Higher is slower and uses more of your plan or credits.</p>
+          <div className="text-sm font-semibold text-fg">{tt('Effort')}</div>
+          <p className="mt-0.5 text-2xs leading-relaxed text-fg-4">{tt('How hard the model thinks before it edits. Higher is slower and uses more of your plan or credits.')}</p>
         </div>
-        <Option title="Default" hint={defaultEffort ? `${EFFORT_INFO[defaultEffort].label}${source}` : 'The model’s own setting'} selected={!current} onSelect={() => pick(undefined)} />
+        <Option title={tt('Default')} hint={defaultEffort ? `${EFFORT_INFO[defaultEffort].label}${source}` : tt('The model’s own setting')} selected={!current} onSelect={() => pick(undefined)} />
         {levels.map((effort) => (
           <Option key={effort} title={EFFORT_INFO[effort].label} hint={EFFORT_INFO[effort].hint} selected={current === effort} onSelect={() => pick(effort)} />
         ))}

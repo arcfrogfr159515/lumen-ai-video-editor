@@ -9,6 +9,8 @@ import { callTool, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
 import { JobOutcome } from './parts'
 import { missingFields, SchemaForm, schemaDefaults, type JsonSchema } from './SchemaForm'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 export function ToolList({ server, onPick }: { server: McpServerState; onPick: (tool: McpTool) => void }) {
   const [query, setQuery] = useState('')
@@ -18,9 +20,9 @@ export function ToolList({ server, onPick }: { server: McpServerState; onPick: (
     <div>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-fg">
-          Tools <span className="ml-1 font-normal text-fg-4 tabular">{server.tools.length}</span>
+          {tt('Tools')}{' '}<span className="ml-1 font-normal text-fg-4 tabular">{server.tools.length}</span>
         </h3>
-        {server.tools.length > 6 && <SearchInput value={query} onChange={setQuery} placeholder="Filter tools" className="w-52" />}
+        {server.tools.length > 6 && <SearchInput value={query} onChange={setQuery} placeholder={tt('Filter tools')} className="w-52" />}
       </div>
       <div className="space-y-1">
         {tools.map((tool) => (
@@ -41,7 +43,7 @@ export function ToolList({ server, onPick }: { server: McpServerState; onPick: (
             <Play className="mt-0.5 size-3.5 shrink-0 text-fg-4 opacity-0 transition-opacity group-hover/tool:opacity-100" />
           </button>
         ))}
-        {!tools.length && <p className="px-3 py-6 text-center text-sm text-fg-4">{server.tools.length ? 'No tools match.' : 'This server doesn’t offer any tools.'}</p>}
+        {!tools.length && <p className="px-3 py-6 text-center text-sm text-fg-4">{server.tools.length ? tt('No tools match.') : tt('This server doesn’t offer any tools.')}</p>}
       </div>
     </div>
   )
@@ -62,7 +64,7 @@ export function ToolRunner({ server, tool, onBack }: { server: McpServerState; t
       const started = await callTool(server.config.id, tool.name, values)
       setJobId(started.id)
     } catch (err) {
-      toast.error(`Couldn’t run ${tool.title ?? tool.name}`, { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t run {0}', tool.title ?? tool.name), { description: err instanceof Error ? err.message : String(err) })
     } finally {
       setStarting(false)
     }
@@ -71,7 +73,7 @@ export function ToolRunner({ server, tool, onBack }: { server: McpServerState; t
   return (
     <div>
       <button type="button" onClick={onBack} className="mb-4 inline-flex items-center gap-1.5 text-xs text-fg-3 transition-colors hover:text-fg">
-        <ArrowLeft className="size-3.5" /> All tools
+        <ArrowLeft className="size-3.5" />{' '}{tt('All tools')}
       </button>
       <div className="mb-5">
         <div className="flex items-baseline gap-2">
@@ -84,9 +86,9 @@ export function ToolRunner({ server, tool, onBack }: { server: McpServerState; t
       <div className="mt-5 flex items-center gap-3">
         <Button variant="ai" size="lg" disabled={running || missing.length > 0} onClick={run} className={cn('min-w-36')}>
           <AiSparkle className="!size-4 [&_path]:fill-current" />
-          {running ? 'Running…' : 'Run tool'}
+          {running ? tt('Running…') : tt('Run tool')}
         </Button>
-        {missing.length > 0 && <span className="text-xs text-fg-4">Fill in {missing.join(', ')}</span>}
+        {missing.length > 0 && <span className="text-xs text-fg-4">{ttx('Fill in {0}', missing.join(', '))}</span>}
       </div>
       {job && (
         <div className="mt-6 border-t border-line pt-5">

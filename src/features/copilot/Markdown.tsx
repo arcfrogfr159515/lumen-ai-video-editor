@@ -1,6 +1,7 @@
 import { Check, Copy } from 'lucide-react'
 import { Fragment, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 /**
  * The Copilot's replies, rendered from markdown: paragraphs, headings, lists,
@@ -182,7 +183,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
   return (
     <div className="overflow-hidden rounded-lg bg-black/35 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)]">
       <div className="flex h-7 items-center border-b border-line px-2.5 text-[10.5px] text-fg-4">
-        <span className="font-mono">{lang || 'text'}</span>
+        <span className="font-mono">{lang || tt('text')}</span>
         <CopyButton text={code} className="ml-auto" />
       </div>
       <pre className="overflow-x-auto px-3 py-2 font-mono text-[11.5px] leading-relaxed text-fg-2">
@@ -205,8 +206,8 @@ export function CopyButton({ text, className, label = 'Copy' }: { text: string |
     <button
       type="button"
       onClick={copy}
-      aria-label={copied ? 'Copied' : label}
-      title={copied ? 'Copied' : label}
+      aria-label={copied ? tt('Copied') : label}
+      title={copied ? tt('Copied') : label}
       className={cn('grid size-6 place-items-center rounded-md text-fg-4 transition-colors hover:bg-white/[0.07] hover:text-fg-2', className)}
     >
       {copied ? <Check className="size-3.5 text-ok" strokeWidth={2.5} /> : <Copy className="size-3.5" />}

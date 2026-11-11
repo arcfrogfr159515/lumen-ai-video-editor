@@ -15,6 +15,8 @@ import { useLayout } from './layout'
 import { HEADER_W, RULER_H } from './model'
 import { paintRenderBar, RENDER_BAR_H } from './render-bar'
 import { useViewport } from './viewport'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 export const MARKER_COLORS: Record<Marker['color'], string> = {
   lime: '#d6ee00',
@@ -183,21 +185,21 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
               onSelect={() => patch({ done: !marker.done })}
               className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg"
             >
-              <Check className="size-4" /> {marker.done ? 'Reopen' : 'Tick off'}
+              <Check className="size-4" /> {marker.done ? tt('Reopen') : tt('Tick off')}
             </ContextMenu.Item>
           )}
           <ContextMenu.Item
             onSelect={() => useUI.getState().setLeftTab('notes')}
             className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-white/[0.07] data-[highlighted]:text-fg"
           >
-            <PencilLine className="size-4" /> Rename or add a note…
+            <PencilLine className="size-4" />{' '}{tt('Rename or add a note…')}
           </ContextMenu.Item>
           <div className="mx-1 my-1 h-px bg-line" />
           <ContextMenu.Item
             onSelect={() => dispatch('marker.remove', { id: marker.id })}
             className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-danger outline-none data-[highlighted]:bg-white/[0.07]"
           >
-            <Trash className="size-4" /> Remove marker
+            <Trash className="size-4" />{' '}{tt('Remove marker')}
           </ContextMenu.Item>
         </ContextMenu.Content>
       </ContextMenu.Portal>
@@ -233,7 +235,7 @@ function RangeBand() {
       const near = (f: number) => Math.abs(f - playhead) * (pps / fps) < 8
       if (edge === 'in' && near(next.in) && playhead < next.out) next.in = playhead
       if (edge === 'out' && near(next.out) && playhead > next.in) next.out = playhead
-      dispatch('timeline.setRange', { range: next }, { coalesce: key, label: 'Adjust in and out' })
+      dispatch('timeline.setRange', { range: next }, { coalesce: key, label: tt('Adjust in and out') })
     }
     const up = () => {
       window.removeEventListener('pointermove', move)
@@ -249,11 +251,11 @@ function RangeBand() {
       className="absolute top-0 z-[5] h-[11px] cursor-grab rounded-b-[3px] bg-accent/25 shadow-[inset_0_-1.5px_0_var(--color-accent)]"
       style={{ left: x0, width: Math.max(2, x1 - x0) }}
       onPointerDown={(e) => drag(e, 'both')}
-      title={`In ${formatTimecode(range.in, fps)} · Out ${formatTimecode(range.out, fps)} · ${formatDuration(range.out - range.in, fps)}`}
+      title={tt('In {0} · Out {1} · {2}', formatTimecode(range.in, fps), formatTimecode(range.out, fps), formatDuration(range.out - range.in, fps))}
     >
       {x1 - x0 > 70 && <span className="pointer-events-none absolute inset-x-2 top-px truncate text-center font-mono text-[9px] leading-[10px] font-semibold text-accent-2">{formatDuration(range.out - range.in, fps)}</span>}
-      <span onPointerDown={(e) => drag(e, 'in')} className="absolute -left-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-l-[2px] border-l-2 border-accent" aria-label="In point" />
-      <span onPointerDown={(e) => drag(e, 'out')} className="absolute -right-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-r-[2px] border-r-2 border-accent" aria-label="Out point" />
+      <span onPointerDown={(e) => drag(e, 'in')} className="absolute -left-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-l-[2px] border-l-2 border-accent" aria-label={tt('In point')} />
+      <span onPointerDown={(e) => drag(e, 'out')} className="absolute -right-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-r-[2px] border-r-2 border-accent" aria-label={tt('Out point')} />
     </div>
   )
 }
@@ -322,10 +324,10 @@ export function TimecodeCell() {
           type="button"
           onClick={() => (setDraft(formatTimecode(usePlayback.getState().frame, fps)), setEditing(true))}
           className="flex items-baseline gap-2 rounded px-1 font-mono text-[13px] font-medium tracking-tight text-fg tabular outline-none hover:bg-white/[0.05]"
-          title="Click to jump to a timecode"
+          title={tt('Click to jump to a timecode')}
         >
           <span ref={readout} />
-          <span className="font-sans text-2xs font-medium text-fg-4">{fps} fps</span>
+          <span className="font-sans text-2xs font-medium text-fg-4">{ttx('{0} fps', fps)}</span>
         </button>
       )}
     </div>

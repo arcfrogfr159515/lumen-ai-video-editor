@@ -13,6 +13,7 @@ import { dnd } from '@/features/dnd'
 import { api, cancelJob, importLink, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
 import { formatSeconds } from '@/lib/time'
+import { tt } from '@/lib/i18n'
 
 export function StatusDot({ status, className }: { status: McpStatus | 'ready' | 'missing'; className?: string }) {
   const color = {
@@ -68,7 +69,7 @@ export function JobProgress({ job, compact }: { job: Job; compact?: boolean }) {
         )}
       </div>
       <div className="flex items-center justify-between gap-2 text-2xs text-fg-3">
-        <span className="truncate">{job.message ?? 'Working…'}</span>
+        <span className="truncate">{job.message ?? tt('Working…')}</span>
         {pct !== null && <span className="shrink-0 font-mono tabular">{Math.round(pct)}%</span>}
       </div>
     </div>
@@ -106,7 +107,7 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
               )}
               <button
                 type="button"
-                aria-label={`Add ${asset.name} at playhead`}
+                aria-label={tt('Add {0} at playhead', asset.name)}
                 onClick={() => {
                   const id = placeAsset(asset.id, usePlayback.getState().frame)
                   if (id) useUI.getState().select([id])
@@ -117,7 +118,7 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
               </button>
             </div>
             <div className="mt-1.5 flex items-center gap-1 px-0.5 text-2xs text-fg-3">
-              <Check className="size-3 text-ok" /> <span className="truncate">In your media</span>
+              <Check className="size-3 text-ok" /> <span className="truncate">{tt('In your media')}</span>
             </div>
           </div>
         )
@@ -135,10 +136,10 @@ export function LinkRow({ link, provenance }: { link: McpLink; provenance: Gener
     try {
       await importLink(link.url, link.name, provenance, true)
       setState('done')
-      toast.success('Added to your media')
+      toast.success(tt('Added to your media'))
     } catch (err) {
       setState('idle')
-      toast.error('Couldn’t import that link', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t import that link'), { description: err instanceof Error ? err.message : String(err) })
     }
   }
   return (
@@ -148,12 +149,12 @@ export function LinkRow({ link, provenance }: { link: McpLink; provenance: Gener
         <div className="truncate text-xs text-fg-2">{link.name ?? file}</div>
         <div className="truncate text-2xs text-fg-4">{url.hostname}</div>
       </div>
-      <a href={link.url} target="_blank" rel="noreferrer" className="grid size-6 place-items-center rounded-md text-fg-4 hover:bg-white/[0.06] hover:text-fg-2" aria-label="Open in browser">
+      <a href={link.url} target="_blank" rel="noreferrer" className="grid size-6 place-items-center rounded-md text-fg-4 hover:bg-white/[0.06] hover:text-fg-2" aria-label={tt('Open in browser')}>
         <ExternalLink className="size-3.5" />
       </a>
       <Button size="xs" variant={state === 'done' ? 'ghost' : 'secondary'} disabled={state !== 'idle'} onClick={importIt}>
         {state === 'busy' ? <LoaderCircle className="animate-spin" /> : state === 'done' ? <Check /> : <Download />}
-        {state === 'done' ? 'Imported' : 'Import'}
+        {state === 'done' ? tt('Imported') : tt('Import')}
       </Button>
     </div>
   )
@@ -170,7 +171,7 @@ export function JobOutcome({ job }: { job: Job }) {
             <JobProgress job={job} />
           </div>
           <Button size="xs" variant="ghost" onClick={() => void cancelJob(job.id)}>
-            <X /> Cancel
+            <X />{' '}{tt('Cancel')}
           </Button>
         </div>
       )}
@@ -180,7 +181,7 @@ export function JobOutcome({ job }: { job: Job }) {
           <span className="min-w-0 break-words whitespace-pre-wrap">{job.error}</span>
         </div>
       )}
-      {job.status === 'cancelled' && <p className="text-xs text-fg-3">Cancelled.</p>}
+      {job.status === 'cancelled' && <p className="text-xs text-fg-3">{tt('Cancelled.')}</p>}
       <JobMedia job={job} />
       {result?.links.map((link) => (
         <LinkRow key={link.url} link={link} provenance={{ integration: job.integration, tool: job.title }} />
@@ -199,7 +200,7 @@ export function JobOutcome({ job }: { job: Job }) {
           }}
           className="inline-flex items-center gap-1.5 text-2xs text-fg-4 hover:text-fg-2"
         >
-          <FolderOpen className="size-3" /> Show files
+          <FolderOpen className="size-3" />{' '}{tt('Show files')}
         </button>
       )}
     </div>
@@ -234,7 +235,7 @@ export function RenderCard({ job }: { job: Job }) {
         )}
         <span className="min-w-0 flex-1 truncate text-xs font-medium text-fg-2">{job.title}</span>
         {running ? (
-          <button type="button" aria-label="Cancel" onClick={() => void cancelJob(job.id)} className="grid size-5 place-items-center rounded-md text-fg-4 hover:bg-white/[0.08] hover:text-fg-2">
+          <button type="button" aria-label={tt('Cancel')} onClick={() => void cancelJob(job.id)} className="grid size-5 place-items-center rounded-md text-fg-4 hover:bg-white/[0.08] hover:text-fg-2">
             <X className="size-3" />
           </button>
         ) : (
@@ -248,7 +249,7 @@ export function RenderCard({ job }: { job: Job }) {
           {job.result.links.map((link) => (
             <LinkRow key={link.url} link={link} provenance={{ integration: job.integration, tool: job.title }} />
           ))}
-          {!job.result.links.length && <p className="line-clamp-4 text-2xs leading-relaxed text-fg-3">{job.result.text.join(' ') || 'Done'}</p>}
+          {!job.result.links.length && <p className="line-clamp-4 text-2xs leading-relaxed text-fg-3">{job.result.text.join(' ') || tt('Done')}</p>}
         </div>
       )}
       {job.status === 'error' && <p className="line-clamp-4 text-2xs leading-relaxed break-words text-danger/90">{job.error}</p>}
@@ -278,13 +279,13 @@ export function CopyField({ label, value, secret }: { label: string; value: stri
       <div className="flex items-center gap-1 rounded-lg bg-black/30 py-1 pr-1 pl-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
         <code className="min-w-0 flex-1 truncate font-mono text-xs text-fg-2">{shown ? value : '•'.repeat(Math.min(32, value.length))}</code>
         {secret && (
-          <button type="button" aria-label={shown ? 'Hide' : 'Show'} onClick={() => setShown(!shown)} className="grid size-7 place-items-center rounded-md text-fg-4 hover:bg-white/[0.06] hover:text-fg-2">
+          <button type="button" aria-label={shown ? tt('Hide') : tt('Show')} onClick={() => setShown(!shown)} className="grid size-7 place-items-center rounded-md text-fg-4 hover:bg-white/[0.06] hover:text-fg-2">
             {shown ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
           </button>
         )}
         <button
           type="button"
-          aria-label="Copy"
+          aria-label={tt('Copy')}
           onClick={() => {
             void navigator.clipboard.writeText(value)
             setCopied(true)

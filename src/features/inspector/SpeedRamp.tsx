@@ -15,6 +15,8 @@ import type { Clip } from '@/editor/types'
 import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
 import { formatDuration } from '@/lib/time'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const W = 260
 const H = 120
@@ -155,7 +157,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
           onClick={() => (setSelected(null), dispatch('clip.setSpeedRamp', { id: clip.id, points: null }))}
           className="h-7 rounded-md bg-white/[0.04] px-1 text-2xs font-medium text-fg-3 transition-colors hover:bg-white/[0.07] hover:text-fg disabled:opacity-40"
         >
-          No ramp
+          {tt('No ramp')}
         </button>
       </div>
 
@@ -187,7 +189,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
             key={`${h.segment}:${h.which}`}
             data-curve-handle={`${h.segment}:${h.which}`}
             onPointerDown={(e) => dragHandleOf(e, h.segment, h.which)}
-            title="Drag to shape the curve"
+            title={tt('Drag to shape the curve')}
             className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-[3px] bg-white shadow-[0_1px_4px_rgb(0_0_0/0.6)] transition-transform hover:scale-125 active:cursor-grabbing"
             style={{ left: pct(toX(h.pos.at), W), top: pct(toY(h.pos.speed), H) }}
           />
@@ -207,24 +209,24 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
           />
         ))}
         <div className="pointer-events-none absolute top-1 right-1.5 flex flex-col items-end font-mono text-[9px] leading-tight text-fg-4">
-          <span>{round(Math.max(...points.map((p) => p.speed)))}× max</span>
-          <span>{round(Math.min(...points.map((p) => p.speed)))}× min</span>
+          <span>{ttx('{0}× max', round(Math.max(...points.map((p) => p.speed))))}</span>
+          <span>{ttx('{0}× min', round(Math.min(...points.map((p) => p.speed))))}</span>
         </div>
         {/* Time remapping: how much of the footage has played by each moment. */}
-        <svg viewBox={`0 0 ${W} ${FOOT_H}`} className="block w-full border-t border-white/[0.06]" style={{ aspectRatio: `${W} / ${FOOT_H}` }} preserveAspectRatio="none" aria-label="How much of the footage has played over the clip">
+        <svg viewBox={`0 0 ${W} ${FOOT_H}`} className="block w-full border-t border-white/[0.06]" style={{ aspectRatio: `${W} / ${FOOT_H}` }} preserveAspectRatio="none" aria-label={tt('How much of the footage has played over the clip')}>
           <line x1={toX(0)} y1={FOOT_H - 3} x2={toX(1)} y2={3} stroke="white" strokeOpacity={0.12} strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
           <path d={footLine} fill="none" stroke="var(--color-snap)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
         </svg>
-        <span className="pointer-events-none absolute bottom-1 left-2 text-[9px] leading-none text-fg-4">Footage played</span>
+        <span className="pointer-events-none absolute bottom-1 left-2 text-[9px] leading-none text-fg-4">{tt('Footage played')}</span>
       </div>
 
       {sel !== null && (
         <div className="space-y-2 rounded-lg bg-white/[0.03] p-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
           <div className="flex items-center gap-2">
-            <span className="w-12 shrink-0 text-2xs text-fg-4">Point {sel + 1}</span>
-            <ScrubInput aria-label="Speed at this point" value={points[sel].speed} min={MIN_SPEED} max={MAX_SPEED} step={0.05} precision={2} unit="×" className="w-[72px]" onChange={(v) => change(movePoint(points, sel, points[sel].at, v), `ramp-speed:${clip.id}:${sel}`)} />
+            <span className="w-12 shrink-0 text-2xs text-fg-4">{ttx('Point {0}', sel + 1)}</span>
+            <ScrubInput aria-label={tt('Speed at this point')} value={points[sel].speed} min={MIN_SPEED} max={MAX_SPEED} step={0.05} precision={2} unit="×" className="w-[72px]" onChange={(v) => change(movePoint(points, sel, points[sel].at, v), `ramp-speed:${clip.id}:${sel}`)} />
             <ScrubInput
-              aria-label="Where along the clip"
+              aria-label={tt('Where along the clip')}
               value={Math.round(points[sel].at * 100)}
               min={0}
               max={100}
@@ -237,13 +239,13 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
             />
             {sel > 0 && sel < points.length - 1 && (
               <button type="button" onClick={() => remove(sel)} className="ml-auto h-6 rounded-md px-2 text-2xs text-fg-3 hover:bg-white/[0.07] hover:text-fg">
-                Remove
+                {tt('Remove')}
               </button>
             )}
           </div>
           {shapeOf !== null && (
             <div className="flex items-center gap-1">
-              <span className="w-12 shrink-0 text-2xs text-fg-4">To next</span>
+              <span className="w-12 shrink-0 text-2xs text-fg-4">{tt('To next')}</span>
               {SEGMENT_SHAPES.map((s) => (
                 <button
                   key={s.id}
@@ -262,8 +264,8 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
       )}
 
       <p className="text-2xs text-fg-4">
-        {ramped ? `The clip comes out ${formatDuration(length, fps)} long. ` : ''}
-        Drag a point to set a speed, and the handles of a selected point to shape the curve · double-click to add or remove a point · it catches at 1× (hold Alt to skip).
+        {ramped ? (tt('The clip comes out {0} long.', formatDuration(length, fps)) + ' ') : ''}
+        {tt('Drag a point to set a speed, and the handles of a selected point to shape the curve · double-click to add or remove a point · it catches at 1× (hold Alt to skip).')}
       </p>
     </div>
   )

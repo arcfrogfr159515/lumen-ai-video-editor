@@ -8,6 +8,7 @@ import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } fr
 import { useUI } from '@/editor/ui-store'
 import { timelineActions } from './timeline-actions'
 import { useTimelineView } from '@/editor/timeline-view'
+import { tt } from '@/lib/i18n'
 
 export function TimelineTools() {
   const view = useTimelineView()
@@ -15,64 +16,64 @@ export function TimelineTools() {
   return (
     <Menu>
       <MenuTrigger asChild>
-        <IconButton label="Timeline view and tools">
+        <IconButton label={tt('Timeline view and tools')}>
           <SlidersHorizontal />
         </IconButton>
       </MenuTrigger>
       <MenuContent align="end" className="min-w-[270px]">
-        <MenuLabel>Show</MenuLabel>
+        <MenuLabel>{tt('Show')}</MenuLabel>
         <MenuItem icon={<LayoutGrid />} shortcut="shift+s" checked={view.storyboard} onSelect={() => set({ storyboard: !view.storyboard })}>
-          Storyboard
+          {tt('Storyboard')}
         </MenuItem>
         <MenuItem icon={<GalleryHorizontalEnd />} checked={view.minimap} onSelect={() => set({ minimap: !view.minimap })}>
-          Overview strip
+          {tt('Overview strip')}
         </MenuItem>
         <MenuItem icon={<StickyNote />} checked={view.showNotes} onSelect={() => set({ showNotes: !view.showNotes })}>
-          Notes and tasks on clips
+          {tt('Notes and tasks on clips')}
         </MenuItem>
         <MenuItem icon={<AudioLines />} checked={view.pauseGuides} onSelect={() => set({ pauseGuides: !view.pauseGuides })}>
-          Guides where speech pauses
+          {tt('Guides where speech pauses')}
         </MenuItem>
         <MenuItem icon={<ScanLine />} checked={view.cutGuides} onSelect={() => set({ cutGuides: !view.cutGuides })}>
-          Guides at shot cuts
+          {tt('Guides at shot cuts')}
         </MenuItem>
         <MenuItem icon={<Copy />} checked={view.showReuse} onSelect={() => set({ showReuse: !view.showReuse })}>
-          Footage used more than once
+          {tt('Footage used more than once')}
         </MenuItem>
         <MenuItem icon={<Palette />} onSelect={() => set({ colorsOpen: true })}>
-          Clip colours…
+          {tt('Clip colours…')}
         </MenuItem>
         <MenuSeparator />
-        <MenuLabel>Tools</MenuLabel>
+        <MenuLabel>{tt('Tools')}</MenuLabel>
         <MenuItem icon={<SeparatorVertical />} shortcut="t" onSelect={() => timelineActions.toggleTrimMode()}>
-          Trim mode on the nearest cut
+          {tt('Trim mode on the nearest cut')}
         </MenuItem>
         <MenuItem icon={<CircleDot />} onSelect={() => set({ macrosOpen: true })}>
-          Macros…
+          {tt('Macros…')}
         </MenuItem>
         <MenuItem icon={<Clapperboard />} onSelect={() => set({ directorOpen: true })}>
-          Auto-direct a multicam clip…
+          {tt('Auto-direct a multicam clip…')}
         </MenuItem>
         <MenuItem icon={<GitBranch />} onSelect={() => timelineActions.branch()}>
-          Branch this timeline
+          {tt('Branch this timeline')}
         </MenuItem>
         <MenuItem icon={<GitCompare />} onSelect={() => set({ compareOpen: true })}>
-          Compare versions…
+          {tt('Compare versions…')}
         </MenuItem>
         <MenuItem icon={<Wand />} onSelect={() => timelineActions.openBatch()}>
-          Batch-edit the selected clips
+          {tt('Batch-edit the selected clips')}
         </MenuItem>
         <MenuItem icon={<MonitorPlay />} onSelect={() => timelineActions.openSourceMonitor()}>
-          Source monitor for the selected media
+          {tt('Source monitor for the selected media')}
         </MenuItem>
         <MenuItem icon={<Eraser />} onSelect={() => set({ cleanup: 'gaps' })}>
-          Clean up gaps and flash frames…
+          {tt('Clean up gaps and flash frames…')}
         </MenuItem>
         <MenuItem icon={<Gauge />} onSelect={() => set({ cleanup: 'rates' })}>
-          Frame rates of the footage…
+          {tt('Frame rates of the footage…')}
         </MenuItem>
         <MenuItem icon={<ListChecks />} onSelect={() => useUI.getState().setLeftTab('notes')}>
-          Markers and clip notes
+          {tt('Markers and clip notes')}
         </MenuItem>
       </MenuContent>
     </Menu>

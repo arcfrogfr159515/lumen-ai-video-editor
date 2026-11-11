@@ -16,6 +16,7 @@ import type { ClipColoring, ColorRule, ColorRuleField, LabelColor } from '@/edit
 import { uid } from '@/lib/id'
 import { cn } from '@/lib/cn'
 import { useTimelineView } from '@/editor/timeline-view'
+import { tt } from '@/lib/i18n'
 
 type Auto = NonNullable<ClipColoring['auto']> | 'kind'
 
@@ -23,7 +24,7 @@ export function ClipColorsDialog() {
   const open = useTimelineView((s) => s.colorsOpen)
   const set = useTimelineView((s) => s.set)
   return (
-    <Dialog open={open} onOpenChange={(o) => set({ colorsOpen: o })} title="Clip colours" description="What a clip’s colour on the timeline tells you." className="w-[min(620px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={(o) => set({ colorsOpen: o })} title={tt('Clip colours')} description={tt('What a clip’s colour on the timeline tells you.')} className="w-[min(620px,calc(100vw-32px))]">
       {open && <Body />}
     </Dialog>
   )
@@ -56,27 +57,27 @@ function Body() {
   return (
     <div className="max-h-[calc(100vh-150px)] space-y-5 overflow-y-auto px-5 pb-5">
       <section>
-        <h3 className="mb-2 text-2xs font-semibold tracking-wider text-fg-4 uppercase">Colour every clip by its</h3>
+        <h3 className="mb-2 text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('Colour every clip by its')}</h3>
         <Segmented
           stretch
           size="md"
           value={auto}
           onChange={(v) => apply({ auto: v === 'kind' ? null : v })}
-          options={[{ value: 'kind' as Auto, label: 'Kind', title: 'Video, image, audio, title — as Lumen does by default' }, ...AUTO_MODES.map((m) => ({ value: m.id as Auto, label: m.label, title: m.hint }))]}
+          options={[{ value: 'kind' as Auto, label: tt('Kind'), title: tt('Video, image, audio, title — as Lumen does by default') }, ...AUTO_MODES.map((m) => ({ value: m.id as Auto, label: m.label, title: m.hint }))]}
         />
-        <p className="mt-2 text-xs text-fg-4">{auto === 'kind' ? 'Video, images, sound, titles and adjustment layers each have their colour.' : `${AUTO_MODES.find((m) => m.id === auto)?.hint}, in the order they first play.`}</p>
+        <p className="mt-2 text-xs text-fg-4">{auto === 'kind' ? tt('Video, images, sound, titles and adjustment layers each have their colour.') : tt('{0}, in the order they first play.', AUTO_MODES.find((m) => m.id === auto)?.hint)}</p>
       </section>
 
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-2xs font-semibold tracking-wider text-fg-4 uppercase">Rules</h3>
+          <h3 className="text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('Rules')}</h3>
           <Button size="xs" variant="secondary" onClick={add}>
-            <Plus /> Add a rule
+            <Plus />{' '}{tt('Add a rule')}
           </Button>
         </div>
         {rules.length === 0 ? (
           <p className="rounded-lg bg-white/[0.03] px-3 py-3 text-xs leading-relaxed text-fg-4">
-            No rules. A rule says “clips whose source, speaker, camera, track, name, tag or kind matches this are that colour” — the first rule that matches wins, before the automatic colours above.
+            {tt('No rules. A rule says “clips whose source, speaker, camera, track, name, tag or kind matches this are that colour” — the first rule that matches wins, before the automatic colours above.')}
           </p>
         ) : (
           <ul className="space-y-1.5">
@@ -84,33 +85,33 @@ function Body() {
               <li key={rule.id} className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] p-1.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
                 <ColorPick value={rule.color} onChange={(color) => setRule(rule.id, { color })} />
                 <Select
-                  aria-label="What the rule looks at"
+                  aria-label={tt('What the rule looks at')}
                   className="w-[118px] shrink-0"
                   value={rule.field}
                   onChange={(field) => setRule(rule.id, { field: field as ColorRuleField })}
                   options={COLOR_FIELDS.map((f) => ({ value: f.id, label: f.label, hint: f.hint }))}
                 />
-                <span className="shrink-0 text-xs text-fg-4">matches</span>
+                <span className="shrink-0 text-xs text-fg-4">{tt('matches')}</span>
                 <RuleValue rule={rule} onChange={(value) => setRule(rule.id, { value })} />
-                <IconButton size="xs" label="Check this rule earlier" disabled={i === 0} onClick={() => move(i, -1)}>
+                <IconButton size="xs" label={tt('Check this rule earlier')} disabled={i === 0} onClick={() => move(i, -1)}>
                   <ArrowUp />
                 </IconButton>
-                <IconButton size="xs" label="Check this rule later" disabled={i === rules.length - 1} onClick={() => move(i, 1)}>
+                <IconButton size="xs" label={tt('Check this rule later')} disabled={i === rules.length - 1} onClick={() => move(i, 1)}>
                   <ArrowDown />
                 </IconButton>
-                <IconButton size="xs" label="Remove rule" onClick={() => apply({ rules: rules.filter((r) => r.id !== rule.id) })}>
+                <IconButton size="xs" label={tt('Remove rule')} onClick={() => apply({ rules: rules.filter((r) => r.id !== rule.id) })}>
                   <Trash />
                 </IconButton>
               </li>
             ))}
           </ul>
         )}
-        <p className="mt-2 text-xs text-fg-4">Part of a name is enough, capitals don’t matter, and * matches every clip that has the thing at all. A label you put on a clip yourself wins over every rule.</p>
+        <p className="mt-2 text-xs text-fg-4">{tt('Part of a name is enough, capitals don’t matter, and * matches every clip that has the thing at all. A label you put on a clip yourself wins over every rule.')}</p>
       </section>
 
       {legend.length > 0 && (
         <section>
-          <h3 className="mb-2 text-2xs font-semibold tracking-wider text-fg-4 uppercase">On the timeline now</h3>
+          <h3 className="mb-2 text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('On the timeline now')}</h3>
           <ul className="flex flex-wrap gap-1.5">
             {legend.map((row) => (
               <li key={`${row.color}|${row.label}`} className="flex h-6 max-w-full items-center gap-1.5 rounded-full bg-white/[0.04] pr-2 pl-1.5 text-2xs text-fg-2">
@@ -135,7 +136,7 @@ function RuleValue({ rule, onChange }: { rule: ColorRule; onChange: (value: stri
       key={`${rule.id}:${rule.value}`}
       defaultValue={rule.value}
       placeholder={field?.placeholder}
-      aria-label="What it matches"
+      aria-label={tt('What it matches')}
       onBlur={(e) => {
         const value = e.target.value.trim()
         if (value && value !== rule.value) onChange(value)
@@ -154,7 +155,7 @@ function ColorPick({ value, onChange }: { value: LabelColor; onChange: (color: L
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" aria-label={`Colour: ${value}`} className="size-6 shrink-0 rounded-md ring-1 ring-white/15 outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-accent/60" style={{ background: labelCss(value) }} />
+        <button type="button" aria-label={tt('Colour: {0}', value)} className="size-6 shrink-0 rounded-md ring-1 ring-white/15 outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-accent/60" style={{ background: labelCss(value) }} />
       </PopoverTrigger>
       <PopoverContent side="bottom" align="start" className="w-auto p-2">
         <div className="grid grid-cols-5 gap-1.5">

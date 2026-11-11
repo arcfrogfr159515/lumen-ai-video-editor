@@ -11,6 +11,7 @@ import { dispatch } from '@/editor/store'
 import type { Clip } from '@/editor/types'
 import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
+import { tt } from '@/lib/i18n'
 
 /** A tiny drawing of a curve (time across, value up). */
 export function CurveIcon({ easing, className }: { easing: Easing | string; className?: string }) {
@@ -39,7 +40,7 @@ export function EasingMenu({ value, onChange, children, allowPreset }: { value: 
         {allowPreset && (
           <>
             <MenuItem icon={<Clapperboard />} onSelect={() => onChange(undefined)}>
-              Each preset’s own curves
+              {tt('Each preset’s own curves')}
             </MenuItem>
             <MenuSeparator />
           </>
@@ -63,10 +64,10 @@ export function EasingMenu({ value, onChange, children, allowPreset }: { value: 
 }
 
 const GROUPS: { id: PresetGroup; label: string; icon: ReactNode; hint: string }[] = [
-  { id: 'camera', label: 'Camera', icon: <Clapperboard />, hint: 'Over the whole clip' },
-  { id: 'in', label: 'In', icon: <LogIn />, hint: 'At the start' },
-  { id: 'out', label: 'Out', icon: <LogOut />, hint: 'At the end' },
-  { id: 'emphasis', label: 'Emphasis', icon: <Zap />, hint: 'At the playhead' },
+  { id: 'camera', label: tt('Camera'), icon: <Clapperboard />, hint: tt('Over the whole clip') },
+  { id: 'in', label: tt('In'), icon: <LogIn />, hint: tt('At the start') },
+  { id: 'out', label: tt('Out'), icon: <LogOut />, hint: tt('At the end') },
+  { id: 'emphasis', label: tt('Emphasis'), icon: <Zap />, hint: tt('At the playhead') },
 ]
 
 /** One-click motion, baked into keyframes you can then fine-tune. */
@@ -79,7 +80,7 @@ export function MotionPresetsSection({ clip }: { clip: Clip }) {
     if (!res.ok) toast.error(res.error)
   }
   return (
-    <Section title="Motion presets" icon={<Diamond />}>
+    <Section title={tt('Motion presets')} icon={<Diamond />}>
       <div className="space-y-3.5">
         {GROUPS.map((g) => (
           <div key={g.id}>
@@ -103,19 +104,19 @@ export function MotionPresetsSection({ clip }: { clip: Clip }) {
             </div>
           </div>
         ))}
-        <Row label="Intensity">
+        <Row label={tt('Intensity')}>
           <Slider value={intensity} min={0.25} max={2.5} step={0.05} onChange={setIntensity} />
           <span className="w-10 shrink-0 text-right text-xs text-fg-3 tabular">{Math.round(intensity * 100)}%</span>
         </Row>
-        <Row label="Curve">
+        <Row label={tt('Curve')}>
           <EasingMenu value={easing} onChange={setEasing} allowPreset>
             <button type="button" className="flex h-7 flex-1 items-center gap-2 rounded-md bg-white/[0.04] px-2 text-xs text-fg-2 hover:bg-white/[0.07]">
               {easing ? <CurveIcon easing={easing} /> : <Clapperboard className="size-3.5 text-fg-4" />}
-              <span className="truncate">{easing ? easingLabel(easing) : 'Each preset’s own'}</span>
+              <span className="truncate">{easing ? easingLabel(easing) : tt('Each preset’s own')}</span>
             </button>
           </EasingMenu>
         </Row>
-        <p className="text-2xs leading-relaxed text-fg-4">Presets become keyframes — tweak them below. Land emphasis on a beat: put the playhead on the hit first.</p>
+        <p className="text-2xs leading-relaxed text-fg-4">{tt('Presets become keyframes — tweak them below. Land emphasis on a beat: put the playhead on the hit first.')}</p>
       </div>
     </Section>
   )

@@ -21,6 +21,7 @@ import { CLIP_COLOR, HEADER_W } from './model'
 import { MARKER_COLORS } from './Ruler'
 import { cssColor } from './strips'
 import { anchorNextZoom, useViewport } from './viewport'
+import { tt } from '@/lib/i18n'
 
 export const MINIMAP_H = 40
 const PAD = 4
@@ -189,14 +190,14 @@ export function Minimap({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | n
   return (
     <div data-minimap className="flex shrink-0 border-b border-line bg-black/20" style={{ height: MINIMAP_H }}>
       <div className="flex shrink-0 items-center border-r border-line px-3 text-2xs font-medium text-fg-4" style={{ width: HEADER_W }}>
-        Overview
+        {tt('Overview')}
       </div>
       <div
         ref={stripRef}
         className="relative min-w-0 flex-1 cursor-pointer touch-none overflow-hidden"
         onPointerDown={pan}
         onDoubleClick={actions.zoomToFit}
-        title="The whole timeline. Drag the window to scroll, its edges to zoom · click to go there · Alt-drag to scrub · double-click to fit"
+        title={tt('The whole timeline. Drag the window to scroll, its edges to zoom · click to go there · Alt-drag to scrub · double-click to fit')}
       >
         <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 block h-full w-full" />
         <div
@@ -204,8 +205,8 @@ export function Minimap({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | n
           className="absolute inset-y-0 cursor-grab rounded-[4px] bg-white/[0.07] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.5),0_0_0_100vmax_rgb(0_0_0/0.38)] active:cursor-grabbing"
           style={{ left, width: w }}
         >
-          <span onPointerDown={(e) => resize(e, 'start')} className="absolute inset-y-0 -left-1 w-2.5 cursor-ew-resize" aria-label="Drag to zoom from the left" />
-          <span onPointerDown={(e) => resize(e, 'end')} className="absolute inset-y-0 -right-1 w-2.5 cursor-ew-resize" aria-label="Drag to zoom from the right" />
+          <span onPointerDown={(e) => resize(e, 'start')} className="absolute inset-y-0 -left-1 w-2.5 cursor-ew-resize" aria-label={tt('Drag to zoom from the left')} />
+          <span onPointerDown={(e) => resize(e, 'end')} className="absolute inset-y-0 -right-1 w-2.5 cursor-ew-resize" aria-label={tt('Drag to zoom from the right')} />
         </div>
         <div ref={playheadRef} data-minimap-playhead className="pointer-events-none absolute inset-y-0 left-0 -ml-px w-[2px] bg-white shadow-[0_0_6px_rgb(255_255_255/0.6)] will-change-transform" />
       </div>

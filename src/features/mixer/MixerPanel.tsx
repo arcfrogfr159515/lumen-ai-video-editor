@@ -15,6 +15,7 @@ import { onMeterFrame } from '@/engine/meter-clock'
 import { cn } from '@/lib/cn'
 import { ChannelEditor } from './ChannelEditor'
 import { FADER_MARKS, faderDb, faderPos, formatDb, meterPos } from './scales'
+import { tt } from '@/lib/i18n'
 
 type Target = 'master' | string
 
@@ -36,7 +37,7 @@ export function MixerPanel() {
           {trackIds.map((id) => (
             <TrackStrip key={id} id={id} selected={target === id} onSelect={() => setSelected(id)} />
           ))}
-          {!trackIds.length && <p className="self-center px-2 text-xs text-fg-4">Tracks with sound show up here.</p>}
+          {!trackIds.length && <p className="self-center px-2 text-xs text-fg-4">{tt('Tracks with sound show up here.')}</p>}
         </div>
         <div className="mx-0.5 w-px shrink-0 self-stretch bg-line-2" />
         <Strip target="master" name="Master" color="var(--color-accent)" icon={<Music />} mix={undefined} master selected={target === 'master'} onSelect={() => setSelected('master')} />
@@ -94,9 +95,9 @@ function Strip({
   const masterMix = useEditor((s) => s.project.master)
   const mix = (master ? masterMix : trackMix) ?? DEFAULT_BUS
   const fx = [
-    { label: 'EQ', on: Boolean(mix.eq?.enabled), present: Boolean(mix.eq) },
-    { label: 'CMP', on: Boolean(mix.compressor?.enabled), present: Boolean(mix.compressor) },
-    { label: 'LIM', on: Boolean(mix.limiter?.enabled), present: Boolean(mix.limiter) },
+    { label: tt('EQ'), on: Boolean(mix.eq?.enabled), present: Boolean(mix.eq) },
+    { label: tt('CMP'), on: Boolean(mix.compressor?.enabled), present: Boolean(mix.compressor) },
+    { label: tt('LIM'), on: Boolean(mix.limiter?.enabled), present: Boolean(mix.limiter) },
   ]
   const pan = mix.pan
   const panLabel = Math.abs(pan) < 0.005 ? 'C' : `${pan < 0 ? 'L' : 'R'}${Math.round(Math.abs(pan) * 100)}`
@@ -130,8 +131,8 @@ function Strip({
           </span>
         ))}
       </div>
-      <div title={`Pan ${panLabel}`}>
-        <Slider aria-label={`${name} pan`} value={pan} min={-1} max={1} step={0.01} bipolar defaultValue={0} onChange={(v) => setMix(target, { pan: Math.round(v * 100) / 100 }, `pan:${target}`)} />
+      <div title={tt('Pan {0}', panLabel)}>
+        <Slider aria-label={tt('{0} pan', name)} value={pan} min={-1} max={1} step={0.01} bipolar defaultValue={0} onChange={(v) => setMix(target, { pan: Math.round(v * 100) / 100 }, `pan:${target}`)} />
         <div className="text-center font-mono text-[9px] text-fg-4 tabular">{panLabel}</div>
       </div>
       <div className={cn('flex h-[124px] justify-center gap-1.5', dimmed && 'opacity-40')}>
@@ -143,7 +144,7 @@ function Strip({
         <div className="flex gap-1">
           <button
             type="button"
-            title={track.muted ? 'Unmute' : 'Mute'}
+            title={track.muted ? tt('Unmute') : tt('Mute')}
             onClick={() => dispatch('track.update', { id: track.id, patch: { muted: !track.muted } })}
             className={cn('grid h-6 flex-1 place-items-center rounded-md text-2xs font-bold transition-colors', track.muted ? 'bg-warn/25 text-warn' : 'bg-white/[0.05] text-fg-3 hover:bg-white/[0.09]')}
           >
@@ -151,7 +152,7 @@ function Strip({
           </button>
           <button
             type="button"
-            title={track.solo ? 'Unsolo' : 'Solo'}
+            title={track.solo ? tt('Unsolo') : tt('Solo')}
             onClick={() => dispatch('track.update', { id: track.id, patch: { solo: !track.solo } })}
             className={cn('grid h-6 flex-1 place-items-center rounded-md text-2xs font-bold transition-colors', track.solo ? 'bg-accent/25 text-accent-2' : 'bg-white/[0.05] text-fg-3 hover:bg-white/[0.09]')}
           >
@@ -159,7 +160,7 @@ function Strip({
           </button>
         </div>
       ) : (
-        <div className="grid h-6 place-items-center text-[9px] font-semibold tracking-wider text-fg-4 uppercase">Out</div>
+        <div className="grid h-6 place-items-center text-[9px] font-semibold tracking-wider text-fg-4 uppercase">{tt('Out')}</div>
       )}
     </div>
   )
@@ -198,7 +199,7 @@ function Fader({ value, name, onChange }: { value: number; name: string; onChang
     <div
       ref={ref}
       role="slider"
-      aria-label={`${name} volume`}
+      aria-label={tt('{0} volume', name)}
       aria-valuemin={-60}
       aria-valuemax={12}
       aria-valuenow={value}
@@ -270,7 +271,7 @@ function Meter({ target }: { target: Target }) {
       <button
         ref={clip}
         type="button"
-        title="Clipped — click to reset"
+        title={tt('Clipped — click to reset')}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => delete e.currentTarget.dataset.on}
         className="h-1.5 w-full rounded-[2px] bg-white/[0.07] data-[on=true]:bg-danger data-[on=true]:shadow-[0_0_6px_var(--color-danger)]"

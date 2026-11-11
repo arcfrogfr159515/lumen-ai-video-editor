@@ -6,6 +6,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { useUI } from '@/editor/ui-store'
 import { APP_VERSION, platform } from '@/lib/platform'
 import { checkForUpdates, installUpdate, RELEASES_URL, releaseUrl, useUpdates } from '@/lib/updates'
+import { tt } from '@/lib/i18n'
 
 export function AboutDialog() {
   const open = useUI((s) => s.aboutOpen)
@@ -16,13 +17,13 @@ export function AboutDialog() {
     ['Platform', platform.isWindows ? 'Windows' : platform.isMac ? 'macOS' : 'Linux'],
   ]
   return (
-    <Dialog open={open} onOpenChange={setOpen} title="About Lumen" className="w-[min(420px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={setOpen} title={tt('About Lumen')} className="w-[min(420px,calc(100vw-32px))]">
       <div className="px-5 pt-1 pb-5">
         <div className="flex items-center gap-3">
           <LogoMark className="size-12 drop-shadow-[0_6px_24px_rgb(214_238_0/0.28)]" />
           <div>
-            <div className="font-display text-xl font-semibold tracking-tight text-fg">Lumen</div>
-            <div className="text-xs text-fg-3">AI-native video editor</div>
+            <div className="font-display text-xl font-semibold tracking-tight text-fg">{tt('Lumen')}</div>
+            <div className="text-xs text-fg-3">{tt('AI-native video editor')}</div>
           </div>
         </div>
         <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
@@ -35,13 +36,12 @@ export function AboutDialog() {
         </dl>
         <Updates />
         <p className="mt-5 text-xs leading-relaxed text-fg-4">
-          Decoding and encoding run on your computer with WebCodecs (Mediabunny). Noise reduction uses RNNoise. AI features use the providers you connect in Integrations —
-          your keys stay on this machine.
+          {tt('Decoding and encoding run on your computer with WebCodecs (Mediabunny). Noise reduction uses RNNoise. AI features use the providers you connect in Integrations — your keys stay on this machine.')}
         </p>
         <p className="mt-3 text-xs text-fg-3">
-          Vibecoded with <span className="text-fg-2">Claude Opus 5.5</span> by <span className="text-accent">Mas-Inx</span> at{' '}
+          {tt('Vibecoded with')}{' '}<span className="text-fg-2">{tt('Claude Opus 5.5')}</span>{' '}{tt('by')}{' '}<span className="text-accent">Mas-Inx</span>{' '}{tt('at')}{' '}
           <a href="https://async.tech/" target="_blank" rel="noreferrer" className="text-accent hover:underline">
-            AsyncTech
+            {tt('AsyncTech')}
           </a>
         </p>
       </div>
@@ -60,7 +60,7 @@ function Updates() {
   const percent = Math.round((u.progress ?? 0) * 100)
   const check = (
     <Button size="sm" variant="outline" onClick={() => void checkForUpdates()}>
-      Check now
+      {tt('Check now')}
     </Button>
   )
   let line: ReactNode
@@ -72,7 +72,7 @@ function Updates() {
     case 'checking':
       line = (
         <>
-          <LoaderCircle className="size-3 animate-spin" /> Checking GitHub…
+          <LoaderCircle className="size-3 animate-spin" />{' '}{tt('Checking GitHub…')}
         </>
       )
       break
@@ -83,12 +83,12 @@ function Updates() {
       line = `Lumen ${u.version} is ready to install.`
       action = (
         <Button size="sm" variant="primary" onClick={() => void installUpdate()}>
-          <RefreshCw /> Restart to update
+          <RefreshCw />{' '}{tt('Restart to update')}
         </Button>
       )
       break
     case 'error':
-      line = <span className="text-danger/90">{u.error ?? 'Couldn’t check for updates.'}</span>
+      line = <span className="text-danger/90">{u.error ?? tt('Couldn’t check for updates.')}</span>
       action = check
       break
     case 'up-to-date':
@@ -103,7 +103,7 @@ function Updates() {
     <div className="mt-5 rounded-xl bg-white/[0.03] p-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)]">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-medium text-fg-2">Updates</div>
+          <div className="text-xs font-medium text-fg-2">{tt('Updates')}</div>
           <div className="mt-0.5 flex items-center gap-1.5 text-2xs leading-relaxed text-fg-4">{line}</div>
         </div>
         {action}
@@ -117,7 +117,7 @@ function Updates() {
         <div className="mt-2.5 max-h-28 overflow-y-auto border-t border-line pt-2 text-2xs leading-relaxed whitespace-pre-line text-fg-3">{u.notes}</div>
       )}
       <a href={u.version ? releaseUrl(u.version) : RELEASES_URL} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-2xs text-accent-2 hover:underline">
-        {u.version ? `What’s new in ${u.version}` : 'All releases'} <ExternalLink className="size-3" />
+        {u.version ? tt('What’s new in {0}', u.version) : tt('All releases')} <ExternalLink className="size-3" />
       </a>
     </div>
   )

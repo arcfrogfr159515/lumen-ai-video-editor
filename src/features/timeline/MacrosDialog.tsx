@@ -16,12 +16,14 @@ import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
 import { pickTextFile, saveTextFile } from '@/project/text-files'
 import { timelineActions } from './timeline-actions'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 export function MacrosDialog() {
   const open = useTimelineView((s) => s.macrosOpen)
   const set = useTimelineView((s) => s.set)
   return (
-    <Dialog open={open} onOpenChange={(o) => set({ macrosOpen: o })} title="Macros" description="Edits recorded on one clip, to do again on others." className="w-[min(620px,calc(100vw-32px))]">
+    <Dialog open={open} onOpenChange={(o) => set({ macrosOpen: o })} title={tt('Macros')} description={tt('Edits recorded on one clip, to do again on others.')} className="w-[min(620px,calc(100vw-32px))]">
       {open && <Body onClose={() => set({ macrosOpen: false })} />}
     </Dialog>
   )
@@ -36,7 +38,7 @@ function Body({ onClose }: { onClose: () => void }) {
     try {
       await saveTextFile({ name, extension: 'json', filterName: 'Lumen macros', mime: 'application/json', text: exportMacros(list) }, list.length === 1 ? 'Saved the macro' : `Saved ${list.length} macros`)
     } catch (err) {
-      toast.error('Couldn’t save the file', { description: err instanceof Error ? err.message : String(err) })
+      toast.error(tt('Couldn’t save the file'), { description: err instanceof Error ? err.message : String(err) })
     }
   }
   const load = async () => {
@@ -44,7 +46,7 @@ function Body({ onClose }: { onClose: () => void }) {
     if (!file) return
     try {
       const n = addMacros(importMacros(file.text))
-      toast(n ? `Added ${n} macro${n === 1 ? '' : 's'} from ${file.name}` : `${file.name} holds no macros Lumen can run`)
+      toast(n ? tt('Added {0} macro{1} from {2}', n, n === 1 ? '' : 's', file.name) : tt('{0} holds no macros Lumen can run', file.name))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     }
@@ -60,17 +62,17 @@ function Body({ onClose }: { onClose: () => void }) {
             if (timelineActions.toggleRecording()) onClose()
           }}
         >
-          <CircleDot /> Record a macro
+          <CircleDot />{' '}{tt('Record a macro')}
         </Button>
         <span className="flex items-center gap-1 text-2xs text-fg-4">
-          <Kbd combo="alt+r" /> starts and stops
+          <Kbd combo="alt+r" />{' '}{tt('starts and stops')}
         </span>
         <div className="ml-auto flex items-center gap-1">
           <Button size="sm" variant="ghost" onClick={() => void load()}>
-            <Upload /> Import
+            <Upload />{' '}{tt('Import')}
           </Button>
           <Button size="sm" variant="ghost" disabled={!macros.length} onClick={() => void save(macros, 'Lumen macros')}>
-            <Download /> Export all
+            <Download />{' '}{tt('Export all')}
           </Button>
         </div>
       </div>
@@ -78,9 +80,9 @@ function Body({ onClose }: { onClose: () => void }) {
       {macros.length === 0 ? (
         <div className="rounded-xl bg-white/[0.03] p-5 text-center">
           <CircleDot className="mx-auto size-6 text-fg-3" />
-          <p className="mt-2 text-sm font-medium text-fg">No macros yet</p>
+          <p className="mt-2 text-sm font-medium text-fg">{tt('No macros yet')}</p>
           <p className="mx-auto mt-1 max-w-[440px] text-xs leading-relaxed text-fg-3">
-            Select a clip, press Record, and edit it as you would — grade it, trim it, cut it, add effects. Stop, and those edits are a macro you can run on any other clips: trims and cuts are measured from each clip’s own start and end.
+            {tt('Select a clip, press Record, and edit it as you would — grade it, trim it, cut it, add effects. Stop, and those edits are a macro you can run on any other clips: trims and cuts are measured from each clip’s own start and end.')}
           </p>
         </div>
       ) : (
@@ -91,7 +93,7 @@ function Body({ onClose }: { onClose: () => void }) {
         </ul>
       )}
       <p className="text-2xs leading-relaxed text-fg-4">
-        A macro runs on each selected clip in turn, as one undo step. If a step can’t be done to a clip (it adjusts an effect the clip hasn’t got, say), that clip is left exactly as it was and the rest still get the macro.
+        {tt('A macro runs on each selected clip in turn, as one undo step. If a step can’t be done to a clip (it adjusts an effect the clip hasn’t got, say), that clip is left exactly as it was and the rest still get the macro.')}
       </p>
     </div>
   )
@@ -105,7 +107,7 @@ function MacroRow({ macro, last, selected, onSave }: { macro: Macro; last: boole
       <div className="flex items-center gap-2">
         <input
           value={name}
-          aria-label="Macro name"
+          aria-label={tt('Macro name')}
           onChange={(e) => setName(e.target.value)}
           onBlur={() => (name.trim() && name.trim() !== macro.name ? renameMacro(macro.id, name) : setName(macro.name))}
           onKeyDown={(e) => {
@@ -115,15 +117,15 @@ function MacroRow({ macro, last, selected, onSave }: { macro: Macro; last: boole
           className="h-7 min-w-0 flex-1 rounded-md bg-transparent px-1.5 text-sm font-medium text-fg outline-none hover:bg-white/[0.04] focus:bg-white/[0.07] focus:ring-1 focus:ring-accent/60"
         />
         <button type="button" onClick={() => setOpen(!open)} className="shrink-0 rounded px-1.5 py-0.5 text-2xs text-fg-3 outline-none hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60" aria-expanded={open}>
-          {macro.steps.length} step{macro.steps.length === 1 ? '' : 's'}
+          {ttx('{0} step{1}', macro.steps.length, macro.steps.length === 1 ? '' : 's')}
         </button>
-        <Button size="xs" variant="secondary" disabled={!selected} onClick={() => timelineActions.runMacro(macro.id)} title={selected ? undefined : 'Select the clips to run it on first'}>
-          <Play /> Run on {selected || 'the selection'}
+        <Button size="xs" variant="secondary" disabled={!selected} onClick={() => timelineActions.runMacro(macro.id)} title={selected ? undefined : tt('Select the clips to run it on first')}>
+          <Play />{' '}{ttx('Run on {0}', selected || tt('the selection'))}
         </Button>
-        <IconButton size="xs" label="Save as a file" onClick={onSave}>
+        <IconButton size="xs" label={tt('Save as a file')} onClick={onSave}>
           <Download />
         </IconButton>
-        <IconButton size="xs" label="Delete this macro" onClick={() => removeMacro(macro.id)}>
+        <IconButton size="xs" label={tt('Delete this macro')} onClick={() => removeMacro(macro.id)}>
           <Trash />
         </IconButton>
       </div>

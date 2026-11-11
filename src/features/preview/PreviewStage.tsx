@@ -19,6 +19,8 @@ import { closeReaders, renderedFrame } from '@/engine/render-player'
 import { drawUpscaled } from '@/engine/upscale'
 import { useElementSize } from '@/lib/hooks'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 /** On-screen bounds of visible clips; re-published only when a selected clip's box changes. */
 export const useBounds = create<{ bounds: Map<string, ClipBounds> }>(() => ({ bounds: new Map() }))
@@ -233,7 +235,7 @@ function CropGizmo({ clip, b, scale }: { clip: Clip; b: ClipBounds; scale: numbe
         if (handle.includes('b')) next.bottom = Math.max(0, Math.min(1 - start.top - min, start.bottom - fy))
       }
       const r = (v: number) => Math.min(0.95, Math.round(v * 10000) / 10000)
-      dispatch('clip.update', { ids: [clip.id], patch: { crop: { left: r(next.left), right: r(next.right), top: r(next.top), bottom: r(next.bottom) } } }, { coalesce: key, label: 'Crop' })
+      dispatch('clip.update', { ids: [clip.id], patch: { crop: { left: r(next.left), right: r(next.right), top: r(next.top), bottom: r(next.bottom) } } }, { coalesce: key, label: tt('Crop') })
     }
     const up = () => {
       window.removeEventListener('pointermove', move)
@@ -278,7 +280,7 @@ function CropGizmo({ clip, b, scale }: { clip: Clip; b: ClipBounds; scale: numbe
         onClick={() => useUI.getState().setCropMode(false)}
         className="absolute top-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-fg shadow-[0_4px_16px_-4px_rgb(0_0_0/0.7)] hover:bg-accent-2"
       >
-        Done cropping
+        {tt('Done cropping')}
       </button>
     </>
   )
@@ -344,7 +346,7 @@ function MaskGizmo({ clip, mask, layer, pw, ph, scale, frame }: { clip: Clip; ma
       }
       const round = (v: number) => Math.round(v * 10000) / 10000
       for (const k of Object.keys(patch) as (keyof Mask)[]) if (typeof patch[k] === 'number' && k !== 'rotation') (patch as Record<string, number>)[k] = round(patch[k] as number)
-      dispatch('mask.update', { clipId: clip.id, maskId: mask.id, patch }, { coalesce: key, label: 'Edit mask' })
+      dispatch('mask.update', { clipId: clip.id, maskId: mask.id, patch }, { coalesce: key, label: tt('Edit mask') })
     }
     const up = () => {
       window.removeEventListener('pointermove', move)
@@ -392,7 +394,7 @@ function MaskGizmo({ clip, mask, layer, pw, ph, scale, frame }: { clip: Clip; ma
         onClick={() => useUI.getState().setMaskEdit(null)}
         className="absolute top-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-fg shadow-[0_4px_16px_-4px_rgb(0_0_0/0.7)] hover:bg-accent-2"
       >
-        Done with mask
+        {tt('Done with mask')}
       </button>
     </>
   )
@@ -463,10 +465,10 @@ function TrackGizmo({ edit, pw, ph, scale }: { edit: TrackEdit; pw: number; ph: 
         // The footage itself was tracked: the new title that follows it is ready to be reworded.
         useUI.getState().select([r.clipId])
         useUI.getState().setRightTab('inspector')
-        toast.success(`Tracked ${r.frames} frames`, { description: lost ?? 'A title now follows it. Change its words in the Inspector, or drag it to sit where you like.' })
-      } else toast.success(`Tracked ${r.frames} frames`, { description: lost })
+        toast.success(tt('Tracked {0} frames', r.frames), { description: lost ?? tt('A title now follows it. Change its words in the Inspector, or drag it to sit where you like.') })
+      } else toast.success(tt('Tracked {0} frames', r.frames), { description: lost })
     } catch (err) {
-      if (!(err instanceof AnalysisCancelled)) toast.error('Couldn’t track that', { description: err instanceof Error ? err.message : String(err) })
+      if (!(err instanceof AnalysisCancelled)) toast.error(tt('Couldn’t track that'), { description: err instanceof Error ? err.message : String(err) })
     } finally {
       setBusy(false)
     }
@@ -489,18 +491,18 @@ function TrackGizmo({ edit, pw, ph, scale }: { edit: TrackEdit; pw: number; ph: 
         {knob('se', '-right-[5px] -bottom-[5px]', 'nwse-resize')}
       </div>
       <div onPointerDown={(e) => e.stopPropagation()} className="popover absolute top-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full p-1 shadow-[0_6px_20px_-6px_rgb(0_0_0/0.8)]">
-        <span className="px-2 text-2xs font-medium whitespace-nowrap text-fg-3">{busy ? 'Tracking…' : edit.newTitle ? 'Box what a new title should follow' : `Box what the ${edit.maskId ? 'mask' : 'clip'} should follow`}</span>
-        <button type="button" disabled={busy} onClick={() => void run('backward')} className={cn(btn, 'text-fg-2 hover:bg-white/[0.08] hover:text-fg')} title="Track back from the playhead">
-          <ArrowLeft className="size-3.5" /> Back
+        <span className="px-2 text-2xs font-medium whitespace-nowrap text-fg-3">{busy ? tt('Tracking…') : edit.newTitle ? tt('Box what a new title should follow') : tt('Box what the {0} should follow', edit.maskId ? tt('mask') : tt('clip'))}</span>
+        <button type="button" disabled={busy} onClick={() => void run('backward')} className={cn(btn, 'text-fg-2 hover:bg-white/[0.08] hover:text-fg')} title={tt('Track back from the playhead')}>
+          <ArrowLeft className="size-3.5" />{' '}{tt('Back')}
         </button>
-        <button type="button" disabled={busy} onClick={() => void run('both')} className={cn(btn, 'text-fg-2 hover:bg-white/[0.08] hover:text-fg')} title="Track both ways from the playhead">
-          <ArrowLeftRight className="size-3.5" /> Both
+        <button type="button" disabled={busy} onClick={() => void run('both')} className={cn(btn, 'text-fg-2 hover:bg-white/[0.08] hover:text-fg')} title={tt('Track both ways from the playhead')}>
+          <ArrowLeftRight className="size-3.5" />{' '}{tt('Both')}
         </button>
-        <button type="button" disabled={busy} onClick={() => void run('forward')} className={cn(btn, 'bg-accent text-accent-fg hover:bg-accent-2')} title="Track forward from the playhead">
-          {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <ArrowRight className="size-3.5" />} Track
+        <button type="button" disabled={busy} onClick={() => void run('forward')} className={cn(btn, 'bg-accent text-accent-fg hover:bg-accent-2')} title={tt('Track forward from the playhead')}>
+          {busy ? <LoaderCircle className="size-3.5 animate-spin" /> : <ArrowRight className="size-3.5" />}{' '}{tt('Track')}
         </button>
         <button type="button" disabled={busy} onClick={() => useUI.getState().setTrackEdit(null)} className={cn(btn, 'text-fg-3 hover:bg-white/[0.08] hover:text-fg')}>
-          Cancel
+          {tt('Cancel')}
         </button>
       </div>
     </>
@@ -648,7 +650,7 @@ function Gizmo({ scale }: { scale: number }) {
       )}
       {/* project-size hint for screen readers */}
       <span className="sr-only">
-        Canvas {pw} by {ph}
+        {ttx('Canvas {0} by {1}', pw, ph)}
       </span>
     </div>
   )

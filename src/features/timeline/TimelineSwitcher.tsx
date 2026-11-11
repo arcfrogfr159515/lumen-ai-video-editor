@@ -15,6 +15,8 @@ import { timelineActions } from './timeline-actions'
 import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
 import { formatDuration } from '@/lib/time'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 const PRESETS = CANVAS_PRESETS.filter((p) => ['landscape', 'vertical', 'square', 'portrait'].includes(p.id))
 
@@ -38,7 +40,7 @@ function deleteTimeline(id: string) {
   const seq = getSequence(p, id)
   if (!seq) return
   const uses = usesOf(p, id)
-  if (uses.length) return void toast(`“${seq.name}” is nested in ${uses.map((u) => `“${u.name}”`).join(', ')}`, { description: 'Remove it there first.' })
+  if (uses.length) return void toast(tt('“{0}” is nested in {1}', seq.name, uses.map((u) => `“${u.name}”`).join(', ')), { description: tt('Remove it there first.') })
   const others = allSequences(p).filter((s) => s.id !== id)
   if (!others.length) return
   useEditor.getState().transaction(`Delete ${seq.name}`, 'user', () => {
@@ -61,7 +63,7 @@ export function TimelineSwitcher() {
   return (
     <div className="flex min-w-0 items-center gap-0.5">
       {back && (
-        <IconButton size="xs" label={`Back to ${back.name}`} onClick={timelineBack}>
+        <IconButton size="xs" label={tt('Back to {0}', back.name)} onClick={timelineBack}>
           <ArrowLeft />
         </IconButton>
       )}
@@ -70,7 +72,7 @@ export function TimelineSwitcher() {
           <button
             type="button"
             className="flex h-7 max-w-[220px] min-w-0 items-center gap-1.5 rounded-[9px] px-2 text-xs font-semibold text-fg-2 outline-none transition-colors hover:bg-white/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.08]"
-            title="Timelines"
+            title={tt('Timelines')}
           >
             {trail.length > 0 && <span className="truncate font-medium text-fg-4">{trail.map((t) => t.name).join(' › ')} ›</span>}
             {sequenceRef?.multicam ? <Video className="size-3.5 shrink-0 text-accent-2" /> : <Layers className="size-3.5 shrink-0 text-fg-3" />}
@@ -80,7 +82,7 @@ export function TimelineSwitcher() {
           </button>
         </MenuTrigger>
         <MenuContent className="w-72">
-          <MenuLabel>Timelines</MenuLabel>
+          <MenuLabel>{tt('Timelines')}</MenuLabel>
           {sequences.map((s) => (
             <MenuItem key={s.id} icon={s.id === openId ? <Check /> : s.multicam ? <Video /> : s.branchOf ? <GitBranch /> : <Film />} onSelect={() => openTimeline(s.id)}>
               <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -92,9 +94,9 @@ export function TimelineSwitcher() {
             </MenuItem>
           ))}
           <MenuSeparator />
-          <MenuSub icon={<Plus />} label="New timeline">
+          <MenuSub icon={<Plus />} label={tt('New timeline')}>
             <MenuItem onSelect={() => newTimeline()}>
-              Same shape <span className="ml-auto text-fg-4">{settings.width}×{settings.height}</span>
+              {tt('Same shape')}{' '}<span className="ml-auto text-fg-4">{settings.width}×{settings.height}</span>
             </MenuItem>
             {PRESETS.map((p) => (
               <MenuItem key={p.id} onSelect={() => newTimeline({ width: p.width, height: p.height }, `${p.label} timeline`)}>
@@ -102,7 +104,7 @@ export function TimelineSwitcher() {
               </MenuItem>
             ))}
           </MenuSub>
-          <MenuSub icon={<Smartphone />} label="Copy in another shape">
+          <MenuSub icon={<Smartphone />} label={tt('Copy in another shape')}>
             {PRESETS.filter((p) => p.width !== settings.width || p.height !== settings.height).map((p) => (
               <MenuItem key={p.id} onSelect={() => reshapedCopy(p.width, p.height, p.label)}>
                 {p.label} <span className="ml-auto text-fg-4">{p.hint.split(' · ')[0]}</span>
@@ -110,21 +112,21 @@ export function TimelineSwitcher() {
             ))}
           </MenuSub>
           <MenuItem icon={<CopyPlus />} onSelect={() => dispatch('sequence.duplicate', { id: openId, open: true })}>
-            Duplicate “{name}”
+            {ttx('Duplicate “{0}”', name)}
           </MenuItem>
           {!sequenceRef?.multicam && (
             <MenuItem icon={<GitBranch />} onSelect={() => timelineActions.branch()}>
-              Branch “{name}”
+              {ttx('Branch “{0}”', name)}
             </MenuItem>
           )}
           <MenuItem icon={<GitCompare />} onSelect={() => useTimelineView.getState().set({ compareOpen: true })}>
-            Compare versions…
+            {tt('Compare versions…')}
           </MenuItem>
           <MenuItem icon={<PencilLine />} onSelect={() => useUI.getState().setRenamingTimeline(openId)}>
-            Rename…
+            {tt('Rename…')}
           </MenuItem>
           <MenuItem icon={<Trash />} danger disabled={sequences.length < 2} onSelect={() => deleteTimeline(openId)}>
-            Delete “{name}”
+            {ttx('Delete “{0}”', name)}
           </MenuItem>
         </MenuContent>
       </Menu>
@@ -147,7 +149,7 @@ export function RenameTimelineDialog() {
     close()
   }
   return (
-    <Dialog open={Boolean(id)} onOpenChange={(o) => !o && close()} title="Rename timeline" className="w-[min(400px,calc(100vw-32px))]">
+    <Dialog open={Boolean(id)} onOpenChange={(o) => !o && close()} title={tt('Rename timeline')} className="w-[min(400px,calc(100vw-32px))]">
       <form
         className="flex flex-col gap-4 px-5 pb-5"
         onSubmit={(e) => {
@@ -155,13 +157,13 @@ export function RenameTimelineDialog() {
           save()
         }}
       >
-        <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.stopPropagation()} placeholder="Timeline name" />
+        <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.stopPropagation()} placeholder={tt('Timeline name')} />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={close}>
-            Cancel
+            {tt('Cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={!name.trim()}>
-            Rename
+            {tt('Rename')}
           </Button>
         </div>
       </form>

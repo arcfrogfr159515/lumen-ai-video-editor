@@ -22,6 +22,8 @@ import { assetThumb } from '@/features/assets/shared'
 import { cn } from '@/lib/cn'
 import { formatDuration, formatTimecode } from '@/lib/time'
 import { CLIP_COLOR } from './model'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 /** What is being dragged, and where it would land. */
 type Drag = { kind: 'cards'; ids: string[]; before: string | null | undefined; x: number; y: number } | { kind: 'section'; id: string; before: string | null | undefined; x: number; y: number }
@@ -197,8 +199,8 @@ export function Storyboard() {
         <div className="grid h-full place-items-center text-center">
           <div>
             <Layers className="mx-auto size-6 text-fg-4" />
-            <p className="mt-2 text-sm font-medium text-fg-2">Nothing on the main track yet</p>
-            <p className="mt-1 text-xs text-fg-4">The storyboard shows the clips that tell the story, one card each. Add footage and it appears here.</p>
+            <p className="mt-2 text-sm font-medium text-fg-2">{tt('Nothing on the main track yet')}</p>
+            <p className="mt-1 text-xs text-fg-4">{tt('The storyboard shows the clips that tell the story, one card each. Add footage and it appears here.')}</p>
           </div>
         </div>
       ) : (
@@ -223,16 +225,16 @@ export function Storyboard() {
                   onOpen={() => (useUI.getState().select([card.clipId]), setView({ storyboard: false }))}
                 />
               ))}
-              {section.cards.length === 0 && <p className="py-3 text-xs text-fg-4">No clip starts in this chapter.</p>}
+              {section.cards.length === 0 && <p className="py-3 text-xs text-fg-4">{tt('No clip starts in this chapter.')}</p>}
             </div>
             {drag?.kind === 'section' && drag.before === null && si === sections.length - 1 && <div className="pointer-events-none absolute inset-x-0 -bottom-2 h-[3px] rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />}
           </section>
         ))
       )}
-      {!canReorder && cards.length > 0 && <p className="mt-4 text-xs text-fg-4">Cards can be reordered on the main track, whose clips sit edge to edge. This timeline has none, so the cards are for looking at.</p>}
+      {!canReorder && cards.length > 0 && <p className="mt-4 text-xs text-fg-4">{tt('Cards can be reordered on the main track, whose clips sit edge to edge. This timeline has none, so the cards are for looking at.')}</p>}
       {drag && (
         <div className="popover pointer-events-none fixed z-[80] rounded-lg px-2.5 py-1.5 text-xs font-medium text-fg" style={{ left: drag.x + 14, top: drag.y + 14 }}>
-          {drag.kind === 'cards' ? (drag.ids.length === 1 ? (clips[drag.ids[0]]?.name ?? 'Card') : `${drag.ids.length} cards`) : (sections.find((s) => s.id === drag.id)?.title ?? 'Section')}
+          {drag.kind === 'cards' ? (drag.ids.length === 1 ? (clips[drag.ids[0]]?.name ?? tt('Card')) : tt('{0} cards', drag.ids.length)) : (sections.find((s) => s.id === drag.id)?.title ?? tt('Section'))}
         </div>
       )}
     </div>
@@ -246,7 +248,7 @@ function SectionHeading({ section, fps, canDrag, dragging, onPointerDown }: { se
     <div className={cn('mb-1.5 flex h-7 items-center gap-1.5', dragging && 'opacity-40')}>
       <span
         onPointerDown={canDrag ? onPointerDown : undefined}
-        title={canDrag ? 'Drag to move the whole section' : undefined}
+        title={canDrag ? tt('Drag to move the whole section') : undefined}
         className={cn('grid size-5 place-items-center rounded text-fg-4 [&_svg]:size-3.5', canDrag ? 'cursor-grab hover:bg-white/[0.06] hover:text-fg-2 active:cursor-grabbing' : 'opacity-40')}
       >
         <GripVertical />
@@ -255,7 +257,7 @@ function SectionHeading({ section, fps, canDrag, dragging, onPointerDown }: { se
       {section.markerId ? (
         <input
           value={title}
-          aria-label="Chapter title"
+          aria-label={tt('Chapter title')}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => (title.trim() && title.trim() !== section.title ? dispatch('marker.update', { id: section.markerId!, patch: { label: title.trim() } }) : setTitle(section.title))}
           onKeyDown={(e) => {
@@ -271,7 +273,7 @@ function SectionHeading({ section, fps, canDrag, dragging, onPointerDown }: { se
         <span className="px-1 text-sm font-semibold text-fg-3">{section.title}</span>
       )}
       <span className="text-2xs text-fg-4 tabular">
-        {section.cards.length} card{section.cards.length === 1 ? '' : 's'} · {formatDuration(section.end - section.start, fps)}
+        {ttx('{0} card{1} · {2}', section.cards.length, section.cards.length === 1 ? '' : 's', formatDuration(section.end - section.start, fps))}
       </span>
     </div>
   )
@@ -356,8 +358,8 @@ function Card({
         </div>
       </ContextTrigger>
       <ContextContent>
-        <ContextItem onSelect={onOpen}>Show it in the timeline</ContextItem>
-        <ContextItem onSelect={() => dispatch('marker.add', { frame: card.start, kind: 'chapter' })}>Start a chapter here</ContextItem>
+        <ContextItem onSelect={onOpen}>{tt('Show it in the timeline')}</ContextItem>
+        <ContextItem onSelect={() => dispatch('marker.add', { frame: card.start, kind: 'chapter' })}>{tt('Start a chapter here')}</ContextItem>
         <ContextSeparator />
         <ContextItem
           onSelect={() => {
@@ -365,7 +367,7 @@ function Card({
             useUI.getState().setRightTab('inspector')
           }}
         >
-          Notes and tasks…
+          {tt('Notes and tasks…')}
         </ContextItem>
         <ContextSeparator />
         <ContextItem
@@ -376,7 +378,7 @@ function Card({
             if (!res.ok) toast(res.error)
           }}
         >
-          Remove the card
+          {tt('Remove the card')}
         </ContextItem>
       </ContextContent>
     </ContextRoot>

@@ -13,6 +13,8 @@ import { dnd } from '@/features/dnd'
 import { cn } from '@/lib/cn'
 import { formatDuration } from '@/lib/time'
 import { SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 /** The project's timelines: open one, or drag it onto the timeline to nest it. */
 export function TimelinesSection({ query }: { query: string }) {
@@ -24,7 +26,7 @@ export function TimelinesSection({ query }: { query: string }) {
   if (!visible.length) return null
   return (
     <>
-      <SectionLabel>Timelines</SectionLabel>
+      <SectionLabel>{tt('Timelines')}</SectionLabel>
       <div className="mb-1 space-y-1">
         {visible.map((s) => (
           <TimelineRow key={s.id} seq={s} open={s.id === openId} />
@@ -49,7 +51,7 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
   }
   const remove = () => {
     const uses = usesOf(getProject(), seq.id)
-    if (uses.length) return void toast(`“${seq.name}” is nested in ${uses.map((u) => `“${u.name}”`).join(', ')}`, { description: 'Remove it there first.' })
+    if (uses.length) return void toast(tt('“{0}” is nested in {1}', seq.name, uses.map((u) => `“${u.name}”`).join(', ')), { description: tt('Remove it there first.') })
     const res = dispatch('sequence.delete', { id: seq.id })
     if (!res.ok) toast(res.error)
   }
@@ -63,7 +65,7 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
           onDragEnd={dnd.end}
           onDoubleClick={() => openTimeline(seq.id)}
           className={cn('group/tl flex h-11 items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-white/[0.04]', nestable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}
-          title={open ? 'The timeline you’re editing' : 'Double-click to open — drag onto the timeline to nest it'}
+          title={open ? tt('The timeline you’re editing') : tt('Double-click to open — drag onto the timeline to nest it')}
         >
           <span className={cn('grid size-8 shrink-0 place-items-center rounded-lg', open ? 'bg-accent/15 text-accent-2' : 'bg-clip-nest/15 text-clip-nest')}>
             <Icon className="size-4" />
@@ -71,17 +73,17 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <span className="truncate text-xs font-medium text-fg-2 group-hover/tl:text-fg">{seq.name}</span>
-              {open && <span className="shrink-0 rounded bg-accent/15 px-1 text-[9px] font-bold text-accent-2">OPEN</span>}
+              {open && <span className="shrink-0 rounded bg-accent/15 px-1 text-[9px] font-bold text-accent-2">{tt('OPEN')}</span>}
               {seq.multicam && <span className="shrink-0 rounded bg-white/[0.07] px-1 text-[9px] font-bold text-fg-3">MULTICAM</span>}
             </div>
             <div className="text-2xs text-fg-4 tabular">
-              {seq.settings.width}×{seq.settings.height} · {seq.settings.fps} fps · {formatDuration(clipsLength(seq.clips), seq.settings.fps)}
+              {ttx('{0}×{1} · {2} fps · {3}', seq.settings.width, seq.settings.height, seq.settings.fps, formatDuration(clipsLength(seq.clips), seq.settings.fps))}
             </div>
           </div>
           {nestable && (
             <button
               type="button"
-              aria-label={`Add ${seq.name} at the playhead`}
+              aria-label={tt('Add {0} at the playhead', seq.name)}
               onClick={add}
               className="grid size-6 shrink-0 place-items-center rounded-full text-fg-3 opacity-0 transition-opacity group-hover/tl:opacity-100 hover:bg-white/[0.1] hover:text-fg"
             >
@@ -93,25 +95,25 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
       <ContextContent>
         {!open && (
           <ContextItem icon={<FolderOpen />} onSelect={() => openTimeline(seq.id)}>
-            Open
+            {tt('Open')}
           </ContextItem>
         )}
         {nestable && (
           <ContextItem icon={<Plus />} onSelect={add}>
-            Add at playhead (nested)
+            {tt('Add at playhead (nested)')}
           </ContextItem>
         )}
         <ContextItem icon={<PencilLine />} onSelect={() => useUI.getState().setRenamingTimeline(seq.id)}>
-          Rename…
+          {tt('Rename…')}
         </ContextItem>
         <ContextItem icon={<CopyPlus />} onSelect={() => dispatch('sequence.duplicate', { id: seq.id })}>
-          Duplicate
+          {tt('Duplicate')}
         </ContextItem>
         {!open && (
           <>
             <ContextSeparator />
             <ContextItem icon={<Trash />} danger onSelect={remove}>
-              Delete timeline
+              {tt('Delete timeline')}
             </ContextItem>
           </>
         )}

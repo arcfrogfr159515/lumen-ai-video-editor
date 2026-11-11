@@ -22,6 +22,8 @@ import { useIngest } from '@/project/ingest'
 import { IngestPane } from './IngestPane'
 import { Card, CopyField, IconTile, PaneHeader, STATUS_LABEL, StatusDot } from './parts'
 import { ToolList, ToolRunner } from './ToolRunner'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 type Selection = 'ai-models' | 'local-agents' | 'skills' | 'blender' | 'hyperframes' | 'elevenlabs' | 'agents' | 'ingest' | 'add' | `server:${string}` | `catalog:${string}`
 
@@ -38,8 +40,8 @@ export function IntegrationsHub() {
     <Dialog
       open={open}
       onOpenChange={(o) => useIntegrations.setState({ hubOpen: o })}
-      title="Integrations"
-      description="Connect Blender, HyperFrames and MCP servers so Lumen’s AI can make assets for your edit."
+      title={tt('Integrations')}
+      description={tt('Connect Blender, HyperFrames and MCP servers so Lumen’s AI can make assets for your edit.')}
       bare
       focusContent
       className="h-[min(680px,calc(100vh-64px))] w-[min(1000px,calc(100vw-48px))]"
@@ -81,43 +83,43 @@ function Sidebar({ selected, onSelect }: { selected: Selection; onSelect: (s: Se
     <nav className="flex w-[244px] shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-line bg-black/15 px-2.5 py-5">
       <div className="mb-4 px-2.5">
         <div className="flex items-center gap-2 text-md font-semibold tracking-tight text-fg">
-          <Plug className="size-4 text-accent-2" /> Integrations
+          <Plug className="size-4 text-accent-2" />{' '}{tt('Integrations')}
         </div>
-        <p className="mt-1 text-2xs leading-relaxed text-fg-4">Tools Lumen’s AI can use to make assets for your edit.</p>
+        <p className="mt-1 text-2xs leading-relaxed text-fg-4">{tt('Tools Lumen’s AI can use to make assets for your edit.')}</p>
       </div>
 
-      <NavLabel>Copilot</NavLabel>
+      <NavLabel>{tt('Copilot')}</NavLabel>
       <NavItem
         active={selected === 'ai-models'}
         onClick={() => onSelect('ai-models')}
         icon={<IconTile tone="lumen" size="sm"><Sparkles /></IconTile>}
-        label="AI models"
-        hint={modelCount ? `${modelCount} connected` : 'Claude, GPT, Gemini, OpenRouter…'}
+        label={tt('AI models')}
+        hint={modelCount ? tt('{0} connected', modelCount) : tt('Claude, GPT, Gemini, OpenRouter…')}
         status={modelCount ? 'ready' : undefined}
       />
       <NavItem
         active={selected === 'local-agents'}
         onClick={() => onSelect('local-agents')}
         icon={<IconTile tone="mcp" size="sm"><Terminal /></IconTile>}
-        label="Claude Code & Codex"
-        hint={agentsReady ? `${agentsReady} ready` : 'Use your own install'}
+        label={tt('Claude Code & Codex')}
+        hint={agentsReady ? tt('{0} ready', agentsReady) : tt('Use your own install')}
         status={agentsReady ? 'ready' : undefined}
       />
-      <NavItem active={selected === 'skills'} onClick={() => onSelect('skills')} icon={<IconTile tone="lumen" size="sm"><BookOpen /></IconTile>} label="Skills" hint={`${skillsOn} on`} status={skillsOn ? 'ready' : undefined} />
+      <NavItem active={selected === 'skills'} onClick={() => onSelect('skills')} icon={<IconTile tone="lumen" size="sm"><BookOpen /></IconTile>} label={tt('Skills')} hint={tt('{0} on', skillsOn)} status={skillsOn ? 'ready' : undefined} />
 
-      <NavLabel>Engines</NavLabel>
-      <NavItem active={selected === 'blender'} onClick={() => onSelect('blender')} icon={<IconTile tone="blender" size="sm"><Box /></IconTile>} label="Blender" hint={!available ? 'Desktop app' : blender?.found ? blender.version : blender ? 'Not found' : 'Checking…'} status={blender?.found ? 'ready' : blender ? 'missing' : undefined} />
-      <NavItem active={selected === 'hyperframes'} onClick={() => onSelect('hyperframes')} icon={<IconTile tone="hyperframes" size="sm"><Clapperboard /></IconTile>} label="HyperFrames" hint="Built in" status={available ? 'ready' : undefined} />
+      <NavLabel>{tt('Engines')}</NavLabel>
+      <NavItem active={selected === 'blender'} onClick={() => onSelect('blender')} icon={<IconTile tone="blender" size="sm"><Box /></IconTile>} label={tt('Blender')} hint={!available ? tt('Desktop app') : blender?.found ? blender.version : blender ? tt('Not found') : tt('Checking…')} status={blender?.found ? 'ready' : blender ? 'missing' : undefined} />
+      <NavItem active={selected === 'hyperframes'} onClick={() => onSelect('hyperframes')} icon={<IconTile tone="hyperframes" size="sm"><Clapperboard /></IconTile>} label={tt('HyperFrames')} hint={tt('Built in')} status={available ? 'ready' : undefined} />
       <NavItem
         active={selected === 'elevenlabs'}
         onClick={() => onSelect('elevenlabs')}
         icon={<IconTile tone="mcp" size="sm"><AudioLines /></IconTile>}
-        label="ElevenLabs"
-        hint={eleven?.configured ? 'Connected' : 'Voice, transcripts, SFX, music'}
+        label={tt('ElevenLabs')}
+        hint={eleven?.configured ? tt('Connected') : tt('Voice, transcripts, SFX, music')}
         status={eleven?.configured ? 'ready' : undefined}
       />
 
-      <NavLabel>MCP servers</NavLabel>
+      <NavLabel>{tt('MCP servers')}</NavLabel>
       {configured.map((s) => (
         <NavItem
           key={s.config.id}
@@ -125,25 +127,25 @@ function Sidebar({ selected, onSelect }: { selected: Selection; onSelect: (s: Se
           onClick={() => onSelect(`server:${s.config.id}`)}
           icon={<ServerGlyph config={s.config} />}
           label={s.config.name}
-          hint={s.status === 'connected' ? `${s.tools.length} tools` : STATUS_LABEL[s.status]}
+          hint={s.status === 'connected' ? tt('{0} tools', s.tools.length) : STATUS_LABEL[s.status]}
           status={s.status}
         />
       ))}
       {catalog.map((c) => (
-        <NavItem key={c.id} active={selected === `catalog:${c.id}`} onClick={() => onSelect(`catalog:${c.id}`)} icon={<ServerGlyph config={c} />} label={c.name} hint="Not added" muted />
+        <NavItem key={c.id} active={selected === `catalog:${c.id}`} onClick={() => onSelect(`catalog:${c.id}`)} icon={<ServerGlyph config={c} />} label={c.name} hint={tt('Not added')} muted />
       ))}
-      <NavItem active={selected === 'add'} onClick={() => onSelect('add')} icon={<span className="grid size-7 place-items-center rounded-[8px] border border-dashed border-line-3 text-fg-3"><Plus className="size-3.5" /></span>} label="Add a server" hint="Any MCP URL or command" />
+      <NavItem active={selected === 'add'} onClick={() => onSelect('add')} icon={<span className="grid size-7 place-items-center rounded-[8px] border border-dashed border-line-3 text-fg-3"><Plus className="size-3.5" /></span>} label={tt('Add a server')} hint={tt('Any MCP URL or command')} />
 
-      <NavLabel>For AI agents</NavLabel>
-      <NavItem active={selected === 'agents'} onClick={() => onSelect('agents')} icon={<IconTile tone="lumen" size="sm"><Waypoints /></IconTile>} label="Lumen MCP server" hint={bridge.running ? 'On' : 'Off'} status={bridge.running ? 'ready' : undefined} />
+      <NavLabel>{tt('For AI agents')}</NavLabel>
+      <NavItem active={selected === 'agents'} onClick={() => onSelect('agents')} icon={<IconTile tone="lumen" size="sm"><Waypoints /></IconTile>} label={tt('Lumen MCP server')} hint={bridge.running ? tt('On') : tt('Off')} status={bridge.running ? 'ready' : undefined} />
 
-      <NavLabel>From other apps</NavLabel>
+      <NavLabel>{tt('From other apps')}</NavLabel>
       <NavItem
         active={selected === 'ingest'}
         onClick={() => onSelect('ingest')}
         icon={<IconTile tone="lumen" size="sm"><Film /></IconTile>}
-        label="Frame ingest"
-        hint={receiving ? `Receiving ${receiving === 1 ? 'a clip' : `${receiving} clips`}` : ingest?.running ? 'On' : 'Off'}
+        label={tt('Frame ingest')}
+        hint={receiving ? tt('Receiving {0}', receiving === 1 ? tt('a clip') : tt('{0} clips', receiving)) : ingest?.running ? tt('On') : tt('Off')}
         status={ingest?.running ? 'ready' : undefined}
       />
     </nav>
@@ -179,7 +181,7 @@ function ServerGlyph({ config }: { config: Pick<McpServerConfig, 'id' | 'name' |
   if (config.preset === 'runway' || config.preset === 'replicate' || config.preset === 'fal')
     return (
       <IconTile tone="mcp" size="sm">
-        <span className="text-[11px] font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? 'Re' : 'f'}</span>
+        <span className="text-[11px] font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? tt('Re') : 'f'}</span>
       </IconTile>
     )
   if (config.preset === 'higgsfield')
@@ -231,8 +233,8 @@ function DesktopOnly() {
     <div className="grid min-h-[420px] place-items-center text-center">
       <div className="max-w-sm">
         <Plug className="mx-auto mb-3 size-8 text-fg-4" />
-        <h2 className="text-lg font-semibold text-fg">Integrations run in the desktop app</h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-fg-3">Blender, HyperFrames rendering and MCP connections need Lumen’s desktop app — the browser preview can’t launch local tools.</p>
+        <h2 className="text-lg font-semibold text-fg">{tt('Integrations run in the desktop app')}</h2>
+        <p className="mt-1.5 text-sm leading-relaxed text-fg-3">{tt('Blender, HyperFrames rendering and MCP connections need Lumen’s desktop app — the browser preview can’t launch local tools.')}</p>
       </div>
     </div>
   )
@@ -263,26 +265,26 @@ function BlenderPane() {
     <div>
       <PaneHeader
         icon={<IconTile tone="blender"><Box /></IconTile>}
-        title="Blender"
-        subtitle="Real 3D for your edit: Lumen drives Blender in the background and drops transparent renders straight into your media."
+        title={tt('Blender')}
+        subtitle={tt('Real 3D for your edit: Lumen drives Blender in the background and drops transparent renders straight into your media.')}
       />
       <Card>
         <div className="flex items-center gap-3">
           <StatusDot status={blender?.found ? 'ready' : 'missing'} className="size-2" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-fg">{blender?.found ? `Blender ${blender.version} is ready` : checking ? 'Looking for Blender…' : 'Blender not found'}</div>
-            <div className="truncate font-mono text-2xs text-fg-4">{blender?.path ?? 'Install Blender 4.2 or newer, or point Lumen at it.'}</div>
+            <div className="text-sm font-medium text-fg">{blender?.found ? tt('Blender {0} is ready', blender.version) : checking ? tt('Looking for Blender…') : tt('Blender not found')}</div>
+            <div className="truncate font-mono text-2xs text-fg-4">{blender?.path ?? tt('Install Blender 4.2 or newer, or point Lumen at it.')}</div>
           </div>
           <Button size="sm" variant="ghost" onClick={() => void refreshBlender()} disabled={checking}>
-            <RefreshCw className={cn(checking && 'animate-spin')} /> Re-detect
+            <RefreshCw className={cn(checking && 'animate-spin')} />{' '}{tt('Re-detect')}
           </Button>
           <Button size="sm" variant="outline" onClick={() => (setEditing(!editing), setPath(blender?.path ?? ''))}>
-            {blender?.found ? 'Change' : 'Locate'}
+            {blender?.found ? tt('Change') : tt('Locate')}
           </Button>
         </div>
         {editing && (
           <div className="mt-3 flex gap-2 border-t border-line pt-3">
-            <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="C:\Program Files\Blender Foundation\Blender 5.1\blender.exe" className="font-mono text-xs" />
+            <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder={tt('C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe')} className="font-mono text-xs" />
             <Button
               size="md"
               variant="primary"
@@ -291,45 +293,45 @@ function BlenderPane() {
                 setEditing(false)
               }}
             >
-              Save
+              {tt('Save')}
             </Button>
             <Button size="md" variant="ghost" onClick={async () => (await setBlenderPath(null), setEditing(false))}>
-              Auto
+              {tt('Auto')}
             </Button>
           </div>
         )}
         {!blender?.found && !editing && (
           <a href="https://www.blender.org/download/" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs text-accent-2 hover:underline">
-            Download Blender (free) <ExternalLink className="size-3" />
+            {tt('Download Blender (free)')}{' '}<ExternalLink className="size-3" />
           </a>
         )}
       </Card>
 
       <div className="mt-4 grid grid-cols-3 gap-2.5">
-        <Feature title="3D titles">Extruded, bevelled type in chrome, gold, glass or neon — lit in a studio, with motion blur and a transparent background.</Feature>
-        <Feature title="Motion backgrounds">Seamless looping abstract 3D scenes with depth of field, in your palette.</Feature>
-        <Feature title="AI-built scenes">Agents write Blender Python; Lumen renders it after you approve, and it lands on your timeline.</Feature>
+        <Feature title={tt('3D titles')}>{tt('Extruded, bevelled type in chrome, gold, glass or neon — lit in a studio, with motion blur and a transparent background.')}</Feature>
+        <Feature title={tt('Motion backgrounds')}>{tt('Seamless looping abstract 3D scenes with depth of field, in your palette.')}</Feature>
+        <Feature title={tt('AI-built scenes')}>{tt('Agents write Blender Python; Lumen renders it after you approve, and it lands on your timeline.')}</Feature>
       </div>
 
       <Card className="mt-4">
         <div className="flex items-start gap-3">
           <StatusDot status={blender?.live ? 'ready' : 'disconnected'} className="mt-1.5 size-2" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-fg">Live link {blender?.live ? '— your Blender is listening' : '(optional)'}</div>
+            <div className="text-sm font-medium text-fg">{ttx('Live link {0}', blender?.live ? tt('— your Blender is listening') : tt('(optional)'))}</div>
             <p className="mt-0.5 text-xs leading-relaxed text-fg-3">
               {blender?.live
-                ? 'Agents can now inspect and change the scene you have open in Blender (port 9876). Every script asks for your approval first.'
-                : 'To let agents work inside the Blender window you have open, install the BlenderMCP add-on and start its server (port 9876). Headless renders don’t need this.'}
+                ? tt('Agents can now inspect and change the scene you have open in Blender (port 9876). Every script asks for your approval first.')
+                : tt('To let agents work inside the Blender window you have open, install the BlenderMCP add-on and start its server (port 9876). Headless renders don’t need this.')}
             </p>
           </div>
           <a href="https://github.com/ahujasid/blender-mcp" target="_blank" rel="noreferrer" className="shrink-0 text-xs text-accent-2 hover:underline">
-            Add-on ↗
+            {tt('Add-on ↗')}
           </a>
         </div>
       </Card>
 
       <Button variant="primary" size="lg" className="mt-6" disabled={!blender?.found} onClick={() => openGenerator('3d')}>
-        Make something in 3D <ArrowRight />
+        {tt('Make something in 3D')}{' '}<ArrowRight />
       </Button>
     </div>
   )
@@ -340,30 +342,30 @@ function HyperFramesPane() {
     <div>
       <PaneHeader
         icon={<IconTile tone="hyperframes"><Clapperboard /></IconTile>}
-        title="HyperFrames"
-        subtitle="HeyGen’s open-source HTML-to-video framework. Motion graphics are written as HTML + GSAP and rendered frame-exactly inside Lumen — no FFmpeg or browser download."
+        title={tt('HyperFrames')}
+        subtitle={tt('HeyGen’s open-source HTML-to-video framework. Motion graphics are written as HTML + GSAP and rendered frame-exactly inside Lumen — no FFmpeg or browser download.')}
       />
       <Card>
         <div className="flex items-center gap-3">
           <StatusDot status="ready" className="size-2" />
           <div className="flex-1">
-            <div className="text-sm font-medium text-fg">Built in</div>
-            <div className="text-2xs text-fg-4">@hyperframes/core runtime · Apache-2.0</div>
+            <div className="text-sm font-medium text-fg">{tt('Built in')}</div>
+            <div className="text-2xs text-fg-4">{tt('@hyperframes/core runtime · Apache-2.0')}</div>
           </div>
           <a href="https://github.com/heygen-com/hyperframes" target="_blank" rel="noreferrer" className="text-xs text-accent-2 hover:underline">
-            GitHub ↗
+            {tt('GitHub ↗')}
           </a>
         </div>
       </Card>
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <Feature title="Lower thirds">Names and titles with a glass panel, accent bar and clean exits.</Feature>
-        <Feature title="Title cards">Letter-by-letter reveals with a shimmer pass.</Feature>
-        <Feature title="Kinetic type">Punchy word-by-word typography, timed to fill the clip.</Feature>
-        <Feature title="Stat counters">Animated numbers with a progress ring.</Feature>
+        <Feature title={tt('Lower thirds')}>{tt('Names and titles with a glass panel, accent bar and clean exits.')}</Feature>
+        <Feature title={tt('Title cards')}>{tt('Letter-by-letter reveals with a shimmer pass.')}</Feature>
+        <Feature title={tt('Kinetic type')}>{tt('Punchy word-by-word typography, timed to fill the clip.')}</Feature>
+        <Feature title={tt('Stat counters')}>{tt('Animated numbers with a progress ring.')}</Feature>
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-fg-4">AI agents can also hand Lumen a complete HyperFrames composition — anything HTML, CSS and GSAP can draw — and get back a transparent clip.</p>
+      <p className="mt-4 text-xs leading-relaxed text-fg-4">{tt('AI agents can also hand Lumen a complete HyperFrames composition — anything HTML, CSS and GSAP can draw — and get back a transparent clip.')}</p>
       <Button variant="primary" size="lg" className="mt-6" onClick={() => openGenerator('motion')}>
-        Make a motion graphic <ArrowRight />
+        {tt('Make a motion graphic')}{' '}<ArrowRight />
       </Button>
     </div>
   )
@@ -403,11 +405,11 @@ function ServerPane({ server, onRemoved }: { server: McpServerState; onRemoved: 
           <div className="flex shrink-0 items-center gap-1.5">
             {status === 'connected' ? (
               <Button size="sm" variant="outline" disabled={busy} onClick={act(() => disconnectServer(config.id))}>
-                <Unplug /> Disconnect
+                <Unplug />{' '}{tt('Disconnect')}
               </Button>
             ) : (
               <Button size="sm" variant="primary" disabled={busy || status === 'connecting' || status === 'needs-auth'} onClick={act(() => connectServer(config.id))}>
-                {status === 'connecting' || status === 'needs-auth' ? <LoaderCircle className="animate-spin" /> : <Plug />} Connect
+                {status === 'connecting' || status === 'needs-auth' ? <LoaderCircle className="animate-spin" /> : <Plug />}{' '}{tt('Connect')}
               </Button>
             )}
           </div>
@@ -417,17 +419,17 @@ function ServerPane({ server, onRemoved }: { server: McpServerState; onRemoved: 
         {config.transport === 'http' ? config.url : [config.command, ...(config.args ?? [])].join(' ')}
       </div>
       <label className="mb-5 flex cursor-pointer items-center gap-3 rounded-lg px-1 py-1.5">
-        <Switch checked={config.agentTools !== false} disabled={busy} onChange={(on) => void act(() => saveServer({ ...config, agentTools: on }))()} aria-label="Copilot can use these tools" />
+        <Switch checked={config.agentTools !== false} disabled={busy} onChange={(on) => void act(() => saveServer({ ...config, agentTools: on }))()} aria-label={tt('Copilot can use these tools')} />
         <span className="text-sm text-fg-2">
-          Copilot and your agents can use these tools
-          <span className="block text-2xs text-fg-4">Tools that can’t be undone always ask you first.</span>
+          {tt('Copilot and your agents can use these tools')}
+          <span className="block text-2xs text-fg-4">{tt('Tools that can’t be undone always ask you first.')}</span>
         </span>
       </label>
 
       {status === 'needs-auth' && (
         <Card className="mb-5 flex items-center gap-3">
           <LoaderCircle className="size-4 shrink-0 animate-spin text-accent-2" />
-          <p className="text-sm text-fg-2">Finish signing in to {config.name} in your browser — Lumen connects as soon as you’re back.</p>
+          <p className="text-sm text-fg-2">{ttx('Finish signing in to {0} in your browser — Lumen connects as soon as you’re back.', config.name)}</p>
         </Card>
       )}
       {status === 'error' && server.error && (
@@ -439,7 +441,7 @@ function ServerPane({ server, onRemoved }: { server: McpServerState; onRemoved: 
       ) : (
         status !== 'needs-auth' && (
           <p className="text-sm leading-relaxed text-fg-3">
-            Connect to see what {config.name} can do. Its tools show up here, in the Generate panel{config.agentTools !== false ? ' and for Copilot' : ''}.
+            {ttx('Connect to see what {0} can do. Its tools show up here, in the Generate panel{1}.', config.name, config.agentTools !== false ? (' ' + tt('and for Copilot')) : '')}
           </p>
         )
       )}
@@ -447,7 +449,7 @@ function ServerPane({ server, onRemoved }: { server: McpServerState; onRemoved: 
       <div className="mt-8 flex items-center gap-2 border-t border-line pt-4">
         {server.authorized && (
           <Button size="sm" variant="ghost" disabled={busy} onClick={act(() => signOutServer(config.id))}>
-            <LogOut /> Sign out
+            <LogOut />{' '}{tt('Sign out')}
           </Button>
         )}
         <Button
@@ -460,7 +462,7 @@ function ServerPane({ server, onRemoved }: { server: McpServerState; onRemoved: 
             onRemoved()
           })}
         >
-          <Trash /> Remove server
+          <Trash />{' '}{tt('Remove server')}
         </Button>
       </div>
     </div>
@@ -471,7 +473,7 @@ function ServerGlyphLarge({ config }: { config: Pick<McpServerConfig, 'transport
   if (config.preset === 'runway' || config.preset === 'replicate' || config.preset === 'fal')
     return (
       <IconTile tone="mcp">
-        <span className="text-base font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? 'Re' : 'f'}</span>
+        <span className="text-base font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? tt('Re') : 'f'}</span>
       </IconTile>
     )
   if (config.preset === 'higgsfield')
@@ -520,21 +522,21 @@ function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id:
       <PaneHeader icon={<ServerGlyphLarge config={entry} />} title={entry.name} subtitle={entry.tagline} />
       <Card>
         <dl className="grid grid-cols-[110px_1fr] gap-x-4 gap-y-2.5 text-sm">
-          <dt className="text-fg-4">Connection</dt>
+          <dt className="text-fg-4">{tt('Connection')}</dt>
           <dd className="font-mono text-xs break-all text-fg-2">{entry.transport === 'http' ? (entry.urlHint ? address || entry.url : entry.url) : [entry.command, ...(entry.args ?? [])].join(' ')}</dd>
-          <dt className="text-fg-4">Sign-in</dt>
+          <dt className="text-fg-4">{tt('Sign-in')}</dt>
           <dd className="text-fg-2">
             {entry.auth === 'oauth'
-              ? 'Your browser opens to sign in; tokens are encrypted on this computer.'
+              ? tt('Your browser opens to sign in; tokens are encrypted on this computer.')
               : entry.auth === 'key'
-                ? 'Your API key, encrypted with your OS keychain.'
+                ? tt('Your API key, encrypted with your OS keychain.')
                 : entry.auth === 'local'
-                  ? 'Runs locally on your computer.'
-                  : 'None'}
+                  ? tt('Runs locally on your computer.')
+                  : tt('None')}
           </dd>
           {entry.requirement && (
             <>
-              <dt className="text-fg-4">You’ll need</dt>
+              <dt className="text-fg-4">{tt('You’ll need')}</dt>
               <dd className="text-fg-2">{entry.requirement}</dd>
             </>
           )}
@@ -549,10 +551,10 @@ function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id:
       {entry.auth === 'key' && (
         <div className="mt-4">
           <div className="flex items-center gap-2">
-            <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={entry.keyHint ? 'Token' : 'API key'} className="font-mono text-xs" autoComplete="off" />
+            <Input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={entry.keyHint ? tt('Token') : tt('API key')} className="font-mono text-xs" autoComplete="off" />
             {entry.keyUrl && (
               <a href={entry.keyUrl} target="_blank" rel="noreferrer" className="shrink-0 text-xs text-accent-2 hover:underline">
-                Get a key ↗
+                {tt('Get a key ↗')}
               </a>
             )}
           </div>
@@ -561,11 +563,11 @@ function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id:
       )}
       <div className="mt-6 flex items-center gap-3">
         <Button variant="primary" size="lg" disabled={busy || !urlOk || (entry.auth === 'key' && !key.trim())} onClick={add}>
-          {busy ? <LoaderCircle className="animate-spin" /> : <Plug />} Connect {entry.name}
+          {busy ? <LoaderCircle className="animate-spin" /> : <Plug />}{' '}{ttx('Connect {0}', entry.name)}
         </Button>
         {entry.docs && (
           <a href={entry.docs} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-fg-3 hover:text-fg">
-            Learn more <ExternalLink className="size-3" />
+            {tt('Learn more')}{' '}<ExternalLink className="size-3" />
           </a>
         )}
       </div>
@@ -621,49 +623,49 @@ function AddServerPane({ onAdded }: { onAdded: (id: string) => void }) {
 
   return (
     <div>
-      <PaneHeader icon={<IconTile tone="mcp"><Plus /></IconTile>} title="Add an MCP server" subtitle="Any Model Context Protocol server — hosted (URL) or local (command). Its tools become available to you and to Lumen’s AI." />
+      <PaneHeader icon={<IconTile tone="mcp"><Plus /></IconTile>} title={tt('Add an MCP server')} subtitle={tt('Any Model Context Protocol server — hosted (URL) or local (command). Its tools become available to you and to Lumen’s AI.')} />
       <div className="space-y-4">
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-fg-2">Name</span>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Runway, ElevenLabs, My tools" />
+          <span className="mb-1.5 block text-xs font-medium text-fg-2">{tt('Name')}</span>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tt('e.g. Runway, ElevenLabs, My tools')} />
         </label>
         <Segmented
           value={kind}
           onChange={setKind}
           size="md"
           options={[
-            { value: 'http', label: 'Remote (URL)', icon: <Server /> },
-            { value: 'stdio', label: 'Local (command)', icon: <Terminal /> },
+            { value: 'http', label: tt('Remote (URL)'), icon: <Server /> },
+            { value: 'stdio', label: tt('Local (command)'), icon: <Terminal /> },
           ]}
         />
         {kind === 'http' ? (
           <label className="block">
-            <span className="mb-1.5 block text-xs font-medium text-fg-2">Server URL</span>
+            <span className="mb-1.5 block text-xs font-medium text-fg-2">{tt('Server URL')}</span>
             <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/mcp" className="font-mono text-xs" />
           </label>
         ) : (
           <label className="block">
-            <span className="mb-1.5 block text-xs font-medium text-fg-2">Command</span>
-            <Input value={command} onChange={(e) => setCommand(e.target.value)} placeholder="npx -y @modelcontextprotocol/server-everything" className="font-mono text-xs" />
+            <span className="mb-1.5 block text-xs font-medium text-fg-2">{tt('Command')}</span>
+            <Input value={command} onChange={(e) => setCommand(e.target.value)} placeholder={tt('npx -y @modelcontextprotocol/server-everything')} className="font-mono text-xs" />
           </label>
         )}
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-fg-2">{kind === 'http' ? 'Headers' : 'Environment'} <span className="font-normal text-fg-4">— optional, one per line</span></span>
+          <span className="mb-1.5 block text-xs font-medium text-fg-2">{kind === 'http' ? tt('Headers') : tt('Environment')} <span className="font-normal text-fg-4">{tt('— optional, one per line')}</span></span>
           <textarea
             value={extra}
             onChange={(e) => setExtra(e.target.value)}
             rows={3}
-            placeholder={kind === 'http' ? 'Authorization: Bearer …' : 'API_KEY=…'}
+            placeholder={kind === 'http' ? tt('Authorization: Bearer …') : tt('API_KEY=…')}
             className="w-full resize-y rounded-control bg-white/[0.045] px-2.5 py-2 font-mono text-xs leading-relaxed text-fg shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none placeholder:text-fg-4 focus:bg-white/[0.07]"
           />
-          <span className="mt-1 block text-2xs text-fg-4">{kind === 'http' ? 'Servers that support OAuth open a sign-in page instead — no keys needed.' : 'Stored in Lumen’s settings on this computer.'}</span>
+          <span className="mt-1 block text-2xs text-fg-4">{kind === 'http' ? tt('Servers that support OAuth open a sign-in page instead — no keys needed.') : tt('Stored in Lumen’s settings on this computer.')}</span>
         </label>
       </div>
       <div className="mt-6 flex items-center gap-3">
         <Button variant="primary" size="lg" disabled={!ready || busy} onClick={add}>
-          {busy ? <LoaderCircle className="animate-spin" /> : <Plus />} Add & connect
+          {busy ? <LoaderCircle className="animate-spin" /> : <Plus />}{' '}{tt('Add & connect')}
         </Button>
-        <span className="text-2xs leading-relaxed text-fg-4">Local servers run with your permissions — only add ones you trust.</span>
+        <span className="text-2xs leading-relaxed text-fg-4">{tt('Local servers run with your permissions — only add ones you trust.')}</span>
       </div>
     </div>
   )
@@ -691,26 +693,26 @@ function AgentsPane() {
     <div>
       <PaneHeader
         icon={<IconTile tone="lumen"><Waypoints /></IconTile>}
-        title="Lumen MCP server"
-        subtitle="Let AI agents — Claude Code, Claude Desktop or any MCP client — drive this editor: cut, arrange, title, grade, and render with Blender and HyperFrames."
-        right={<Switch aria-label="Enable Lumen MCP server" checked={status.running} disabled={busy} onChange={(on) => void toggle(on)} />}
+        title={tt('Lumen MCP server')}
+        subtitle={tt('Let AI agents — Claude Code, Claude Desktop or any MCP client — drive this editor: cut, arrange, title, grade, and render with Blender and HyperFrames.')}
+        right={<Switch aria-label={tt('Enable Lumen MCP server')} checked={status.running} disabled={busy} onChange={(on) => void toggle(on)} />}
       />
       {status.error && <div className="mb-4 rounded-lg bg-danger/10 px-3 py-2 text-xs text-danger">{status.error}</div>}
       {status.running && status.url ? (
         <div className="space-y-4">
-          <CopyField label="Endpoint (Streamable HTTP, this computer only)" value={status.url} />
-          <CopyField label="Access token" value={status.token ?? ''} secret />
-          <CopyField label="Claude Code" value={`claude mcp add --transport http lumen ${status.url} --header "${auth}"`} secret />
-          <CopyField label=".mcp.json" value={JSON.stringify({ mcpServers: { lumen: { type: 'http', url: status.url, headers: { Authorization: `Bearer ${status.token}` } } } })} secret />
+          <CopyField label={tt('Endpoint (Streamable HTTP, this computer only)')} value={status.url} />
+          <CopyField label={tt('Access token')} value={status.token ?? ''} secret />
+          <CopyField label={tt('Claude Code')} value={`claude mcp add --transport http lumen ${status.url} --header "${auth}"`} secret />
+          <CopyField label={tt('.mcp.json')} value={JSON.stringify({ mcpServers: { lumen: { type: 'http', url: status.url, headers: { Authorization: `Bearer ${status.token}` } } } })} secret />
           <div className="flex items-center justify-between text-2xs text-fg-4">
-            <span>{tools.length} tools exposed · edits show up in History like your own, and can be undone.</span>
+            <span>{ttx('{0} tools exposed · edits show up in History like your own, and can be undone.', tools.length)}</span>
             <button type="button" className="text-fg-3 hover:text-fg" onClick={() => void regenerateBridgeToken()}>
-              New token
+              {tt('New token')}
             </button>
           </div>
           {log.length > 0 && (
             <Card className="p-0">
-              <div className="border-b border-line px-4 py-2.5 text-xs font-medium text-fg-2">Recent agent activity</div>
+              <div className="border-b border-line px-4 py-2.5 text-xs font-medium text-fg-2">{tt('Recent agent activity')}</div>
               <div className="max-h-48 overflow-y-auto py-1">
                 {log.map((entry) => (
                   <div key={entry.id} className="flex items-center gap-2.5 px-4 py-1.5 text-xs">
@@ -726,7 +728,7 @@ function AgentsPane() {
         </div>
       ) : (
         <Card>
-          <p className="text-sm leading-relaxed text-fg-2">When it’s on, Lumen listens on 127.0.0.1 only and every request needs a secret token. Scripts that would run code in Blender always ask you first.</p>
+          <p className="text-sm leading-relaxed text-fg-2">{tt('When it’s on, Lumen listens on 127.0.0.1 only and every request needs a secret token. Scripts that would run code in Blender always ask you first.')}</p>
         </Card>
       )}
     </div>

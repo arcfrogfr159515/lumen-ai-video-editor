@@ -12,6 +12,7 @@ import { drawTransitionPreview } from '@/engine/three/previews'
 import { dnd } from '@/features/dnd'
 import { clamp } from '@/lib/math'
 import { PanelHeader, scrollArea, SectionLabel } from './shared'
+import { tt } from '@/lib/i18n'
 
 /** CSS keyframe name per 2D transition — the B frame animates over A on hover. */
 const ANIM: Partial<Record<TransitionKind, string>> = {
@@ -70,7 +71,7 @@ export function TransitionsPanel() {
     // Two clips that touch: the cut between them. One clip: the cut at its start, or else at its end.
     if (sel.length === 2 && adjacentBefore(p, sel[1])?.id === sel[0].id) return void applyTransition(kind, sel[1].id, 'user', 'center')
     const spot = sel.length === 1 ? transitionSpot(p, sel[0]) : null
-    if (!spot) return void toast('Select a clip next to a cut', { description: 'Or the two clips on either side of it. You can also drag a transition onto the cut.' })
+    if (!spot) return void toast(tt('Select a clip next to a cut'), { description: tt('Or the two clips on either side of it. You can also drag a transition onto the cut.') })
     applyTransition(kind, spot.clipId, 'user', spot.align)
   }
 
@@ -96,13 +97,13 @@ export function TransitionsPanel() {
 
   return (
     <>
-      <PanelHeader title="Transitions" />
+      <PanelHeader title={tt('Transitions')} />
       <div className={scrollArea}>
         <SectionLabel>3D</SectionLabel>
         <div className="grid grid-cols-2 gap-x-2.5 gap-y-3">{TRANSITIONS.filter((t) => t.is3d).map(card)}</div>
-        <SectionLabel>Classic</SectionLabel>
+        <SectionLabel>{tt('Classic')}</SectionLabel>
         <div className="grid grid-cols-2 gap-x-2.5 gap-y-3">{TRANSITIONS.filter((t) => !t.is3d).map(card)}</div>
-        <p className="mt-4 px-1 text-2xs leading-relaxed text-fg-4">Drag a transition to where two clips touch: onto the end of the first clip, onto the cut itself, or onto the start of the second. Or select the clips and click. Click a transition on the timeline to move it, change its length or remove it.</p>
+        <p className="mt-4 px-1 text-2xs leading-relaxed text-fg-4">{tt('Drag a transition to where two clips touch: onto the end of the first clip, onto the cut itself, or onto the start of the second. Or select the clips and click. Click a transition on the timeline to move it, change its length or remove it.')}</p>
       </div>
     </>
   )

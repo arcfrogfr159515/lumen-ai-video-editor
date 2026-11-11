@@ -4,6 +4,8 @@ import { IconButton } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { clearFinishedJobs, openIntegrations, useIntegrations } from '@/integrations/store'
 import { RenderCard } from './parts'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 /** Title-bar entry to integrations, which turns into live progress while renders run. */
 export function JobsIndicator() {
@@ -27,19 +29,19 @@ export function JobsIndicator() {
                   {running.length ? (
                     <>
                       <LoaderCircle className="size-3.5 animate-spin text-ai-2" />
-                      <span className="tabular">{running.length === 1 ? `${Math.max(0, Math.round((running[0].progress >= 0 ? running[0].progress : 0) * 100))}%` : `${running.length} renders`}</span>
+                      <span className="tabular">{running.length === 1 ? `${Math.max(0, Math.round((running[0].progress >= 0 ? running[0].progress : 0) * 100))}%` : tt('{0} renders', running.length)}</span>
                     </>
                   ) : (
-                    <span className="tabular">Renders · {list.length}</span>
+                    <span className="tabular">{ttx('Renders · {0}', list.length)}</span>
                   )}
                 </button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-80 p-0">
                 <div className="flex items-center justify-between border-b border-line px-3.5 py-2.5">
-                  <span className="text-sm font-semibold text-fg">Renders & generations</span>
+                  <span className="text-sm font-semibold text-fg">{tt('Renders & generations')}</span>
                   {list.length > running.length && (
                     <button type="button" onClick={clearFinishedJobs} className="text-2xs text-fg-4 transition-colors hover:text-fg-2">
-                      Clear finished
+                      {tt('Clear finished')}
                     </button>
                   )}
                 </div>
@@ -53,7 +55,7 @@ export function JobsIndicator() {
           </motion.div>
         )}
       </AnimatePresence>
-      <IconButton label="Integrations" onClick={() => openIntegrations()} tooltipSide="bottom">
+      <IconButton label={tt('Integrations')} onClick={() => openIntegrations()} tooltipSide="bottom">
         <Plug />
       </IconButton>
     </div>

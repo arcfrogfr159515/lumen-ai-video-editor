@@ -17,6 +17,8 @@ import { useMediaSelection } from '@/features/assets/media-selection'
 import { timelineActions } from '@/features/timeline/timeline-actions'
 import { cn } from '@/lib/cn'
 import { formatDuration, formatSeconds } from '@/lib/time'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 export function TakesSection({ clip }: { clip: Clip }) {
   const fps = useEditor((s) => s.project.settings.fps)
@@ -40,14 +42,14 @@ export function TakesSection({ clip }: { clip: Clip }) {
     const res = dispatch('take.switch', { clipId: clip.id, takeId })
     if (!res.ok) return void toast(res.error)
     const r = res.result as SwitchResult
-    if (r.shortenedBy) toast(`This take is ${formatDuration(r.shortenedBy, fps)} shorter than the place`, { description: 'The clip got shorter. It gets its length back with a longer take.' })
+    if (r.shortenedBy) toast(tt('This take is {0} shorter than the place', formatDuration(r.shortenedBy, fps)), { description: tt('The clip got shorter. It gets its length back with a longer take.') })
   }
 
   return (
-    <Section title={rows.length ? `Takes · ${rows.findIndex((r) => r.take.id === clip.takeId) + 1} of ${rows.length}` : 'Takes'} icon={<Layers2 />} defaultOpen={rows.length > 0}>
+    <Section title={rows.length ? tt('Takes · {0} of {1}', rows.findIndex((r) => r.take.id === clip.takeId) + 1, rows.length) : tt('Takes')} icon={<Layers2 />} defaultOpen={rows.length > 0}>
       {rows.length === 0 ? (
         <p className="text-xs leading-relaxed text-fg-4">
-          Other footage that could play here — another take of the line, another piece of B-roll. Switching between them keeps the clip’s place, length, grade and effects.
+          {tt('Other footage that could play here — another take of the line, another piece of B-roll. Switching between them keeps the clip’s place, length, grade and effects.')}
         </p>
       ) : (
         <ul className="space-y-1">
@@ -69,20 +71,20 @@ export function TakesSection({ clip }: { clip: Clip }) {
                   <span className="min-w-0 flex-1">
                     <span className={cn('block truncate text-sm', showing ? 'font-medium text-fg' : 'text-fg-2')}>{take.name}</span>
                     <span className="block truncate text-2xs text-fg-4">
-                      {source !== take.name && `${source} · `}from {formatSeconds(take.inPoint / fps)}
-                      {seconds !== null && ` · ${formatSeconds(seconds)} to spare`}
+                      {ttx('{0}from {1}', source !== take.name && `${source} · `, formatSeconds(take.inPoint / fps))}
+                      {seconds !== null && (' ' + tt('· {0} to spare', formatSeconds(seconds)))}
                       {take.speed !== 1 && ` · ${take.speed}×`}
                     </span>
                   </span>
                   {missing ? (
-                    <TriangleAlert className="size-3.5 shrink-0 text-warn" aria-label="Its media is missing" />
+                    <TriangleAlert className="size-3.5 shrink-0 text-warn" aria-label={tt('Its media is missing')} />
                   ) : (
-                    !fills && !showing && <span className="shrink-0 rounded bg-warn/20 px-1 py-px text-[9.5px] font-semibold text-warn" title="Shorter than this place: the clip gets shorter while it shows">SHORT</span>
+                    !fills && !showing && <span className="shrink-0 rounded bg-warn/20 px-1 py-px text-[9.5px] font-semibold text-warn" title={tt('Shorter than this place: the clip gets shorter while it shows')}>{tt('SHORT')}</span>
                   )}
                 </button>
                 <button
                   type="button"
-                  aria-label={`Remove take ${i + 1}`}
+                  aria-label={tt('Remove take {0}', i + 1)}
                   onClick={() => dispatch('take.remove', { clipId: clip.id, takeId: take.id })}
                   className="grid size-6 shrink-0 place-items-center rounded-md text-fg-4 opacity-0 outline-none hover:bg-white/[0.08] hover:text-fg-2 group-hover/take:opacity-100 focus-visible:opacity-100"
                 >
@@ -94,21 +96,21 @@ export function TakesSection({ clip }: { clip: Clip }) {
         </ul>
       )}
       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-        <Button size="xs" variant="secondary" disabled={candidates.length === 0} onClick={() => timelineActions.addTakes(clip.id, candidates)} title="Select the other takes in the Media panel, then add them here">
-          <Plus /> Add {candidates.length > 0 ? `${candidates.length} selected` : 'selected media'}
+        <Button size="xs" variant="secondary" disabled={candidates.length === 0} onClick={() => timelineActions.addTakes(clip.id, candidates)} title={tt('Select the other takes in the Media panel, then add them here')}>
+          <Plus />{' '}{ttx('Add {0}', candidates.length > 0 ? tt('{0} selected', candidates.length) : tt('selected media'))}
         </Button>
         {rows.length > 1 && (
           <>
-            <Button size="xs" variant="ghost" onClick={() => dispatch('take.remove', { clipId: clip.id, all: true })} title="Forget the other candidates">
-              Keep only this one
+            <Button size="xs" variant="ghost" onClick={() => dispatch('take.remove', { clipId: clip.id, all: true })} title={tt('Forget the other candidates')}>
+              {tt('Keep only this one')}
             </Button>
             <span className="ml-auto flex items-center gap-1 text-2xs text-fg-4">
-              Next <Kbd combo="alt+t" />
+              {tt('Next')}{' '}<Kbd combo="alt+t" />
             </span>
           </>
         )}
       </div>
-      {rows.length === 0 && candidates.length === 0 && <p className="mt-2 text-2xs text-fg-4">Select media in the Media panel to add it — or drop it on the clip while holding Alt.</p>}
+      {rows.length === 0 && candidates.length === 0 && <p className="mt-2 text-2xs text-fg-4">{tt('Select media in the Media panel to add it — or drop it on the clip while holding Alt.')}</p>}
     </Section>
   )
 }

@@ -2,6 +2,8 @@ import { RotateCcw, Save, TriangleAlert } from 'lucide-react'
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button } from './button'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 /**
  * A part of the editor that fails to draw takes only itself down. Without
@@ -39,9 +41,9 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error(`${this.props.name} failed to draw`, error, info.componentStack)
     if (this.props.as === 'dialog') {
-      toast.error(`${this.props.name} ran into a problem`, {
+      toast.error(tt('{0} ran into a problem', this.props.name), {
         description: brief(error),
-        action: { label: 'Try again', onClick: this.retry },
+        action: { label: tt('Try again'), onClick: this.retry },
         duration: 12000,
       })
     }
@@ -59,20 +61,20 @@ export class ErrorBoundary extends Component<Props, State> {
         <div role="alert" className="grid h-screen place-items-center bg-canvas p-8 text-fg">
           <div className="max-w-md text-center">
             <TriangleAlert className="mx-auto size-8 text-warn" />
-            <h1 className="mt-4 text-xl font-semibold tracking-tight">Lumen ran into a problem</h1>
-            <p className="mt-2 text-sm leading-relaxed text-fg-2">The editor couldn’t be drawn. Your project is still in memory, and what you hadn’t saved is offered back the next time Lumen opens.</p>
+            <h1 className="mt-4 text-xl font-semibold tracking-tight">{tt('Lumen ran into a problem')}</h1>
+            <p className="mt-2 text-sm leading-relaxed text-fg-2">{tt('The editor couldn’t be drawn. Your project is still in memory, and what you hadn’t saved is offered back the next time Lumen opens.')}</p>
             <p className="mt-3 rounded-control bg-surface-2 px-3 py-2 text-left font-mono text-xs break-words text-fg-3">{brief(error)}</p>
             <div className="mt-5 flex justify-center gap-2">
               {onSaveCopy && (
                 <Button variant="primary" onClick={onSaveCopy}>
-                  <Save /> Save a copy
+                  <Save />{' '}{tt('Save a copy')}
                 </Button>
               )}
               <Button onClick={() => location.reload()}>
-                <RotateCcw /> Reload Lumen
+                <RotateCcw />{' '}{tt('Reload Lumen')}
               </Button>
               <Button variant="ghost" onClick={this.retry}>
-                Try again
+                {tt('Try again')}
               </Button>
             </div>
           </div>
@@ -83,11 +85,11 @@ export class ErrorBoundary extends Component<Props, State> {
       <div role="alert" className="grid h-full min-h-0 place-items-center overflow-auto rounded-panel bg-surface p-4 shadow-panel">
         <div className="max-w-xs text-center">
           <TriangleAlert className="mx-auto size-5 text-warn" />
-          <p className="mt-2 text-sm font-medium text-fg">{name} ran into a problem</p>
+          <p className="mt-2 text-sm font-medium text-fg">{ttx('{0} ran into a problem', name)}</p>
           <p className="mt-1 text-xs leading-relaxed break-words text-fg-3">{brief(error)}</p>
-          <p className="mt-1 text-xs leading-relaxed text-fg-3">The rest of the editor still works: you can save, undo, or try again.</p>
+          <p className="mt-1 text-xs leading-relaxed text-fg-3">{tt('The rest of the editor still works: you can save, undo, or try again.')}</p>
           <Button size="sm" className="mt-3" onClick={this.retry}>
-            <RotateCcw /> Try again
+            <RotateCcw />{' '}{tt('Try again')}
           </Button>
         </div>
       </div>

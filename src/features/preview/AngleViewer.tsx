@@ -8,6 +8,7 @@ import { useUI } from '@/editor/ui-store'
 import { setAngleSink } from '@/engine/compositor'
 import { notifyMediaReady } from '@/engine/media'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 interface Shown {
   clipId: string
@@ -87,7 +88,7 @@ export function AngleViewer() {
               key={a.id}
               type="button"
               onClick={() => cut(i)}
-              title={`Cut to ${a.name} at the playhead`}
+              title={tt('Cut to {0} at the playhead', a.name)}
               className={cn(
                 'group/angle relative shrink-0 overflow-hidden rounded-lg bg-black outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-accent/60',
                 active ? 'shadow-[0_0_0_2px_var(--color-accent),0_0_16px_-2px_rgb(214_238_0/0.5)]' : 'shadow-[0_0_0_1px_rgb(255_255_255/0.1)] hover:shadow-[0_0_0_1.5px_rgb(255_255_255/0.5)]',
@@ -107,7 +108,7 @@ export function AngleViewer() {
                 {i < 9 && <Kbd combo={String(i + 1)} />}
                 <span className={cn('truncate text-[11px] font-medium', active ? 'text-accent-2' : 'text-white/85')}>{a.name}</span>
               </span>
-              {active && <span className="absolute top-1.5 left-1.5 rounded bg-accent px-1 text-[9px] font-bold text-accent-fg">LIVE</span>}
+              {active && <span className="absolute top-1.5 left-1.5 rounded bg-accent px-1 text-[9px] font-bold text-accent-fg">{tt('LIVE')}</span>}
             </button>
           )
         })}

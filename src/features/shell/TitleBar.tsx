@@ -44,6 +44,8 @@ import { checkForUpdates, installUpdate, useUpdates } from '@/lib/updates'
 import { collectProject, openProject, refreshRecent, useDirty, useSession } from '@/project/session'
 import { pickSubtitles, saveSubtitles } from '@/project/subtitle-files'
 import { actions } from './actions'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 export function TitleBar() {
   const canUndo = useEditor((s) => s.past.length > 0)
@@ -86,7 +88,7 @@ export function TitleBar() {
         className="no-drag group absolute left-1/2 flex h-7 w-[min(380px,28vw)] -translate-x-1/2 items-center gap-2 rounded-lg bg-white/[0.04] px-2.5 text-sm text-fg-4 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] outline-none transition-colors hover:bg-white/[0.07] hover:text-fg-3 focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         <AiSparkle className="size-3.5 opacity-80 transition-opacity group-hover:opacity-100" />
-        <span className="truncate">Search, or ask Copilot to edit…</span>
+        <span className="truncate">{tt('Search, or ask Copilot to edit…')}</span>
         <Kbd combo="mod+k" className="ml-auto" />
       </button>
 
@@ -95,10 +97,10 @@ export function TitleBar() {
         <QueueIndicator />
         <JobsIndicator />
         <div className="mx-1.5 h-4 w-px bg-line-2" />
-        <IconButton label={undoLabel ? `Undo ${undoLabel}` : 'Undo'} shortcut="mod+z" disabled={!canUndo} onClick={actions.undo} tooltipSide="bottom">
+        <IconButton label={undoLabel ? tt('Undo {0}', undoLabel) : tt('Undo')} shortcut="mod+z" disabled={!canUndo} onClick={actions.undo} tooltipSide="bottom">
           <Undo2 />
         </IconButton>
-        <IconButton label={redoLabel ? `Redo ${redoLabel}` : 'Redo'} shortcut="mod+shift+z" disabled={!canRedo} onClick={actions.redo} tooltipSide="bottom">
+        <IconButton label={redoLabel ? tt('Redo {0}', redoLabel) : tt('Redo')} shortcut="mod+shift+z" disabled={!canRedo} onClick={actions.redo} tooltipSide="bottom">
           <Redo2 />
         </IconButton>
         <div className="mx-2 h-4 w-px bg-line-2" />
@@ -110,11 +112,11 @@ export function TitleBar() {
           className={cn('gap-1.5', rightTab === 'copilot' && 'bg-white/[0.07] text-fg')}
         >
           <AiSparkle />
-          Copilot
+          {tt('Copilot')}
         </Button>
         <Button variant="primary" size="sm" className="ml-1.5 px-3" onClick={() => setExportOpen(true)}>
           <Upload />
-          Export
+          {tt('Export')}
         </Button>
       </div>
     </header>
@@ -127,7 +129,7 @@ function RecordButton() {
   const seconds = useRecorder((s) => s.stats.seconds)
   if (phase === 'idle')
     return (
-      <IconButton label="Record a screen or window" shortcut="mod+shift+r" onClick={() => void openRecorder()} tooltipSide="bottom">
+      <IconButton label={tt('Record a screen or window')} shortcut="mod+shift+r" onClick={() => void openRecorder()} tooltipSide="bottom">
         <span className="grid size-[17px] place-items-center rounded-full ring-[1.5px] ring-current">
           <span className="size-[7px] rounded-full bg-danger" />
         </span>
@@ -136,13 +138,13 @@ function RecordButton() {
   const rolling = phase === 'recording' || phase === 'paused'
   return (
     <div className="mr-1 flex h-7 items-center gap-1 rounded-full bg-danger/14 pr-1 pl-2.5 text-xs font-medium text-danger tabular">
-      <button type="button" className="flex items-center gap-1.5" onClick={() => void openRecorder()} title="Show the recording">
+      <button type="button" className="flex items-center gap-1.5" onClick={() => void openRecorder()} title={tt('Show the recording')}>
         <span className={cn('size-2 rounded-full bg-danger', phase === 'recording' && 'animate-pulse-soft')} />
-        {phase === 'paused' ? 'Paused' : phase === 'finishing' ? 'Finishing' : phase === 'countdown' ? 'Starting' : phase === 'preparing' ? 'Getting ready' : fmtClock(seconds)}
+        {phase === 'paused' ? tt('Paused') : phase === 'finishing' ? tt('Finishing') : phase === 'countdown' ? tt('Starting') : phase === 'preparing' ? tt('Getting ready') : fmtClock(seconds)}
         {phase === 'paused' && <span className="text-danger/70">{fmtClock(seconds)}</span>}
       </button>
       {rolling && (
-        <button type="button" aria-label="Stop recording" title="Stop recording" onClick={() => void stopRecording().catch(() => {})} className="grid size-5 place-items-center rounded-full hover:bg-danger/20">
+        <button type="button" aria-label={tt('Stop recording')} title={tt('Stop recording')} onClick={() => void stopRecording().catch(() => {})} className="grid size-5 place-items-center rounded-full hover:bg-danger/20">
           <Square className="size-2.5" fill="currentColor" />
         </button>
       )}
@@ -171,14 +173,14 @@ function AppMenu() {
         </button>
       </MenuTrigger>
       <MenuContent className="w-60">
-        <MenuLabel>File</MenuLabel>
+        <MenuLabel>{tt('File')}</MenuLabel>
         <MenuItem icon={<FilePlus />} shortcut="mod+n" onSelect={actions.home}>
-          New project…
+          {tt('New project…')}
         </MenuItem>
         <MenuItem icon={<FolderOpen />} shortcut="mod+o" disabled={!desktop} onSelect={actions.open}>
-          Open project…
+          {tt('Open project…')}
         </MenuItem>
-        <MenuSub icon={<Clock />} label="Open recent">
+        <MenuSub icon={<Clock />} label={tt('Open recent')}>
           {recent.length ? (
             recent.slice(0, 10).map((r) => (
               <MenuItem key={r.path} disabled={!r.exists} onSelect={() => void openProject(r.path)}>
@@ -186,65 +188,65 @@ function AppMenu() {
               </MenuItem>
             ))
           ) : (
-            <MenuItem disabled>No recent projects</MenuItem>
+            <MenuItem disabled>{tt('No recent projects')}</MenuItem>
           )}
         </MenuSub>
         {!home && (
           <>
             <MenuSeparator />
             <MenuItem icon={<Save />} shortcut="mod+s" onSelect={() => void actions.save()}>
-              Save
+              {tt('Save')}
             </MenuItem>
             <MenuItem icon={<SaveAll />} shortcut="mod+shift+s" onSelect={actions.saveAs}>
-              Save as…
+              {tt('Save as…')}
             </MenuItem>
             <MenuItem icon={<Download />} shortcut="mod+i" onSelect={actions.importMedia}>
-              Import media…
+              {tt('Import media…')}
             </MenuItem>
-            <MenuSub icon={<Captions />} label="Subtitles">
-              <MenuItem onSelect={pickSubtitles}>Import SRT / VTT…</MenuItem>
-              <MenuItem onSelect={() => void saveSubtitles('srt')}>Export captions as SRT…</MenuItem>
-              <MenuItem onSelect={() => void saveSubtitles('vtt')}>Export captions as WebVTT…</MenuItem>
+            <MenuSub icon={<Captions />} label={tt('Subtitles')}>
+              <MenuItem onSelect={pickSubtitles}>{tt('Import SRT / VTT…')}</MenuItem>
+              <MenuItem onSelect={() => void saveSubtitles('srt')}>{tt('Export captions as SRT…')}</MenuItem>
+              <MenuItem onSelect={() => void saveSubtitles('vtt')}>{tt('Export captions as WebVTT…')}</MenuItem>
             </MenuSub>
             <MenuItem icon={<Upload />} shortcut="mod+e" onSelect={() => setExportOpen(true)}>
-              Export…
+              {tt('Export…')}
             </MenuItem>
             <MenuItem icon={<ListVideo />} shortcut="mod+shift+e" onSelect={() => useUI.getState().setQueueOpen(true)}>
-              Render queue…
+              {tt('Render queue…')}
             </MenuItem>
             <MenuItem icon={<History />} disabled={!desktop} onSelect={() => useUI.getState().setVersionsOpen(true)}>
-              Version history…
+              {tt('Version history…')}
             </MenuItem>
             <MenuItem icon={<FolderArchive />} disabled={!desktop} onSelect={() => void collectProject()}>
-              Collect project…
+              {tt('Collect project…')}
             </MenuItem>
             <MenuItem icon={<House />} onSelect={actions.home}>
-              Start screen
+              {tt('Start screen')}
             </MenuItem>
             <MenuSeparator />
             <MenuItem icon={autoProxies ? <Check /> : <Gauge />} onSelect={() => useUI.getState().setAutoProxies(!autoProxies)}>
-              Make proxies for 4K footage
+              {tt('Make proxies for 4K footage')}
             </MenuItem>
           </>
         )}
         <MenuSeparator />
         <MenuItem icon={<Keyboard />} shortcut="?" onSelect={() => setShortcutsOpen(true)}>
-          Keyboard shortcuts
+          {tt('Keyboard shortcuts')}
         </MenuItem>
         <MenuItem icon={<Cpu />} disabled={!desktop} onSelect={() => useUI.getState().setGraphicsOpen(true)}>
-          Graphics and encoding…
+          {tt('Graphics and encoding…')}
         </MenuItem>
         {updateReady ? (
           <MenuItem icon={<RefreshCw />} onSelect={() => void installUpdate()}>
-            Restart to update
+            {tt('Restart to update')}
           </MenuItem>
         ) : (
           <MenuItem icon={<RefreshCw />} disabled={!desktop} onSelect={() => void checkForUpdates()}>
-            Check for updates…
+            {tt('Check for updates…')}
           </MenuItem>
         )}
         <MenuItem icon={<Info />} onSelect={() => setAboutOpen(true)}>
-          About {APP_NAME}
+          {ttx('About {0}', APP_NAME)}
         </MenuItem>
       </MenuContent>
     </Menu>
@@ -259,21 +261,21 @@ function UpdatePill() {
   const setAboutOpen = useUI((s) => s.setAboutOpen)
   if (status === 'ready') {
     return (
-      <Tip content={`Lumen ${version} is downloaded — restart to install it`} side="bottom">
+      <Tip content={tt('Lumen {0} is downloaded — restart to install it', version)} side="bottom">
         <button
           type="button"
           onClick={() => void installUpdate()}
           className="mr-1 flex h-7 items-center gap-1.5 rounded-lg bg-accent/[0.14] px-2.5 text-xs font-medium text-accent-2 outline-none transition-colors hover:bg-accent/[0.22] focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           <RefreshCw className="size-3.5" />
-          Restart to update
+          {tt('Restart to update')}
         </button>
       </Tip>
     )
   }
   if (status === 'downloading') {
     return (
-      <Tip content={`Downloading Lumen ${version} — it installs when you restart`} side="bottom">
+      <Tip content={tt('Downloading Lumen {0} — it installs when you restart', version)} side="bottom">
         <button
           type="button"
           onClick={() => setAboutOpen(true)}
@@ -342,7 +344,7 @@ function ProjectName() {
             setEditing(true)
           }}
         >
-          Rename
+          {tt('Rename')}
         </MenuItem>
         <MenuItem
           icon={<Settings2 />}
@@ -351,16 +353,16 @@ function ProjectName() {
             useUI.getState().setRightTab('inspector')
           }}
         >
-          Project settings
+          {tt('Project settings')}
         </MenuItem>
         {path && (
           <MenuItem icon={<FolderSearch />} onSelect={() => void desktop?.files.reveal(path)}>
-            Show in folder
+            {tt('Show in folder')}
           </MenuItem>
         )}
         <MenuSeparator />
         <MenuItem icon={<House />} onSelect={actions.home}>
-          Close project
+          {tt('Close project')}
         </MenuItem>
       </MenuContent>
     </Menu>
@@ -375,20 +377,20 @@ function SaveBadge() {
       <Tip content={path}>
         <span className="no-drag flex items-center gap-1 pl-1 text-xs text-fg-4">
           <Check className="size-3" />
-          Saved
+          {tt('Saved')}
         </span>
       </Tip>
     )
   }
   return (
-    <Tip content={path ? 'Save changes' : 'Save this project to a file'} shortcut="mod+s">
+    <Tip content={path ? tt('Save changes') : tt('Save this project to a file')} shortcut="mod+s">
       <button
         type="button"
         onClick={() => void actions.save()}
         className="no-drag flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs text-fg-3 transition-colors hover:bg-white/[0.06] hover:text-fg"
       >
         <span className="size-1.5 rounded-full bg-accent" />
-        {path ? 'Unsaved changes' : 'Not saved'}
+        {path ? tt('Unsaved changes') : tt('Not saved')}
       </button>
     </Tip>
   )

@@ -3,6 +3,7 @@ import { ContextMenu, DropdownMenu } from 'radix-ui'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import { Kbd } from './kbd'
+import { tt } from '@/lib/i18n'
 
 const contentClass =
   'popover z-[100] min-w-[220px] overflow-hidden p-1 data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out'
@@ -21,7 +22,7 @@ interface ItemProps {
   children: ReactNode
 }
 
-const Tick = () => <Check className="!size-3.5 !text-accent-2" aria-label="On" />
+const Tick = () => <Check className="!size-3.5 !text-accent-2" aria-label={tt('On')} />
 
 // ─── Dropdown ────────────────────────────────────────────────────────────
 

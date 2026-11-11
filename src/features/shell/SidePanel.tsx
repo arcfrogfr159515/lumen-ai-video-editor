@@ -6,6 +6,7 @@ import { useUI, type RightTab } from '@/editor/ui-store'
 import { CopilotPanel } from '@/features/copilot/CopilotPanel'
 import { Inspector } from '@/features/inspector/Inspector'
 import { MixerPanel } from '@/features/mixer/MixerPanel'
+import { tt } from '@/lib/i18n'
 
 const ORDER: RightTab[] = ['inspector', 'mixer', 'copilot']
 
@@ -20,9 +21,9 @@ export function SidePanel() {
           onChange={setTab}
           stretch
           options={[
-            { value: 'inspector', label: 'Inspector', icon: <SlidersHorizontal /> },
-            { value: 'mixer', label: 'Mixer', icon: <SlidersVertical /> },
-            { value: 'copilot', label: 'Copilot', icon: <AiSparkle className="!size-3.5" /> },
+            { value: 'inspector', label: tt('Inspector'), icon: <SlidersHorizontal /> },
+            { value: 'mixer', label: tt('Mixer'), icon: <SlidersVertical /> },
+            { value: 'copilot', label: tt('Copilot'), icon: <AiSparkle className="!size-3.5" /> },
           ]}
         />
       </div>

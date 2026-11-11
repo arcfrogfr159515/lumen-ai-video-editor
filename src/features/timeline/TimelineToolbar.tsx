@@ -21,6 +21,8 @@ import { timelineActions } from './timeline-actions'
 import { RenderMenu } from './RenderMenu'
 import { TimelineTools } from './TimelineTools'
 import { TimelineSwitcher } from './TimelineSwitcher'
+import { tt } from '@/lib/i18n'
+import { ttx } from '@/lib/i18n-react'
 
 export function TimelineToolbar() {
   const tool = useUI((s) => s.tool)
@@ -36,42 +38,42 @@ export function TimelineToolbar() {
   return (
     <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line px-2">
       <TimelineSwitcher />
-      <IconButton size="sm" label={storyboard ? 'Back to the lanes' : 'Storyboard — the timeline as cards'} shortcut="shift+s" active={storyboard} onClick={() => setView({ storyboard: !storyboard })}>
+      <IconButton size="sm" label={storyboard ? tt('Back to the lanes') : tt('Storyboard — the timeline as cards')} shortcut="shift+s" active={storyboard} onClick={() => setView({ storyboard: !storyboard })}>
         <LayoutGrid />
       </IconButton>
       <div className="mx-1 h-4 w-px bg-line-2" />
       <div className="flex items-center gap-0.5 rounded-[9px] bg-black/25 p-[3px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]">
-        <IconButton size="xs" label="Select" shortcut="v" active={tool === 'select'} onClick={() => setTool('select')}>
+        <IconButton size="xs" label={tt('Select')} shortcut="v" active={tool === 'select'} onClick={() => setTool('select')}>
           <MousePointer2 />
         </IconButton>
-        <IconButton size="xs" label="Blade" shortcut="b" active={tool === 'blade'} onClick={() => setTool('blade')}>
+        <IconButton size="xs" label={tt('Blade')} shortcut="b" active={tool === 'blade'} onClick={() => setTool('blade')}>
           <Scissors />
         </IconButton>
-        <IconButton size="xs" label="Roll — move a cut between two clips" shortcut="r" active={tool === 'roll'} onClick={() => setTool('roll')}>
+        <IconButton size="xs" label={tt('Roll — move a cut between two clips')} shortcut="r" active={tool === 'roll'} onClick={() => setTool('roll')}>
           <SeparatorVertical />
         </IconButton>
-        <IconButton size="xs" label="Slip — change the footage in place" shortcut="y" active={tool === 'slip'} onClick={() => setTool('slip')}>
+        <IconButton size="xs" label={tt('Slip — change the footage in place')} shortcut="y" active={tool === 'slip'} onClick={() => setTool('slip')}>
           <ArrowLeftRight />
         </IconButton>
-        <IconButton size="xs" label="Slide — move a clip between its neighbours" shortcut="u" active={tool === 'slide'} onClick={() => setTool('slide')}>
+        <IconButton size="xs" label={tt('Slide — move a clip between its neighbours')} shortcut="u" active={tool === 'slide'} onClick={() => setTool('slide')}>
           <MoveHorizontal />
         </IconButton>
       </div>
       <div className="mx-1.5 h-4 w-px bg-line-2" />
-      <IconButton label="Split at playhead" shortcut="s" onClick={actions.split}>
+      <IconButton label={tt('Split at playhead')} shortcut="s" onClick={actions.split}>
         <SquareSplitHorizontal />
       </IconButton>
-      <IconButton label="Duplicate" shortcut="mod+d" disabled={!hasSelection} onClick={actions.duplicateSelection}>
+      <IconButton label={tt('Duplicate')} shortcut="mod+d" disabled={!hasSelection} onClick={actions.duplicateSelection}>
         <Copy />
       </IconButton>
-      <IconButton label="Delete" shortcut="delete" disabled={!hasSelection} onClick={() => actions.deleteSelection(false)}>
+      <IconButton label={tt('Delete')} shortcut="delete" disabled={!hasSelection} onClick={() => actions.deleteSelection(false)}>
         <Trash />
       </IconButton>
       <div className="mx-1.5 h-4 w-px bg-line-2" />
-      <IconButton label={snapping ? 'Snapping on' : 'Snapping off'} shortcut="n" active={snapping} onClick={toggleSnapping}>
+      <IconButton label={snapping ? tt('Snapping on') : tt('Snapping off')} shortcut="n" active={snapping} onClick={toggleSnapping}>
         <Magnet />
       </IconButton>
-      <IconButton label="Add marker" shortcut="m" onClick={actions.addMarker}>
+      <IconButton label={tt('Add marker')} shortcut="m" onClick={actions.addMarker}>
         <Flag />
       </IconButton>
 
@@ -87,12 +89,12 @@ export function TimelineToolbar() {
       <RenderMenu />
       <div className="mx-1 h-4 w-px bg-line-2" />
 
-      <IconButton label="Zoom out" shortcut="-" onClick={() => actions.zoom(1 / 1.35)}>
+      <IconButton label={tt('Zoom out')} shortcut="-" onClick={() => actions.zoom(1 / 1.35)}>
         <ZoomOut />
       </IconButton>
       <div className="w-28">
         <Slider
-          aria-label="Timeline zoom"
+          aria-label={tt('Timeline zoom')}
           value={Math.log(pps)}
           min={Math.log(ZOOM_MIN)}
           max={Math.log(ZOOM_MAX)}
@@ -100,10 +102,10 @@ export function TimelineToolbar() {
           onChange={(v) => setZoom(Math.exp(v))}
         />
       </div>
-      <IconButton label="Zoom in" shortcut="=" onClick={() => actions.zoom(1.35)}>
+      <IconButton label={tt('Zoom in')} shortcut="=" onClick={() => actions.zoom(1.35)}>
         <ZoomIn />
       </IconButton>
-      <IconButton label="Zoom to fit" shortcut="shift+z" onClick={actions.zoomToFit}>
+      <IconButton label={tt('Zoom to fit')} shortcut="shift+z" onClick={actions.zoomToFit}>
         <UnfoldHorizontal />
       </IconButton>
     </div>
@@ -117,10 +119,10 @@ function RangeChip() {
   if (!range) return null
   return (
     <div className="ml-1 flex h-6 shrink-0 items-center gap-1 rounded-full bg-accent/10 pr-0.5 pl-2 text-2xs font-medium text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.25)]">
-      <button type="button" onClick={actions.goToIn} className="font-mono tabular hover:text-fg" title="In to out — click to go to the in point (Shift+I)">
-        In–Out {formatDuration(range.out - range.in, fps)}
+      <button type="button" onClick={actions.goToIn} className="font-mono tabular hover:text-fg" title={tt('In to out — click to go to the in point (Shift+I)')}>
+        {ttx('In–Out {0}', formatDuration(range.out - range.in, fps))}
       </button>
-      <button type="button" aria-label="Clear in and out" onClick={actions.clearInOut} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
+      <button type="button" aria-label={tt('Clear in and out')} onClick={actions.clearInOut} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
         <X className="size-3" />
       </button>
     </div>
@@ -136,7 +138,7 @@ function TrimChip() {
   const sides = trimSides(cut, { tracks })
   return (
     <div data-trim-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-accent/10 pr-0.5 pl-2.5 text-2xs font-medium text-accent-2 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]">
-      <span className="font-semibold">Trim</span>
+      <span className="font-semibold">{tt('Trim')}</span>
       <div className="flex items-center gap-0.5">
         {TRIM_SIDES.filter((s) => sides.includes(s.id)).map((s) => (
           <button
@@ -153,12 +155,12 @@ function TrimChip() {
       </div>
       <span className="hidden items-center gap-1 text-fg-3 xl:flex">
         <Kbd combo="j" />
-        <Kbd combo="l" /> play
-        <Kbd combo="k" className="ml-1" /> trim here
+        <Kbd combo="l" />{' '}{tt('play')}
+        <Kbd combo="k" className="ml-1" />{' '}{tt('trim here')}
         <Kbd combo="left" className="ml-1" />
-        <Kbd combo="right" /> nudge
+        <Kbd combo="right" />{' '}{tt('nudge')}
       </span>
-      <button type="button" aria-label="Leave trim mode" title="Leave trim mode (Esc)" onClick={exitTrim} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
+      <button type="button" aria-label={tt('Leave trim mode')} title={tt('Leave trim mode (Esc)')} onClick={exitTrim} className="grid size-5 place-items-center rounded-full text-accent-2/80 hover:bg-white/[0.08] hover:text-fg">
         <X className="size-3" />
       </button>
     </div>
@@ -173,14 +175,14 @@ function RecordingChip() {
   return (
     <div data-recording-chip className="ml-1 flex h-7 shrink-0 items-center gap-2 rounded-full bg-danger/12 pr-0.5 pl-2.5 text-2xs font-medium text-danger shadow-[inset_0_0_0_1px_rgb(255_93_93/0.35)]">
       <span className="size-2 animate-pulse rounded-full bg-danger" />
-      <span className="max-w-[220px] truncate" title={recording.skipped.length ? `Left out:\n${recording.skipped.join('\n')}` : undefined}>
-        Recording{name ? ` on “${name}”` : ''} · {recording.steps.length} step{recording.steps.length === 1 ? '' : 's'}
-        {recording.skipped.length > 0 && <span className="text-fg-3"> · {recording.skipped.length} left out</span>}
+      <span className="max-w-[220px] truncate" title={recording.skipped.length ? tt('Left out:\n{0}', recording.skipped.join('\n')) : undefined}>
+        {ttx('Recording{0} · {1} step{2}', name ? (' ' + tt('on “{0}”', name)) : '', recording.steps.length, recording.steps.length === 1 ? '' : 's')}
+        {recording.skipped.length > 0 && <span className="text-fg-3">{' '}{ttx('· {0} left out', recording.skipped.length)}</span>}
       </span>
-      <button type="button" onClick={() => void timelineActions.toggleRecording()} title="Stop and keep the macro (Alt+R)" className="h-5 rounded-full bg-danger px-2 font-semibold text-black outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-accent/60">
-        Stop
+      <button type="button" onClick={() => void timelineActions.toggleRecording()} title={tt('Stop and keep the macro (Alt+R)')} className="h-5 rounded-full bg-danger px-2 font-semibold text-black outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-accent/60">
+        {tt('Stop')}
       </button>
-      <button type="button" aria-label="Discard the recording" title="Discard the recording" onClick={cancelRecording} className="grid size-5 place-items-center rounded-full text-danger/80 hover:bg-white/[0.08] hover:text-fg">
+      <button type="button" aria-label={tt('Discard the recording')} title={tt('Discard the recording')} onClick={cancelRecording} className="grid size-5 place-items-center rounded-full text-danger/80 hover:bg-white/[0.08] hover:text-fg">
         <X className="size-3" />
       </button>
     </div>
@@ -241,7 +243,7 @@ function CopilotHint() {
           </button>
           <button
             type="button"
-            aria-label="Dismiss suggestion"
+            aria-label={tt('Dismiss suggestion')}
             onClick={() => setDismissed((d) => [...d, suggestion.id])}
             className="grid size-5 shrink-0 place-items-center rounded-full text-fg-4 hover:bg-white/[0.08] hover:text-fg-2"
           >

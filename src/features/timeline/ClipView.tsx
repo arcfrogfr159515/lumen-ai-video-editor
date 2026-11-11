@@ -23,6 +23,7 @@ import { reuseOf } from './reuse-view'
 import { cssColor, onThumb, paintFilm, paintWave } from './strips'
 import { useTimelineView } from '@/editor/timeline-view'
 import { OVERSCAN, QUANTUM, useViewport } from './viewport'
+import { tt } from '@/lib/i18n'
 
 const INSET = 3
 
@@ -216,7 +217,7 @@ function CueLane({ cues, fps, pps, x0, x1, width, bottom }: { cues: ClipCue[]; f
         .map(({ x, room, item }) => (
           <span
             key={`${item.frame}:${item.cue.kind}:${item.cue.label}`}
-            title={`${cueText(item.cue)} — ${item.cue.at.toFixed(2)} s into the clip${item.cue.seconds ? `, ${item.cue.seconds} s long` : ''}`}
+            title={tt('{0} — {1} s into the clip{2}', cueText(item.cue), item.cue.at.toFixed(2), item.cue.seconds ? tt(', {0} s long', item.cue.seconds) : '')}
             className="pointer-events-auto absolute inset-y-0 flex items-center overflow-hidden"
             style={{ left: x, width: Math.max(3, room - 1) }}
           >
@@ -242,19 +243,19 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
         </span>
       )}
       <span className="min-w-0 truncate">{text}</span>
-      {clip.groupId && <Link2 className="size-3 shrink-0 opacity-80" aria-label="Linked" />}
-      {(clip.follow || clip.masks?.some((m) => m.follow)) && <Crosshair className="size-3 shrink-0 opacity-80" aria-label="Tracked" />}
-      {clip.stabilize && <Move className="size-3 shrink-0 opacity-80" aria-label="Stabilized" />}
+      {clip.groupId && <Link2 className="size-3 shrink-0 opacity-80" aria-label={tt('Linked')} />}
+      {(clip.follow || clip.masks?.some((m) => m.follow)) && <Crosshair className="size-3 shrink-0 opacity-80" aria-label={tt('Tracked')} />}
+      {clip.stabilize && <Move className="size-3 shrink-0 opacity-80" aria-label={tt('Stabilized')} />}
       {clip.freeze ? (
         <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold">
           <Snowflake className="size-2.5" />
-          Freeze
+          {tt('Freeze')}
         </span>
       ) : (
         (clip.speed !== 1 || isRamped(clip)) && (
           <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold tabular">
             <Gauge className="size-2.5" />
-            {isRamped(clip) ? 'Ramp' : `${clip.speed}×`}
+            {isRamped(clip) ? tt('Ramp') : `${clip.speed}×`}
           </span>
         )
       )}
@@ -264,9 +265,9 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
           {clip.effects.length}
         </span>
       )}
-      {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-[9px] font-bold text-accent-fg [text-shadow:none]">AI</span>}
+      {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-[9px] font-bold text-accent-fg [text-shadow:none]">{tt('AI')}</span>}
       {clip.takes && clip.takes.length > 1 && (
-        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold tabular" aria-label={`Take ${takeIndex(clip) + 1} of ${clip.takes.length}`}>
+        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold tabular" aria-label={tt('Take {0} of {1}', takeIndex(clip) + 1, clip.takes.length)}>
           <Layers2 className="size-2.5" />
           {takeIndex(clip) + 1}/{clip.takes.length}
         </span>
@@ -328,7 +329,7 @@ function ReuseStripes({ clipId, duration }: { clipId: string; duration: number }
       {ranges.map(([a, b]) => (
         <span
           key={a}
-          title="This footage plays somewhere else on the timeline too"
+          title={tt('This footage plays somewhere else on the timeline too')}
           className="absolute bottom-0 z-[9] h-[5px] bg-[repeating-linear-gradient(135deg,var(--color-warn)_0_3px,rgb(0_0_0/0.55)_3px_6px)] shadow-[0_-1px_0_rgb(0_0_0/0.5)]"
           style={{ left: `${(a / duration) * 100}%`, width: `${((b - a) / duration) * 100}%` }}
         />
@@ -345,7 +346,7 @@ function NoteBadge({ clip }: { clip: Clip }) {
   const done = Boolean(clip.tasks?.length) && open === 0
   return (
     <span
-      aria-label={open ? `${open} open task${open === 1 ? '' : 's'}` : done ? 'Tasks done' : 'Has a note'}
+      aria-label={open ? tt('{0} open task{1}', open, open === 1 ? '' : 's') : done ? tt('Tasks done') : tt('Has a note')}
       className={cn('flex shrink-0 items-center gap-0.5 rounded px-1 py-px text-[9.5px] font-bold tabular [text-shadow:none]', open ? 'bg-warn text-black' : done ? 'bg-ok text-black' : 'bg-white/85 text-black')}
     >
       <StickyNote className="size-2.5" />
@@ -386,7 +387,7 @@ function NestBody({ clip, seq, inPoint, duration, width, height }: { clip: Clip;
   return (
     <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--clip)_30%,#12110f),color-mix(in_oklab,var(--clip)_14%,#0f0f0d))]">
       <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: 'var(--clip)' }} />
-      {!seq && <div className="absolute inset-x-0 top-5 px-1.5 text-[10px] text-danger">Timeline missing</div>}
+      {!seq && <div className="absolute inset-x-0 top-5 px-1.5 text-[10px] text-danger">{tt('Timeline missing')}</div>}
       {width > 30 &&
         bars.map((bar) => {
           const h = Math.max(2, Math.min(7, usable / bar.rows - 2))
@@ -532,7 +533,7 @@ function KeyframeDiamonds({ clip, duration, width }: { clip: Clip; duration: num
           key={f}
           data-handle="keyframe"
           data-frame={f}
-          title="Drag to retime · click to go to it"
+          title={tt('Drag to retime · click to go to it')}
           className={cn(
             'absolute bottom-[1px] z-[13] grid size-[13px] -translate-x-1/2 cursor-ew-resize place-items-center',
             drag?.from === f && 'opacity-30',

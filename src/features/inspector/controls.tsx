@@ -11,6 +11,7 @@ import { dispatch } from '@/editor/store'
 import type { AnimatableProp, Clip } from '@/editor/types'
 import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
+import { tt } from '@/lib/i18n'
 
 /** Current value of a property at the playhead (re-renders only while animated). */
 export function usePropValue(clip: Clip, prop: AnimatableProp) {
@@ -38,7 +39,7 @@ export function KeyframeButton({ clip, prop }: { clip: Clip; prop: AnimatablePro
       {animated && (
         <button
           type="button"
-          aria-label="Previous keyframe"
+          aria-label={tt('Previous keyframe')}
           disabled={!prev}
           onClick={() => prev && (playback.pause(), playback.seek(clip.start + prev.frame))}
           className="grid h-5 w-3 place-items-center text-fg-4 hover:text-fg disabled:opacity-30"
@@ -46,7 +47,7 @@ export function KeyframeButton({ clip, prop }: { clip: Clip; prop: AnimatablePro
           <ChevronLeft className="size-3" />
         </button>
       )}
-      <Tip content={here ? 'Remove keyframe' : animated ? 'Add keyframe here' : 'Animate this property'}>
+      <Tip content={here ? tt('Remove keyframe') : animated ? tt('Add keyframe here') : tt('Animate this property')}>
         <button type="button" onClick={toggle} className="grid size-5 place-items-center rounded-md outline-none hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-accent/60">
           <Diamond
             className={cn('size-[11px] transition-colors', here ? 'fill-accent-2 text-accent-2' : animated ? 'text-accent-2' : 'text-fg-4 hover:text-fg-2')}
@@ -57,7 +58,7 @@ export function KeyframeButton({ clip, prop }: { clip: Clip; prop: AnimatablePro
       {animated && (
         <button
           type="button"
-          aria-label="Next keyframe"
+          aria-label={tt('Next keyframe')}
           disabled={!next}
           onClick={() => next && (playback.pause(), playback.seek(clip.start + next.frame))}
           className="grid h-5 w-3 place-items-center text-fg-4 hover:text-fg disabled:opacity-30"
@@ -152,7 +153,7 @@ export function ColorSwatches({ value, onChange, allowNone }: { value: string | 
       {allowNone && (
         <button
           type="button"
-          aria-label="None"
+          aria-label={tt('None')}
           onClick={() => onChange(null)}
           className={cn('relative size-[18px] rounded-full bg-white/[0.06] ring-1 ring-white/10', value === null && 'ring-2 ring-accent ring-offset-2 ring-offset-surface')}
         >
@@ -169,7 +170,7 @@ export function ColorSwatches({ value, onChange, allowNone }: { value: string | 
           style={{ background: c }}
         />
       ))}
-      <label className="relative size-[18px] cursor-pointer overflow-hidden rounded-full bg-[conic-gradient(#f87171,#fbbf24,#34d399,#60a5fa,#a78bfa,#f472b6,#f87171)] ring-1 ring-black/30 transition-transform hover:scale-110" title="Custom color">
+      <label className="relative size-[18px] cursor-pointer overflow-hidden rounded-full bg-[conic-gradient(#f87171,#fbbf24,#34d399,#60a5fa,#a78bfa,#f472b6,#f87171)] ring-1 ring-black/30 transition-transform hover:scale-110" title={tt('Custom color')}>
         <input type="color" value={value?.slice(0, 7) ?? '#ffffff'} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0" />
       </label>
     </div>
