@@ -19,6 +19,10 @@ import { assetById, bool, clampNum, clipById, frameArg, list, num, number, obj, 
 
 const ai = { source: 'ai' as const }
 
+/** What import_subtitles reads from a path: subtitle files, and nothing the size of something else. */
+const SUBTITLE_FILE = /\.(srt|vtt)$/i
+const SUBTITLE_BYTES = 16 * 1024 * 1024
+
 export const FOOTAGE_TOOLS: AgentTool[] = [
   {
     name: 'list_timelines',
@@ -62,9 +66,14 @@ export const FOOTAGE_TOOLS: AgentTool[] = [
       if (!body) {
         const path = text(a, 'path')
         if (!path) throw new Error('Give path (an .srt / .vtt file) or text.')
+        // Asking for a file's URL is what makes it readable, so what may be asked for is settled first: a path
+        // comes from the model, and what the model was told may have come from a web page.
+        if (!SUBTITLE_FILE.test(path)) throw new Error('Only .srt and .vtt files are read from a path. For subtitles in another form, give their text.')
         if (!desktop) throw new Error('Reading files needs the desktop app.')
         const info = await desktop.files.urlForPath(path)
         if (!info) throw new Error(`Can’t read ${path} — check the path.`)
+        if (!SUBTITLE_FILE.test(info.name)) throw new Error('Only .srt and .vtt files are read from a path.')
+        if (info.size > SUBTITLE_BYTES) throw new Error(`${info.name} is ${Math.round(info.size / 1048576)} MB — too large to be subtitles.`)
         body = await (await fetch(info.url)).text()
         name = info.name.replace(/\.[^.]+$/, '')
       }
