@@ -113,6 +113,69 @@ describe('recording', () => {
     expect(steps()).toEqual(['clip.update'])
   })
 
+  it('drops only the step that is undone when history is full', () => {
+    // History keeps its last 300 edits: from then on it is always 300 deep, whatever is done.
+    for (let n = 0; n < 310; n++) run('marker.add', { frame: n })
+    expect(useEditor.getState().past).toHaveLength(300)
+    startRecording(a)
+    run('clip.update', { ids: [a], patch: { color: { contrast: 10 } } })
+    run('effect.add', { ids: [a], kind: 'grain' })
+    run('clip.trim', { id: a, edge: 'end', frame: 290 })
+    expect(steps()).toEqual(['clip.update', 'effect.add', 'clip.trim'])
+    useEditor.getState().undo()
+    expect(steps()).toEqual(['clip.update', 'effect.add'])
+    useEditor.getState().undo()
+    expect(steps()).toEqual(['clip.update'])
+    useEditor.getState().redo()
+    useEditor.getState().redo()
+    expect(steps()).toEqual(['clip.update', 'effect.add', 'clip.trim'])
+    // An edit made before the recording began isn't a step: undoing down to it takes only the recorded ones.
+    for (let n = 0; n < 4; n++) useEditor.getState().undo()
+    expect(steps()).toEqual([])
+    expect(stopRecording()).toBeNull()
+  })
+
+  it('takes every step of an edit made in one go with its undo, and brings them back in order', () => {
+    startRecording(a)
+    run('clip.update', { ids: [a], patch: { blend: 'screen' } })
+    useEditor.getState().transaction('Tidy', 'user', () => {
+      run('effect.add', { ids: [a], kind: 'grain' })
+      run('clip.trim', { id: a, edge: 'end', frame: 290 })
+    })
+    expect(steps()).toEqual(['clip.update', 'effect.add', 'clip.trim'])
+    useEditor.getState().undo()
+    expect(steps()).toEqual(['clip.update'])
+    useEditor.getState().redo()
+    expect(steps()).toEqual(['clip.update', 'effect.add', 'clip.trim'])
+  })
+
+  it('goes back to the setting before when the second of two is undone', () => {
+    const patches = () => useMacros.getState().recording!.steps.map((s) => JSON.stringify((s.input as { patch: unknown }).patch))
+    startRecording(a)
+    // The same setting made twice is one step, the second value — but two edits to undo.
+    run('clip.update', { ids: [a], patch: { color: { contrast: 10 } } })
+    run('clip.update', { ids: [a], patch: { color: { contrast: 30 } } })
+    expect(patches()).toEqual(['{"color":{"contrast":30}}'])
+    useEditor.getState().undo()
+    expect(clip(a).color?.contrast).toBe(10)
+    expect(patches()).toEqual(['{"color":{"contrast":10}}'])
+    useEditor.getState().redo()
+    expect(patches()).toEqual(['{"color":{"contrast":30}}'])
+    useEditor.getState().undo()
+    useEditor.getState().undo()
+    expect(patches()).toEqual([])
+    useEditor.getState().redo()
+    useEditor.getState().redo()
+    expect(patches()).toEqual(['{"color":{"contrast":30}}'])
+    // A slider dragged is one edit: its undo takes the step whole.
+    for (const exposure of [5, 12, 20]) dispatch('clip.update', { ids: [a], patch: { color: { exposure } } }, { coalesce: 'exposure' })
+    expect(patches()).toEqual(['{"color":{"contrast":30}}', '{"color":{"exposure":20}}'])
+    useEditor.getState().undo()
+    expect(patches()).toEqual(['{"color":{"contrast":30}}'])
+    useEditor.getState().redo()
+    expect(patches()).toEqual(['{"color":{"contrast":30}}', '{"color":{"exposure":20}}'])
+  })
+
   it('folds a dragged slider into one step, and keeps edits to different things apart', async () => {
     run('effect.add', { ids: [a], kind: 'grain' })
     run('effect.add', { ids: [a], kind: 'blur' })

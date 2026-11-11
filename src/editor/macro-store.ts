@@ -19,8 +19,10 @@ interface RecordedStep extends MacroStep {
   made: string[]
   /** The project before the step — before the first of them, when several were folded into one. */
   origin: Project
-  /** How deep history was once the step was in it: an undo back past that takes the step with it. */
-  depth: number | null
+  /** The history entry the step is part of: an undo of that entry takes the step with it. */
+  entry: number
+  /** The step this one was folded over, from an earlier entry: an undo of this one leaves that one standing. */
+  under?: RecordedStep
 }
 
 export interface Recording {
@@ -125,21 +127,16 @@ onDispatch((e) => {
   if (!recordable(e.name)) return void note(`${e.label} — macros hold edits to clips, not to media, tracks or timelines`)
   const context = (steps: RecordedStep[]) => ({ clipId: recording.clipId, results: steps.map((s) => s.result), made: steps.map((s) => s.made) })
   if (!touches(e.name, e.input, e.before, context(recording.steps))) return void note(`${e.label} — it wasn’t made to the clip being recorded on`)
-  const write = (earlier: RecordedStep[], origin: Project): RecordedStep => ({ command: e.name, input: generalize(e.name, e.input, origin, context(earlier)), title: e.label, result: e.result, made: madeBy(origin, e.after), origin, depth: null })
+  const write = (earlier: RecordedStep[], origin: Project): RecordedStep => ({ command: e.name, input: generalize(e.name, e.input, origin, context(earlier)), title: e.label, result: e.result, made: madeBy(origin, e.after), origin, entry: e.entry })
   const last = recording.steps[recording.steps.length - 1]
   const earlier = recording.steps.slice(0, -1)
   // Folded into the step before it, a step is written as that one was: against the project as the first of them found it.
   const folded = last && last.command === e.name && restates(e) ? write(earlier, last.origin) : null
+  // What an undo of this edit goes back to: the step as it stood before this edit's history entry began.
+  if (folded) folded.under = last.entry === e.entry ? last.under : last
   const steps = folded && shape(folded.input) === shape(last.input) ? [...earlier, folded] : [...recording.steps, write(recording.steps, e.before)]
   undone = []
   useMacros.setState({ recording: { ...recording, steps } })
-  // History takes the step in when the edit (or the transaction around it) is done: note how deep it is then.
-  queueMicrotask(() => {
-    const now = useMacros.getState().recording
-    if (!now) return
-    const depth = useEditor.getState().past.length
-    if (now.steps.some((s) => s.depth === null)) useMacros.setState({ recording: { ...now, steps: now.steps.map((s) => (s.depth === null ? { ...s, depth } : s)) } })
-  })
 })
 
 // Undo takes the steps it undoes out of the recording; redo puts them back.
@@ -150,19 +147,25 @@ useEditor.subscribe((s, prev) => {
   // History starting afresh is another project being opened: the clip being recorded on went with the old one.
   if (!depth && !s.future.length && s.project !== prev.project) return void cancelRecording()
   // An undo moves the last step of history to the front of what can be redone; a redo moves it back. (A new edit
-  // also empties what can be redone — but what it puts in history is new.)
+  // also empties what can be redone — but what it puts in history is new.) The steps that go with it are the ones
+  // made in that entry — told by the entry itself, not by how deep history is: once history is full it stays as
+  // deep as it is, and every step would look like the last one.
   const undid = s.future[0] !== undefined && s.future[0] === prev.past[prev.past.length - 1]
   const redid = s.past[depth - 1] !== undefined && s.past[depth - 1] === prev.future[0]
   if (undid) {
-    const gone = recording.steps.filter((x) => x.depth !== null && x.depth > depth)
+    const entry = s.future[0].id
+    const gone = recording.steps.filter((x) => x.entry === entry)
     if (!gone.length) return
     undone = [...gone, ...undone]
-    useMacros.setState({ recording: { ...recording, steps: recording.steps.filter((x) => !gone.includes(x)) } })
+    // A step folded over an earlier one gives way to it: that earlier setting is still made.
+    useMacros.setState({ recording: { ...recording, steps: recording.steps.flatMap((x) => (x.entry !== entry ? [x] : x.under ? [x.under] : [])) } })
   } else if (redid && undone.length) {
-    const back = undone.filter((x) => x.depth !== null && x.depth <= depth)
+    const entry = s.past[depth - 1].id
+    const back = undone.filter((x) => x.entry === entry)
     if (!back.length) return
     undone = undone.filter((x) => !back.includes(x))
-    useMacros.setState({ recording: { ...recording, steps: [...recording.steps, ...back] } })
+    const over = new Map(back.flatMap((x) => (x.under ? [[x.under, x] as const] : [])))
+    useMacros.setState({ recording: { ...recording, steps: [...recording.steps.map((x) => over.get(x) ?? x), ...back.filter((x) => !x.under || !recording.steps.includes(x.under))] } })
   }
 })
 

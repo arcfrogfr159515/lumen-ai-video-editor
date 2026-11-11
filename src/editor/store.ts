@@ -69,6 +69,8 @@ export interface DispatchEvent {
   label: string
   /** It went into the history entry before it: one gesture — a slider being dragged — not a new edit. */
   merged: boolean
+  /** The history entry it is part of (the one an undo takes back with it). */
+  entry: number
 }
 
 const dispatchListeners = new Set<(e: DispatchEvent) => void>()
@@ -145,16 +147,16 @@ export const useEditor = create<EditorState>()((set, get) => ({
 
     const version = get().version + 1
     const label = opts.label ?? def.title(parsed.data, before)
-    const announce = (merged = false) => {
+    const announce = (entry: number, merged = false) => {
       if (!dispatchListeners.size) return
-      const event: DispatchEvent = { name, input: parsed.data, result, before, after: next, source: opts.source ?? openTransaction?.source ?? 'user', label, merged }
+      const event: DispatchEvent = { name, input: parsed.data, result, before, after: next, source: opts.source ?? openTransaction?.source ?? 'user', label, merged, entry }
       for (const fn of dispatchListeners) fn(event)
     }
     if (openTransaction) {
       openTransaction.patches.push(...patches)
       openTransaction.inverse.unshift(...inverse)
       set({ project: next, version })
-      announce()
+      announce(openTransaction.id)
       return { ok: true, result }
     }
 
@@ -162,6 +164,7 @@ export const useEditor = create<EditorState>()((set, get) => ({
     const past = get().past
     const last = past[past.length - 1]
     const merges = Boolean(opts.coalesce && last?.key === opts.coalesce && now - last.at < COALESCE_MS)
+    let entryId = last?.id ?? 0
     if (merges) {
       const merged: HistoryEntry = { ...last, patches: [...last.patches, ...patches], inverse: [...inverse, ...last.inverse], at: now }
       set({ project: next, past: [...past.slice(0, -1), merged], future: [], version })
@@ -175,9 +178,10 @@ export const useEditor = create<EditorState>()((set, get) => ({
         key: opts.coalesce,
         at: now,
       }
+      entryId = entry.id
       set({ project: next, past: [...past, entry].slice(-HISTORY_LIMIT), future: [], version })
     }
-    announce(merges)
+    announce(entryId, merges)
     return { ok: true, result }
   },
 
