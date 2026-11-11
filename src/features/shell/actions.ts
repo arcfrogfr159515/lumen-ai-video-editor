@@ -227,6 +227,16 @@ export const actions = {
     turnClips('rotation', 90, tt('Rotate'), tt('Select a video, image or title clip to rotate'))
   },
 
+  /** Plays the selected media clips backwards, or forwards again when they already are — as one undo step. */
+  toggleReverse() {
+    const clips = targetClips(['video', 'audio']).filter((c) => !c.freeze)
+    if (!clips.length) return void toast(tt('Select a video or audio clip to reverse'))
+    const on = !clips.every((c) => c.reverse)
+    useEditor.getState().transaction(on ? tt('Reverse') : tt('Play forwards'), 'user', () => {
+      for (const c of clips) dispatch('clip.update', { ids: [c.id], patch: { reverse: on } })
+    })
+  },
+
   /** Crops a clip on the canvas: it is selected, shown in the viewer, and its edges can be dragged there. */
   cropOnCanvas(clipId?: string) {
     const clip = clipId ? getProject().clips[clipId] : targetClips(['video', 'image'])[0]

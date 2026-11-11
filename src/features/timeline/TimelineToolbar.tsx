@@ -1,9 +1,10 @@
-import { ArrowLeftRight, Copy, Flag, LayoutGrid, Magnet, MousePointer2, MoveHorizontal, Scissors, SeparatorVertical, SquareSplitHorizontal, Trash, UnfoldHorizontal, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { ArrowLeftRight, Copy, FlipHorizontal2, Flag, LayoutGrid, Magnet, MousePointer2, MoveHorizontal, Rewind, RotateCw, Scissors, SeparatorVertical, SlidersHorizontal, Snowflake, SquareSplitHorizontal, Trash, UnfoldHorizontal, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { AiSparkle } from '@/components/brand'
 import { IconButton } from '@/components/ui/button'
+import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { Slider } from '@/components/ui/slider'
 import { Kbd } from '@/components/ui/kbd'
 import { cancelRecording, useMacros } from '@/editor/macro-store'
@@ -69,6 +70,7 @@ export function TimelineToolbar() {
       <IconButton label={tt('Delete')} shortcut="delete" disabled={!hasSelection} onClick={() => actions.deleteSelection(false)}>
         <Trash />
       </IconButton>
+      <MoreEditMenu />
       <div className="mx-1.5 h-4 w-px bg-line-2" />
       <IconButton label={snapping ? tt('Snapping on') : tt('Snapping off')} shortcut="n" active={snapping} onClick={toggleSnapping}>
         <Magnet />
@@ -109,6 +111,33 @@ export function TimelineToolbar() {
         <UnfoldHorizontal />
       </IconButton>
     </div>
+  )
+}
+
+/** The quick edits of CapCut's “More edit”: freeze, reverse, mirror, rotate — on the selected clip, or the one under the playhead. */
+function MoreEditMenu() {
+  return (
+    <Menu>
+      <MenuTrigger asChild>
+        <IconButton label={tt('More edits')}>
+          <SlidersHorizontal />
+        </IconButton>
+      </MenuTrigger>
+      <MenuContent align="start">
+        <MenuItem icon={<Snowflake />} shortcut="shift+f" onSelect={actions.freezeFrame}>
+          {tt('Freeze frame')}
+        </MenuItem>
+        <MenuItem icon={<Rewind />} onSelect={actions.toggleReverse}>
+          {tt('Reverse')}
+        </MenuItem>
+        <MenuItem icon={<FlipHorizontal2 />} onSelect={actions.mirror}>
+          {tt('Mirror')}
+        </MenuItem>
+        <MenuItem icon={<RotateCw />} onSelect={actions.rotate}>
+          {tt('Rotate')}
+        </MenuItem>
+      </MenuContent>
+    </Menu>
   )
 }
 
