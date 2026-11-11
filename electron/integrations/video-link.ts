@@ -7,6 +7,7 @@ import path from 'node:path'
 import { finished } from 'node:stream/promises'
 import { app, net } from 'electron'
 import type { TranscriptSegment, WebVideo, WebVideoOptions, WebVideoPicture } from '../../shared/integrations'
+import { elements, firstElement, tidy as tidyPage, tidyTags } from './html'
 import { allowPath, fileUrl, workDir } from './paths'
 import { absolute, checkUrl, decodeEntities, isCancelledRedirect, meta, redirectTarget, strip, UA } from './web'
 
@@ -256,20 +257,24 @@ export function parseJson3(data: unknown): Cue[] {
 export function parseCaptionXml(xml: string): Cue[] {
   const cues: Cue[] = []
   const attr = (tag: string, name: string) => Number(new RegExp(`\\b${name}="([\\d.]+)"`).exec(tag)?.[1] ?? NaN)
-  for (const m of xml.matchAll(/<p\b([^>]*)>([\s\S]*?)<\/p>/g)) {
-    const start = attr(m[1], 't')
-    const text = decodeEntities(m[2].replace(/<[^>]+>/g, ''))
-    if (Number.isFinite(start) && text.trim()) cues.push({ start: start / 1000, end: (start + (attr(m[1], 'd') || 0)) / 1000, text })
+  const lower = xml.toLowerCase()
+  for (const p of elements(xml, 'p', lower)) {
+    const start = attr(p.tag, 't')
+    const text = decodeEntities(untagged(p.inner))
+    if (Number.isFinite(start) && text.trim()) cues.push({ start: start / 1000, end: (start + (attr(p.tag, 'd') || 0)) / 1000, text })
   }
   if (cues.length) return cues
-  for (const m of xml.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/g)) {
-    const start = attr(m[1], 'start')
+  for (const t of elements(xml, 'text', lower)) {
+    const start = attr(t.tag, 'start')
     // This shape escapes its text twice ("&amp;#39;").
-    const text = decodeEntities(decodeEntities(m[2].replace(/<[^>]+>/g, '')))
-    if (Number.isFinite(start) && text.trim()) cues.push({ start, end: start + (attr(m[1], 'dur') || 0), text })
+    const text = decodeEntities(decodeEntities(untagged(t.inner)))
+    if (Number.isFinite(start) && text.trim()) cues.push({ start, end: start + (attr(t.tag, 'dur') || 0), text })
   }
   return cues
 }
+
+/** Text without the tags in it — in one pass, whatever the text is (see html.ts). */
+const untagged = (text: string) => tidyTags(text).replace(/<[^>]+>/g, '')
 
 /** WebVTT (and SRT, which differs only in its comma). */
 export function parseVtt(text: string): Cue[] {
@@ -279,7 +284,7 @@ export function parseVtt(text: string): Cue[] {
     const at = lines.findIndex((l) => l.includes('-->'))
     const m = at < 0 ? null : /((?:\d+:)?\d+:\d+[.,]\d+)\s*-->\s*((?:\d+:)?\d+:\d+[.,]\d+)/.exec(lines[at])
     if (!m) continue
-    const said = decodeEntities(lines.slice(at + 1).join(' ').replace(/<[^>]+>/g, ''))
+    const said = decodeEntities(untagged(lines.slice(at + 1).join(' ')))
     if (said.trim()) cues.push({ start: fromClock(m[1]), end: fromClock(m[2]), text: said })
   }
   return cues
@@ -553,7 +558,7 @@ export function youtubeId(url: URL): string | null {
 
 /** The video a YouTube page says it is about (its canonical link). */
 export function canonicalYouTubeId(html: string): string | null {
-  const href = /<link\b[^>]*rel=["']canonical["'][^>]*>/i.exec(html)?.[0]
+  const href = /<link\b[^>]*rel=["']canonical["'][^>]*>/i.exec(tidyPage(html))?.[0]
   const url = href && parseUrl(decodeEntities(/href=["']([^"']+)["']/i.exec(href)?.[1] ?? ''))
   return url ? youtubeId(url) : null
 }
@@ -775,9 +780,10 @@ function ldVideos(html: string): LdVideo[] {
     if (type === 'VideoObject' || (Array.isArray(type) && type.includes('VideoObject'))) out.push(node as LdVideo)
     for (const value of Object.values(node)) visit(value, depth + 1)
   }
-  for (const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+  for (const script of elements(html, 'script')) {
+    if (!/\stype=["']application\/ld\+json["']/i.test(script.tag)) continue
     try {
-      visit(JSON.parse(m[1]), 0)
+      visit(JSON.parse(script.inner), 0)
     } catch {
       /* not JSON after all */
     }
@@ -797,17 +803,19 @@ export function parseVideoPage(html: string, base: URL): PageVideo {
 
   const declared = meta(html, 'og:video:type') ?? ''
   const og = [meta(html, 'og:video:secure_url'), meta(html, 'og:video:url'), meta(html, 'og:video')]
-  const tags = [...html.matchAll(/<(?:video|source)\b[^>]*\ssrc=["']([^"']+)["'][^>]*>/gi)].filter((m) => /^<video/i.test(m[0]) || /type=["']video\//i.test(m[0]) || VIDEO_FILE.test(m[1].split('?')[0])).map((m) => m[1])
+  // The tag patterns below run on the tidied page, where a "<" can't run on past its own tag (see html.ts).
+  const tagged = tidyPage(html)
+  const tags = [...tagged.matchAll(/<(?:video|source)\b[^>]*\ssrc=["']([^"']+)["'][^>]*>/gi)].filter((m) => /^<video/i.test(m[0]) || /type=["']video\//i.test(m[0]) || VIDEO_FILE.test(m[1].split('?')[0])).map((m) => m[1])
   const media = [ld?.contentUrl, meta(html, 'twitter:player:stream'), ...og.filter((u) => u && (declared.startsWith('video/') || VIDEO_FILE.test(u.split('?')[0]))), ...tags]
-  const frames = [...html.matchAll(/<iframe\b[^>]*\ssrc=["']([^"']+)["']/gi)].map((m) => m[1])
+  const frames = [...tagged.matchAll(/<iframe\b[^>]*\ssrc=["']([^"']+)["']/gi)].map((m) => m[1])
   const embeds = [ld?.embedUrl, ...og, meta(html, 'twitter:player'), ...frames]
   const unique = (list: unknown[]) => [...new Set(list.map(link).filter((u): u is string => Boolean(u)))]
-  const oembed = /<link\b[^>]*type=["']application\/json\+oembed["'][^>]*>/i.exec(html)?.[0]
+  const oembed = /<link\b[^>]*type=["']application\/json\+oembed["'][^>]*>/i.exec(tagged)?.[0]
   const oembedHref = oembed && link(/href=["']([^"']+)["']/i.exec(oembed)?.[1])
   const author = typeof ld?.author === 'string' ? ld.author : ld?.author?.name
 
   const page: PageVideo = {
-    title: text(meta(html, 'og:title'), meta(html, 'twitter:title'), ld?.name, strip(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? '')),
+    title: text(meta(html, 'og:title'), meta(html, 'twitter:title'), ld?.name, strip(firstElement(html, 'title')?.inner ?? '')),
     description: text(meta(html, 'og:description'), ld?.description, meta(html, 'description'), meta(html, 'twitter:description')),
     author: text(author, meta(html, 'author')),
     site: text(meta(html, 'og:site_name')),

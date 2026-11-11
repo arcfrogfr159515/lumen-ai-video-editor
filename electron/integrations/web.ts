@@ -4,6 +4,7 @@ import { nativeImage, net, session } from 'electron'
 import { exactOffscreenWindow } from '../offscreen'
 import type { WebPage, WebPreview, WebSearchResult, WebShot } from '../../shared/integrations'
 import { isPrivateHost } from '../../shared/integrations'
+import { dropElements, elements, firstElement, stripComments, tidy, tidyTags } from './html'
 
 /**
  * The web for the Copilot: search, reading pages, and screenshots of pages —
@@ -189,18 +190,26 @@ export function decodeEntities(s: string) {
 
 export const meta = (html: string, name: string) => {
   const re = new RegExp(`<meta[^>]+(?:name|property)=["']${name}["'][^>]*>`, 'i')
-  const tag = re.exec(html)?.[0]
+  // On the tidied page, where a "<" can't run on past its own tag (see html.ts).
+  const tag = re.exec(tidy(html))?.[0]
   const content = tag && /content=["']([^"']*)["']/i.exec(tag)?.[1]
   return content ? decodeEntities(content).trim() : undefined
 }
 
 /** A page's readable text: the article (or main) part when there is one, without scripts, menus and footers. */
 export function readable(html: string): string {
-  let body = html.replace(/<!--[\s\S]*?-->/g, '')
-  const main = /<article[\s\S]*?<\/article>/i.exec(body)?.[0] ?? /<main[\s\S]*?<\/main>/i.exec(body)?.[0]
+  let body = stripComments(html)
+  const lower = body.toLowerCase()
+  /** From the first `<name` to the first `</name>` after it. */
+  const part = (name: string) => {
+    const start = lower.indexOf(`<${name}`)
+    const end = start < 0 ? -1 : lower.indexOf(`</${name}>`, start + name.length + 1)
+    return end < 0 ? null : body.slice(start, end + name.length + 3)
+  }
+  const main = part('article') ?? part('main')
   if (main && main.length > 400) body = main
-  body = body
-    .replace(/<(script|style|noscript|svg|template|iframe|form|nav|footer|header|aside)[\s\S]*?<\/\1>/gi, ' ')
+  // Each step goes through the text once, whatever the page is made of (see html.ts).
+  body = tidyTags(dropElements(body, ['script', 'style', 'noscript', 'svg', 'template', 'iframe', 'form', 'nav', 'footer', 'header', 'aside']))
     .replace(/<(br|hr)\s*\/?>/gi, '\n')
     .replace(/<li[^>]*>/gi, '\n• ')
     .replace(/<\/(p|div|section|h[1-6]|li|tr|blockquote|pre|table|ul|ol)>/gi, '\n')
@@ -255,18 +264,38 @@ function resultUrl(href: string) {
   return /^https?:\/\//.test(url) && !/duckduckgo\.com\/y\.js/.test(url) ? url : null
 }
 
-export const strip = (s: string) => decodeEntities(s.replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim()
+export const strip = (s: string) => decodeEntities(tidyTags(s).replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim()
+
+/** A result's link in its block: the `<a>` marked result__a, with where it leads and what it says. */
+function resultLink(block: string) {
+  for (const a of elements(block, 'a')) {
+    if (!/class="[^"]*result__a[^"]*"/i.test(a.tag)) continue
+    const href = /\shref="([^"]+)"/i.exec(a.tag)?.[1]
+    if (href) return { href, text: a.inner }
+  }
+  return null
+}
+
+/** A result's snippet: from the tag marked result__snippet to the first closing a, div or td after it. */
+function resultSnippet(block: string) {
+  const open = /class="[^"]*result__snippet[^"]*"[^>]*>/i.exec(block)
+  if (!open) return undefined
+  const from = open.index + open[0].length
+  const lower = block.toLowerCase()
+  const ends = ['</a>', '</div>', '</td>'].map((close) => lower.indexOf(close, from)).filter((i) => i >= 0)
+  return ends.length ? block.slice(from, Math.min(...ends)) : undefined
+}
 
 export function parseSearch(html: string, max: number): WebSearchResult[] {
   const out: WebSearchResult[] = []
-  const blocks = html.split(/<div[^>]+class="[^"]*\bresult\b[^"]*"/i).slice(1)
+  const blocks = tidyTags(html).split(/<div[^>]+class="[^"]*\bresult\b[^"]*"/i).slice(1)
   for (const b of blocks) {
-    const a = /<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i.exec(b) ?? /<a[^>]+href="([^"]+)"[^>]+class="[^"]*result__a[^"]*"[^>]*>([\s\S]*?)<\/a>/i.exec(b)
+    const a = resultLink(b)
     if (!a) continue
-    const url = resultUrl(a[1])
+    const url = resultUrl(a.href)
     if (!url || out.some((r) => r.url === url)) continue
-    const snippet = /class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/(?:a|div|td)>/i.exec(b)?.[1]
-    out.push({ title: strip(a[2]), url, snippet: snippet ? strip(snippet) : '' })
+    const snippet = resultSnippet(b)
+    out.push({ title: strip(a.text), url, snippet: snippet ? strip(snippet) : '' })
     if (out.length >= max) break
   }
   return out
@@ -301,19 +330,21 @@ export async function readPage(raw: string, maxChars = 12000): Promise<WebPage> 
   const raw8 = bytes.toString('utf8')
   if (!type.includes('html')) return { url: url.href, title: url.href, text: raw8.slice(0, limit), truncated: raw8.length > limit, links: [], images: [] }
   const html = raw8
-  const title = meta(html, 'og:title') ?? strip(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? '') ?? url.hostname
+  const title = meta(html, 'og:title') ?? strip(firstElement(html, 'title')?.inner ?? '') ?? url.hostname
   const description = meta(html, 'og:description') ?? meta(html, 'description')
   const site = meta(html, 'og:site_name')
   const lead = meta(html, 'og:image') ?? meta(html, 'twitter:image')
   const text = readable(html)
   const links: { text: string; url: string }[] = []
-  for (const m of html.matchAll(/<a[^>]+href="([^"#][^"]*)"[^>]*>([\s\S]*?)<\/a>/gi)) {
-    const href = absolute(m[1], url)
-    const label = strip(m[2])
+  for (const a of elements(html, 'a')) {
+    const target = /\shref="([^"#][^"]*)"/i.exec(a.tag)?.[1]
+    if (!target) continue
+    const href = absolute(target, url)
+    const label = strip(a.inner)
     if (href && label && label.length > 2 && !links.some((l) => l.url === href)) links.push({ text: label.slice(0, 80), url: href })
     if (links.length >= 40) break
   }
-  const images = [lead, ...[...html.matchAll(/<img[^>]+src="([^"]+)"/gi)].map((m) => m[1])]
+  const images = [lead, ...[...tidy(html).matchAll(/<img[^>]+src="([^"]+)"/gi)].map((m) => m[1])]
     .map((src) => (src ? absolute(src, url) : null))
     .filter((src, i, all): src is string => Boolean(src) && all.indexOf(src) === i && !/\.svg(\?|$)/i.test(src!))
     .slice(0, 12)
@@ -347,7 +378,7 @@ export async function linkPreview(raw: string): Promise<WebPreview> {
     const lead = meta(html, 'og:image') ?? meta(html, 'twitter:image')
     value = {
       url: url.href,
-      title: meta(html, 'og:title') ?? strip(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? '') ?? url.hostname,
+      title: meta(html, 'og:title') ?? strip(firstElement(html, 'title')?.inner ?? '') ?? url.hostname,
       description: meta(html, 'og:description') ?? meta(html, 'description'),
       site: meta(html, 'og:site_name') ?? url.hostname.replace(/^www\./, ''),
       image: lead ? (absolute(lead, url) ?? undefined) : undefined,
