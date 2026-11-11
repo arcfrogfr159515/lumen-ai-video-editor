@@ -398,6 +398,7 @@ const frameTiming = z.object({
   median: z.number().positive(),
   grid: z.number().positive().optional(),
   frames: z.number().int().min(1),
+  whole: z.boolean().optional(),
 })
 
 const originalMedia = z.object({

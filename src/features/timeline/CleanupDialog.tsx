@@ -11,7 +11,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { Segmented } from '@/components/ui/segmented'
 import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { constantRateFor, describeTiming, isUneven, rateLabel } from '@/editor/frame-rate'
+import { constantRateFor, describeTiming, isUneven, needsFullCheck, rateLabel } from '@/editor/frame-rate'
 import { cleanupDidNothing, describeCleanup, findGaps, FLASH_FRAMES, type CloseGapsResult } from '@/editor/gaps'
 
 import { playback } from '@/editor/playback'
@@ -304,7 +304,8 @@ function RatesPane({ project }: { project: Project }) {
   const jobs = useConformJobs((s) => s.jobs)
   const [checking, setChecking] = useState(false)
   const videos = Object.values(project.assets).filter((a) => a.kind === 'video' && a.source.type === 'file' && !a.matteOf)
-  const unchecked = videos.filter((a) => !a.frameTiming && !a.conformedFrom && !(a.source.type === 'file' && a.source.missing))
+  // Importing takes a quick look at the start of a file: one that starts evenly is still to be read whole.
+  const unchecked = videos.filter((a) => needsFullCheck(a.frameTiming) && !a.conformedFrom && !(a.source.type === 'file' && a.source.missing))
   const uneven = unevenAssets(project.assets)
 
   const check = async () => {
@@ -359,7 +360,7 @@ function RateRow({ asset, fps, progress }: { asset: Asset; fps: number; progress
   const busy = progress !== undefined
   return (
     <Row
-      icon={copy ? <CircleCheck className="text-ok" /> : uneven ? <TriangleAlert className="text-warn" /> : timing ? <CircleCheck className="text-fg-4" /> : <Gauge />}
+      icon={copy ? <CircleCheck className="text-ok" /> : uneven ? <TriangleAlert className="text-warn" /> : needsFullCheck(timing) ? <Gauge /> : <CircleCheck className="text-fg-4" />}
       title={asset.name}
       detail={copy ? `Plays a constant ${rateLabel(asset.fps ?? fps)} fps copy · was: ${describeTiming(asset.conformedFrom?.frameTiming).toLowerCase()}` : describeTiming(timing)}
       trailing={

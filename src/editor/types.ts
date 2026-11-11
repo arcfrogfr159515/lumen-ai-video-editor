@@ -83,6 +83,8 @@ export interface FrameTiming {
   grid?: number
   /** How many frames were looked at. */
   frames: number
+  /** Every frame of the file was looked at, not only its start. */
+  whole?: boolean
 }
 
 /** The file an asset was imported as, kept while a constant-frame-rate copy stands in for it. */

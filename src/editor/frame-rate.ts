@@ -28,11 +28,19 @@ const round3 = (n: number) => Math.round(n * 1000) / 1000
 export const MIN_FRAMES = 12
 
 /**
+ * How many frames a quick look reads (what a file is given when it is
+ * imported): its first eight seconds or so. A file with fewer has been read
+ * whole.
+ */
+export const QUICK_FRAMES = 256
+
+/**
  * What a track's metrics say about it. `variable` means no grid fits the
  * frames; `dropped` means they sit on a grid with frames missing — still
- * uneven to play, but its rate is known.
+ * uneven to play, but its rate is known. `whole` says the metrics are of
+ * every frame of the file.
  */
-export function timingFromMetrics(m: RateMetrics): FrameTiming | null {
+export function timingFromMetrics(m: RateMetrics, whole = false): FrameTiming | null {
   if (m.probedPacketCount < MIN_FRAMES || !Number.isFinite(m.medianFrameRate) || m.medianFrameRate <= 0) return null
   const variable = m.underlyingFrameRate === null
   const dropped = !variable && !m.frameRateIsConstant
@@ -45,11 +53,22 @@ export function timingFromMetrics(m: RateMetrics): FrameTiming | null {
     median: round3(m.medianFrameRate),
     ...(m.underlyingFrameRate !== null ? { grid: round3(m.underlyingFrameRate) } : {}),
     frames: m.probedPacketCount,
+    ...(whole ? { whole: true } : {}),
   }
 }
 
 /** A file whose frames don't arrive evenly: worth a constant-rate copy. */
 export const isUneven = (t: FrameTiming | undefined) => Boolean(t && (t.variable || t.dropped))
+
+/** The timing is of the whole file: it was read whole, or it is shorter than a quick look. */
+export const isWhole = (t: FrameTiming) => Boolean(t.whole) || t.frames < QUICK_FRAMES
+
+/**
+ * Whether a file is still to be read whole. An even start says nothing about
+ * the rest: a screen recording stutters where the computer gets busy, a
+ * phone's frame rate drops when the light does. (An uneven start settles it.)
+ */
+export const needsFullCheck = (t: FrameTiming | undefined) => !t || (!isUneven(t) && !isWhole(t))
 
 /** The common rate within `tolerance` (a fraction) of `fps`, if there is one. */
 export function snapRate(fps: number, tolerance = 0.012): number | null {
@@ -84,5 +103,5 @@ export function describeTiming(t: FrameTiming | undefined): string {
   if (!t) return 'Not checked yet'
   if (t.variable) return `Variable: ${rateLabel(t.min)}–${rateLabel(t.max)} fps, usually ${rateLabel(t.median)}`
   if (t.dropped) return `${rateLabel(t.grid ?? t.median)} fps with frames missing (as slow as ${rateLabel(t.min)} fps in places)`
-  return `Constant ${rateLabel(t.grid ?? t.median)} fps`
+  return `Constant ${rateLabel(t.grid ?? t.median)} fps${isWhole(t) ? '' : ' at the start — the rest isn’t checked yet'}`
 }

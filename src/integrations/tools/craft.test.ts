@@ -291,13 +291,15 @@ describe('macros', () => {
 describe('check_frame_rates', () => {
   it('reports what is known about each video and which need a constant-rate copy', async () => {
     addAsset('phone', 30, 'video', { frameTiming: { variable: true, min: 18, max: 60, average: 28.9, median: 29.6, frames: 400 } })
-    addAsset('camera', 30, 'video', { frameTiming: { min: 25, max: 25, average: 25, median: 25, grid: 25, frames: 400 } })
+    // Read to its last frame: there is nothing more to find out about it. (One that was only looked at quickly is read on.)
+    addAsset('camera', 30, 'video', { frameTiming: { min: 25, max: 25, average: 25, median: 25, grid: 25, frames: 400, whole: true } })
     const r = (await call('check_frame_rates')).json
     expect(r.project_fps).toBe(30)
     expect(r.uneven).toEqual(['phone'])
     expect(r.videos.find((v: Json) => v.asset_id === 'phone')).toMatchObject({ uneven: true, suggested_fps: 30 })
     expect(r.videos.find((v: Json) => v.asset_id === 'phone').timing).toMatch(/^Variable/)
     expect(r.videos.find((v: Json) => v.asset_id === 'camera').uneven).toBeUndefined()
+    expect(r.videos.find((v: Json) => v.asset_id === 'camera').timing).toBe('Constant 25 fps')
     expect((await call('get_project')).json.media.find((m: Json) => m.id === 'phone').uneven_frame_rate).toBe(true)
   })
 

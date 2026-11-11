@@ -12,7 +12,7 @@
 import { ALL_FORMATS, BufferTarget, Conversion, getFirstEncodableVideoCodec, Input, Mp4OutputFormat, Output, QUALITY_VERY_HIGH, StreamTarget, UrlSource, type StreamTargetChunk } from 'mediabunny'
 import { toast } from 'sonner'
 import { create } from 'zustand'
-import { constantRateFor, isUneven, rateLabel, timingFromMetrics } from '@/editor/frame-rate'
+import { constantRateFor, isUneven, needsFullCheck, rateLabel, timingFromMetrics } from '@/editor/frame-rate'
 import { dispatch, getProject } from '@/editor/store'
 import type { Asset, FrameTiming, OriginalMedia } from '@/editor/types'
 import { desktop } from '@/lib/platform'
@@ -33,14 +33,18 @@ const setProgress = (assetId: string, p: number | null) =>
 /** Videos read from a file that aren't a copy already. */
 export const canConform = (a: Asset) => a.kind === 'video' && a.source.type === 'file' && !a.source.missing && !a.conformedFrom
 
-/** What a file's frame timestamps say, read from the file itself (null if it can't be told). */
+/**
+ * What a file's frame timestamps say, read from the file itself (null if it
+ * can't be told). Every frame's timestamp is read, not only the first few
+ * seconds': footage that starts evenly and stutters later is still uneven.
+ */
 export async function readFrameTiming(url: string): Promise<{ timing: FrameTiming | null; fps?: number; duration?: number }> {
   const input = new Input({ source: new UrlSource(url), formats: ALL_FORMATS })
   try {
     const track = await input.getPrimaryVideoTrack()
     if (!track) return { timing: null }
-    const metrics = await track.computeFrameRateMetrics()
-    return { timing: timingFromMetrics(metrics), fps: Math.round(metrics.bestGuessFrameRate * 1000) / 1000, duration: Math.round((await input.computeDuration()) * 1000) / 1000 }
+    const metrics = await track.computeFrameRateMetrics({ targetPacketCount: Infinity })
+    return { timing: timingFromMetrics(metrics, true), fps: Math.round(metrics.bestGuessFrameRate * 1000) / 1000, duration: Math.round((await input.computeDuration()) * 1000) / 1000 }
   } finally {
     input.dispose()
   }
@@ -51,7 +55,8 @@ export async function readFrameTiming(url: string): Promise<{ timing: FrameTimin
  * the ones given). Returns the ids of those whose frames arrive unevenly.
  */
 export async function checkFrameTiming(ids?: string[], force = false): Promise<string[]> {
-  const assets = Object.values(getProject().assets).filter((a) => a.kind === 'video' && a.source.type === 'file' && !a.source.missing && (!ids || ids.includes(a.id)) && (force || !a.frameTiming))
+  // What importing found is a quick look at the start of the file: an even start is read on to the end here.
+  const assets = Object.values(getProject().assets).filter((a) => a.kind === 'video' && a.source.type === 'file' && !a.source.missing && (!ids || ids.includes(a.id)) && (force || needsFullCheck(a.frameTiming)))
   for (const asset of assets) {
     if (asset.source.type !== 'file') continue
     try {
