@@ -97,7 +97,8 @@ export function MediaPanel() {
       </PanelHeader>
       <div className="space-y-2.5 px-3.5 pb-2">
         <SearchInput value={query} onChange={setQuery} placeholder={tt('Search media, tags…')} />
-        <div className="scrollbar-none flex gap-1 overflow-x-auto">
+        {/* Where the panel is too narrow for all four, they go onto a second line rather than off the edge. */}
+        <div className="flex flex-wrap gap-1">
           <Chip active={filter === 'all'} onClick={() => setFilter('all')} count={counts.all}>
             {tt('All')}
           </Chip>
@@ -113,7 +114,7 @@ export function MediaPanel() {
         </div>
       </div>
 
-      <div ref={scrollRef} tabIndex={-1} onKeyDown={onKeyDown} onPointerDown={marquee.onPointerDown} className={cn(scrollArea, 'relative outline-none')}>
+      <div ref={scrollRef} tabIndex={-1} onKeyDown={onKeyDown} onPointerDown={marquee.onPointerDown} className={cn(scrollArea, 'relative')}>
         <TimelinesSection query={query} />
         {!assets.length && <EmptyDrop />}
         {visual.length > 0 && (
@@ -411,7 +412,7 @@ function ProxyBadge({ asset }: { asset: Asset }) {
   const making = useProxyJobs((s) => s.jobs[asset.id])
   if (making !== undefined)
     return (
-      <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9px] font-semibold text-white/85 backdrop-blur-sm" title={tt('Making a proxy')}>
+      <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-md bg-black/65 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-white/85 backdrop-blur-sm" title={tt('Making a proxy')}>
         <svg viewBox="0 0 16 16" className="size-2.5 -rotate-90">
           <circle cx="8" cy="8" r="6" fill="none" stroke="rgb(255 255 255 / 0.25)" strokeWidth="3" />
           <circle cx="8" cy="8" r="6" fill="none" stroke="var(--color-accent)" strokeWidth="3" strokeDasharray={`${making * 37.7} 37.7`} />
@@ -421,7 +422,7 @@ function ProxyBadge({ asset }: { asset: Asset }) {
     )
   if (!asset.proxy) return null
   return (
-    <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-accent-2 backdrop-blur-sm" title={tt('Plays a {0}p proxy in the preview; exports use the original', asset.proxy.height)}>
+    <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-accent-2 backdrop-blur-sm" title={tt('Plays a {0}p proxy in the preview; exports use the original', asset.proxy.height)}>
       {tt('PROXY')}
     </span>
   )
@@ -431,7 +432,7 @@ function ProxyBadge({ asset }: { asset: Asset }) {
 function RateBadge({ asset }: { asset: Asset }) {
   const making = useConformJobs((s) => s.jobs[asset.id])
   const open = () => useTimelineView.getState().set({ cleanup: 'rates' })
-  const place = cn('absolute left-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-semibold backdrop-blur-sm', asset.proxy || asset.alpha ? 'bottom-6' : 'bottom-1.5')
+  const place = cn('absolute left-1.5 rounded-md px-1.5 py-0.5 text-2xs/[inherit] font-semibold backdrop-blur-sm', asset.proxy || asset.alpha ? 'bottom-6' : 'bottom-1.5')
   if (making !== undefined)
     return (
       <span className={cn(place, 'bg-black/65 text-white/85')} title={tt('Making a constant-frame-rate copy')}>
@@ -523,7 +524,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
               <div className="h-full bg-white" style={{ width: `${(skim / (asset.duration ?? 1)) * 100}%` }} />
             </div>
           )}
-          {asset.alpha && <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-white/80 backdrop-blur-sm">{tt('ALPHA')}</span>}
+          {asset.alpha && <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-white/80 backdrop-blur-sm">{tt('ALPHA')}</span>}
           <ProxyBadge asset={asset} />
           <RateBadge asset={asset} />
           {asset.kind === 'image' && (
@@ -531,14 +532,14 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
               <ImageIcon className="size-3" />
             </span>
           )}
-          {asset.generated && <span className="absolute top-1.5 left-1.5 rounded-md bg-ai px-1.5 py-0.5 text-[9px] font-bold text-accent-fg shadow">{tt('AI')}</span>}
+          {asset.generated && <span className="absolute top-1.5 left-1.5 rounded-md bg-ai px-1.5 py-0.5 text-2xs/[inherit] font-bold text-accent-fg shadow">{tt('AI')}</span>}
           {selected && (
             <span className="absolute top-1.5 left-1.5 grid size-5 place-items-center rounded-full bg-accent text-accent-fg shadow-[0_0_0_2px_rgb(0_0_0/0.35)]">
               <Check className="size-3" strokeWidth={3} />
             </span>
           )}
           {asset.duration !== undefined && (
-            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-[10px] text-white tabular backdrop-blur-sm">
+            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-white tabular backdrop-blur-sm">
               {skim !== null && canSkim ? formatSeconds(skim) : formatSeconds(asset.duration)}
             </span>
           )}

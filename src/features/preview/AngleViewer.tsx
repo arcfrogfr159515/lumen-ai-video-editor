@@ -106,9 +106,9 @@ export function AngleViewer() {
               />
               <span className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/80 to-transparent px-1.5 pt-3 pb-1 text-left">
                 {i < 9 && <Kbd combo={String(i + 1)} />}
-                <span className={cn('truncate text-[11px] font-medium', active ? 'text-accent-2' : 'text-white/85')}>{a.name}</span>
+                <span className={cn('truncate text-xs/[inherit] font-medium', active ? 'text-accent-2' : 'text-white/85')}>{a.name}</span>
               </span>
-              {active && <span className="absolute top-1.5 left-1.5 rounded bg-accent px-1 text-[9px] font-bold text-accent-fg">{tt('LIVE')}</span>}
+              {active && <span className="absolute top-1.5 left-1.5 rounded bg-accent px-1 text-2xs/[inherit] font-bold text-accent-fg">{tt('LIVE')}</span>}
             </button>
           )
         })}

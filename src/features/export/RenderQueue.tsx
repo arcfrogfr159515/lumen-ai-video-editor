@@ -74,7 +74,7 @@ function JobRow({ job }: { job: QueueJob }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate text-sm font-medium text-fg">{job.label}</span>
-          <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold', s.className)}>{s.label}</span>
+          <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-2xs/[inherit] font-semibold', s.className)}>{s.label}</span>
         </div>
         <div className="truncate text-2xs text-fg-4">{job.detail}</div>
         <div className="truncate text-2xs text-fg-4" title={path}>

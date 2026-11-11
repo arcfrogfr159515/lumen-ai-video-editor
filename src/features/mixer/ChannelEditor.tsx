@@ -213,7 +213,7 @@ function Reduction({ target, which }: { target: Target; which: 'compressor' | 'l
       <span className="relative h-1.5 w-16 overflow-hidden rounded-full bg-black/50">
         <span ref={bar} className="absolute inset-y-0 right-0 w-0 rounded-full bg-warn" />
       </span>
-      <span ref={label} className="w-12 font-mono text-[10px] text-warn tabular" />
+      <span ref={label} className="w-12 font-mono text-2xs/[inherit] text-warn tabular" />
     </span>
   )
 }
@@ -298,7 +298,7 @@ function EqEditor({ target, eq }: { target: Target; eq: EqSettings }) {
             style={{ left: `${(X(h.f) / W) * 100}%`, top: `${(Y(clamp(h.db, -24, 24)) / H) * 100}%` }}
           />
         ))}
-        <div className="pointer-events-none absolute inset-x-2 bottom-1 flex justify-between font-mono text-[9px] text-fg-4">
+        <div className="pointer-events-none absolute inset-x-2 bottom-1 flex justify-between font-mono text-2xs/[inherit] text-fg-4">
           <span>20</span>
           <span>100</span>
           <span>1k</span>

@@ -78,7 +78,7 @@ export function VersionHistoryDialog() {
               {g.items.map((v, i) => (
                 <div key={v.id} className="group/v flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-white/[0.04]">
                   <span className="w-[4.5rem] shrink-0 font-mono text-sm whitespace-nowrap text-fg tabular">{time(v.savedAt)}</span>
-                  <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold', KIND[v.kind].className)}>{KIND[v.kind].label}</span>
+                  <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-2xs/[inherit] font-semibold', KIND[v.kind].className)}>{KIND[v.kind].label}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-fg-3">
                     {ttx('{0} · {1} · {2} clip{3}', v.name, length(v.seconds), v.clips, v.clips === 1 ? '' : 's')}
                     {g.day === tt('Today') && i === 0 && groups[0] === g && <span className="ml-1.5 text-fg-4">{tt('(latest)')}</span>}

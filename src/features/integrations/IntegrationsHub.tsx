@@ -153,7 +153,7 @@ function Sidebar({ selected, onSelect }: { selected: Selection; onSelect: (s: Se
 }
 
 function NavLabel({ children }: { children: ReactNode }) {
-  return <div className="mt-4 mb-1 px-2.5 text-[10px] font-semibold tracking-wider text-fg-4 uppercase first:mt-0">{children}</div>
+  return <div className="mt-4 mb-1 px-2.5 text-2xs/[inherit] font-semibold tracking-wider text-fg-4 uppercase first:mt-0">{children}</div>
 }
 
 function NavItem({ active, onClick, icon, label, hint, status, muted }: { active: boolean; onClick: () => void; icon: ReactNode; label: string; hint?: string; status?: Parameters<typeof StatusDot>[0]['status']; muted?: boolean }) {
@@ -181,13 +181,13 @@ function ServerGlyph({ config }: { config: Pick<McpServerConfig, 'id' | 'name' |
   if (config.preset === 'runway' || config.preset === 'replicate' || config.preset === 'fal')
     return (
       <IconTile tone="mcp" size="sm">
-        <span className="text-[11px] font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? 'Re' : 'f'}</span>
+        <span className="text-xs/[inherit] font-black">{config.preset === 'runway' ? 'R' : config.preset === 'replicate' ? 'Re' : 'f'}</span>
       </IconTile>
     )
   if (config.preset === 'higgsfield')
     return (
       <IconTile tone="higgsfield" size="sm">
-        <span className="text-[11px] font-black">H</span>
+        <span className="text-xs/[inherit] font-black">H</span>
       </IconTile>
     )
   if (config.preset === 'blender-mcp')

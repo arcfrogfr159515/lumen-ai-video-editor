@@ -222,7 +222,7 @@ function CueLane({ cues, fps, pps, x0, x1, width, bottom }: { cues: ClipCue[]; f
             style={{ left: x, width: Math.max(3, room - 1) }}
           >
             <span className="h-full w-[2px] shrink-0" style={{ background: CUE_COLOR[cueTone(item.cue.kind)] }} />
-            {room >= 40 && <span className="min-w-0 truncate pr-1 pl-1 text-[9.5px] leading-none font-medium text-white/90">{cueText(item.cue)}</span>}
+            {room >= 40 && <span className="min-w-0 truncate pr-1 pl-1 text-2xs leading-none font-medium text-white/90">{cueText(item.cue)}</span>}
           </span>
         ))}
     </div>
@@ -235,10 +235,10 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
   const angles = nested?.multicam ? angleTracks(nested) : []
   const angle = angles.findIndex((t) => t.id === clip.angle)
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[18px] min-w-0 items-center gap-1 px-1.5 pt-px text-[11px] leading-none font-medium text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.7)]">
+    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[18px] min-w-0 items-center gap-1 px-1.5 pt-px text-xs leading-none font-medium text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.7)]">
       <Icon className="size-3 shrink-0 opacity-80" />
       {angles.length > 0 && (
-        <span className="shrink-0 rounded bg-white px-1 py-px text-[9.5px] font-bold text-black tabular [text-shadow:none]" title={angles[Math.max(0, angle)]?.name}>
+        <span className="shrink-0 rounded bg-white px-1 py-px text-2xs/[inherit] font-bold text-black tabular [text-shadow:none]" title={angles[Math.max(0, angle)]?.name}>
           {Math.max(0, angle) + 1}
         </span>
       )}
@@ -247,27 +247,27 @@ function ClipLabel({ clip, asset, nested }: { clip: Clip; asset?: Asset; nested?
       {(clip.follow || clip.masks?.some((m) => m.follow)) && <Crosshair className="size-3 shrink-0 opacity-80" aria-label={tt('Tracked')} />}
       {clip.stabilize && <Move className="size-3 shrink-0 opacity-80" aria-label={tt('Stabilized')} />}
       {clip.freeze ? (
-        <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold">
+        <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-2xs/[inherit] font-semibold">
           <Snowflake className="size-2.5" />
           {tt('Freeze')}
         </span>
       ) : (
         (clip.speed !== 1 || isRamped(clip)) && (
-          <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold tabular">
+          <span className="ml-0.5 flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-2xs/[inherit] font-semibold tabular">
             <Gauge className="size-2.5" />
             {isRamped(clip) ? tt('Ramp') : `${clip.speed}×`}
           </span>
         )
       )}
       {clip.effects.length > 0 && (
-        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold">
+        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-2xs/[inherit] font-semibold">
           <Sparkles className="size-2.5" />
           {clip.effects.length}
         </span>
       )}
-      {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-[9px] font-bold text-accent-fg [text-shadow:none]">{tt('AI')}</span>}
+      {asset?.generated && <span className="shrink-0 rounded bg-ai px-1 py-px text-2xs/[inherit] font-bold text-accent-fg [text-shadow:none]">{tt('AI')}</span>}
       {clip.takes && clip.takes.length > 1 && (
-        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-[9.5px] font-semibold tabular" aria-label={tt('Take {0} of {1}', takeIndex(clip) + 1, clip.takes.length)}>
+        <span className="flex shrink-0 items-center gap-0.5 rounded bg-black/40 px-1 py-px text-2xs/[inherit] font-semibold tabular" aria-label={tt('Take {0} of {1}', takeIndex(clip) + 1, clip.takes.length)}>
           <Layers2 className="size-2.5" />
           {takeIndex(clip) + 1}/{clip.takes.length}
         </span>
@@ -347,7 +347,7 @@ function NoteBadge({ clip }: { clip: Clip }) {
   return (
     <span
       aria-label={open ? tt('{0} open task{1}', open, open === 1 ? '' : 's') : done ? tt('Tasks done') : tt('Has a note')}
-      className={cn('flex shrink-0 items-center gap-0.5 rounded px-1 py-px text-[9.5px] font-bold tabular [text-shadow:none]', open ? 'bg-warn text-black' : done ? 'bg-ok text-black' : 'bg-white/85 text-black')}
+      className={cn('flex shrink-0 items-center gap-0.5 rounded px-1 py-px text-2xs/[inherit] font-bold tabular [text-shadow:none]', open ? 'bg-warn text-black' : done ? 'bg-ok text-black' : 'bg-white/85 text-black')}
     >
       <StickyNote className="size-2.5" />
       {open > 0 && open}
@@ -387,7 +387,7 @@ function NestBody({ clip, seq, inPoint, duration, width, height }: { clip: Clip;
   return (
     <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--clip)_30%,#12110f),color-mix(in_oklab,var(--clip)_14%,#0f0f0d))]">
       <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: 'var(--clip)' }} />
-      {!seq && <div className="absolute inset-x-0 top-5 px-1.5 text-[10px] text-danger">{tt('Timeline missing')}</div>}
+      {!seq && <div className="absolute inset-x-0 top-5 px-1.5 text-2xs/[inherit] text-danger">{tt('Timeline missing')}</div>}
       {width > 30 &&
         bars.map((bar) => {
           const h = Math.max(2, Math.min(7, usable / bar.rows - 2))

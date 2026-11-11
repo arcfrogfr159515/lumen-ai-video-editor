@@ -118,7 +118,7 @@ function blocks(text: string) {
         )
       case 'h':
         return (
-          <p key={i} className={cn('font-semibold text-fg', b.level <= 2 ? 'mt-3 text-[15px]' : 'mt-2 text-sm')}>
+          <p key={i} className={cn('font-semibold text-fg', b.level <= 2 ? 'mt-3 text-md/[inherit]' : 'mt-2 text-sm')}>
             {inline(b.text)}
           </p>
         )
@@ -182,11 +182,11 @@ function blocks(text: string) {
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
   return (
     <div className="overflow-hidden rounded-lg bg-black/35 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)]">
-      <div className="flex h-7 items-center border-b border-line px-2.5 text-[10.5px] text-fg-4">
+      <div className="flex h-7 items-center border-b border-line px-2.5 text-2xs/[inherit] text-fg-4">
         <span className="font-mono">{lang || tt('text')}</span>
         <CopyButton text={code} className="ml-auto" />
       </div>
-      <pre className="overflow-x-auto px-3 py-2 font-mono text-[11.5px] leading-relaxed text-fg-2">
+      <pre className="overflow-x-auto px-3 py-2 font-mono text-xs leading-relaxed text-fg-2">
         <code>{code}</code>
       </pre>
     </div>

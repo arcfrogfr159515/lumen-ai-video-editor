@@ -269,7 +269,7 @@ function LocalAgentCard({ id }: { id: LocalAgentId }) {
           <div className="truncate text-2xs text-fg-4">
             {!a ? tt('Checking…') : !a.found ? tt('Not installed') : `${a.signedIn ? tt('Signed in · {0}', a.account ?? tt('your account')) : tt('Not signed in')}${a.version ? ` · v${a.version}` : ''}`}
           </div>
-          {a?.path && <div className="truncate font-mono text-[10px] text-fg-4/80">{a.path}</div>}
+          {a?.path && <div className="truncate font-mono text-2xs/[inherit] text-fg-4/80">{a.path}</div>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {a && !a.found && (

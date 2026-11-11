@@ -194,7 +194,7 @@ export function Storyboard() {
   const lastCard = cards[cards.length - 1]?.clipId
 
   return (
-    <div ref={rootRef} data-storyboard tabIndex={0} onKeyDown={onKeyDown} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pt-2 pb-4 outline-none">
+    <div ref={rootRef} data-storyboard tabIndex={0} onKeyDown={onKeyDown} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pt-2 pb-4">
       {cards.length === 0 ? (
         <div className="grid h-full place-items-center text-center">
           <div>
@@ -322,7 +322,7 @@ function Card({
           onPointerDown={onPointerDown}
           onDoubleClick={onOpen}
           aria-selected={selected}
-          className={cn('group/card relative w-[168px] shrink-0 cursor-grab select-none rounded-[10px] outline-none transition-[opacity,transform] active:cursor-grabbing', lifted && 'scale-[0.97] opacity-40')}
+          className={cn('group/card relative w-[168px] shrink-0 cursor-grab select-none rounded-[10px] transition-[opacity,transform] active:cursor-grabbing', lifted && 'scale-[0.97] opacity-40')}
         >
           {dropBefore && <span className="pointer-events-none absolute inset-y-0 -left-[6px] w-[3px] rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />}
           {dropAfter && <span className="pointer-events-none absolute inset-y-0 -right-[6px] w-[3px] rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />}
@@ -335,16 +335,16 @@ function Card({
           >
             {frame ? <FrameCanvas frame={frame} className="absolute inset-0" /> : poster ? <img src={poster} alt="" draggable={false} className="h-full w-full object-cover" /> : <span className="grid h-full place-items-center text-fg-4"><Icon className="size-5" /></span>}
             <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: color }} />
-            <span className="absolute top-1.5 left-1.5 rounded-md bg-black/65 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white tabular backdrop-blur-sm">{card.number}</span>
-            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/65 px-1.5 py-0.5 font-mono text-[10px] text-white tabular backdrop-blur-sm">{formatDuration(card.end - card.start, fps)}</span>
+            <span className="absolute top-1.5 left-1.5 rounded-md bg-black/65 px-1.5 py-0.5 font-mono text-2xs/[inherit] font-semibold text-white tabular backdrop-blur-sm">{card.number}</span>
+            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/65 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-white tabular backdrop-blur-sm">{formatDuration(card.end - card.start, fps)}</span>
             <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1">
               {clip.takes && clip.takes.length > 1 && (
-                <span className="flex items-center gap-0.5 rounded bg-black/65 px-1 py-0.5 text-[9.5px] font-semibold text-white tabular">
+                <span className="flex items-center gap-0.5 rounded bg-black/65 px-1 py-0.5 text-2xs/[inherit] font-semibold text-white tabular">
                   <Layers2 className="size-2.5" /> {clip.takes.length}
                 </span>
               )}
               {(clip.note || clip.tasks?.length) && (
-                <span className={cn('flex items-center gap-0.5 rounded px-1 py-0.5 text-[9.5px] font-bold tabular', open ? 'bg-warn text-black' : 'bg-white/85 text-black')}>
+                <span className={cn('flex items-center gap-0.5 rounded px-1 py-0.5 text-2xs/[inherit] font-bold tabular', open ? 'bg-warn text-black' : 'bg-white/85 text-black')}>
                   <StickyNote className="size-2.5" /> {open > 0 && open}
                 </span>
               )}
@@ -352,8 +352,8 @@ function Card({
           </div>
           <div className="mt-1 px-0.5">
             <div className="truncate text-xs font-medium text-fg-2">{clip.kind === 'text' ? (clip.text?.content.replace(/\n/g, ' · ') ?? clip.name) : clip.name}</div>
-            <div className="truncate font-mono text-[10px] text-fg-4 tabular">{formatTimecode(card.start, fps)}</div>
-            {clip.note && <div className="mt-0.5 line-clamp-2 text-[10.5px] leading-snug text-fg-3">{clip.note}</div>}
+            <div className="truncate font-mono text-2xs/[inherit] text-fg-4 tabular">{formatTimecode(card.start, fps)}</div>
+            {clip.note && <div className="mt-0.5 line-clamp-2 text-2xs leading-snug text-fg-3">{clip.note}</div>}
           </div>
         </div>
       </ContextTrigger>

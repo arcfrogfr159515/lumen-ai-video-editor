@@ -138,7 +138,7 @@ function SkillRow({ skill, onView, onEdit }: { skill: SkillEntry; onView: () => 
   return (
     <div className="group/skill flex items-start gap-3 rounded-xl bg-white/[0.025] px-3.5 py-3 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)]">
       <div className="min-w-0 flex-1">
-        <div className="font-mono text-[12px] text-fg">{skill.name}</div>
+        <div className="font-mono text-sm/[inherit] text-fg">{skill.name}</div>
         <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-fg-3">{skill.description}</p>
         {skill.files.length > 0 && <p className="mt-1 text-2xs text-fg-4">{ttx('+ {0} file{1}', skill.files.length, skill.files.length === 1 ? '' : 's')}</p>}
       </div>
@@ -248,7 +248,7 @@ function SkillEditor({ folder, onClose }: { folder?: string; onClose: () => void
             onKeyDown={(e) => e.stopPropagation()}
             disabled={busy}
             spellCheck={false}
-            className="block h-[38vh] w-full resize-none rounded-lg bg-black/30 px-3 py-2.5 font-mono text-[12px] leading-relaxed text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] outline-none focus:shadow-[inset_0_0_0_1px_var(--color-accent)]"
+            className="block h-[38vh] w-full resize-none rounded-lg bg-black/30 px-3 py-2.5 font-mono text-sm leading-relaxed text-fg-2 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] outline-none focus:shadow-[inset_0_0_0_1px_var(--color-accent)]"
           />
         </label>
         <div className="flex justify-end gap-2 pt-1">

@@ -123,7 +123,7 @@ function Strip({
           <span
             key={f.label}
             className={cn(
-              'grid h-4 flex-1 place-items-center rounded-[4px] text-[8.5px] font-bold tracking-wide',
+              'grid h-4 flex-1 place-items-center rounded-[4px] text-2xs/[inherit] font-bold tracking-wide',
               f.on ? 'bg-accent/20 text-accent-2' : f.present ? 'bg-white/[0.06] text-fg-4 line-through' : 'bg-white/[0.035] text-fg-4/60',
             )}
           >
@@ -133,13 +133,13 @@ function Strip({
       </div>
       <div title={tt('Pan {0}', panLabel)}>
         <Slider aria-label={tt('{0} pan', name)} value={pan} min={-1} max={1} step={0.01} bipolar defaultValue={0} onChange={(v) => setMix(target, { pan: Math.round(v * 100) / 100 }, `pan:${target}`)} />
-        <div className="text-center font-mono text-[9px] text-fg-4 tabular">{panLabel}</div>
+        <div className="text-center font-mono text-2xs/[inherit] text-fg-4 tabular">{panLabel}</div>
       </div>
       <div className={cn('flex h-[124px] justify-center gap-1.5', dimmed && 'opacity-40')}>
         <Meter target={target} />
         <Fader value={mix.volume} name={name} onChange={(db, key) => setMix(target, { volume: db }, key)} />
       </div>
-      <div className="text-center font-mono text-[10.5px] font-medium text-fg-2 tabular">{formatDb(mix.volume)}</div>
+      <div className="text-center font-mono text-2xs/[inherit] font-medium text-fg-2 tabular">{formatDb(mix.volume)}</div>
       {track ? (
         <div className="flex gap-1">
           <button
@@ -160,7 +160,7 @@ function Strip({
           </button>
         </div>
       ) : (
-        <div className="grid h-6 place-items-center text-[9px] font-semibold tracking-wider text-fg-4 uppercase">{ttc('mixer', 'Out')}</div>
+        <div className="grid h-6 place-items-center text-2xs/[inherit] font-semibold tracking-wider text-fg-4 uppercase">{ttc('mixer', 'Out')}</div>
       )}
     </div>
   )

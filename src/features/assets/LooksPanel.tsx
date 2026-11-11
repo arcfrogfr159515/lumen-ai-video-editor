@@ -65,7 +65,7 @@ function LookCard({ look, src, active }: { look: Look; src?: string; active: boo
       onDragStart={(e) => dnd.start(e, { type: 'look', lookId: look.id }, look.name)}
       onDragEnd={dnd.end}
       onClick={() => applyLook(look.id, useUI.getState().selection)}
-      className="group/look text-left outline-none"
+      className="group/look text-left"
     >
       <div
         className={cn(

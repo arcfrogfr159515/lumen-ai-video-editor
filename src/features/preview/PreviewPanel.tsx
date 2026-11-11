@@ -189,7 +189,7 @@ function Transport() {
       <ScrubBar />
       <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center">
         <div className="flex items-baseline gap-1.5 font-mono tabular">
-          <LiveTimecode fps={fps} className="text-[13px] font-medium text-fg" />
+          <LiveTimecode fps={fps} className="text-base/[inherit] font-medium text-fg" />
           <span className="text-xs text-fg-4">/ {formatTimecode(duration, fps)}</span>
         </div>
         <div className="flex items-center gap-1">
@@ -208,7 +208,7 @@ function Transport() {
             >
               {playing ? <Pause className="size-4" fill="currentColor" /> : <Play className="ml-0.5 size-4" fill="currentColor" />}
               {playing && rate !== 1 && (
-                <span className="absolute -top-1.5 -right-2 rounded-full bg-accent px-1.5 py-px text-[9px] font-bold text-accent-fg tabular">{rate}×</span>
+                <span className="absolute -top-1.5 -right-2 rounded-full bg-accent px-1.5 py-px text-2xs/[inherit] font-bold text-accent-fg tabular">{rate}×</span>
               )}
             </button>
           </Tip>

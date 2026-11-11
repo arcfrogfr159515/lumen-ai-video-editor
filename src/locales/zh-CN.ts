@@ -508,6 +508,7 @@ const zhCN: Record<string, string> = {
   'Auto-direct multicam': '自动导播多机位',
   'Auto-direct: cut between the cameras…': '自动导播：在各机位之间切换…',
   'Auto{0}': '自动{0}',
+  'automatic': '自动',
   'Automatic': '自动',
   'AV1 — best compression': 'AV1 — 压缩率最高',
   'Available in the desktop app': '仅桌面版可用',

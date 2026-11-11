@@ -60,8 +60,8 @@ function Option({ title, hint, selected, onSelect }: { title: string; hint: stri
       className={cn('flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left outline-none transition-colors hover:bg-white/[0.06] focus-visible:bg-white/[0.06]', selected && 'bg-white/[0.04]')}
     >
       <span className="min-w-0 flex-1">
-        <span className="block text-[13px] text-fg">{title}</span>
-        <span className="block truncate text-[10.5px] text-fg-4">{hint}</span>
+        <span className="block text-base/[inherit] text-fg">{title}</span>
+        <span className="block truncate text-2xs/[inherit] text-fg-4">{hint}</span>
       </span>
       {selected && <Check className="size-3.5 shrink-0 text-accent-2" />}
     </button>

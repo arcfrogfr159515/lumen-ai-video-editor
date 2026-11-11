@@ -84,7 +84,7 @@ function Tab({ icon, label, count }: { icon: ReactNode; label: string; count: nu
     <span className="flex items-center gap-1.5">
       {icon}
       {label}
-      {count > 0 && <span className="rounded-full bg-warn/20 px-1.5 text-[10px] leading-4 font-semibold text-warn tabular">{count}</span>}
+      {count > 0 && <span className="rounded-full bg-warn/20 px-1.5 text-2xs leading-4 font-semibold text-warn tabular">{count}</span>}
     </span>
   )
 }

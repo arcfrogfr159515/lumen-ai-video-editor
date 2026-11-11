@@ -240,7 +240,7 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
             />
-            <button type="button" onClick={toggle} aria-label={playing ? tt('Pause') : tt('Play')} className="flex h-full w-full items-center px-8 outline-none">
+            <button type="button" onClick={toggle} aria-label={playing ? tt('Pause') : tt('Play')} className="flex h-full w-full items-center px-8">
               <MiniWave peaks={asset.peaks} bars={96} className="h-24 w-full text-clip-audio" />
             </button>
           </>
@@ -260,7 +260,7 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
           <IconButton size="sm" label={playing ? tt('Pause') : tt('Play')} shortcut="space" onClick={toggle}>
             {playing ? <Pause /> : <Play />}
           </IconButton>
-          <span className="ml-1 font-mono text-[13px] font-medium text-fg tabular">{tc(time)}</span>
+          <span className="ml-1 font-mono text-base/[inherit] font-medium text-fg tabular">{tc(time)}</span>
           <span className="font-mono text-2xs text-fg-4 tabular">/ {tc(duration)}</span>
           <div className="ml-auto flex items-center gap-1">
             <Mark label={tt('In')} shortcut="i" value={marks?.in} tc={tc} onSet={() => markSource(asset.id, { in: time })} onClear={() => markSource(asset.id, { in: null })} onGo={() => seek(marks?.in ?? 0)} icon={<ChevronFirst />} />

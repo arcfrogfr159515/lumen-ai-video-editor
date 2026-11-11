@@ -63,8 +63,11 @@ export function Slider({
         )}
       </RadixSlider.Track>
       {bipolar && <span className="pointer-events-none absolute top-1/2 h-2 w-px -translate-y-1/2 bg-white/20" style={{ left: `${mid}%` }} />}
+      {/* The thumb is what a screen reader lands on, so it carries the name; and it is drawn at 12 px but can be
+          caught anywhere within 24. */}
       <RadixSlider.Thumb
-        className="block size-3 rounded-full bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.25),0_2px_6px_rgb(0_0_0/0.5)] outline-none transition-[transform,box-shadow] duration-150 group-hover/slider:scale-110 focus-visible:ring-4 focus-visible:ring-accent/40 active:scale-125"
+        aria-label={rest['aria-label']}
+        className="relative block size-3 rounded-full before:absolute before:-inset-1.5 before:content-[''] bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.25),0_2px_6px_rgb(0_0_0/0.5)] outline-none transition-[transform,box-shadow] duration-150 group-hover/slider:scale-110 focus-visible:ring-4 focus-visible:ring-accent/40 active:scale-125"
       />
     </RadixSlider.Root>
   )

@@ -83,12 +83,12 @@ export function EffectsPanel() {
       onClick={() => applyEffect(fx.kind, useUI.getState().selection)}
       onPointerEnter={() => setHovered(fx.kind)}
       onPointerLeave={() => setHovered((h) => (h === fx.kind ? null : h))}
-      className="group/fx text-left outline-none"
+      className="group/fx text-left"
     >
       {fx.is3d ? (
         <div className="relative aspect-video overflow-hidden rounded-[10px] bg-[#0c0d0b] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] transition-shadow duration-200 group-hover/fx:shadow-[0_0_0_1px_rgb(255_255_255/0.18),0_10px_24px_-10px_rgb(0_0_0/0.9)]">
           <Preview3D key={art.key} active={hovered === fx.kind} rest={1.2} draw={(canvas, t) => drawEffectPreview(canvas, fx.kind, t)} />
-          <span className="absolute top-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-white backdrop-blur-sm">3D</span>
+          <span className="absolute top-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-2xs/[inherit] font-bold tracking-wide text-white backdrop-blur-sm">3D</span>
         </div>
       ) : (
         <EffectPreview

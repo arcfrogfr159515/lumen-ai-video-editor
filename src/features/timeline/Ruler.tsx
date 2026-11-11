@@ -143,7 +143,7 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
               playback.pause()
               playback.seek(marker.frame)
             }}
-            className="absolute top-[3px] z-10 -translate-x-[1px] outline-none transition-transform hover:scale-110"
+            className="absolute top-[3px] z-10 -translate-x-[1px] transition-transform hover:scale-110"
             style={{ left: x }}
           >
             <svg width="9" height="12" viewBox="0 0 9 12" aria-hidden className={done ? 'opacity-45' : undefined}>
@@ -253,7 +253,7 @@ function RangeBand() {
       onPointerDown={(e) => drag(e, 'both')}
       title={tt('In {0} · Out {1} · {2}', formatTimecode(range.in, fps), formatTimecode(range.out, fps), formatDuration(range.out - range.in, fps))}
     >
-      {x1 - x0 > 70 && <span className="pointer-events-none absolute inset-x-2 top-px truncate text-center font-mono text-[9px] leading-[10px] font-semibold text-accent-2">{formatDuration(range.out - range.in, fps)}</span>}
+      {x1 - x0 > 70 && <span className="pointer-events-none absolute inset-x-2 top-px truncate text-center font-mono text-2xs leading-[10px] font-semibold text-accent-2">{formatDuration(range.out - range.in, fps)}</span>}
       <span onPointerDown={(e) => drag(e, 'in')} className="absolute -left-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-l-[2px] border-l-2 border-accent" aria-label={tt('In point')} />
       <span onPointerDown={(e) => drag(e, 'out')} className="absolute -right-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-r-[2px] border-r-2 border-accent" aria-label={tt('Out point')} />
     </div>
@@ -323,7 +323,7 @@ export function TimecodeCell() {
         <button
           type="button"
           onClick={() => (setDraft(formatTimecode(usePlayback.getState().frame, fps)), setEditing(true))}
-          className="flex items-baseline gap-2 rounded px-1 font-mono text-[13px] font-medium tracking-tight text-fg tabular outline-none hover:bg-white/[0.05]"
+          className="flex items-baseline gap-2 rounded px-1 font-mono text-base/[inherit] font-medium tracking-tight text-fg tabular hover:bg-white/[0.05]"
           title={tt('Click to jump to a timecode')}
         >
           <span ref={readout} />

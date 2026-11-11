@@ -208,7 +208,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
             style={{ left: pct(toX(p.at), W), top: pct(toY(p.speed), H) }}
           />
         ))}
-        <div className="pointer-events-none absolute top-1 right-1.5 flex flex-col items-end font-mono text-[9px] leading-tight text-fg-4">
+        <div className="pointer-events-none absolute top-1 right-1.5 flex flex-col items-end font-mono text-2xs leading-tight text-fg-4">
           <span>{ttx('{0}× max', round(Math.max(...points.map((p) => p.speed))))}</span>
           <span>{ttx('{0}× min', round(Math.min(...points.map((p) => p.speed))))}</span>
         </div>
@@ -217,7 +217,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
           <line x1={toX(0)} y1={FOOT_H - 3} x2={toX(1)} y2={3} stroke="white" strokeOpacity={0.12} strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
           <path d={footLine} fill="none" stroke="var(--color-snap)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
         </svg>
-        <span className="pointer-events-none absolute bottom-1 left-2 text-[9px] leading-none text-fg-4">{tt('Footage played')}</span>
+        <span className="pointer-events-none absolute bottom-1 left-2 text-2xs leading-none text-fg-4">{tt('Footage played')}</span>
       </div>
 
       {sel !== null && (

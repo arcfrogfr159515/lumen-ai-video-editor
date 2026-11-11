@@ -504,7 +504,7 @@ function Overlays() {
       )}
       {readout && (
         <div
-          className="popover pointer-events-none absolute z-[45] rounded-md px-2 py-1 font-mono text-[11px] whitespace-pre text-fg tabular"
+          className="popover pointer-events-none absolute z-[45] rounded-md px-2 py-1 font-mono text-xs/[inherit] whitespace-pre text-fg tabular"
           style={{ left: readout.x + 14, top: Math.max(RULER_H + 4, readout.y - 34) }}
         >
           {readout.text}
@@ -529,7 +529,7 @@ function TrimMarker() {
     <div data-trim-cut={side} className="pointer-events-none absolute z-[23]" style={{ left: x, top, height }}>
       {side !== 'in' && <span className={cn(bracket, 'right-0 rounded-r-[4px] border-r-[3px]')} />}
       {side !== 'out' && <span className={cn(bracket, 'left-0 rounded-l-[4px] border-l-[3px]')} />}
-      <span className="absolute -top-[18px] left-1/2 -translate-x-1/2 rounded-md bg-accent px-1.5 py-0.5 font-mono text-[10px] leading-none font-semibold whitespace-nowrap text-accent-fg tabular">
+      <span className="absolute -top-[18px] left-1/2 -translate-x-1/2 rounded-md bg-accent px-1.5 py-0.5 font-mono text-2xs leading-none font-semibold whitespace-nowrap text-accent-fg tabular">
         {moved === 0 ? '±0' : `${moved > 0 ? '+' : '−'}${Math.abs(moved)}f`}
       </span>
     </div>

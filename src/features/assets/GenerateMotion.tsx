@@ -25,7 +25,7 @@ const tech = { fontFamily: '"Space Grotesk Variable", sans-serif' }
 const PREVIEWS: Record<Template, ReactNode> = {
   'lower-third': (
     <div className="absolute bottom-[16%] left-[9%] text-white">
-      <span className="block text-[13px] leading-none" style={serif}>
+      <span className="block text-base leading-none" style={serif}>
         {tt('Ada Lovelace')}
       </span>
       <span className="my-[4px] block h-px w-5 bg-accent" />
@@ -34,7 +34,7 @@ const PREVIEWS: Record<Template, ReactNode> = {
   ),
   'title-card': (
     <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-      <span className="text-[17px] leading-none font-light" style={serif}>
+      <span className="text-lg leading-none font-light" style={serif}>
         {tt('The')}{' '}<em className="text-accent">{tt('quiet')}</em>{' '}{tt('hour')}
       </span>
       <span className="mt-1.5 h-px w-4 bg-accent" />
@@ -42,7 +42,7 @@ const PREVIEWS: Record<Template, ReactNode> = {
   ),
   kinetic: (
     <div className="absolute inset-0 grid place-items-center">
-      <span className="text-[21px] leading-none font-extrabold tracking-tighter text-accent uppercase" style={{ fontFamily: '"Archivo Variable"', fontStretch: '125%' }}>
+      <span className="text-xl leading-none font-extrabold tracking-tighter text-accent uppercase" style={{ fontFamily: '"Archivo Variable"', fontStretch: '125%' }}>
         {tt('Loud')}
       </span>
     </div>
@@ -53,14 +53,14 @@ const PREVIEWS: Record<Template, ReactNode> = {
         <circle r="16" cx="20" cy="20" fill="none" stroke="rgb(255 255 255 / 0.16)" strokeWidth="0.75" />
         <circle r="16" cx="20" cy="20" fill="none" stroke="#d6ee00" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="100.5" strokeDashoffset="18" />
       </svg>
-      <span className="absolute text-[10px] font-semibold text-white tabular" style={tech}>
+      <span className="absolute text-2xs/[inherit] font-semibold text-white tabular" style={tech}>
         87%
       </span>
     </div>
   ),
   quote: (
     <div className="absolute inset-0 flex flex-col justify-center px-[14%] text-white">
-      <span className="text-[16px] leading-[0.6] text-accent" style={serif}>
+      <span className="text-lg leading-[0.6] text-accent" style={serif}>
         “
       </span>
       <span className="text-[8px] leading-tight" style={serif}>
@@ -72,7 +72,7 @@ const PREVIEWS: Record<Template, ReactNode> = {
     <div className="absolute bottom-[16%] left-[9%] text-white">
       <span className="block font-mono text-[5px] tracking-[0.2em] text-accent">02</span>
       <span className="my-[3px] block h-px w-8 bg-white/80" />
-      <span className="block text-[11px] leading-none font-semibold tracking-tight" style={art}>
+      <span className="block text-xs leading-none font-semibold tracking-tight" style={art}>
         {tt('The Build')}
       </span>
     </div>
@@ -173,7 +173,7 @@ export function GenerateMotion() {
       <div className="space-y-4 px-3.5 pb-3">
         <div className="grid grid-cols-2 gap-2">
           {TEMPLATES.map((t) => (
-            <button key={t.id} type="button" onClick={() => setTemplate(t.id)} className="group/tpl text-left outline-none">
+            <button key={t.id} type="button" onClick={() => setTemplate(t.id)} className="group/tpl text-left">
               <div
                 className={cn(
                   'relative aspect-[16/9] overflow-hidden rounded-[10px] bg-[radial-gradient(120%_100%_at_30%_0%,#22261a,#0f100d)] transition-shadow',

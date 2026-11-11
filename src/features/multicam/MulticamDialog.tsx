@@ -93,7 +93,7 @@ export function MulticamDialog() {
                   onClick={() => toggle(v.id)}
                   className={cn('flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors', on ? 'bg-accent/10 shadow-[inset_0_0_0_1px_rgb(214_238_0/0.3)]' : 'hover:bg-white/[0.04]')}
                 >
-                  <span className={cn('grid size-5 shrink-0 place-items-center rounded-md text-[10px] font-bold', on ? 'bg-accent text-accent-fg' : 'bg-white/[0.06] text-transparent')}>{on ? videos.filter((x) => chosen.includes(x.id)).findIndex((x) => x.id === v.id) + 1 : <Check className="size-3" />}</span>
+                  <span className={cn('grid size-5 shrink-0 place-items-center rounded-md text-2xs/[inherit] font-bold', on ? 'bg-accent text-accent-fg' : 'bg-white/[0.06] text-transparent')}>{on ? videos.filter((x) => chosen.includes(x.id)).findIndex((x) => x.id === v.id) + 1 : <Check className="size-3" />}</span>
                   <span className="relative aspect-video w-16 shrink-0 overflow-hidden rounded-md bg-surface-3">{thumb && <img src={thumb} alt="" className="h-full w-full object-cover" />}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium text-fg">{v.name}</span>

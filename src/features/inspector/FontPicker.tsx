@@ -173,7 +173,7 @@ function Heading({ children }: { children: string }) {
 
 function Item({ active, onClick, family, children }: { active: boolean; onClick: () => void; family: string; children: string }) {
   return (
-    <button type="button" onClick={onClick} className={cn('flex h-8 w-full items-center rounded-md px-2 text-left text-[15px] text-fg-2 hover:bg-white/[0.06] hover:text-fg', active && 'bg-accent/12 text-accent-2')} style={{ fontFamily: family }}>
+    <button type="button" onClick={onClick} className={cn('flex h-8 w-full items-center rounded-md px-2 text-left text-md/[inherit] text-fg-2 hover:bg-white/[0.06] hover:text-fg', active && 'bg-accent/12 text-accent-2')} style={{ fontFamily: family }}>
       <span className="truncate">{children}</span>
     </button>
   )

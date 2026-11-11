@@ -77,7 +77,7 @@ export function TimelineSwitcher() {
             {trail.length > 0 && <span className="truncate font-medium text-fg-4">{trail.map((t) => t.name).join(' › ')} ›</span>}
             {sequenceRef?.multicam ? <Video className="size-3.5 shrink-0 text-accent-2" /> : <Layers className="size-3.5 shrink-0 text-fg-3" />}
             <span className="truncate">{name}</span>
-            {sequences.length > 1 && <span className="rounded bg-white/[0.07] px-1 text-[10px] font-medium text-fg-4 tabular">{sequences.length}</span>}
+            {sequences.length > 1 && <span className="rounded bg-white/[0.07] px-1 text-2xs/[inherit] font-medium text-fg-4 tabular">{sequences.length}</span>}
             <ChevronDown className="size-3 shrink-0 text-fg-4" />
           </button>
         </MenuTrigger>
@@ -87,7 +87,7 @@ export function TimelineSwitcher() {
             <MenuItem key={s.id} icon={s.id === openId ? <Check /> : s.multicam ? <Video /> : s.branchOf ? <GitBranch /> : <Film />} onSelect={() => openTimeline(s.id)}>
               <span className="flex min-w-0 flex-1 items-center gap-2">
                 <span className={cn('truncate', s.id === openId && 'text-fg')}>{s.name}</span>
-                <span className="ml-auto shrink-0 font-mono text-[10.5px] text-fg-4 tabular">
+                <span className="ml-auto shrink-0 font-mono text-2xs/[inherit] text-fg-4 tabular">
                   {s.settings.width}×{s.settings.height} · {formatDuration(clipsLength(s.clips), s.settings.fps)}
                 </span>
               </span>

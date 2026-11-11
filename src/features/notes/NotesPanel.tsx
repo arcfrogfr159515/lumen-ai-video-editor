@@ -56,7 +56,7 @@ function Counted({ label, count, title }: { label: string; count: number; title:
     <span className="flex items-center gap-1.5">
       {label}
       {count > 0 && (
-        <span title={`${count} ${title}`} className="rounded-full bg-warn/20 px-1.5 text-[10px] leading-4 font-semibold text-warn tabular">
+        <span title={`${count} ${title}`} className="rounded-full bg-warn/20 px-1.5 text-2xs leading-4 font-semibold text-warn tabular">
           {count}
         </span>
       )}

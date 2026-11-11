@@ -158,7 +158,7 @@ export function BatchSection({ clips }: { clips: Clip[] }) {
         </Row>
         <div className="flex flex-wrap gap-1">
           {RENAME_TOKENS.map((t) => (
-            <button key={t.token} type="button" title={tt('Adds {0}', t.means)} onClick={() => setPattern((p) => `${p}${p && !p.endsWith(' ') ? ' ' : ''}${t.token}`)} className={cn(chip, 'h-5 px-1.5 font-mono text-[10px]')}>
+            <button key={t.token} type="button" title={tt('Adds {0}', t.means)} onClick={() => setPattern((p) => `${p}${p && !p.endsWith(' ') ? ' ' : ''}${t.token}`)} className={cn(chip, 'h-5 px-1.5 font-mono text-2xs/[inherit]')}>
               {t.token}
             </button>
           ))}

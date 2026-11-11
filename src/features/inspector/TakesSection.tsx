@@ -79,7 +79,7 @@ export function TakesSection({ clip }: { clip: Clip }) {
                   {missing ? (
                     <TriangleAlert className="size-3.5 shrink-0 text-warn" aria-label={tt('Its media is missing')} />
                   ) : (
-                    !fills && !showing && <span className="shrink-0 rounded bg-warn/20 px-1 py-px text-[9.5px] font-semibold text-warn" title={tt('Shorter than this place: the clip gets shorter while it shows')}>{tt('SHORT')}</span>
+                    !fills && !showing && <span className="shrink-0 rounded bg-warn/20 px-1 py-px text-2xs/[inherit] font-semibold text-warn" title={tt('Shorter than this place: the clip gets shorter while it shows')}>{tt('SHORT')}</span>
                   )}
                 </button>
                 <button

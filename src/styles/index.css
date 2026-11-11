@@ -54,10 +54,14 @@
   --color-line-2: rgb(255 255 255 / 0.1);
   --color-line-3: rgb(255 255 255 / 0.16);
 
+  /* Text, from what matters most to least. Every step reads at 4.5:1 or better on the surfaces text sits on
+     (canvas to surface-4); what was fg-4 before, too faint to read, is fg-disabled: for controls that are off
+     and for decoration, which don't have to be read. */
   --color-fg: #eeeee9;
   --color-fg-2: #b5b6ae;
-  --color-fg-3: #7f8078;
-  --color-fg-4: #585952;
+  --color-fg-3: #a3a49b;
+  --color-fg-4: #8f9087;
+  --color-fg-disabled: #585952;
 
   /* Brand — acid lime. Text and icons sitting on it use the dark accent-fg ink. */
   --color-accent: #d6ee00;
@@ -158,6 +162,11 @@
 /* ───────────────────────────── Base ───────────────────────────── */
 
 @layer base {
+  :root {
+    /* What the browser draws itself — scrollbars, pickers, the caret, autofill — follows the theme. */
+    color-scheme: dark;
+  }
+
   html,
   body,
   #root {

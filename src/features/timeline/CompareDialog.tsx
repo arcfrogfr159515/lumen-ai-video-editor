@@ -257,7 +257,7 @@ function Viewer({ label, sub, project, frame, fps, marked }: { label: string; su
       >
         <canvas ref={canvasRef} width={w} height={h} className="block h-auto w-full" />
         {marked && (
-          <span className="absolute top-1.5 left-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-black" style={{ background: HUNK_COLOR[marked] }}>
+          <span className="absolute top-1.5 left-1.5 rounded-md px-1.5 py-0.5 text-2xs/[inherit] font-semibold text-black" style={{ background: HUNK_COLOR[marked] }}>
             {HUNK_WORD[marked]}
           </span>
         )}

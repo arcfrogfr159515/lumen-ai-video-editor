@@ -54,7 +54,7 @@ export function TrackLane({ track, width }: { track: Track; width: number }) {
       {track.kind === 'audio' && !track.locked && <CrossfadeHandles trackId={track.id} />}
       {ghost && (
         <div
-          className="pointer-events-none absolute top-[3px] bottom-[3px] z-20 flex items-center overflow-hidden rounded-[7px] border-2 border-dashed px-2 text-[11px] font-medium text-white/90"
+          className="pointer-events-none absolute top-[3px] bottom-[3px] z-20 flex items-center overflow-hidden rounded-[7px] border-2 border-dashed px-2 text-xs/[inherit] font-medium text-white/90"
           style={{
             left: (ghost.start / fps) * pps,
             width: Math.max(8, (ghost.duration / fps) * pps),
@@ -92,7 +92,7 @@ function TransitionDrop({ trackId }: { trackId: string }) {
       />
       <div className="pointer-events-none absolute top-0 bottom-0 z-[15] w-px bg-accent" style={{ left: (clip.start / fps) * pps }} />
       <span
-        className="pointer-events-none absolute top-[5px] z-[15] -translate-x-1/2 rounded-md bg-accent px-1.5 py-0.5 text-[9.5px] font-semibold whitespace-nowrap text-accent-fg"
+        className="pointer-events-none absolute top-[5px] z-[15] -translate-x-1/2 rounded-md bg-accent px-1.5 py-0.5 text-2xs/[inherit] font-semibold whitespace-nowrap text-accent-fg"
         style={{ left: ((clip.start - lead + duration / 2) / fps) * pps }}
       >
         {ALIGNS.find((a) => a.id === spot.align)?.label}

@@ -165,7 +165,7 @@ function TitleCard({ preset }: { preset: TitlePreset }) {
       {preset.is3d ? (
         <div className="relative aspect-video overflow-hidden rounded-[10px] bg-[radial-gradient(ellipse_at_30%_20%,#23261b,#111210_70%)] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] transition-shadow duration-200 group-hover/title:shadow-[0_0_0_1px_rgb(255_255_255/0.16),0_10px_24px_-10px_rgb(0_0_0/0.9)]">
           <Preview3D active={hover} rest={0.6} draw={(canvas, t) => drawTitlePreview(canvas, preset.id, t)} />
-          <span className="absolute top-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-white backdrop-blur-sm">3D</span>
+          <span className="absolute top-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-2xs/[inherit] font-bold tracking-wide text-white backdrop-blur-sm">3D</span>
           <span className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-white text-black opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/title:scale-100 group-hover/title:opacity-100">
             <Plus className="size-3.5" strokeWidth={2.5} />
           </span>

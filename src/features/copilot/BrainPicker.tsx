@@ -57,21 +57,23 @@ export function BrainPicker() {
       <PopoverTrigger asChild>
         <button
           type="button"
+          title={`${label.title} · ${label.subtitle}`}
           className="-ml-1.5 flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 outline-none transition-colors hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-white/[0.07]"
         >
           <span className="relative flex size-1.5 shrink-0">
             {ready && <span className="absolute inset-0 animate-ping rounded-full bg-ok/60" />}
             <span className={cn('relative size-1.5 rounded-full', ready ? 'bg-ok' : 'bg-warn')} />
           </span>
-          <span className="truncate font-medium text-fg-2">{label.title}</span>
-          <span className="shrink-0 text-fg-4">· {label.subtitle}</span>
+          {/* Where there isn't room for both, the detail gives way before the name does. */}
+          <span className="min-w-0 truncate font-medium text-fg-2">{label.title}</span>
+          <span className="min-w-0 shrink-[100] truncate text-fg-4">· {label.subtitle}</span>
           <ChevronDown className="size-3 shrink-0 text-fg-4" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[340px] p-0">
         <Command loop className="flex flex-col">
           <Command.Input placeholder={tt('Search models…')} className="h-10 border-b border-line bg-transparent px-3.5 text-sm text-fg outline-none placeholder:text-fg-4" />
-          <Command.List className="max-h-[420px] overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-fg-4 [&_[cmdk-group-heading]]:uppercase">
+          <Command.List className="max-h-[420px] overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-2xs/[inherit] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-fg-4 [&_[cmdk-group-heading]]:uppercase">
             <Command.Empty className="px-3 py-6 text-center text-xs text-fg-4">{tt('No models match.')}</Command.Empty>
 
             <Command.Group heading={tt('Default')}>
@@ -159,7 +161,7 @@ function AgentRows({
         onSelect={() => (agent?.found ? onSignIn() : openIntegrations('local-agents'))}
         action={
           agent?.found ? (
-            <span className="flex items-center gap-1 rounded-md bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-medium text-fg-2">
+            <span className="flex items-center gap-1 rounded-md bg-white/[0.08] px-1.5 py-0.5 text-2xs/[inherit] font-medium text-fg-2">
               {signingIn ? <LoaderCircle className="size-3 animate-spin" /> : null}
               {tt('Sign in')}
             </span>
@@ -217,8 +219,8 @@ function Row({
     >
       {icon && <span className="grid size-6 shrink-0 place-items-center rounded-md bg-white/[0.05] text-fg-3">{icon}</span>}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] text-fg">{title}</span>
-        {hint && <span className="block truncate text-[10.5px] text-fg-4">{hint}</span>}
+        <span className="block truncate text-base/[inherit] text-fg">{title}</span>
+        {hint && <span className="block truncate text-2xs/[inherit] text-fg-4">{hint}</span>}
       </span>
       {action}
       {selected && <Check className="size-3.5 shrink-0 text-accent-2" />}

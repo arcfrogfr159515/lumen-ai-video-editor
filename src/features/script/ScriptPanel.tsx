@@ -187,7 +187,7 @@ export function ScriptPanel() {
           tabIndex={0}
           onPointerDown={onPointerDown}
           onKeyDown={onKeyDown}
-          className="min-h-0 flex-1 cursor-text space-y-2.5 overflow-y-auto px-3 pb-3 text-[13px] leading-[1.75] text-fg-2 outline-none select-none"
+          className="min-h-0 flex-1 cursor-text space-y-2.5 overflow-y-auto px-3 pb-3 text-base leading-[1.75] text-fg-2 select-none"
         >
           {lines.map((line, i) => (
             <Line key={`${line.clipId}:${line.start}`} line={line} fps={fps} head={line.speaker !== lines[i - 1]?.speaker || line.clipId !== lines[i - 1]?.clipId} speakers={speakers} selected={selected} matched={matched} />
@@ -220,7 +220,7 @@ function Line({ line, fps, head, speakers, selected, matched }: { line: ScriptLi
   return (
     <p className={cn('relative', line.speaker && 'border-l-2 pl-2')} style={color ? { borderColor: color } : undefined}>
       {head && (
-        <span className="mb-0.5 block font-mono text-[10px] leading-none text-fg-4 tabular">
+        <span className="mb-0.5 block font-mono text-2xs leading-none text-fg-4 tabular">
           {line.speaker && (
             <span className="mr-1.5 font-sans font-semibold" style={{ color }}>
               {line.speaker}

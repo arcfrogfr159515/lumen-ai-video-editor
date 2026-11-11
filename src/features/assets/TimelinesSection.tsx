@@ -73,8 +73,8 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <span className="truncate text-xs font-medium text-fg-2 group-hover/tl:text-fg">{seq.name}</span>
-              {open && <span className="shrink-0 rounded bg-accent/15 px-1 text-[9px] font-bold text-accent-2">{tt('OPEN')}</span>}
-              {seq.multicam && <span className="shrink-0 rounded bg-white/[0.07] px-1 text-[9px] font-bold text-fg-3">{tt('MULTICAM')}</span>}
+              {open && <span className="shrink-0 rounded bg-accent/15 px-1 text-2xs/[inherit] font-bold text-accent-2">{tt('OPEN')}</span>}
+              {seq.multicam && <span className="shrink-0 rounded bg-white/[0.07] px-1 text-2xs/[inherit] font-bold text-fg-3">{tt('MULTICAM')}</span>}
             </div>
             <div className="text-2xs text-fg-4 tabular">
               {ttx('{0}×{1} · {2} fps · {3}', seq.settings.width, seq.settings.height, seq.settings.fps, formatDuration(clipsLength(seq.clips), seq.settings.fps))}

@@ -6,7 +6,7 @@ export function ResizeHandle({ vertical }: { vertical?: boolean }) {
   return (
     <Separator
       className={cn(
-        'group/handle relative flex shrink-0 items-center justify-center outline-none',
+        'group/handle relative flex shrink-0 items-center justify-center',
         vertical ? 'h-2 w-full' : 'h-full w-2',
       )}
     >

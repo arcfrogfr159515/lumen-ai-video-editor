@@ -103,7 +103,7 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
                 </div>
               )}
               {asset.duration !== undefined && (
-                <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-[10px] text-white">{formatSeconds(asset.duration)}</span>
+                <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-2xs/[inherit] text-white">{formatSeconds(asset.duration)}</span>
               )}
               <button
                 type="button"

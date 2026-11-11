@@ -67,7 +67,7 @@ export function WheelsSection({ clips }: { clips: Clip[] }) {
             />
             <div className="text-center leading-tight">
               <div className="text-2xs font-semibold text-fg-2">{w.label}</div>
-              <div className="text-[10px] text-fg-4">{w.hint}</div>
+              <div className="text-2xs/[inherit] text-fg-4">{w.hint}</div>
             </div>
           </div>
         ))}

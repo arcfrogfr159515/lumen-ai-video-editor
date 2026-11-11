@@ -53,7 +53,7 @@ function TransitionPreview3D({ kind, active }: { kind: TransitionKind; active: b
           drawTransitionPreview(canvas, kind, p)
         }}
       />
-      <span className="absolute top-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-white backdrop-blur-sm">3D</span>
+      <span className="absolute top-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-2xs/[inherit] font-bold tracking-wide text-white backdrop-blur-sm">3D</span>
     </div>
   )
 }
@@ -85,7 +85,7 @@ export function TransitionsPanel() {
       onClick={() => apply(t.kind)}
       onPointerEnter={() => setHovered(t.kind)}
       onPointerLeave={() => setHovered((h) => (h === t.kind ? null : h))}
-      className="group/tr text-left outline-none"
+      className="group/tr text-left"
     >
       {t.is3d ? <TransitionPreview3D key={art.key} kind={t.kind} active={hovered === t.kind} /> : <TransitionPreview2D kind={t.kind} a={art.a} b={art.b} />}
       <div className="mt-1.5 px-0.5">

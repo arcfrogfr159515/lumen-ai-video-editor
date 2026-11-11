@@ -92,7 +92,8 @@ export function CopilotPanel() {
 
   const toBottom = () => {
     const el = scrollRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    // An empty chat shows the welcome, which starts at its top.
+    if (el) el.scrollTop = useCopilot.getState().messages.length ? el.scrollHeight : 0
     pinned.current = true
     setAway(false)
     setFresh(false)
@@ -108,7 +109,10 @@ export function CopilotPanel() {
     const observer = new ResizeObserver(() => {
       const grew = content.offsetHeight > height
       height = content.offsetHeight
-      if (pinned.current) el.scrollTop = el.scrollHeight
+      // With nothing said yet there is no "latest" to follow: the welcome is read from its top, heading first,
+      // even where the panel is too short to show all of it.
+      if (!useCopilot.getState().messages.length) el.scrollTop = 0
+      else if (pinned.current) el.scrollTop = el.scrollHeight
       // Only the reply growing counts as news — not a step you opened yourself.
       else if (grew && useCopilot.getState().busy) setFresh(true)
     })
@@ -193,7 +197,7 @@ function StatusBar() {
           <div className="max-h-72 overflow-y-auto p-1.5">
             {tools.map((t) => (
               <div key={t.name} className="rounded-md px-2 py-1.5 hover:bg-white/[0.04]">
-                <div className="font-mono text-[11px] text-accent-2">{t.name}</div>
+                <div className="font-mono text-xs/[inherit] text-accent-2">{t.name}</div>
                 <div className="line-clamp-2 text-2xs leading-snug text-fg-4">{t.description}</div>
               </div>
             ))}
@@ -299,7 +303,7 @@ function ChatRow({ chat, active, disabled, onOpen }: { chat: Chat; active: boole
     <div className={cn('group/chat flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/[0.05]', active && 'bg-white/[0.06]')}>
       <button type="button" disabled={disabled && !active} onClick={onOpen} className="min-w-0 flex-1 text-left disabled:opacity-50">
         <div className={cn('truncate text-xs', active ? 'font-medium text-fg' : 'text-fg-2')}>{chatTitle(chat)}</div>
-        <div className="text-[10.5px] text-fg-4">
+        <div className="text-2xs/[inherit] text-fg-4">
           {ago(chat.updatedAt)} · {turns} {turns === 1 ? tt('request') : tt('requests')}
         </div>
       </button>
@@ -350,7 +354,7 @@ function Welcome() {
             onClick={() => void sendPrompt(s.prompt)}
             className="group rounded-xl bg-white/[0.035] p-3 text-left shadow-[inset_0_0_0_1px_rgb(255_255_255/0.05)] outline-none transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:bg-white/[0.06] hover:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)] focus-visible:ring-2 focus-visible:ring-accent/60"
           >
-            <div className="text-[12.5px] leading-snug font-medium text-fg">{s.title}</div>
+            <div className="text-sm leading-snug font-medium text-fg">{s.title}</div>
             <div className="mt-0.5 text-2xs leading-snug text-fg-4 group-hover:text-fg-3">{s.subtitle}</div>
           </motion.button>
         ))}
@@ -379,7 +383,7 @@ function RecentChats() {
           >
             <History className="size-3.5 shrink-0 text-fg-4" />
             <span className="min-w-0 flex-1 truncate text-xs text-fg-2">{chatTitle(c)}</span>
-            <span className="shrink-0 text-[10.5px] text-fg-4">{ago(c.updatedAt)}</span>
+            <span className="shrink-0 text-2xs/[inherit] text-fg-4">{ago(c.updatedAt)}</span>
           </button>
         ))}
       </div>
@@ -409,7 +413,7 @@ function FileBadge({ file }: { file: FileChip }) {
       <FileText className="size-3.5 shrink-0 text-fg-3" />
       <span className="min-w-0">
         <span className="block truncate font-medium">{file.name}</span>
-        <span className="block text-[10px] text-fg-4">
+        <span className="block text-2xs/[inherit] text-fg-4">
           {file.kind === 'pdf' ? tt('PDF') : tt('Text')} · {bytes(file.size)}
         </span>
       </span>
@@ -524,13 +528,13 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
         <span className="mt-[3px] grid size-3.5 shrink-0 place-items-center">{icon[p.status]}</span>
         <span className="min-w-0 flex-1">
           <span className={cn('block truncate text-xs text-fg', undone && 'line-through decoration-fg-4')}>{p.title}</span>
-          <span className="block truncate font-mono text-[10px] text-fg-4">
+          <span className="block truncate font-mono text-2xs/[inherit] text-fg-4">
             {p.tool}
             {p.detail && <span className="font-sans"> · {p.detail}</span>}
           </span>
-          {live && <span className={cn('mt-0.5 block truncate text-[11px]', SHIMMER)}>{live}</span>}
+          {live && <span className={cn('mt-0.5 block truncate text-xs/[inherit]', SHIMMER)}>{live}</span>}
         </span>
-        {side && <span className="mt-0.5 shrink-0 text-[10px] text-fg-4 tabular">{side}</span>}
+        {side && <span className="mt-0.5 shrink-0 text-2xs/[inherit] text-fg-4 tabular">{side}</span>}
         {details && <ChevronRight className={cn('mt-1 size-3 shrink-0 text-fg-4 transition-transform', open && 'rotate-90')} />}
       </button>
       {open && details && (
@@ -542,7 +546,7 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
       {(p.images?.length || p.pictures) && (
         <div className="px-2 pb-2 pl-[30px]">
           {!p.images?.length && p.pictures ? (
-            <div className="flex items-center gap-1 text-[10px] text-fg-4">
+            <div className="flex items-center gap-1 text-2xs/[inherit] text-fg-4">
               <ImageIcon className="size-3" />{' '}{ttx('{0} picture{1} — not kept after a restart', p.pictures, p.pictures === 1 ? '' : 's')}
             </div>
           ) : (
@@ -569,8 +573,8 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
 function Detail({ label, text, bad }: { label: string; text: string; bad?: boolean }) {
   return (
     <div className="relative">
-      <div className="mb-0.5 text-[10px] font-semibold tracking-wider text-fg-4 uppercase">{label}</div>
-      <pre className={cn('max-h-56 overflow-auto rounded-md bg-black/30 p-2 font-mono text-[10.5px] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]', bad ? 'text-danger' : 'text-fg-3')}>{text}</pre>
+      <div className="mb-0.5 text-2xs/[inherit] font-semibold tracking-wider text-fg-4 uppercase">{label}</div>
+      <pre className={cn('max-h-56 overflow-auto rounded-md bg-black/30 p-2 font-mono text-2xs leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]', bad ? 'text-danger' : 'text-fg-3')}>{text}</pre>
       <CopyButton text={text} label={tt('Copy what {0}', label === tt('Sent') ? tt('was sent') : tt('came back'))} className="absolute top-0 right-0" />
     </div>
   )
@@ -611,7 +615,7 @@ function AssistantMessage({ message: m }: { message: Message }) {
         <AiSparkle className="size-3.5" />
       </div>
       <div className="group/reply min-w-0 flex-1 text-sm leading-relaxed text-fg-2">
-        {m.agent && <div className="mb-1 text-[10.5px] font-medium tracking-wide text-fg-4">{m.agent}</div>}
+        {m.agent && <div className="mb-1 text-2xs/[inherit] font-medium tracking-wide text-fg-4">{m.agent}</div>}
 
         <div className="space-y-2.5">
           {grouped(parts).map((p, i, all) => {
@@ -654,7 +658,7 @@ function AssistantMessage({ message: m }: { message: Message }) {
             </div>
           )}
           {working && !silent && quiet > QUIET_MS && (
-            <div className="flex items-center gap-2 text-[11px] text-fg-4">
+            <div className="flex items-center gap-2 text-xs/[inherit] text-fg-4">
               <LoaderCircle className="size-3 shrink-0 animate-spin" />
               {ttx('Still working — nothing new for {0}.', duration(quiet))}
             </div>
@@ -675,7 +679,7 @@ function AssistantMessage({ message: m }: { message: Message }) {
           <div className="mt-1 -ml-1 flex h-6 items-center gap-1 opacity-0 transition-opacity group-hover/reply:opacity-100 focus-within:opacity-100">
             {text && <CopyButton text={text} label={tt('Copy reply')} />}
             {parts.some((p) => p.kind !== 'text') && <CopyButton text={() => transcriptText(m)} label={tt('Copy everything it did')} />}
-            {usage && <span className="ml-1 truncate text-[10.5px] text-fg-4 tabular">{usage}</span>}
+            {usage && <span className="ml-1 truncate text-2xs/[inherit] text-fg-4 tabular">{usage}</span>}
           </div>
         )}
 
@@ -733,9 +737,9 @@ function LinkPreviews({ text }: { text: string }) {
         >
           {c.image && <img src={c.image} alt="" loading="lazy" className="h-[68px] w-[104px] shrink-0 object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />}
           <div className="min-w-0 flex-1 px-3 py-2">
-            <div className="truncate text-[10.5px] text-fg-4">{c.site}</div>
+            <div className="truncate text-2xs/[inherit] text-fg-4">{c.site}</div>
             <div className="truncate text-xs font-medium text-fg">{c.title}</div>
-            {c.description && <div className="line-clamp-1 text-[11px] text-fg-3">{c.description}</div>}
+            {c.description && <div className="line-clamp-1 text-xs/[inherit] text-fg-3">{c.description}</div>}
           </div>
         </a>
       ))}
@@ -842,7 +846,7 @@ function QueueList() {
       <div className="max-h-28 overflow-y-auto p-1">
         {queue.map((q, i) => (
           <div key={q.id} className="group/q flex items-center gap-1 rounded-lg py-1 pr-1 pl-2 hover:bg-white/[0.04]">
-            <span className="w-3 shrink-0 text-[10px] text-fg-4 tabular">{i + 1}</span>
+            <span className="w-3 shrink-0 text-2xs/[inherit] text-fg-4 tabular">{i + 1}</span>
             <span className="min-w-0 flex-1 truncate text-xs text-fg-2">
               {q.text}
               {q.files.length + q.assets.length > 0 && <span className="ml-1.5 text-fg-4">{ttx('+{0} attached', q.files.length + q.assets.length)}</span>}
@@ -1065,7 +1069,7 @@ function AttachMenu() {
           </span>
           <span className="min-w-0">
             <span className="block font-medium">{tt('From your computer…')}</span>
-            <span className="block text-[10.5px] text-fg-4">{tt('Pictures, PDFs, Word and text files; video and audio go into Media')}</span>
+            <span className="block text-2xs/[inherit] text-fg-4">{tt('Pictures, PDFs, Word and text files; video and audio go into Media')}</span>
           </span>
         </button>
         <div className="mt-1 border-t border-line px-2 pt-2 pb-1.5 text-2xs font-semibold tracking-wider text-fg-4 uppercase">{tt('From your media')}</div>
