@@ -150,7 +150,14 @@ export const useEditor = create<EditorState>()((set, get) => ({
     const announce = (entry: number, merged = false) => {
       if (!dispatchListeners.size) return
       const event: DispatchEvent = { name, input: parsed.data, result, before, after: next, source: opts.source ?? openTransaction?.source ?? 'user', label, merged, entry }
-      for (const fn of dispatchListeners) fn(event)
+      for (const fn of dispatchListeners) {
+        // The edit is made and in history by now: something watching it that fails must not make it look as if it wasn't.
+        try {
+          fn(event)
+        } catch (err) {
+          console.error(`[${name}] a listener failed`, err)
+        }
+      }
     }
     if (openTransaction) {
       openTransaction.patches.push(...patches)

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { between, choice, flag, kept } from '@/lib/persisted'
+import { between, choice, flag, kept, quietStorage } from '@/lib/persisted'
 import { useEditor } from './store'
 
 export type LeftTab = 'media' | 'audio' | 'text' | 'effects' | 'transitions' | 'looks' | 'script' | 'notes' | 'generate'
@@ -218,6 +218,7 @@ export const useUI = create<UIState>()(
     }),
     {
       name: 'lumen.ui.v1',
+      storage: quietStorage<KeptUI>(),
       merge: kept<KeptUI>({
         leftTab: choice('media', 'audio', 'text', 'effects', 'transitions', 'looks', 'script', 'notes', 'generate'),
         rightTab: choice('inspector', 'mixer', 'copilot'),

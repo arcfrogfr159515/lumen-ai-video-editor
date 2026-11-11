@@ -12,6 +12,41 @@
  * an older Lumen would lose it.)
  */
 
+import { toast } from 'sonner'
+import { createJSONStorage } from 'zustand/middleware'
+
+/**
+ * Local storage for a store kept between sessions, that says so instead of
+ * throwing when it can't be written (it is full, or the profile is read-only).
+ * A store writes itself at every change: left to throw, a full storage turns
+ * every click that changes a setting — and, while a macro is being recorded,
+ * every edit — into an error, after the change has already been made.
+ */
+export function quietStorage<S>(what: 'settings' | 'macros' = 'settings') {
+  let failing = false
+  return createJSONStorage<S>(() => {
+    // Where there is no storage at all this throws, and the store simply isn't kept (as before).
+    const inner = window.localStorage
+    return {
+      getItem: (name) => inner.getItem(name),
+      removeItem: (name) => inner.removeItem(name),
+      setItem: (name, value) => {
+        try {
+          inner.setItem(name, value)
+          failing = false
+        } catch (err) {
+          // Said once for a run of failures, not at every change.
+          if (failing) return
+          failing = true
+          console.warn(`${name} couldn’t be saved`, err)
+          if (what === 'macros') toast.warning('Your macros couldn’t be saved', { description: 'Lumen’s storage for settings on this computer is full. They work until Lumen is closed — export them from the Macros dialog to keep them.', duration: 12000 })
+          else toast.warning('Your settings couldn’t be saved', { description: 'Lumen’s storage for settings on this computer is full. They’ll be as they were the next time Lumen opens.', duration: 12000 })
+        }
+      },
+    }
+  })
+}
+
 /** Reads one stored value: the value to use, or undefined to keep the default. */
 export type Read<T> = (value: unknown) => T | undefined
 

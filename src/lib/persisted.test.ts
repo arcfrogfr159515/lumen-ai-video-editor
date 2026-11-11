@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { between, choice, each, flag, kept } from './persisted'
 
+const told = vi.hoisted(() => [] as string[])
+vi.mock('sonner', () => ({ toast: Object.assign(() => {}, { warning: (title: string) => void told.push(title), error: () => {}, success: () => {} }) }))
+
 describe('reading stored values', () => {
   it('takes a value of the kind it should be, and nothing else', () => {
     expect([true, false, 'true', 1, null, undefined].map(flag)).toEqual([true, false, undefined, undefined, undefined, undefined])
@@ -23,7 +26,15 @@ describe('reading stored values', () => {
 
 describe('the editor’s settings', () => {
   const stored = new Map<string, string>()
-  const storage = { getItem: (k: string) => stored.get(k) ?? null, setItem: (k: string, v: string) => void stored.set(k, v), removeItem: (k: string) => void stored.delete(k) }
+  let full = false
+  const storage = {
+    getItem: (k: string) => stored.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      if (full) throw Object.assign(new Error(`Failed to execute 'setItem' on 'Storage': Setting the value of '${k}' exceeded the quota.`), { name: 'QuotaExceededError' })
+      stored.set(k, v)
+    },
+    removeItem: (k: string) => void stored.delete(k),
+  }
   /** The editor starting with whatever is in local storage. */
   const start = async () => {
     vi.resetModules()
@@ -34,7 +45,12 @@ describe('the editor’s settings', () => {
   }
   const put = (key: string, state: unknown, version = 0) => stored.set(key, JSON.stringify({ state, version }))
 
-  beforeEach(() => stored.clear())
+  beforeEach(() => {
+    stored.clear()
+    full = false
+    told.length = 0
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
   afterEach(() => vi.unstubAllGlobals())
 
   it('come back as they were left', async () => {
@@ -79,6 +95,33 @@ describe('the editor’s settings', () => {
     expect(ui.leftTab).toBe('media')
     expect(view.minimap).toBe(true)
     expect(macros.macros).toEqual([])
+  })
+
+  it('change without an error when storage is full, and say once that they weren’t kept', async () => {
+    const { useUI, useMacros } = await start()
+    const { startRecording, stopRecording } = await import('@/editor/macro-store')
+    const { dispatch } = await import('@/editor/store')
+    full = true
+    // Every one of these writes the store: none may throw, and each still takes effect.
+    useUI.getState().setLeftTab('audio')
+    useUI.getState().setZoom(90)
+    useUI.getState().toggleSnapping()
+    expect(useUI.getState()).toMatchObject({ leftTab: 'audio', pxPerSecond: 90, snapping: false })
+    expect(told).toEqual(['Your settings couldn’t be saved'])
+    // Recording a macro writes the macro store at every step — while the project is being edited.
+    startRecording('clip_x')
+    expect(dispatch('marker.add', { frame: 10 }).ok).toBe(true)
+    expect(stopRecording('Empty')).toBeNull()
+    expect(told).toEqual(['Your settings couldn’t be saved', 'Your macros couldn’t be saved'])
+    expect(stored.size).toBe(0)
+    // Room again: the next change is written, and a later failure would be said again.
+    full = false
+    useUI.getState().setLeftTab('text')
+    expect(JSON.parse(stored.get('lumen.ui.v1')!).state).toMatchObject({ leftTab: 'text', pxPerSecond: 90, snapping: false })
+    full = true
+    useUI.getState().setLeftTab('notes')
+    expect(told.filter((t) => t === 'Your settings couldn’t be saved')).toHaveLength(2)
+    expect(useMacros.getState().recording).toBeNull()
   })
 
   it('are still written in the form an older Lumen reads', async () => {

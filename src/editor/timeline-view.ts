@@ -5,7 +5,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { MARKER_KINDS, type MarkerFilter } from '@/editor/markers'
-import { choice, each, flag, kept } from '@/lib/persisted'
+import { choice, each, flag, kept, quietStorage } from '@/lib/persisted'
 
 /** The pane of the clean-up dialog. */
 export type CleanupTab = 'gaps' | 'reuse' | 'rates'
@@ -92,6 +92,7 @@ export const useTimelineView = create<TimelineViewState>()(
     }),
     {
       name: 'lumen.timeline-view.v1',
+      storage: quietStorage<KeptView>(),
       merge: kept<KeptView>({
         storyboard: flag,
         minimap: flag,

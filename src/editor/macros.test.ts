@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cancelRecording, runMacro, startRecording, stopRecording, useMacros } from './macro-store'
 import { exportMacros, generalize, importMacros, instantiate, recordable, type Macro } from './macros'
-import { dispatch, getProject, useEditor } from './store'
+import { dispatch, getProject, onDispatch, useEditor } from './store'
 import { add, addAsset, clip, freshProject, onTrack, run, spans, trackId } from './test-helpers'
 
 let a: string
@@ -111,6 +111,26 @@ describe('recording', () => {
     run('clip.update', { ids: [a], patch: { blend: 'screen' } })
     await settle()
     expect(steps()).toEqual(['clip.update'])
+  })
+
+  it('never lets something watching an edit make the edit look failed', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const stop = onDispatch(() => {
+      throw new Error('a watcher broke')
+    })
+    try {
+      startRecording(a)
+      const res = dispatch('clip.update', { ids: [a], patch: { color: { contrast: 15 } } })
+      // The edit was made, is in history, and the recorder — another watcher — still saw it.
+      expect(res.ok).toBe(true)
+      expect(clip(a).color?.contrast).toBe(15)
+      expect(useEditor.getState().past.at(-1)?.label).toBe('Edit color')
+      expect(steps()).toEqual(['clip.update'])
+      expect(error).toHaveBeenCalledTimes(1)
+    } finally {
+      stop()
+      error.mockRestore()
+    }
   })
 
   it('drops only the step that is undone when history is full', () => {
