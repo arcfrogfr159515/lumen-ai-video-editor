@@ -9,13 +9,34 @@ import { IPC, type BridgeRequest, type BridgeResponse, type BridgeTool, type Bri
  */
 
 let editor: BrowserWindow | null = null
-const pending = new Map<string, { resolve: (r: BridgeResponse) => void; timer: NodeJS.Timeout }>()
+const pending = new Map<string, { resolve: (r: BridgeResponse) => void; timer: NodeJS.Timeout; win: BrowserWindow }>()
+
+/**
+ * Answers every call `win` was asked and hasn't answered, with `error`. The
+ * page that was going to answer is gone — closed, reloaded, crashed — and
+ * what it was doing with it: without this the caller (an agent over MCP, the
+ * Copilot's turn) waits out the whole time a tool may take, up to an hour.
+ */
+function drop(win: BrowserWindow, error: string) {
+  for (const [id, p] of [...pending]) {
+    if (p.win !== win) continue
+    pending.delete(id)
+    clearTimeout(p.timer)
+    p.resolve({ id, ok: false, error })
+  }
+}
 
 export function initEditorRpc(win: BrowserWindow, isTrustedUrl: (url: string) => boolean) {
   editor = win
   win.on('closed', () => {
     if (editor === win) editor = null
+    drop(win, 'Lumen’s editor window was closed before it answered.')
   })
+  // A reload (or any move to another document) starts the editor afresh: what it was asked is forgotten.
+  win.webContents.on('did-start-navigation', (details: { isMainFrame?: boolean; isSameDocument?: boolean }, _url?: string, isInPlace?: boolean, isMainFrame?: boolean) => {
+    if ((details?.isMainFrame ?? isMainFrame) && !(details?.isSameDocument ?? isInPlace)) drop(win, 'Lumen’s editor was reloaded before it answered.')
+  })
+  win.webContents.on('render-process-gone', () => drop(win, 'Lumen’s editor stopped working before it answered.'))
   ipcMain.removeAllListeners(IPC.bridgeResponse)
   ipcMain.on(IPC.bridgeResponse, (event, res: BridgeResponse) => {
     if (!isTrustedUrl(event.senderFrame?.url ?? '')) return
@@ -38,7 +59,7 @@ export function askEditor(req: Omit<BridgeRequest, 'id'>, timeoutMs: number): Pr
       pending.delete(id)
       resolve({ id, ok: false, error: 'Lumen didn’t answer in time.' })
     }, timeoutMs)
-    pending.set(id, { resolve, timer })
+    pending.set(id, { resolve, timer, win })
     win.webContents.send(IPC.bridgeRequest, { ...req, id })
   })
 }
