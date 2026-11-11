@@ -4,8 +4,26 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 
 ## [Unreleased]
 
+### Added
+
+- **Lumen in Simplified Chinese.** The whole interface — menus, panels, dialogs, messages, the names edits get in the history, the built-in looks, transitions, effects, titles and sounds — and the system dialogs around it. It follows the computer's language; File → Language picks English, 简体中文 or the computer's, and takes effect at the next start. What is written for the model stays in English.
+- **A light theme.** File → Appearance: Dark (as before, and still the default), Light, or the computer's. It changes at once.
+
+### Changed
+
+- **Text that could not be read can be.** The two dimmest greys read at 2.2–4.2:1; every text colour now reads at 4.5:1 or better on every surface, in both themes. Nothing in the interface is smaller than 10 px.
+- **The library rail fits its tabs at any window height**; at the smallest window all nine are in view.
+- **Small controls can be caught within 24 px**, every control has a name for a screen reader, and controls that had switched off the keyboard focus outline show it again.
+
 ### Fixed
 
+- **A page written to waste time could freeze Lumen for minutes to hours** when it was read for a search result, a link preview or a video page. Pages are now read once through.
+- **An error while one part of the editor drew left the whole window blank**, menus and Save included. Only that part says so now, with a way to try again; around everything is a last resort that can still save a copy.
+- **A damaged project file was opened as it was** — and saved back that way. What isn't a project is refused, with the reason; what is a project with something wrong in it is repaired, says what was left out, and stays unsaved until you save.
+- **The Copilot's subtitle import could read any file on this computer.** It reads `.srt` and `.vtt` files only.
+- **Fonts embedded in a project stayed in memory** after they were removed or another project was opened.
+- **A key saved in the first seconds of Lumen's first run was lost if Lumen was then killed.** Saving now waits until the key that encrypts it is on disk.
+- **The cache of text widths grew for as long as the window was open.**
 - **An edit made while the project was being saved was marked as saved.** The file was written from the project as it was when the save began, then marked saved at whatever edit the editor had reached by the time the write ended. An edit in between — by the Copilot, an agent over MCP, or you while the Save dialog was open — was not in the file, was not asked about on close, and its recovery copy was deleted. A save now marks only what it wrote; Save As writes the project as it is when the dialog closes; a save that ends after another project was opened leaves that project's path alone.
 - **Lumen did not start when the file that holds your keys had been cut short.** Electron's keychain, handed a few bytes that begin with its version tag, ends the whole app instead of reporting an error, and the file is read at start. A file too short to be the keychain's is now treated as unreadable. Keys, settings, MCP sign-ins, project files and versions are written beside their name, flushed and renamed, so an interrupted write leaves the old file whole; a keys or settings file that can't be read is kept as `<name>.unreadable` before anything replaces it, and for the keys you are told.
 - **The web tools could be pointed at this computer.** `[::ffff:127.0.0.1]` (which a URL writes as `[::ffff:7f00:1]`) and `localhost.` got past the local-network check of `read_web_page`, `screenshot_web_page` and `watch_web_video`; `import_media_url` had no check at all; and a page being photographed could load anything through a name registered to point at 127.0.0.1. Addresses are now read in every spelling, a link the Copilot or an agent chose is checked hop by hop, and the screenshot session looks up where each host leads. A link you click in a result card may still lead to this computer.

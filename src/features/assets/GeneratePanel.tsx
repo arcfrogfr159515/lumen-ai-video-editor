@@ -30,7 +30,10 @@ import { Generate3D } from './Generate3D'
 import { GenerateMotion } from './GenerateMotion'
 import { useGenerate, type GenerateMode } from './generate-store'
 import { Chip, PanelHeader, SectionLabel } from './shared'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
+
+/** What is being generated, as a word in a sentence. */
+const kindWord = (mode: string) => (mode === 'video' ? tt('video') : mode === 'image' ? tt('image') : mode === 'music' ? tt('music') : mode)
 import { ttx } from '@/lib/i18n-react'
 
 type Mode = GenerateMode
@@ -68,7 +71,7 @@ export function GeneratePanel() {
           options={[
             { value: 'media', icon: <Sparkles />, label: tt('Media') },
             { value: '3d', icon: <Box />, label: '3D' },
-            { value: 'motion', icon: <Clapperboard />, label: tt('Motion') },
+            { value: 'motion', icon: <Clapperboard />, label: ttc('generate', 'Motion') },
           ]}
         />
       </div>
@@ -302,7 +305,7 @@ function MediaGenerator() {
         {gen && (
           <Button variant="ai" size="lg" className="w-full" disabled={!canSubmit} onClick={() => void submit()}>
             <AiSparkle className="!size-4 [&_path]:fill-current" />
-            {ttx('Generate {0}', mode === 'voice' ? tt('voiceover') : mode === 'sfx' ? tt('sound effect') : mode)}
+            {ttx('Generate {0}', mode === 'voice' ? tt('voiceover') : mode === 'sfx' ? tt('sound effect') : kindWord(mode))}
           </Button>
         )}
         {gen && generators.length > 0 && (
@@ -367,7 +370,7 @@ function ConnectCards({ mode }: { mode: Mode }) {
       ]
   return (
     <div className="space-y-1.5">
-      <p className="px-1 text-xs text-fg-3">{ttx('Connect a service to generate {0}:', mode === 'sfx' ? tt('sound effects') : mode === 'voice' ? tt('voiceovers') : mode)}</p>
+      <p className="px-1 text-xs text-fg-3">{ttx('Connect a service to generate {0}:', mode === 'sfx' ? tt('sound effects') : mode === 'voice' ? tt('voiceovers') : kindWord(mode))}</p>
       {cards.map((c) => (
         <button
           key={c.title}

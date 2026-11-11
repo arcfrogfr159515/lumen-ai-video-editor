@@ -42,7 +42,8 @@ export function language(): Language {
 /** What the window speaks: remembered, so the next start's first dialog is in it too. */
 export function setLanguage(next: unknown) {
   if (next !== 'en' && next !== 'zh-CN') return
-  if (next === current) return
+  // Told at every start: nothing is written unless it is news (what was remembered, or the computer's own language).
+  if (next === language()) return
   current = next
   try {
     writeJson(FILE, { language: next })

@@ -120,7 +120,7 @@ export function CommandPalette() {
         <Kbd combo="esc" />
       </div>
 
-      <Command.List className="max-h-[min(440px,58vh)] overflow-y-auto overscroll-contain p-2 [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-2.5 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-fg-4 [&_[cmdk-group-heading]]:uppercase">
+      <Command.List label={tt('Suggestions')} className="max-h-[min(440px,58vh)] overflow-y-auto overscroll-contain p-2 [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pt-2.5 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-fg-4 [&_[cmdk-group-heading]]:uppercase">
         {query.trim() && (
           <Command.Group heading={tt('Copilot')} forceMount>
             <Item forceMount value={`ask-copilot ${query}`} icon={<AiSparkle />} onSelect={run(() => void sendPrompt(query))} hint="↵">
