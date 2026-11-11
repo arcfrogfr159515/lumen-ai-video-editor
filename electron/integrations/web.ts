@@ -64,6 +64,30 @@ export function blockedHost(hostname: string) {
   return !h.includes('.')
 }
 
+/** Where names lead, looked up at most once a minute each (a page asks the same few hosts for everything on it). */
+const resolved = new Map<string, { at: number; inside: Promise<boolean> }>()
+
+/**
+ * Whether a host is off limits: by what it is called, or by where the name
+ * leads. A name anyone can register may point at 127.0.0.1 or at a router —
+ * what it is called says nothing about that.
+ */
+export function leadsInside(hostname: string): Promise<boolean> {
+  const host = hostname.replace(/^\[|\]$/g, '').toLowerCase().replace(/\.+$/, '')
+  if (blockedHost(host)) return Promise.resolve(true)
+  if (isIP(host)) return Promise.resolve(false)
+  const hit = resolved.get(host)
+  if (hit && Date.now() - hit.at < 60_000) return hit.inside
+  // A name that can't be looked up here leads nowhere from here either (through a proxy, the proxy looks it up).
+  const inside = lookup(host, { all: true }).then(
+    (addrs) => addrs.some((a) => blockedIp(a.address)),
+    () => false,
+  )
+  resolved.set(host, { at: Date.now(), inside })
+  if (resolved.size > 500) resolved.delete(resolved.keys().next().value!)
+  return inside
+}
+
 export async function checkUrl(raw: string): Promise<URL> {
   let url: URL
   try {
@@ -339,20 +363,27 @@ export async function linkPreview(raw: string): Promise<WebPreview> {
 let webSession: Electron.Session | null = null
 
 /** A separate in-memory browser session for looking at pages: no editor cookies, no downloads, nothing local. */
-function browsing() {
+export function browsing() {
   if (webSession) return webSession
   const s = session.fromPartition('lumen-web')
   s.setUserAgent(UA)
   s.on('will-download', (e) => e.preventDefault())
   s.setPermissionRequestHandler((_wc, _perm, cb) => cb(false))
   s.webRequest.onBeforeRequest((details, cb) => {
+    let u: URL
     try {
-      const u = new URL(details.url)
-      const ok = u.protocol === 'data:' || u.protocol === 'blob:' || ((u.protocol === 'https:' || u.protocol === 'http:' || u.protocol === 'wss:') && !blockedHost(u.hostname))
-      cb({ cancel: !ok })
+      u = new URL(details.url)
     } catch {
-      cb({ cancel: true })
+      return cb({ cancel: true })
     }
+    if (u.protocol === 'data:' || u.protocol === 'blob:') return cb({ cancel: false })
+    if (u.protocol !== 'https:' && u.protocol !== 'http:' && u.protocol !== 'wss:') return cb({ cancel: true })
+    // Everything the page asks for — frames, pictures, redirects, what its scripts fetch — is checked the way the
+    // page's own address was: a public page may not reach into this computer through a name that points at it.
+    void leadsInside(u.hostname).then(
+      (inside) => cb({ cancel: inside }),
+      () => cb({ cancel: true }),
+    )
   })
   webSession = s
   return s
