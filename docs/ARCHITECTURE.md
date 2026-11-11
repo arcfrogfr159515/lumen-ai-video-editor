@@ -227,7 +227,8 @@ Claude on an API key is asked for `display: 'summarized'`; without it, recent Cl
 
 - **Pages** are fetched by the main process. It follows redirects itself and checks every hop's address after DNS, refusing private, loopback and link-local ones.
 - **Search** uses DuckDuckGo's HTML results.
-- **Screenshots** render offscreen in a separate session that blocks requests to private addresses.
+- **Screenshots** render offscreen in a separate session that blocks requests to private addresses — for everything the page asks for, by the host's name and by where the name leads.
+- **Media by link** (`import_media_url`) goes through the same check hop by hop, has a time to answer and a size cap, and leaves nothing behind when it fails. A link the user clicks in a result card may lead to this computer (a generation service running here); one the Copilot or an agent chose may not.
 - **Video links** ([`electron/integrations/video-link.ts`](../electron/integrations/video-link.ts)) are watched without importing them. The main process finds what there is, and the editor lays the frames out as contact sheets.
   - **YouTube:** the player endpoint, asked as YouTube's own apps ask it, gives the caption tracks and the *storyboard* spec — the sprite sheets of preview frames the player shows on hover. Captions become a transcript; tiles are cut from the sheets. The video itself is never downloaded.
   - **Vimeo:** the same from its player config. **X:** the post's public video file. **Other pages:** `og:video`, JSON-LD and `<video>` sources.
@@ -241,6 +242,7 @@ Claude on an API key is asked for `display: 'summarized'`; without it, recent Cl
 
 - **Blender.** Lumen finds Blender, writes a JSON spec and runs `blender -b --factory-startup -P runner.py`. The runner builds the scene — 3D titles with Lumen's fonts, a studio world for real metal reflections, baked keyframes so motion blur works; looping abstract backgrounds; or agent-written `bpy` (which needs the user's approval) — renders EEVEE to a PNG sequence and streams progress. With the BlenderMCP add-on, agents can also drive an open Blender (port 9876).
 - **HyperFrames.** Compositions are HTML + GSAP. Lumen loads them in a hidden, sandboxed, transparent Chromium window with the HyperFrames runtime injected, seeks each frame with the runtime's `renderSeek` and captures PNGs — no FFmpeg or headless-Chrome download.
+  - **What a composition may load:** files from its own scratch folder and the bundled GSAP and runtime only, and the network from a few font and library hosts. Its HTML is written by an agent, and its frames go back to whoever asked for them — so it reads nothing else on this computer.
   - **Display scaling:** Windows clamps a window to the work area in DIPs. So for a scale k, the window is sized at 1/k with a device scale factor of k and a zoom of 1/k. That gives exact, centred pixels at any display scaling.
 - **MCP host.** Any MCP server by URL (Streamable HTTP, SSE fallback) or command (stdio). One-click catalog: Higgsfield, Runway and Replicate (OAuth), fal.ai (API key), Blender MCP. OAuth runs in the browser with a loopback redirect; tokens and header keys are encrypted with the OS keychain. Tools get forms generated from their JSON Schema; image and audio results land in the project.
 - **Lumen's MCP server.** A Streamable HTTP endpoint on `127.0.0.1:47910/mcp`, token-protected, refusing browser origins, forwarding every request to the editor page, which runs it through the same command system.
