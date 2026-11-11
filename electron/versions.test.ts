@@ -133,4 +133,70 @@ describe('collect project', () => {
     const again = JSON.parse((await openProject(null, path.join(moved, 'Collect me.lumen')))!.text)
     expect(again.assets.a1.source.path).toBe(path.join(moved, 'Media', 'shot.mp4'))
   })
+
+  it('takes along the file a constant-frame-rate copy was made from', async () => {
+    const s = scene('p-conformed')
+    const p = s.project('Phone footage')
+    // The asset plays a constant-rate copy Lumen made; the phone's own file is what "Use the original" goes back to.
+    const copy = path.join(env.root, 'userData', 'media', 'conformed', 'shot (30 fps).mp4')
+    fs.mkdirSync(path.dirname(copy), { recursive: true })
+    fs.writeFileSync(copy, 'the constant-rate copy')
+    const a1 = p.assets.a1 as Record<string, unknown>
+    a1.conformedFrom = { url: fileUrl(s.media), path: s.media, mime: 'video/mp4', fileName: 'shot.mp4', size: 29, fps: 29.7 }
+    a1.source = { type: 'file', url: fileUrl(copy), path: copy, fileName: 'shot (30 fps).mp4', mime: 'video/mp4', size: 22 }
+    env.dialogPath = path.join(env.root, `archive-${n}`)
+    fs.mkdirSync(env.dialogPath, { recursive: true })
+    const res = await collectProject(null, JSON.stringify(p), 'Phone footage', (file, text) => saveProject(file, text))
+    expect(res).toMatchObject({ files: 2, missing: [] })
+    const media = path.join(env.dialogPath, 'Phone footage', 'Media')
+    expect(fs.readdirSync(media).sort()).toEqual(['shot (30 fps).mp4', 'shot.mp4'])
+    expect(fs.readFileSync(path.join(media, 'shot.mp4'), 'utf8')).toBe('not really a video, but bytes')
+
+    // On another computer: the folder is somewhere else, and neither file is where it was made.
+    const moved = path.join(env.root, `moved-${n}`)
+    fs.renameSync(path.join(env.dialogPath, 'Phone footage'), moved)
+    fs.rmSync(s.media)
+    fs.rmSync(copy)
+    const opened = await openProject(null, path.join(moved, 'Phone footage.lumen'))
+    const asset = JSON.parse(opened!.text).assets.a1
+    expect(opened!.missing).toEqual([])
+    expect(asset.source.path).toBe(path.join(moved, 'Media', 'shot (30 fps).mp4'))
+    // The original is found beside it, with an address the editor can read it from.
+    expect(asset.conformedFrom).toMatchObject({ path: path.join(moved, 'Media', 'shot.mp4'), fileName: 'shot.mp4', fps: 29.7 })
+    expect(asset.conformedFrom.url).toBe(fileUrl(path.join(moved, 'Media', 'shot.mp4')))
+  })
+
+  it('still collects a project whose original is no longer there', async () => {
+    const s = scene('p-conformed-gone')
+    const p = s.project('Old footage')
+    ;(p.assets.a1 as Record<string, unknown>).conformedFrom = { url: 'lumen-media://file/gone', path: path.join(s.dir, 'gone.mp4'), mime: 'video/mp4', fileName: 'gone.mp4', size: 1 }
+    env.dialogPath = path.join(env.root, `archive-${n}`)
+    fs.mkdirSync(env.dialogPath, { recursive: true })
+    const res = await collectProject(null, JSON.stringify(p), 'Old footage', (file, text) => saveProject(file, text))
+    // The asset plays its copy: an original that is gone isn't missing media.
+    expect(res).toMatchObject({ files: 1, missing: [] })
+    const opened = await openProject(null, res!.path)
+    expect(opened!.missing).toEqual([])
+    expect(JSON.parse(opened!.text).assets.a1.conformedFrom.path).toBe(path.join(s.dir, 'gone.mp4'))
+  })
+})
+
+describe('the original of a constant-frame-rate copy', () => {
+  it('is found again by its place beside the project when the folder moves', async () => {
+    const s = scene('p-conformed-moved')
+    const p = s.project('Show')
+    const copy = path.join(s.dir, 'footage', 'shot (30 fps).mp4')
+    fs.writeFileSync(copy, 'the constant-rate copy')
+    const a1 = p.assets.a1 as Record<string, unknown>
+    a1.conformedFrom = { url: fileUrl(s.media), path: s.media, mime: 'video/mp4', fileName: 'shot.mp4', size: 29 }
+    a1.source = { type: 'file', url: fileUrl(copy), path: copy, fileName: 'shot (30 fps).mp4', mime: 'video/mp4', size: 22 }
+    saveProject(s.file, JSON.stringify(p))
+    const stored = JSON.parse(fs.readFileSync(s.file, 'utf8')).project.assets.a1
+    expect(stored.conformedFrom).toMatchObject({ path: s.media, relPath: 'footage/shot.mp4' })
+    const moved = path.join(env.root, `moved-${n}`)
+    fs.renameSync(s.dir, moved)
+    const asset = JSON.parse((await openProject(null, path.join(moved, 'Show.lumen')))!.text).assets.a1
+    expect(asset.conformedFrom.path).toBe(path.join(moved, 'footage', 'shot.mp4'))
+    expect(asset.conformedFrom.url).toBe(fileUrl(path.join(moved, 'footage', 'shot.mp4')))
+  })
 })

@@ -43,10 +43,18 @@ interface StoredProxy {
   [key: string]: unknown
 }
 
+/** The file a constant-frame-rate copy was made from: the asset doesn't play it, but can go back to it. */
+interface StoredOriginal {
+  url?: string
+  path?: string
+  relPath?: string
+  [key: string]: unknown
+}
+
 interface StoredProject {
   id?: string
   name?: string
-  assets?: Record<string, { source?: StoredSource; proxy?: StoredProxy; [key: string]: unknown }>
+  assets?: Record<string, { source?: StoredSource; proxy?: StoredProxy; conformedFrom?: StoredOriginal; [key: string]: unknown }>
   [key: string]: unknown
 }
 
@@ -63,6 +71,13 @@ function toStored(project: StoredProject, projectPath: string): StoredProject {
   for (const asset of Object.values(project.assets ?? {})) {
     // A proxy is referenced by path only; its URL is made again on open.
     if (asset.proxy) delete asset.proxy.url
+    // The original of a constant-rate copy is found again the way media is: by its place relative to this file.
+    const from = asset.conformedFrom
+    const original = from ? (from.path ?? (from.url ? mediaPath(from.url) : null)) : null
+    if (from && original) {
+      from.path = original
+      from.relPath = posix(path.relative(dir, original))
+    }
     const src = asset.source
     if (!src) continue
     if (src.type === 'file') {
@@ -100,6 +115,17 @@ function fromStored(project: StoredProject, projectPath: string | null): { proje
       allowPath(proxy.path)
       proxy.url = urlFor(proxy.path)
     } else if (proxy) delete asset.proxy
+    // Where the original of a constant-rate copy is now (the project folder may have moved). One that is gone isn't
+    // missing media — the asset plays its copy — only something "Use the original" will say when asked.
+    const from = asset.conformedFrom
+    if (from) {
+      const original = [from.path, dir && from.relPath ? path.resolve(dir, from.relPath) : null].find((p): p is string => Boolean(p) && fs.existsSync(p!))
+      if (original) {
+        from.path = original
+        from.url = urlFor(original)
+        allowPath(original)
+      }
+    }
     const src = asset.source
     if (!src) continue
     if (src.type === 'file') {
