@@ -77,7 +77,7 @@ A master has no sound. `meta.cues` says what happens in it, so the soundtrack ca
 
 - **`at`** is seconds from the clip's first frame, and is all a cue needs. `kind` is any word; `seconds` is how long it lasts.
 - **Named by** the first of `text`, `label`, `shot`, `sound`, `effect` and a few more that is there; `speaker` or `who` says whose it is. Every other field is kept as it came.
-- **In Lumen** they show along the bottom of the clip on the timeline, following its trims and speed. Right-click the clip for *Add markers at the cues*.
+- **In Lumen** they show along the bottom of the clip on the timeline, following its trims and speed. Right-click the clip: *Smart editing → Add markers at the cues*.
 - **For agents**, `ingest_status` lists a finished clip's cues, and `get_clip` gives them at timeline seconds once the clip is placed.
 - Up to 2,000 cues per clip. Cues outside the clip are dropped.
 

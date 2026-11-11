@@ -4,6 +4,18 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 
 ## [Unreleased]
 
+### Added
+
+- **Copy attributes** (Ctrl+Shift+C, and in a clip's menu). It copies one clip's attributes for Paste attributes and leaves the clips on the clipboard as they are, so Ctrl+V still pastes those.
+- **Mirror and Rotate** in a clip's menu, under Basic editing. Mirror turns the clip half-way round its upright axis (Turn Y in the inspector), which shows its mirror image; Rotate is a quarter turn clockwise. A clip whose angle is keyframed is left as it is.
+- **In a clip's menu:** Crop (on the canvas), AI generate, Smart talking-head cut (the long pauses out of this clip's speech), New multicam clip from the selected clips, Export selected clips (in and out go around them and Export opens on that range), Reselect the source range (the slip tool), Replace clip (files picked from disk go in as a take, so what played before can come back), Link media, Open file location, Edit effects and Show the keyframe speed curve (the inspector, on that pane), and Render.
+
+### Changed
+
+- **A clip's context menu is laid out like the menus of the editors people come from**: the clipboard, then what is done to the clip, grouping, its media, and the timeline around it, in dense rows with shortcuts drawn as key caps. Rows keep their place for every kind of clip — what a clip can't do is greyed. What had a row before and has none in that layout (split, duplicate, ripple delete, speed, takes, label, camera angle) is under More; stabilize, track motion, subject, beat and scene-cut markers are under Smart editing. It scrolls where the window is too short for it.
+- Five rows of that menu are there for the layout and do nothing yet, greyed: Smart extend, Sound separation (and its parts), Align video and audio, Save as my preset, Disable clip.
+- In Chinese, "Freeze frame" is 定格, "Group" 创建组合, "Ungroup" 解除组合, and "Nest into a timeline" 新建复合片段（嵌套时间线）.
+
 ## [1.7.0] — 2026-11-11
 
 Lumen in Simplified Chinese and a light theme, with a run of leaks and edge cases closed.

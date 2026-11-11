@@ -3,30 +3,25 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, 
 import { toast } from 'sonner'
 import { ContextMenu } from 'radix-ui'
 import { ContextContent, ContextItem, ContextSeparator, ContextSub } from '@/components/ui/menu'
-import { AiSparkle } from '@/components/brand'
 import { useClipboard } from '@/editor/clipboard'
 import { clipEnd, findFreeStart, isMagneticTrack, magneticLayout, projectDuration, sourceFrames, trackAccepts } from '@/editor/ops'
-import { LABEL_COLORS } from '@/editor/clip-colors'
 import { MARKER_KINDS } from '@/editor/markers'
 import { applyEffect, applyLook, applyTransition, assetFrames, placeAsset, placeSequence, placeTitle, transitionSpot } from '@/editor/placement'
-import { angleTracks } from '@/editor/sequences'
-import { canHaveTakes, takeIndex } from '@/editor/takes'
-import { openTimeline } from '@/editor/timeline-nav'
+import { canHaveTakes } from '@/editor/takes'
 import { onPlayhead, usePlayback } from '@/editor/playback'
-import { SPEED_RAMPS, TITLE_PRESETS } from '@/editor/presets'
+import { TITLE_PRESETS } from '@/editor/presets'
 import { dispatch, getProject, useEditor } from '@/editor/store'
-import { isRamped } from '@/editor/timing'
 import type { ClipKind } from '@/editor/types'
 import { useUI, ZOOM_MAX, ZOOM_MIN, type Tool } from '@/editor/ui-store'
 import { SFX } from '@/engine/sfx'
 import { sfxAsset } from '@/project/audio-library'
-import { askCopilotAbout } from '@/features/copilot/store'
 import { dnd } from '@/features/dnd'
 import { actions } from '@/features/shell/actions'
 import { useElementSize } from '@/lib/hooks'
 import { clamp } from '@/lib/math'
 import { cn } from '@/lib/cn'
 import { useTrim } from '@/editor/trim-session'
+import { ClipMenu } from './ClipMenu'
 import { computeRows, LayoutContext, useLayout, type TimelineLayout } from './layout'
 import { Minimap } from './Minimap'
 import { ADD_ROW_H, HEADER_W, RULER_H, useDrag, type ClipPreview, type DropGhost } from './model'
@@ -40,7 +35,6 @@ import { usePointerController } from './usePointerController'
 import { useTimelineView } from '@/editor/timeline-view'
 import { anchorNextZoom, useViewport } from './viewport'
 import { tt } from '@/lib/i18n'
-import { ttx } from '@/lib/i18n-react'
 
 const SCISSORS_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>',
@@ -536,200 +530,13 @@ function TrimMarker() {
   )
 }
 
-const SPEEDS = [0.25, 0.5, 1, 1.5, 2, 4]
-
 function TimelineMenu({ clipId, frame }: { clipId: string | null; frame: number }) {
   const clip = useEditor((s) => (clipId ? s.project.clips[clipId] : undefined))
-  const nested = useEditor((s) => (clip?.sequenceId ? s.project.sequences?.[clip.sequenceId] : undefined))
   const range = useEditor((s) => s.project.range)
   const canPaste = useClipboard((s) => Boolean(s.data?.clips.length))
-  const selection = () => useUI.getState().selection
-  if (clip) {
-    const media = clip.kind === 'video' || clip.kind === 'audio'
-    return (
-      <ContextContent>
-        <ContextItem shortcut="s" onSelect={actions.split}>
-          {tt('Split at playhead')}
-        </ContextItem>
-        {clip.kind === 'video' && !clip.freeze && (
-          <ContextItem shortcut="shift+f" onSelect={actions.freezeFrame}>
-            {tt('Freeze frame')}
-          </ContextItem>
-        )}
-        <ContextSeparator />
-        <ContextItem shortcut="mod+c" onSelect={actions.copy}>
-          {tt('Copy')}
-        </ContextItem>
-        <ContextItem shortcut="mod+x" onSelect={actions.cut}>
-          {tt('Cut')}
-        </ContextItem>
-        <ContextItem shortcut="mod+alt+v" disabled={!canPaste} onSelect={actions.pasteAttributes}>
-          {tt('Paste attributes…')}
-        </ContextItem>
-        <ContextItem shortcut="mod+d" onSelect={actions.duplicateSelection}>
-          {tt('Duplicate')}
-        </ContextItem>
-        <ContextSeparator />
-        {media && !clip.freeze && (
-          <ContextSub label={tt('Speed')}>
-            {SPEEDS.map((s) => (
-              <ContextItem key={s} onSelect={() => dispatch('clip.update', { ids: selection(), patch: { speed: s } })}>
-                <span className="tabular">{s}×</span> {s === clip.speed && !isRamped(clip) && <span className="text-accent-2">•</span>}
-              </ContextItem>
-            ))}
-            <ContextSeparator />
-            {SPEED_RAMPS.map((r) => (
-              <ContextItem key={r.id} onSelect={() => dispatch('clip.setSpeedRamp', { id: clip.id, points: r.points })}>
-                {ttx('Ramp: {0}', r.name)}
-              </ContextItem>
-            ))}
-            {isRamped(clip) && <ContextItem onSelect={() => dispatch('clip.setSpeedRamp', { id: clip.id, points: null })}>{tt('Remove ramp')}</ContextItem>}
-            <ContextSeparator />
-            <ContextItem onSelect={() => dispatch('clip.update', { ids: selection(), patch: { reverse: !clip.reverse } })}>{clip.reverse ? tt('Play forwards') : tt('Reverse')}</ContextItem>
-          </ContextSub>
-        )}
-        {clip.kind === 'video' &&
-          (clip.audio.detached ? (
-            <ContextItem shortcut="mod+l" onSelect={actions.reattachAudio}>
-              {tt('Reattach audio')}
-            </ContextItem>
-          ) : (
-            <ContextItem shortcut="mod+l" onSelect={actions.detachAudio}>
-              {tt('Detach audio')}
-            </ContextItem>
-          ))}
-        {clip.groupId ? (
-          <ContextItem shortcut="mod+shift+g" onSelect={actions.ungroup}>
-            {clip.audio.detached || clip.kind === 'audio' ? tt('Unlink') : tt('Ungroup')}
-          </ContextItem>
-        ) : (
-          <ContextItem shortcut="mod+g" disabled={selection().length < 2} onSelect={actions.group}>
-            {tt('Group')}
-          </ContextItem>
-        )}
-        <ContextItem shortcut="x" onSelect={actions.markSelection}>
-          {tt('Mark in and out around clip')}
-        </ContextItem>
-        {canHaveTakes(clip) && (
-          <ContextSub label={clip.takes && clip.takes.length > 1 ? tt('Takes ({0} of {1})', takeIndex(clip) + 1, clip.takes.length) : tt('Takes')}>
-            {(clip.takes ?? []).map((t, i) => (
-              <ContextItem key={t.id} checked={t.id === clip.takeId} onSelect={() => dispatch('take.switch', { clipId: clip.id, takeId: t.id })}>
-                {i + 1} · {t.name}
-              </ContextItem>
-            ))}
-            {clip.takes && clip.takes.length > 1 && (
-              <>
-                <ContextSeparator />
-                <ContextItem shortcut="alt+t" onSelect={() => timelineActions.switchTake(1)}>
-                  {tt('Next take')}
-                </ContextItem>
-                <ContextItem shortcut="alt+shift+t" onSelect={() => timelineActions.switchTake(-1)}>
-                  {tt('Previous take')}
-                </ContextItem>
-                <ContextItem onSelect={() => dispatch('take.remove', { clipId: clip.id, all: true })}>{tt('Keep only this one')}</ContextItem>
-                <ContextSeparator />
-              </>
-            )}
-            <ContextItem onSelect={() => timelineActions.addTakes(clip.id)}>{tt('Add the selected media as takes')}</ContextItem>
-          </ContextSub>
-        )}
-        <ContextSub label={tt('Label')}>
-          {LABEL_COLORS.map((c) => (
-            <ContextItem key={c.id} checked={clip.label === c.id} icon={<span className="size-3 rounded-full" style={{ background: c.css }} />} onSelect={() => dispatch('clip.update', { ids: selection(), patch: { label: c.id } }, { label: tt('Label clip') })}>
-              {c.name}
-            </ContextItem>
-          ))}
-          <ContextSeparator />
-          <ContextItem disabled={!clip.label} onSelect={() => dispatch('clip.update', { ids: selection(), patch: { label: null } }, { label: tt('Remove label') })}>
-            {tt('No label')}
-          </ContextItem>
-          <ContextItem onSelect={() => useTimelineView.getState().set({ colorsOpen: true })}>{tt('Colour rules…')}</ContextItem>
-        </ContextSub>
-        <ContextSeparator />
-        {nested?.multicam && (
-          <ContextSub label={tt('Camera angle')}>
-            {angleTracks(nested).map((t, i) => (
-              <ContextItem key={t.id} shortcut={i < 9 ? String(i + 1) : undefined} onSelect={() => dispatch('clip.update', { ids: [clip.id], patch: { angle: t.id } })}>
-                {t.name} {(clip.angle ?? angleTracks(nested)[0]?.id) === t.id && <span className="text-accent-2">•</span>}
-              </ContextItem>
-            ))}
-          </ContextSub>
-        )}
-        {nested?.multicam && <ContextItem onSelect={() => useTimelineView.getState().set({ directorOpen: true })}>{tt('Auto-direct: cut between the cameras…')}</ContextItem>}
-        {clip.sequenceId ? (
-          <>
-            <ContextItem shortcut="mod+alt+enter" onSelect={() => openTimeline(clip.sequenceId!, true)}>
-              {ttx('Open {0} timeline', nested?.multicam ? tt('multicam') : tt('nested'))}
-            </ContextItem>
-            <ContextItem onSelect={actions.unnestSelection}>{tt('Break apart')}</ContextItem>
-          </>
-        ) : (
-          <ContextItem shortcut="mod+alt+n" onSelect={actions.nestSelection}>
-            {tt('Nest into a timeline')}
-          </ContextItem>
-        )}
-        {clip.kind === 'video' && clip.assetId && !clip.freeze && (
-          <ContextSub label={tt('Scene cuts')}>
-            <ContextItem onSelect={() => void actions.detectScenes('split')}>{tt('Split at scene cuts')}</ContextItem>
-            <ContextItem onSelect={() => void actions.detectScenes('markers')}>{tt('Add markers at scene cuts')}</ContextItem>
-            <ContextItem onSelect={() => void actions.detectScenes('guides')}>{tt('Show scene cuts as guides')}</ContextItem>
-          </ContextSub>
-        )}
-        {clip.kind === 'video' && clip.assetId && !clip.freeze &&
-          (clip.stabilize ? (
-            <ContextItem onSelect={() => dispatch('clip.update', { ids: [clip.id], patch: { stabilize: null } })}>{tt('Remove stabilization')}</ContextItem>
-          ) : (
-            <ContextItem onSelect={() => void actions.stabilize(clip.id)}>{tt('Stabilize')}</ContextItem>
-          ))}
-        {clip.kind !== 'audio' && clip.kind !== 'adjustment' && (
-          <ContextItem onSelect={() => actions.trackMotion(clip.id)}>{clip.follow ? tt('Track motion again…') : tt('Track motion…')}</ContextItem>
-        )}
-        {clip.follow && <ContextItem onSelect={() => dispatch('clip.update', { ids: [clip.id], patch: { follow: null } })}>{tt('Stop following')}</ContextItem>}
-        {(clip.kind === 'video' || clip.kind === 'image') && clip.assetId && !clip.sequenceId && (
-          <ContextSub label={tt('Subject')}>
-            <ContextItem onSelect={() => void actions.textBehindSubject(clip.id)}>{tt('Put text behind the person')}</ContextItem>
-            <ContextItem onSelect={() => void actions.textBehindSubject(clip.id, 'any')}>{tt('Put text behind the main subject (GPU)')}</ContextItem>
-            <ContextSeparator />
-            <ContextItem onSelect={() => void actions.cutOutSubject(clip.id)}>{tt('Cut out the person')}</ContextItem>
-            <ContextItem onSelect={() => void actions.cutOutSubject(clip.id, 'any')}>{tt('Cut out the main subject (GPU)')}</ContextItem>
-            <ContextItem onSelect={() => void actions.cutOutSubject(clip.id, 'person', true)}>{tt('Remove the person, keep the background')}</ContextItem>
-            {clip.matte && (
-              <>
-                <ContextSeparator />
-                <ContextItem onSelect={() => dispatch('clip.update', { ids: [clip.id], patch: { matte: { ...clip.matte!, invert: !clip.matte!.invert } } })}>
-                  {clip.matte.invert ? tt('Show the subject instead') : tt('Show everything but the subject')}
-                </ContextItem>
-                <ContextItem onSelect={() => dispatch('clip.update', { ids: [clip.id], patch: { matte: null } })}>{tt('Show the whole picture again')}</ContextItem>
-              </>
-            )}
-          </ContextSub>
-        )}
-        {clip.assetId && getProject().assets[clip.assetId]?.cues?.length ? <ContextItem onSelect={() => actions.cueMarkers(clip.id)}>{tt('Add markers at the cues')}</ContextItem> : null}
-        {(clip.kind === 'audio' || clip.kind === 'video') && clip.assetId && (
-          <ContextSub label={tt('Beat')}>
-            <ContextItem onSelect={() => void actions.detectBeats(clip.id)}>{getProject().assets[clip.assetId]?.beats ? tt('Show the beat again') : tt('Find the beat')}</ContextItem>
-            <ContextItem onSelect={() => void actions.beatMarkers(clip.id)}>{tt('Add markers on the downbeats')}</ContextItem>
-            {clip.kind !== 'audio' && (
-              <ContextItem onSelect={() => void actions.cutToBeats(2)}>{tt('Cut the selected clips to the beat (2 beats each)')}</ContextItem>
-            )}
-          </ContextSub>
-        )}
-        <ContextSeparator />
-        <ContextItem icon={<AiSparkle />} onSelect={() => askCopilotAbout(clip.id)}>
-          {tt('Ask Copilot about this clip')}
-        </ContextItem>
-        <ContextSeparator />
-        <ContextItem shortcut="delete" danger onSelect={() => actions.deleteSelection(false)}>
-          {tt('Delete')}
-        </ContextItem>
-        <ContextItem shortcut="shift+delete" danger onSelect={() => actions.deleteSelection(true)}>
-          {tt('Ripple delete')}
-        </ContextItem>
-      </ContextContent>
-    )
-  }
+  if (clip) return <ClipMenu clip={clip} />
   return (
-    <ContextContent>
+    <ContextContent dense>
       <ContextItem shortcut="mod+v" disabled={!canPaste} onSelect={() => actions.paste('free', frame)}>
         {tt('Paste here')}
       </ContextItem>

@@ -574,7 +574,7 @@ export function canUndoAll(ids: number[]) {
   return top.length === ids.length && top.every((id, i) => id === ids[i])
 }
 
-/** Opens Copilot focused on one clip (clip context menu → “Ask Copilot”). */
+/** Opens Copilot focused on one clip (clip context menu → “Copilot”). */
 export function askCopilotAbout(clipId: string) {
   const clip = getProject().clips[clipId]
   if (!clip) return
