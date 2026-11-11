@@ -1,11 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { session, type BrowserWindow } from 'electron'
 import { exactOffscreenWindow } from '../../offscreen'
 import type { GeneratedAsset, Job, MotionRenderRequest } from '../../../shared/integrations'
 import { createJob, failJob, finishJob, isCancelled, setCanceller, updateJob } from '../jobs'
-import { jobDir, mediaUrl, packageFile, workDir } from '../paths'
+import { isInside, jobDir, mediaUrl, packageFile, workDir, workRoot } from '../paths'
 import { buildTemplate, fontFaces, TEMPLATE_NAMES, templateDuration } from './templates'
 
 /**
@@ -22,15 +22,48 @@ const ALLOWED_HOSTS = /(^|\.)(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.js
 
 let sessionReady = false
 
-function renderSession() {
+const gsapDir = () => path.dirname(packageFile('gsap', 'dist/gsap.min.js'))
+const runtimeFile = () => packageFile('@hyperframes/core', 'dist/hyperframe.runtime.iife.js')
+
+/** The folders a composition's page may read files from: the compositions' scratch folders, and the bundled GSAP and HyperFrames runtime. */
+export const readableFolders = () => [workRoot('hyperframes'), gsapDir(), path.dirname(runtimeFile())]
+
+/**
+ * Whether a composition may load `raw`. Its HTML is written by the Copilot or an
+ * agent — or by whatever a web page talked them into. A page free to read any
+ * file: address could put a picture or a document from this computer into its
+ * frames (an <img>, an <iframe>), and the frames go back to whoever asked for
+ * the render. So files are read from `folders` only, and the network from a few
+ * font and library hosts.
+ */
+export function mayLoad(raw: string, folders: readonly string[]): boolean {
+  let url: URL
+  try {
+    url = new URL(raw)
+  } catch {
+    return false
+  }
+  if (url.protocol === 'data:' || url.protocol === 'blob:') return true
+  if (url.protocol === 'file:') {
+    // A file: address with a host is a share on the network.
+    if (url.hostname) return false
+    let file: string
+    try {
+      file = fileURLToPath(url)
+    } catch {
+      return false
+    }
+    return folders.some((folder) => isInside(file, folder))
+  }
+  return url.protocol === 'https:' && ALLOWED_HOSTS.test(url.hostname)
+}
+
+export function renderSession() {
   const ses = session.fromPartition(PARTITION)
   if (!sessionReady) {
     sessionReady = true
-    ses.webRequest.onBeforeRequest((details, cb) => {
-      const url = new URL(details.url)
-      if (url.protocol === 'file:' || url.protocol === 'data:' || url.protocol === 'blob:') return cb({})
-      cb({ cancel: !(url.protocol === 'https:' && ALLOWED_HOSTS.test(url.hostname)) })
-    })
+    const folders = readableFolders()
+    ses.webRequest.onBeforeRequest((details, cb) => cb({ cancel: !mayLoad(details.url, folders) }))
     ses.setPermissionRequestHandler((_wc, _permission, cb) => cb(false))
   }
   return ses
@@ -43,17 +76,16 @@ function withFonts(html: string) {
 }
 
 /** Points GSAP (and its plugins) at the bundled copies instead of a CDN, and injects the runtime. */
-function prepareHtml(html: string) {
-  const gsapDir = path.dirname(packageFile('gsap', 'dist/gsap.min.js'))
-  const local = (file: string) => pathToFileURL(path.join(gsapDir, file)).href
+export function prepareHtml(html: string) {
+  const local = (file: string) => pathToFileURL(path.join(gsapDir(), file)).href
   let out = html.replace('__GSAP__', local('gsap.min.js'))
   out = out.replace(/<script([^>]*?)\ssrc=["']([^"']*gsap[^"']*)["']([^>]*)><\/script>/gi, (tag, pre: string, src: string, post: string) => {
     const file = src.split('/').pop()?.split('?')[0] ?? ''
     if (!/\.js$/.test(file)) return tag
     const name = /^gsap(\.min)?\.js$/i.test(file) ? 'gsap.min.js' : file.replace(/(\.min)?\.js$/i, '.min.js')
-    return fs.existsSync(path.join(gsapDir, name)) ? `<script${pre} src="${local(name)}"${post}></script>` : tag
+    return fs.existsSync(path.join(gsapDir(), name)) ? `<script${pre} src="${local(name)}"${post}></script>` : tag
   })
-  const runtime = pathToFileURL(packageFile('@hyperframes/core', 'dist/hyperframe.runtime.iife.js')).href
+  const runtime = pathToFileURL(runtimeFile()).href
   const inject = `<script src="${runtime}"></script>
 <script>
 window.__lumenSeek = async (t) => {

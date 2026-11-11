@@ -24,8 +24,11 @@ export function ensureDir(dir: string) {
 /** A fresh folder for one job's output, e.g. media/blender/<jobId>. */
 export const jobDir = (integration: string, jobId: string) => ensureDir(path.join(mediaRoot(), integration, jobId))
 
+/** Where an integration's scratch folders are. */
+export const workRoot = (integration: string) => path.join(app.getPath('temp'), 'lumen', integration)
+
 /** Scratch space for scripts and compositions (not served). */
-export const workDir = (integration: string, jobId: string) => ensureDir(path.join(app.getPath('temp'), 'lumen', integration, jobId))
+export const workDir = (integration: string, jobId: string) => ensureDir(path.join(workRoot(integration), jobId))
 
 export function mediaUrl(absPath: string) {
   const rel = path.relative(mediaRoot(), absPath)
