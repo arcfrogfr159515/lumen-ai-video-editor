@@ -33,7 +33,7 @@ interface ItemProps {
   children: ReactNode
 }
 
-const Tick = () => <Check className="!size-3.5 !text-accent-2" aria-label={tt('On')} />
+const Tick = () => <Check className="!size-3.5 !text-accent-2" strokeWidth={2.5} aria-label={tt('On')} />
 
 /** A name with something after it, the pair taking the room a name alone would. */
 const named = (name: ReactNode, badge: ReactNode, truncate = true) =>
