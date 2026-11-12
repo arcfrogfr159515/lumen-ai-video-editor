@@ -65,7 +65,7 @@ function Body({ onClose }: { onClose: () => void }) {
           <CircleDot />{' '}{tt('Record a macro')}
         </Button>
         <span className="flex items-center gap-1 text-2xs text-fg-4">
-          <Kbd combo="alt+r" />{' '}{tt('starts and stops')}
+          <Kbd combo="alt+r" bound />{' '}{tt('starts and stops')}
         </span>
         <div className="ml-auto flex items-center gap-1">
           <Button size="sm" variant="ghost" onClick={() => void load()}>

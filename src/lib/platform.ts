@@ -70,6 +70,12 @@ export function formatShortcut(combo: string) {
     backspace: '⌫',
     home: 'Home',
     end: 'End',
+    pageup: 'PgUp',
+    pagedown: 'PgDn',
+    insert: 'Ins',
   }
-  return combo.split('+').map((k) => map[k] ?? k.toUpperCase())
+  // The key may be "+" itself: "+" alone, or "mod++".
+  const plus = combo === '+' || combo.endsWith('++')
+  const parts = plus ? [...combo.slice(0, -1).split('+').filter(Boolean), '+'] : combo.split('+')
+  return parts.map((k) => map[k] ?? k.toUpperCase())
 }

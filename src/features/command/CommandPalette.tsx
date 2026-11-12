@@ -441,7 +441,7 @@ function Item({
     >
       {icon}
       <span className="min-w-0 flex-1 truncate">{children}</span>
-      {shortcut && <Kbd combo={shortcut} />}
+      {shortcut && <Kbd combo={shortcut} bound />}
       {hint && <span className="text-2xs text-fg-4">{hint}</span>}
     </Command.Item>
   )

@@ -11,6 +11,7 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 - **In a clip's menu:** Crop (on the canvas), AI generate, Smart talking-head cut (the long pauses out of this clip's speech), New multicam clip from the selected clips, Export selected clips (in and out go around them and Export opens on that range), Reselect the source range (the slip tool), Replace clip (files picked from disk go in as a take, so what played before can come back), Link media, Open file location, Edit effects and Show the keyframe speed curve (the inspector, on that pane), and Render.
 - **Close gaps and Close all gaps** in the empty-timeline menu (as CapCut's has): the first closes holes and flash slivers, the second also closes every gap between clips on every unlocked track.
 - **A “More edit” dropdown on the timeline toolbar** (as CapCut's has): Freeze frame, Reverse, Mirror, Rotate — the same quick edits as the clip menu's Basic editing, on the selected clip or the one under the playhead.
+- **Shortcuts can be changed.** In Keyboard shortcuts (`?`), click a shortcut's keys and press the new ones; Esc leaves it as it was. Keys another shortcut is on are asked about first, and then moved. A shortcut can be taken off its keys, put back on the ones it came with, or all of them at once. The changes are kept on this computer, and menus, tooltips and the command palette show the keys a shortcut has now. In a text field, a shortcut moved onto a letter leaves the letter to the text.
 
 ### Changed
 

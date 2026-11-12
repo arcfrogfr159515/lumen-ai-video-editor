@@ -183,8 +183,8 @@ function TrimChip() {
         ))}
       </div>
       <span className="hidden items-center gap-1 text-fg-3 xl:flex">
-        <Kbd combo="j" />
-        <Kbd combo="l" />{' '}{tt('play')}
+        <Kbd combo="j" bound />
+        <Kbd combo="l" bound />{' '}{tt('play')}
         <Kbd combo="k" className="ml-1" />{' '}{tt('trim here')}
         <Kbd combo="left" className="ml-1" />
         <Kbd combo="right" />{' '}{tt('nudge')}

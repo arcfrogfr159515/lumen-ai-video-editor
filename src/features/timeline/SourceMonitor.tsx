@@ -306,10 +306,10 @@ function Monitor({ asset, onClose }: { asset: Asset; onClose: () => void }) {
           )}
           <div className="ml-auto flex items-center gap-1.5">
             <Button size="sm" variant="secondary" onClick={() => put('insert')} title={tt('Insert: everything after the point moves later, on every track in sync')}>
-              <CornerDownRight />{' '}{tt('Insert')}{' '}<Kbd combo="," />
+              <CornerDownRight />{' '}{tt('Insert')}{' '}<Kbd combo="," bound />
             </Button>
             <Button size="sm" variant="primary" onClick={() => put('overwrite')} title={tt('Overwrite: covers what is on the track there; nothing moves')}>
-              <ArrowDownToLine />{' '}{tt('Overwrite')}{' '}<Kbd combo="." />
+              <ArrowDownToLine />{' '}{tt('Overwrite')}{' '}<Kbd combo="." bound />
             </Button>
           </div>
         </div>

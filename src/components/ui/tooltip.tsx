@@ -25,7 +25,7 @@ export function Tip({ content, shortcut, side = 'top', children, disabled }: Tip
           className="popover z-[100] flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-medium text-fg origin-(--radix-tooltip-content-transform-origin) data-[state=delayed-open]:animate-pop-in data-[state=instant-open]:animate-pop-in"
         >
           {content}
-          {shortcut && <Kbd combo={shortcut} />}
+          {shortcut && <Kbd combo={shortcut} bound />}
         </Tooltip.Content>
       </Tooltip.Portal>
     </Tooltip.Root>

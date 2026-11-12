@@ -78,7 +78,7 @@ export function MenuItem({ icon, shortcut, danger, disabled, checked, onSelect, 
       {icon}
       <span className="flex-1 truncate">{children}</span>
       {checked && <Tick />}
-      {shortcut && <Kbd combo={shortcut} />}
+      {shortcut && <Kbd combo={shortcut} bound />}
     </DropdownMenu.Item>
   )
 }
@@ -130,7 +130,7 @@ export function ContextItem({ icon, shortcut, danger, disabled, checked, badge, 
       {icon}
       {named(children, badge)}
       {checked && <Tick />}
-      {shortcut && (dense ? <KeyCombo combo={shortcut} /> : <Kbd combo={shortcut} />)}
+      {shortcut && (dense ? <KeyCombo combo={shortcut} bound /> : <Kbd combo={shortcut} bound />)}
     </ContextMenu.Item>
   )
 }

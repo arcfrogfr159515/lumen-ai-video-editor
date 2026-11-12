@@ -263,6 +263,8 @@ npm run dev      # the app, with hot reload
 | `Ctrl+Shift+E` | Render queue |
 | `Ctrl+K` · `Ctrl+J` · `?` | Command palette · Copilot · all shortcuts |
 
+These are the keys Lumen comes with. Any of them can be moved: press `?`, click a shortcut's keys and press the new ones. Menus and tooltips show the keys a shortcut has now.
+
 </details>
 
 ## Roadmap

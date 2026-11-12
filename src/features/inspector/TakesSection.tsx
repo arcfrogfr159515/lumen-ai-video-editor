@@ -105,7 +105,7 @@ export function TakesSection({ clip }: { clip: Clip }) {
               {tt('Keep only this one')}
             </Button>
             <span className="ml-auto flex items-center gap-1 text-2xs text-fg-4">
-              {tt('Next')}{' '}<Kbd combo="alt+t" />
+              {tt('Next')}{' '}<Kbd combo="alt+t" bound />
             </span>
           </>
         )}

@@ -94,7 +94,7 @@ export function TitleBar() {
       >
         <AiSparkle className="size-3.5 opacity-80 transition-opacity group-hover:opacity-100" />
         <span className="truncate">{tt('Search, or ask Copilot to edit…')}</span>
-        <Kbd combo="mod+k" className="ml-auto" />
+        <Kbd combo="mod+k" bound className="ml-auto" />
       </button>
 
       <div className="no-drag ml-auto flex items-center gap-0.5">

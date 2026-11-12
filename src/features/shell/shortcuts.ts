@@ -5,12 +5,16 @@ import { useUI } from '@/editor/ui-store'
 import { timelineActions } from '@/features/timeline/timeline-actions'
 import { actions } from './actions'
 import { tt } from '@/lib/i18n'
+import { defineShortcuts } from '@/lib/keybindings'
 
 export interface Shortcut {
   id: string
   label: string
   group: 'Playback' | 'Editing' | 'Multicam' | 'Tools' | 'View' | 'App'
-  /** One or more combos, e.g. "mod+shift+z". The first is shown in the UI. */
+  /**
+   * The combos it comes with, e.g. "mod+shift+z"; the first is shown in the UI. The user can move a shortcut to
+   * other keys (the shortcuts dialog): what it runs on is `keysOf(id)`, and no two shortcuts come with the same combo.
+   */
   keys: string[]
   run: () => void
   /** Also fires while typing in a text field. */
@@ -40,8 +44,7 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'mute-preview', label: tt('Mute / unmute the preview'), group: 'Playback', keys: ['shift+m'], run: () => playback.toggleMute() },
 
   // Editing
-  { id: 'split', label: tt('Split at playhead'), group: 'Editing', keys: ['s', 'mod+b'], run: actions.split },
-  { id: 'delete', label: tt('Delete'), group: 'Editing', keys: ['delete', 'backspace'], run: () => actions.deleteSelection(false) },
+  { id: 'split', label: tt('Split at playhead'), group: 'Editing', keys: ['s', 'mod+b'], run: actions.split },  { id: 'delete', label: tt('Delete'), group: 'Editing', keys: ['delete', 'backspace'], run: () => actions.deleteSelection(false) },
   { id: 'ripple', label: tt('Ripple delete'), group: 'Editing', keys: ['shift+delete', 'shift+backspace'], run: () => actions.deleteSelection(true) },
   { id: 'duplicate', label: tt('Duplicate'), group: 'Editing', keys: ['mod+d'], run: actions.duplicateSelection },
   { id: 'select-all', label: tt('Select all clips'), group: 'Editing', keys: ['mod+a'], run: actions.selectAll },
@@ -108,4 +111,7 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'help', label: tt('Keyboard shortcuts'), group: 'App', keys: ['?'], run: () => ui().setShortcutsOpen(true) },
 ]
 
+defineShortcuts(SHORTCUTS)
+
+/** The combo a shortcut comes with, to name it by where its keys are drawn (a `shortcut` prop, a bound `Kbd`). */
 export const shortcutFor = (id: string) => SHORTCUTS.find((s) => s.id === id)?.keys[0]

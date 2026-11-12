@@ -51,7 +51,7 @@ export function NestSection({ clip }: { clip: Clip }) {
                       t.id === active ? 'bg-accent/15 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.35)]' : 'bg-ink/[0.035] text-fg-2 hover:bg-ink/[0.07] hover:text-fg',
                     )}
                   >
-                    {i < 9 && <Kbd combo={String(i + 1)} />}
+                    {i < 9 && <Kbd combo={String(i + 1)} bound />}
                     <span className="truncate">{t.name.replace(/^Cam \d+ · /, '')}</span>
                   </button>
                 ))}

@@ -145,7 +145,7 @@ export function HomeScreen() {
             </Button>
           </div>
           <div className="mt-auto flex items-center gap-2 pt-10 text-2xs text-fg-4">
-            <Upload className="size-3.5" />{' '}{tt('Drop video, audio or images here to start a project with them ·')}{' '}<Kbd combo="mod+o" />{' '}{tt('open')}
+            <Upload className="size-3.5" />{' '}{tt('Drop video, audio or images here to start a project with them ·')}{' '}<Kbd combo="mod+o" bound />{' '}{tt('open')}
           </div>
         </motion.section>
 

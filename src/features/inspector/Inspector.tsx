@@ -300,7 +300,7 @@ function ProjectInspector() {
         <div className="mt-4 flex items-start gap-2 px-1 text-xs text-fg-4">
           <MousePointerClick className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            {tt('Select a clip to edit it. Press')}{' '}<Kbd combo="?" className="mx-0.5 align-middle" />{' '}{tt('for every shortcut.')}
+            {tt('Select a clip to edit it. Press')}{' '}<Kbd combo="?" bound className="mx-0.5 align-middle" />{' '}{tt('for every shortcut.')}
           </span>
         </div>
       </div>
