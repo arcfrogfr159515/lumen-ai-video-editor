@@ -18,6 +18,10 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 - Five rows of that menu are there for the layout and do nothing yet, greyed: Smart extend, Sound separation (and its parts), Align video and audio, Save as my preset, Disable clip.
 - In Chinese, "Freeze frame" is 定格, "Group" 创建组合, "Ungroup" 解除组合, and "Nest into a timeline" 新建复合片段（嵌套时间线）.
 
+### Fixed
+
+- **Scene detection found next to nothing in footage cut with transitions.** A shot change counted only as one frame jumping well clear of the two either side of it, so a cut reached through a zoom blur, a wipe or a dissolve — most of the cuts in short-form video — went by unseen. Shot changes are now also read from how the picture's colours change over a little under half a second, which finds those; a one-frame flash, which jumps like a cut, is told from one by the picture coming back; and no cut is made closer to either end of the clip than the shortest shot, so the last frame is no longer split off on its own.
+
 ## [1.7.0] — 2026-11-11
 
 Lumen in Simplified Chinese and a light theme, with a run of leaks and edge cases closed.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { contentDelta, cutsFromScores, sceneThresholds, toHsv } from './scenes'
+import { toGray } from './analysis'
+import { blendResidual, colorHistogram, contentDelta, cutsFromScores, histogramDelta, sceneCuts, sceneScanner, sceneThresholds, shiftsFromChange, toHsv } from './scenes'
 import { crossCorrelate, envelopeOffset, onsetEnvelope, refineOffset } from './sync'
 import { followPatch, frameMotion, type Gray } from './tracker'
 
@@ -57,6 +58,167 @@ describe('scene detection', () => {
     // Two cuts closer than the shortest shot count once.
     scores[185] = 50
     expect(cutsFromScores(scores, { ratio, minContent, minGap: 15 })).toEqual([50, 180])
+  })
+
+  it('finds a cut through the blur of a transition, and through a blended frame', () => {
+    const r = rng(5)
+    const scores = Array.from({ length: 200 }, (_, i) => (i === 0 ? 0 : 5 + r() * 2))
+    // A zoom blur building up to the cut at 60 and settling after it.
+    ;[12, 19, 25, 32, 50, 13, 12, 10].forEach((s, k) => (scores[56 + k] = s))
+    // A cut through one frame that is half of each shot: two jumps side by side.
+    scores[130] = 30
+    scores[131] = 34
+    const { ratio, minContent } = sceneThresholds(50)
+    expect(cutsFromScores(scores, { ratio, minContent, minGap: 15 })).toEqual([60, 131])
+  })
+
+  it('leaves out a flash the picture comes back from, and slivers at either end', () => {
+    const scores: number[] = Array.from({ length: 120 }, (_, i) => (i === 0 ? 0 : 5))
+    const stays: number[] = scores.map(() => 5)
+    const jump = (i: number, left: number) => {
+      scores[i] = 45
+      stays[i] = left
+    }
+    // A cut at 40: the frames after it are as far from the frames before as the jump was.
+    jump(40, 44)
+    // One bright frame at 80: frame 81 looks like frame 79 again.
+    jump(80, 9)
+    jump(81, 9)
+    // Jumps a few frames from either end.
+    jump(4, 45)
+    jump(116, 45)
+    const opts = { ...sceneThresholds(50), minGap: 15 }
+    expect(cutsFromScores(scores, { ...opts, stays })).toEqual([40])
+    expect(cutsFromScores(scores, opts)).toEqual([40, 80])
+  })
+
+  it('reads a frame’s colour make-up, which moving the picture leaves alone', () => {
+    const picture = (...colours: [number, number, number][]) => new Uint8ClampedArray(colours.flatMap((c) => [...c, 255]))
+    const red: [number, number, number] = [255, 0, 0]
+    const blue: [number, number, number] = [0, 0, 255]
+    const green: [number, number, number] = [0, 255, 0]
+    const one = toHsv(picture(red, red, blue, blue))
+    const mirrored = toHsv(picture(blue, blue, red, red))
+    expect(contentDelta(one, mirrored)).toBeGreaterThan(10)
+    expect(histogramDelta(colorHistogram(one), colorHistogram(mirrored))).toBe(0)
+    expect(histogramDelta(colorHistogram(one), colorHistogram(toHsv(picture(green, green, green, green))))).toBe(1)
+    expect(histogramDelta(colorHistogram(one), colorHistogram(toHsv(picture(red, red, red, blue))))).toBeCloseTo(0.25, 6)
+    // Greys have no hue: whatever toHsv makes of theirs, they count as the same colour.
+    const grey = colorHistogram(Float32Array.from([10, 0, 128, 170, 0, 128]))
+    expect(Math.max(...grey)).toBe(1)
+  })
+
+  it('tells the frame half-way through a dissolve from one either side of a cut', () => {
+    const a = Float32Array.from([10, 200, 60, 90])
+    const b = Float32Array.from([210, 40, 160, 30])
+    const mean = a.map((v, k) => (v + b[k]) / 2)
+    expect(blendResidual(a, mean, b)).toBe(0)
+    expect(blendResidual(a, a, b)).toBeCloseTo(0.5, 6)
+    expect(blendResidual(a, b, b)).toBeCloseTo(0.5, 6)
+    // The same picture at both ends: nothing to judge by.
+    expect(blendResidual(a, mean, a)).toBe(1)
+  })
+
+  it('finds transitions in how the colours change over a span', () => {
+    const span = 12
+    const change: number[] = new Array(400).fill(0.03)
+    const raise = (from: number, to: number, value: number) => change.fill(value, from, to + 1)
+    // A cut at 50: frames 50 to 61 are compared with frames of the shot before.
+    raise(50, 61, 0.6)
+    // A dissolve over frames 120 to 131: the change builds while it lasts and falls away over the span after.
+    for (let k = 0; k < 12; k++) {
+      change[120 + k] = 0.03 + (0.5 * (k + 1)) / 12
+      change[132 + k] = 0.03 + 0.5 * (1 - (k + 1) / 12)
+    }
+    // Three odd frames: they pass.
+    raise(200, 202, 0.7)
+    // Someone walking up to the lens: the colours keep changing for over a second.
+    raise(260, 300, 0.4)
+    // A wipe at 340, with a shoulder that is no change of its own.
+    raise(340, 351, 0.66)
+    raise(352, 356, 0.32)
+    const shifts = shiftsFromChange(change, { span, min: 0.3 })
+    expect(shifts.map((s) => s.at)).toEqual([50, 125, 340])
+    expect(shifts[0]).toMatchObject({ from: 50, to: 61, peak: 0.6 })
+  })
+
+  it('takes a slow change of colours for a dissolve only when its frames blend', () => {
+    const span = 12
+    const change: number[] = new Array(300).fill(0.02)
+    // A second-long dissolve from frame 100: the colours change for as long, and for the span after.
+    change.fill(0.35, 100, 142)
+    const blend: number[] = new Array(300).fill(0.9)
+    expect(shiftsFromChange(change, { span, min: 0.3, blend, maxWidth: 60 })).toEqual([])
+    blend.fill(0.1, 118, 137)
+    expect(shiftsFromChange(change, { span, min: 0.3, blend, maxWidth: 60 }).map((s) => s.at)).toEqual([115])
+    expect(shiftsFromChange(change, { span, min: 0.3, blend, maxWidth: 30 })).toEqual([])
+    expect(shiftsFromChange(change, { span, min: 0.3 })).toEqual([])
+  })
+
+  describe('from frames', () => {
+    const W = 16
+    const H = 12
+    /** A frame of two flat colours side by side, with a little noise — and optionally lit up, or mixed with another. */
+    function frame(left: number[], right: number[], noise: () => number, lift = 0): Uint8ClampedArray {
+      const rgba = new Uint8ClampedArray(W * H * 4)
+      for (let i = 0; i < W * H; i++) {
+        const c = i % W < W / 2 ? left : right
+        for (let k = 0; k < 3; k++) rgba[i * 4 + k] = c[k] + lift + (noise() - 0.5) * 6
+        rgba[i * 4 + 3] = 255
+      }
+      return rgba
+    }
+    const mix = (a: number[], b: number[], t: number) => a.map((v, k) => v + (b[k] - v) * t)
+    const A = [[200, 40, 40], [30, 30, 120]]
+    const B = [[40, 180, 60], [220, 220, 60]]
+    const C = [[150, 60, 200], [235, 235, 235]]
+
+    /** 200 frames: shot A with one flash frame at 30, a cut to B at 60, B dissolving into C over frames 120 to 131. */
+    function film() {
+      const r = rng(9)
+      return Array.from({ length: 200 }, (_, i) => {
+        if (i < 60) return frame(A[0], A[1], r, i === 30 ? 150 : 0)
+        if (i < 120) return frame(B[0], B[1], r)
+        const t = Math.min(1, (i - 119) / 13)
+        return frame(mix(B[0], C[0], t), mix(B[1], C[1], t), r)
+      })
+    }
+
+    it('reads the same signals as comparing whole frames would', () => {
+      const span = 5
+      const frames = film().slice(20, 80)
+      const scanner = sceneScanner(span)
+      frames.forEach((f) => scanner.add(f))
+      const { scores, stays, change, blend } = scanner.signals()
+      const hsv = frames.map((f) => toHsv(f))
+      const gray = frames.map((f) => toGray(f))
+      const d = (a: number, b: number) => contentDelta(hsv[a], hsv[b])
+      for (const i of [1, 2, 3, 9, 10, 11, 12, 39, 40, 41, 57, 58, 59]) {
+        expect(scores[i]).toBeCloseTo(d(i - 1, i), 9)
+        const around = [i >= 2 ? d(i - 2, i) : Infinity, i >= 3 ? d(i - 3, i) : Infinity, i + 1 < 60 ? d(i - 1, i + 1) : Infinity, i + 2 < 60 ? d(i - 1, i + 2) : Infinity]
+        expect(stays![i]).toBeCloseTo(Math.min(...around), 9)
+        expect(change![i]).toBeCloseTo(i >= span ? histogramDelta(colorHistogram(hsv[i - span]), colorHistogram(hsv[i])) : 0, 9)
+        expect(blend![i]).toBeCloseTo(i >= 2 * span ? blendResidual(gray[i - 2 * span], gray[i - span], gray[i]) : 1, 9)
+      }
+    })
+
+    it('splits at the cut and in the dissolve, not at the flash', () => {
+      const span = 12
+      const scanner = sceneScanner(span)
+      film().forEach((f) => scanner.add(f))
+      const signals = scanner.signals()
+      const opts = { ...sceneThresholds(50), span, minGap: 18 }
+      const cuts = sceneCuts(signals, opts)
+      expect(cuts).toHaveLength(2)
+      expect(cuts[0]).toBe(60)
+      expect(cuts[1]).toBeGreaterThanOrEqual(122)
+      expect(cuts[1]).toBeLessThanOrEqual(130)
+      // The flash is a jump like the cut — it is what comes after that tells them apart.
+      expect(signals.scores[30]).toBeGreaterThan(sceneThresholds(50).minContent)
+      expect(cutsFromScores(signals.scores, { ...opts, minGap: 1 })).toContain(30)
+      // Without the colours only the cut is found: nothing jumps in a dissolve.
+      expect(sceneCuts({ scores: signals.scores, stays: signals.stays }, opts)).toEqual([60])
+    })
   })
 })
 
