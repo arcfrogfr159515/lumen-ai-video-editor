@@ -54,6 +54,9 @@ export function ClipMenu({ clip }: { clip: Clip }) {
   const hasRange = useEditor((s) => Boolean(s.project.range))
   const selection = useUI((s) => s.selection)
   const grouped = useEditor((s) => selection.some((id) => s.project.clips[id]?.groupId))
+  // Speed and reverse mean something only on media clips — don't let them resize titles or images in a mixed
+  // selection. Worked out when the row is chosen, not as a store selector (a fresh array each render loops).
+  const mediaSelection = () => selection.filter((id) => { const c = getProject().clips[id]; return c && (c.kind === 'video' || c.kind === 'audio') && !c.freeze })
   const canPasteAttributes = Boolean(useAttributeSource())
 
   const media = clip.kind === 'video' || clip.kind === 'audio'
@@ -101,7 +104,7 @@ export function ClipMenu({ clip }: { clip: Clip }) {
         <ContextItem shortcut="shift+f" disabled={clip.kind !== 'video' || clip.freeze} onSelect={actions.freezeFrame}>
           {tt('Freeze frame')}
         </ContextItem>
-        <ContextItem checked={clip.reverse} disabled={!media || clip.freeze} onSelect={() => dispatch('clip.update', { ids: selection, patch: { reverse: !clip.reverse } })}>
+        <ContextItem checked={clip.reverse} disabled={!media || clip.freeze} onSelect={() => dispatch('clip.update', { ids: mediaSelection(), patch: { reverse: !clip.reverse } })}>
           {tt('Reverse')}
         </ContextItem>
         <ContextItem checked={mirrored} disabled={!picture} onSelect={actions.mirror}>
@@ -165,7 +168,8 @@ export function ClipMenu({ clip }: { clip: Clip }) {
       <ContextItem badge={ai} disabled={!canBeat || clip.freeze} onSelect={() => void actions.removePauses()}>
         {tt('Smart talking-head cut')}
       </ContextItem>
-      <ContextSub label={tt('Sound separation')} badge={ai}>
+      {/* Not built yet: the row stays, greyed, and doesn't open onto a list that does nothing. */}
+      <ContextSub label={tt('Sound separation')} badge={ai} disabled>
         {STEMS.map((stem) => (
           <Unbuilt key={stem}>{stem}</Unbuilt>
         ))}
@@ -266,7 +270,7 @@ export function ClipMenu({ clip }: { clip: Clip }) {
         <ContextSeparator />
         <ContextSub label={tt('Speed')} disabled={!media || clip.freeze}>
           {SPEEDS.map((s) => (
-            <ContextItem key={s} checked={s === clip.speed && !isRamped(clip)} onSelect={() => dispatch('clip.update', { ids: selection, patch: { speed: s } })}>
+            <ContextItem key={s} checked={s === clip.speed && !isRamped(clip)} onSelect={() => dispatch('clip.update', { ids: mediaSelection(), patch: { speed: s } })}>
               <span className="tabular">{s}×</span>
             </ContextItem>
           ))}
