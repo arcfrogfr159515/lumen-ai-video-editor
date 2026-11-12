@@ -566,7 +566,7 @@ export function RecordDialog() {
       </div>
 
       {/* What will happen, and the button that does it */}
-      <div className="flex items-center gap-3 border-t border-line px-5 py-3">
+      <div className="flex items-center gap-3 border-t border-line bg-shade/15 px-5 py-3.5">
         {rolling || phase === 'finishing' ? (
           <>
             <div className="min-w-0 flex-1 text-xs text-fg-3 tabular">
