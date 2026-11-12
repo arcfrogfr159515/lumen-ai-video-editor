@@ -44,7 +44,8 @@ export const SHORTCUTS: Shortcut[] = [
   { id: 'mute-preview', label: tt('Mute / unmute the preview'), group: 'Playback', keys: ['shift+m'], run: () => playback.toggleMute() },
 
   // Editing
-  { id: 'split', label: tt('Split at playhead'), group: 'Editing', keys: ['s', 'mod+b'], run: actions.split },  { id: 'delete', label: tt('Delete'), group: 'Editing', keys: ['delete', 'backspace'], run: () => actions.deleteSelection(false) },
+  { id: 'split', label: tt('Split at playhead'), group: 'Editing', keys: ['s', 'mod+b'], run: actions.split },
+  { id: 'scene-split', label: tt('Smart scene split'), group: 'Editing', keys: ['alt+s'], run: () => void actions.detectScenes('split') },  { id: 'delete', label: tt('Delete'), group: 'Editing', keys: ['delete', 'backspace'], run: () => actions.deleteSelection(false) },
   { id: 'ripple', label: tt('Ripple delete'), group: 'Editing', keys: ['shift+delete', 'shift+backspace'], run: () => actions.deleteSelection(true) },
   { id: 'duplicate', label: tt('Duplicate'), group: 'Editing', keys: ['mod+d'], run: actions.duplicateSelection },
   { id: 'select-all', label: tt('Select all clips'), group: 'Editing', keys: ['mod+a'], run: actions.selectAll },

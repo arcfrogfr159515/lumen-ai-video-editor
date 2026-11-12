@@ -12,6 +12,7 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 - **Close gaps and Close all gaps** in the empty-timeline menu (as CapCut's has): the first closes holes and flash slivers, the second also closes every gap between clips on every unlocked track.
 - **A “More edit” dropdown on the timeline toolbar** (as CapCut's has): Freeze frame, Reverse, Mirror, Rotate — the same quick edits as the clip menu's Basic editing, on the selected clip or the one under the playhead.
 - **Shortcuts can be changed.** In Keyboard shortcuts (`?`), click a shortcut's keys and press the new ones; Esc leaves it as it was. Keys another shortcut is on are asked about first, and then moved. A shortcut can be taken off its keys, put back on the ones it came with, or all of them at once. The changes are kept on this computer, and menus, tooltips and the command palette show the keys a shortcut has now. In a text field, a shortcut moved onto a letter leaves the letter to the text.
+- **Smart scene split has a shortcut**, Alt+S, shown in the clip's menu: it splits the selected clip — or the one under the playhead — at its shot changes.
 
 ### Changed
 

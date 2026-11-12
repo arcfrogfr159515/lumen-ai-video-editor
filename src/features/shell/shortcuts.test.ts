@@ -32,4 +32,11 @@ describe('the shortcuts Lumen comes with', () => {
     resetKeys()
     expect([boundCombo('m'), boundCombo('s')]).toEqual(['m', 's'])
   })
+
+  it('include the smart scene split, on Alt+S', () => {
+    resetKeys()
+    expect(shortcutFor('scene-split')).toBe('alt+s')
+    expect(holderOf('alt+s')).toBe('scene-split')
+    expect(SHORTCUTS.find((s) => s.id === 'scene-split')).toMatchObject({ group: 'Editing', label: 'Smart scene split' })
+  })
 })

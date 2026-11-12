@@ -247,6 +247,7 @@ npm run dev      # the app, with hot reload
 | `Space` · `J K L` · `Shift+M` | Play / pause · shuttle · mute the preview |
 | `←` `→` · `↑` `↓` | Frame step · previous / next edit point |
 | `S` · `Del` · `Shift+Del` | Split · delete · ripple delete |
+| `Alt+S` | Smart scene split: split the clip at its shot changes |
 | `V` · `B` · `N` · `M` | Select tool · blade · snapping · marker |
 | `R` · `Y` · `U` | Roll · slip · slide tools |
 | `I` · `O` · `X` · `Alt+X` | Mark in · out · around the selection · clear |

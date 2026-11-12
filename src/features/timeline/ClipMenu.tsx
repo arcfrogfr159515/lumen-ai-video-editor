@@ -162,7 +162,7 @@ export function ClipMenu({ clip }: { clip: Clip }) {
         {hasCues && <ContextItem onSelect={() => actions.cueMarkers(clip.id)}>{tt('Add markers at the cues')}</ContextItem>}
       </ContextSub>
       <Unbuilt badge={ai}>{tt('Smart extend')}</Unbuilt>
-      <ContextItem badge={ai} disabled={!footage} onSelect={() => void actions.detectScenes('split')}>
+      <ContextItem badge={ai} shortcut="alt+s" disabled={!footage} onSelect={() => void actions.detectScenes('split')}>
         {tt('Smart scene split')}
       </ContextItem>
       <ContextItem badge={ai} disabled={!canBeat || clip.freeze} onSelect={() => void actions.removePauses()}>

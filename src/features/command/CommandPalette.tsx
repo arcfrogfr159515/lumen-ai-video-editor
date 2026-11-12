@@ -75,7 +75,7 @@ import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 /** Shortcuts already offered above under a friendlier name. */
-const LISTED = new Set(['split', 'duplicate', 'delete', 'ripple', 'marker', 'undo', 'redo', 'import', 'play', 'start', 'end', 'zoom-fit', 'guides', 'snapping', 'export', 'queue', 'save', 'save-as', 'open', 'new', 'help', 'palette', 'nest', 'storyboard', 'trim-mode', 'next-take', 'macro-record', 'macro-run'])
+const LISTED = new Set(['split', 'duplicate', 'delete', 'ripple', 'marker', 'undo', 'redo', 'import', 'play', 'start', 'end', 'zoom-fit', 'guides', 'snapping', 'export', 'queue', 'save', 'save-as', 'open', 'new', 'help', 'palette', 'nest', 'storyboard', 'trim-mode', 'next-take', 'macro-record', 'macro-run', 'scene-split'])
 
 const ui = () => useUI.getState()
 
@@ -206,7 +206,7 @@ export function CommandPalette() {
           <Item icon={<Video />} keywords={['multicam', 'multi-camera', 'angles', 'sync', 'cameras', 'podcast', 'interview']} onSelect={run(() => ui().setMulticam({ assetIds: [] }))}>
             {tt('Make a multicam clip…')}
           </Item>
-          <Item icon={<ScanLine />} keywords={['scene', 'shot', 'detect', 'cuts', 'split']} onSelect={run(() => void actions.detectScenes('split'))}>
+          <Item icon={<ScanLine />} shortcut={shortcutFor('scene-split')} keywords={['scene', 'shot', 'detect', 'cuts', 'split']} onSelect={run(() => void actions.detectScenes('split'))}>
             {tt('Split clip at scene cuts')}
           </Item>
           <Item icon={<ScanLine />} keywords={['scene', 'shot', 'detect', 'markers']} onSelect={run(() => void actions.detectScenes('markers'))}>
