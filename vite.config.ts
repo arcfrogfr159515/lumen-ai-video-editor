@@ -67,8 +67,23 @@ export default defineConfig(({ mode }) => {
     worker: { format: 'es' },
     // Pre-bundle lazily loaded engines so the dev server never reloads mid-session to optimize them.
     optimizeDeps: { include: ['mediabunny', 'gifenc', '@huggingface/transformers', '@shiguredo/rnnoise-wasm'] },
-    // Desktop app loading from disk — a single ~2 MB chunk (three.js included) is fine.
-    build: { chunkSizeWarningLimit: 2400 },
+    // The heavy engines (three.js, rnnoise, the workers) already split into their own lazy chunks. The startup
+    // chunk is the app shell; pulling the rarely-changing framework (React, Radix, zustand, motion) into a
+    // separate `vendor` chunk shrinks it and lets the browser cache the framework across app updates. The desktop
+    // app loads from disk, so this is for the web build and cold starts; it never changes what loads lazily.
+    build: {
+      chunkSizeWarningLimit: 2400,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return
+            if (/[\\/]node_modules[\\/](react|react-dom|scheduler|use-sync-external-store)[\\/]/.test(id)) return 'react'
+            if (/[\\/]node_modules[\\/](radix-ui|@radix-ui|@floating-ui|aria-hidden|react-remove-scroll|react-remove-scroll-bar|get-nonce|react-style-singleton|use-callback-ref|use-sidecar|tslib)[\\/]/.test(id)) return 'radix'
+            if (/[\\/]node_modules[\\/](zustand|immer|motion|motion-dom|motion-utils|clsx|tailwind-merge|nanoid|sonner|cmdk)[\\/]/.test(id)) return 'vendor'
+          },
+        },
+      },
+    },
     clearScreen: false,
   }
 })
