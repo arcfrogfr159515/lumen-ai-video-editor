@@ -83,7 +83,7 @@ export function GraphicsDialog() {
             <div className="space-y-1.5">
               {devices.map((d, i) => (
                 <div key={i} className="flex items-center gap-2.5 rounded-lg bg-ink/[0.03] px-3 py-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
-                  <span className={`size-1.5 shrink-0 rounded-full ${d.active ? 'bg-ok' : 'bg-white/20'}`} />
+                  <span className={`size-1.5 shrink-0 rounded-full ${d.active ? 'bg-ok' : 'bg-ink/20'}`} />
                   <span className="min-w-0 flex-1 truncate text-sm text-fg-2">
                     <span className="text-fg-4">{d.vendor}</span> {d.name}
                   </span>

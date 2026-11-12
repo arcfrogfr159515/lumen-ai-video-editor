@@ -43,7 +43,7 @@ export function RenderMenu() {
     <div className="flex items-center">
       {job && (
         <div
-          className={`mr-1 flex h-7 items-center gap-1.5 rounded-full pr-0.5 pl-2 text-2xs font-medium tabular ${job.background ? 'bg-white/[0.04] text-fg-3' : 'bg-accent/10 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.25)]'}`}
+          className={`mr-1 flex h-7 items-center gap-1.5 rounded-full pr-0.5 pl-2 text-2xs font-medium tabular ${job.background ? 'bg-ink/[0.04] text-fg-3' : 'bg-accent/10 text-accent-2 shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.25)]'}`}
           title={job.label}
         >
           <LoaderCircle className="size-3 animate-spin" />
