@@ -136,7 +136,9 @@ export function ContextItem({ icon, shortcut, danger, disabled, checked, badge, 
 }
 
 export function ContextSeparator() {
-  return <ContextMenu.Separator className="mx-1 my-1 h-px bg-line" />
+  // A dense menu reads tighter: its group dividers sit closer than a roomy menu's.
+  const dense = useContext(Dense)
+  return <ContextMenu.Separator className={cn('mx-1 h-px bg-line', dense ? 'my-[3px]' : 'my-1')} />
 }
 
 export function ContextSub({ icon, label, badge, disabled, children }: { icon?: ReactNode; label: ReactNode; badge?: ReactNode; disabled?: boolean; children: ReactNode }) {
