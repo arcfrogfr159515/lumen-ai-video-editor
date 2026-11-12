@@ -228,8 +228,17 @@ export async function signInLocal(id: LocalAgentId): Promise<LocalAgentState> {
   const args = id === 'claude-code' ? ['auth', 'login'] : ['login']
   const l = launcher(bin, args)
   if (isWin) {
-    const quoted = [l.command, ...l.args].map((a) => `"${a}"`).join(' ')
-    spawn('cmd.exe', ['/d', '/s', '/c', `start "Sign in" ${quoted}`], { detached: true, windowsVerbatimArguments: true, stdio: 'ignore', env: { ...process.env, ...l.env } }).unref()
+    const env = { ...process.env, ...l.env }
+    const tokens = [l.command, ...l.args]
+    // `start` opens a fresh console for the interactive login. A token with a quote, a percent (cmd env
+    // expansion) or a newline can't be put into a cmd command line safely — launch it directly then,
+    // with no shell parsing at all, rather than build a string cmd might misread.
+    if (tokens.some((t) => /["%\r\n]/.test(t))) {
+      spawn(l.command, l.args, { detached: true, stdio: 'ignore', env }).unref()
+    } else {
+      const quoted = tokens.map((a) => `"${a}"`).join(' ')
+      spawn('cmd.exe', ['/d', '/s', '/c', `start "Sign in" ${quoted}`], { detached: true, windowsVerbatimArguments: true, stdio: 'ignore', env }).unref()
+    }
   } else if (process.platform === 'darwin') {
     const cmd = [l.command, ...l.args].map((a) => `'${a.replace(/'/g, `'\\''`)}'`).join(' ')
     spawn('osascript', ['-e', `tell application "Terminal" to do script "${cmd.replace(/"/g, '\\"')}"`, '-e', 'tell application "Terminal" to activate'], { detached: true, stdio: 'ignore' }).unref()
