@@ -1,4 +1,4 @@
-import { Loader2, Plus } from 'lucide-react'
+import { LoaderCircle, Plus } from 'lucide-react'
 import { useState, type CSSProperties } from 'react'
 import { Preview3D } from '@/components/Preview3D'
 import { fontCss } from '@/engine/fonts'
@@ -116,7 +116,7 @@ function CaptionCard({ spec, busy, disabled, onPick }: { spec: CaptionStyleSpec;
         </span>
         {busy && (
           <span className="absolute inset-0 grid place-items-center bg-shade/55">
-            <Loader2 className="size-5 animate-spin text-on-media" />
+            <LoaderCircle className="size-5 animate-spin text-on-media" />
           </span>
         )}
       </div>
