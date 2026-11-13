@@ -43,7 +43,7 @@ export function TimelineToolbar() {
         <LayoutGrid />
       </IconButton>
       <div className="mx-1 h-4 w-px bg-line-2" />
-      <div className="flex items-center gap-0.5 rounded-group bg-shade/25 p-[3px] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
+      <div className="flex items-center gap-0.5 rounded-group bg-well-2 p-[3px] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.04)]">
         <IconButton size="xs" label={tt('Select')} shortcut="v" active={tool === 'select'} onClick={() => setTool('select')}>
           <MousePointer2 />
         </IconButton>

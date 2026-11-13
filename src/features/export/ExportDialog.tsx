@@ -426,7 +426,7 @@ export function ExportDialog() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 border-t border-line bg-shade/15 px-5 py-3.5">
+      <div className="flex items-center gap-3 border-t border-line bg-well px-5 py-3.5">
         {state.kind === 'running' ? (
           <div className="min-w-0 flex-1">
             <div className="h-1.5 overflow-hidden rounded-full bg-ink/[0.08]">

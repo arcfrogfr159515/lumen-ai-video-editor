@@ -215,7 +215,7 @@ function GapsPane({ project, flashFrames, setFlashFrames }: { project: Project; 
           </>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-3 border-t border-line bg-shade/15 px-5 py-3.5">
+      <div className="flex shrink-0 items-center gap-3 border-t border-line bg-well px-5 py-3.5">
         <span className="text-xs text-fg-3">{tt('A flash is up to')}</span>
         <Select aria-label={tt('How short counts as a flash')} className="w-[110px]" value={String(flashFrames)} onChange={(v) => setFlashFrames(Number(v))} options={[1, 2, 3, 4, 5, 6, 8].map((n) => ({ value: String(n), label: tt('{0} frame{1}', n, n === 1 ? '' : 's') }))} />
         <Button variant="primary" className="ml-auto" disabled={todo === 0} onClick={run}>
@@ -291,7 +291,7 @@ function ReusePane({ project }: { project: Project }) {
           })
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-3 border-t border-line bg-shade/15 px-5 py-3.5 text-xs text-fg-3">
+      <div className="flex shrink-0 items-center gap-3 border-t border-line bg-well px-5 py-3.5 text-xs text-fg-3">
         <Switch aria-label={tt('Mark reused footage on the timeline')} checked={show} onChange={(v) => set({ showReuse: v })} />
         {tt('Mark it on the clips')}
         {total > 0 && <span className="ml-auto text-fg-4">{ttx('{0} of the timeline is footage seen before', formatDuration(total, fps))}</span>}
@@ -339,7 +339,7 @@ function RatesPane({ project }: { project: Project }) {
           </ul>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-2 border-t border-line bg-shade/15 px-5 py-3.5">
+      <div className="flex shrink-0 items-center gap-2 border-t border-line bg-well px-5 py-3.5">
         {!desktop && <span className="mr-auto max-w-[320px] text-2xs leading-snug text-fg-4">{tt('In a browser tab a copy is kept in memory for this session. The desktop app writes it to Lumen’s media folder.')}</span>}
         <Button className={cn(desktop && 'ml-auto')} disabled={checking || unchecked.length === 0} onClick={() => void check()}>
           {checking ? <LoaderCircle className="animate-spin" /> : <Gauge />}{' '}{ttx('Check {0} unchecked', unchecked.length || '')}

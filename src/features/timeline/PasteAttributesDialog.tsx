@@ -102,7 +102,7 @@ export function PasteAttributesDialog() {
           )
         })}
       </div>
-      <div className="flex items-center justify-end gap-2 border-t border-line bg-shade/15 px-5 py-3.5">
+      <div className="flex items-center justify-end gap-2 border-t border-line bg-well px-5 py-3.5">
         <Button variant="ghost" onClick={close}>
           {tt('Cancel')}
         </Button>

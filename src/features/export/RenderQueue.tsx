@@ -40,7 +40,7 @@ export function RenderQueueDialog() {
           <JobRow key={job.id} job={job} />
         ))}
       </div>
-      <div className="flex items-center gap-2 border-t border-line bg-shade/15 px-5 py-3.5">
+      <div className="flex items-center gap-2 border-t border-line bg-well px-5 py-3.5">
         <div className="flex-1 text-xs text-fg-4">
           {counts.running ? tt('Rendering · {0} waiting', counts.queued) : counts.queued ? tt('{0} waiting', counts.queued) : jobs.length ? tt('{0} done{1}', counts.done, counts.failed ? (' ' + tt('· {0} failed', counts.failed)) : '') : ''}
         </div>

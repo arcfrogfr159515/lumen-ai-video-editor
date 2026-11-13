@@ -24,7 +24,7 @@ export function Segmented<T extends string>({ value, options, onChange, size = '
     <div
       role="tablist"
       className={cn(
-        'inline-flex items-center gap-0.5 rounded-group bg-shade/25 p-[3px] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]',
+        'inline-flex items-center gap-0.5 rounded-group bg-well-2 p-[3px] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]',
         stretch && 'flex w-full',
         className,
       )}

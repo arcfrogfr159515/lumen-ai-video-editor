@@ -188,7 +188,7 @@ export function Minimap({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | n
   const w = Math.max(6, (win.x1 - win.x0) * width)
 
   return (
-    <div data-minimap className="flex shrink-0 border-b border-line bg-shade/20" style={{ height: MINIMAP_H }}>
+    <div data-minimap className="flex shrink-0 border-b border-line bg-well-2" style={{ height: MINIMAP_H }}>
       <div className="flex shrink-0 items-center border-r border-line px-3 text-2xs font-medium text-fg-4" style={{ width: HEADER_W }}>
         {tt('Overview')}
       </div>
@@ -202,7 +202,7 @@ export function Minimap({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | n
         <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 block h-full w-full" />
         <div
           data-minimap-window
-          className="absolute inset-y-0 cursor-grab rounded-sm bg-ink/[0.07] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.5),0_0_0_100vmax_rgb(from_var(--color-shade)_r_g_b/0.38)] active:cursor-grabbing"
+          className="absolute inset-y-0 cursor-grab rounded-sm bg-ink/[0.07] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.5),0_0_0_100vmax_var(--color-dim)] active:cursor-grabbing"
           style={{ left, width: w }}
         >
           <span onPointerDown={(e) => resize(e, 'start')} className="absolute inset-y-0 -left-1 w-2.5 cursor-ew-resize" aria-label={tt('Drag to zoom from the left')} />

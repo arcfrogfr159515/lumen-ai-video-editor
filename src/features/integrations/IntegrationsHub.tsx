@@ -80,7 +80,7 @@ function Sidebar({ selected, onSelect }: { selected: Selection; onSelect: (s: Se
   const skillsOn = skillEntries({ disk: skillDisk, off: skillsOff, on: claudeOn }).filter((k) => k.enabled).length
 
   return (
-    <nav className="flex w-[244px] shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-line bg-shade/15 px-2.5 py-5">
+    <nav className="flex w-[244px] shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-line bg-well px-2.5 py-5">
       <div className="mb-4 px-2.5">
         <div className="flex items-center gap-2 text-md font-semibold tracking-tight text-fg">
           <Plug className="size-4 text-accent-2" />{' '}{tt('Integrations')}
@@ -415,7 +415,7 @@ function ServerPane({ server, onRemoved }: { server: McpServerState; onRemoved: 
           </div>
         }
       />
-      <div className="mb-3 rounded-lg bg-shade/25 px-3 py-2 font-mono text-2xs break-all text-fg-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
+      <div className="mb-3 rounded-lg bg-well-2 px-3 py-2 font-mono text-2xs break-all text-fg-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
         {config.transport === 'http' ? config.url : [config.command, ...(config.args ?? [])].join(' ')}
       </div>
       <label className="mb-5 flex cursor-pointer items-center gap-3 rounded-lg px-1 py-1.5">
