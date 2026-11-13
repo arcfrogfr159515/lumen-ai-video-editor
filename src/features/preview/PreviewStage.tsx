@@ -456,7 +456,7 @@ function TrackGizmo({ edit, pw, ph, scale }: { edit: TrackEdit; pw: number; ph: 
     const b = current.box
     setBusy(true)
     try {
-      const r = await withProgress('Tracking', (onProgress, signal) =>
+      const r = await withProgress(tt('Tracking motion'), (onProgress, signal) =>
         trackMotion({ targetId: current.clipId, maskId: current.maskId, newTitle: current.newTitle, box: { x: b.x + b.w / 2 - pw / 2, y: b.y + b.h / 2 - ph / 2, width: b.w, height: b.h }, direction }, onProgress, signal),
       )
       const lost = r.lost ? tt('It lost sight of the point before the end — move the playhead there and track again to go on.') : undefined

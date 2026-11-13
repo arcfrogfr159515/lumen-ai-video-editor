@@ -63,23 +63,48 @@ describe('the Chinese dictionary', () => {
     }
   })
 
+  /** Every source file of the interface, with its text. */
+  const root = path.resolve(__dirname, '..')
+  const sources = (dir = root): [string, string][] =>
+    fs.readdirSync(dir).flatMap((name): [string, string][] => {
+      const full = path.join(dir, name)
+      if (fs.statSync(full).isDirectory()) return sources(full)
+      if (!/\.tsx?$/.test(name) || /\.test\.tsx?$/.test(name) || full.includes(`${path.sep}locales${path.sep}`) || /i18n(-react)?\.ts$/.test(name)) return []
+      return [[full, fs.readFileSync(full, 'utf8')]]
+    })
+
   it('covers what the source says', () => {
-    const root = path.resolve(__dirname, '..')
     const said = new Set<string>()
-    const walk = (dir: string) => {
-      for (const name of fs.readdirSync(dir)) {
-        const full = path.join(dir, name)
-        if (fs.statSync(full).isDirectory()) walk(full)
-        else if (/\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) && !full.includes(`${path.sep}locales${path.sep}`) && !/i18n(-react)?\.ts$/.test(name)) {
-          for (const m of fs.readFileSync(full, 'utf8').matchAll(/\b(?:ttx?|tm)\(\s*'((?:[^'\\]|\\.)*)'/g)) said.add(JSON.parse(`"${m[1].replace(/\\'/g, "'").replace(/"/g, '\\"')}"`) as string)
-        }
-      }
+    for (const [, text] of sources()) {
+      for (const m of text.matchAll(/\b(?:ttx?|tm)\(\s*'((?:[^'\\]|\\.)*)'/g)) said.add(JSON.parse(`"${m[1].replace(/\\'/g, "'").replace(/"/g, '\\"')}"`) as string)
     }
-    walk(root)
     expect(said.size).toBeGreaterThan(2500)
     // Names and the like, the same in every language. Anything else found here is a sentence waiting for a translation.
     const same = new Set(['Lumen', 'Copilot', 'AI', 'GPU', 'CPU', 'RGB', 'HSL', 'LUT', 'PDF', 'Aa', 'px', 'dB', 'ms', 'Hz', 'Mbps', 'CFR', 'VFR', 'GIF', 'PNG', 'MP4', 'MOV', 'WebM', 'WAV', 'SRT', 'WebVTT', 'Markdown', 'JSON', 'Blender', 'HyperFrames', 'ElevenLabs', 'Claude Code', 'Claude Opus 5.5', 'AsyncTech', 'Ada Lovelace', '4K UHD', 'GPT Image', 'Multilingual v2', 'Flash v2.5', 'ElevenLabs Scribe', 'OpenAI Whisper', 'Geist', 'Geist Mono', 'Fraunces', 'Archivo', 'Syne', 'Space Grotesk', 'Caveat', 'Instrument', 'Instrument Serif', 'Bricolage', 'Bricolage Grotesque', 'sk_…', 'API_KEY=…', 'Authorization: Bearer …', '.mcp.json', 'npx -y @modelcontextprotocol/server-everything', '@hyperframes/core runtime · Apache-2.0', 'C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe', 'CFR {0}%', '{0} fps', '{0} dB', '{0}{1}', '{0} ({1} fps).mp4', '{0}×{1} · {2} fps', '{0}×{1} · {2} fps · {3}', '{0}×{1} · {2} · {3} fps{4}', '{0} fps{1}', '· {0} · {1} Mbps', 'GitHub ↗'])
     const waiting = [...said].filter((s) => !(s in zhCN) && !same.has(s))
     expect(waiting).toEqual([])
+  })
+
+  it('is asked for everything a toast says', () => {
+    // The check above sees only what is given to tt(). A sentence handed to a toast as it is written — its title,
+    // its description, its button — is shown in English whatever the language, and nothing notices.
+    const word = /[A-Za-z]{2,}/
+    // Words of a template's own — or words quoted inside one of its ${…}, other than a comparison or what goes to the dictionary.
+    const picked = (code: string) => /(['"])[^'"]*[A-Za-z]{2,}[^'"]*\1/.test(code.replace(/\b(?:ttx?|tm|ttc|plural|counted)\([^)]*\)/g, '').replace(/[!=]==?\s*(['"])[^'"]*\1/g, ''))
+    const words = (literal: string) => word.test(literal.replace(/\$\{[^}]*\}/g, '')) || [...literal.matchAll(/\$\{([^}]*)\}/g)].some((m) => picked(m[1]))
+    const quoted = String.raw`(['"\`])((?:(?!\1)[^\\]|\\.)*)\1`
+    const title = new RegExp(String.raw`\b(?:toast(?:\.\w+)?|withProgress|withMatteProgress)\(\s*` + quoted, 'g')
+    const option = new RegExp(String.raw`\b(?:description|label):\s*` + quoted, 'g')
+    // A sentence made from another by swapping its ending: "Removing…" → "Removing failed" works in one language.
+    const glued = /\.replace\([^)]*,\s*(['"])[^'"]*[A-Za-z]{2,}[^'"]*\1\)/
+    const bare: string[] = []
+    for (const [full, text] of sources()) {
+      text.split('\n').forEach((line, i) => {
+        const toast = /\btoast\b/.test(line)
+        const found = [...line.matchAll(title), ...(toast ? line.matchAll(option) : [])]
+        if (found.some((m) => words(m[2])) || (toast && glued.test(line))) bare.push(`${path.relative(root, full)}:${i + 1}`)
+      })
+    }
+    expect(bare).toEqual([])
   })
 })

@@ -15,6 +15,7 @@ import { timelineCues } from '@/editor/subtitles'
 import { graphicsReport } from '@/engine/graphics-report'
 import { canAlpha, CODECS_FOR, codecSupport, ExportCancelled, exportRunning, FORMAT_INFO, runExport, type ExportFormat, type ExportSettings, type ExportVideoCodec } from '@/engine/export'
 import { queueExport } from '@/engine/render-queue'
+import { tt } from '@/lib/i18n'
 import { desktop } from '@/lib/platform'
 import { saveProject, saveProjectAs, useSession } from '@/project/session'
 import { bool, clampNum, int, list, num, number, obj, oneOf, seconds, str, text, toFrame, trackById, type AgentTool } from './kit'
@@ -307,7 +308,9 @@ export const CONTROL_TOOLS: AgentTool[] = [
       if (!handle) return { exported: false, reason: 'The user closed the Save dialog without choosing a file.' }
       const controller = new AbortController()
       ctx?.signal?.addEventListener('abort', () => controller.abort(), { once: true })
-      const id = toast.loading('Exporting…', { description: 'Started by the Copilot', action: { label: 'Cancel', onClick: () => controller.abort() }, duration: Infinity })
+      // What the user reads is in their language; what goes back to the model (the results below) stays in English.
+      const said = { description: tt('Started by the Copilot'), action: { label: tt('Cancel'), onClick: () => controller.abort() }, duration: Infinity }
+      const id = toast.loading(tt('Exporting…'), said)
       const t0 = performance.now()
       try {
         const res = await runExport(
@@ -317,11 +320,11 @@ export const CONTROL_TOOLS: AgentTool[] = [
           (prog) => {
             if (prog.phase === 'rendering' && prog.total) ctx?.progress?.(`${Math.round((prog.done / prog.total) * 100)}% — frame ${prog.done} of ${prog.total}`)
             else if (prog.message) ctx?.progress?.(prog.message)
-            if (prog.phase === 'rendering' && prog.total) toast.loading(`Exporting… ${Math.round((prog.done / prog.total) * 100)}%`, { id, description: 'Started by the Copilot', action: { label: 'Cancel', onClick: () => controller.abort() }, duration: Infinity })
+            if (prog.phase === 'rendering' && prog.total) toast.loading(tt('Exporting… {0}%', Math.round((prog.done / prog.total) * 100)), { id, ...said })
           },
           controller.signal,
         )
-        toast.success('Export finished', { id, description: res.path, action: { label: 'Show', onClick: () => void desktop?.files.reveal(res.path) }, duration: 8000 })
+        toast.success(tt('Export finished'), { id, description: res.path, action: { label: tt('Show'), onClick: () => void desktop?.files.reveal(res.path) }, duration: 8000 })
         return {
           exported: true,
           path: res.path,
@@ -339,7 +342,7 @@ export const CONTROL_TOOLS: AgentTool[] = [
           toast.dismiss(id)
           return { exported: false, reason: 'The user cancelled the export.' }
         }
-        toast.error('Export failed', { id, description: err instanceof Error ? err.message : String(err), duration: 8000 })
+        toast.error(tt('Export failed'), { id, description: err instanceof Error ? err.message : String(err), duration: 8000 })
         throw err
       }
     },

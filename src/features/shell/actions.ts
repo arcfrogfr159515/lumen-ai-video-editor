@@ -32,9 +32,10 @@ const ui = () => useUI.getState()
 
 /**
  * Runs a subject-matte job with a progress toast (the model's one-time
- * download included) and a Cancel button.
+ * download included) and a Cancel button. `failed` is what the toast says when the job doesn't work: a sentence
+ * of its own, since a language's "…ing" can't be turned into its "couldn't" by swapping an ending.
  */
-async function withMatteProgress<T>(title: string, run: (opts: { onProgress: (p: MatteProgress) => void; signal: AbortSignal }) => Promise<T>) {
+async function withMatteProgress<T>(title: string, failed: string, run: (opts: { onProgress: (p: MatteProgress) => void; signal: AbortSignal }) => Promise<T>) {
   const ctl = new AbortController()
   const id = toast.loading(title, { action: { label: tt('Cancel'), onClick: () => ctl.abort() }, duration: Infinity })
   const show = (description: string) => toast.loading(title, { id, description, action: { label: tt('Cancel'), onClick: () => ctl.abort() }, duration: Infinity })
@@ -51,7 +52,7 @@ async function withMatteProgress<T>(title: string, run: (opts: { onProgress: (p:
     return result
   } catch (err) {
     if (ctl.signal.aborted || (err instanceof Error && err.message === 'Cancelled')) toast(tt('Stopped'), { id, description: undefined, action: undefined, duration: 2000 })
-    else toast.error(title.replace(/…$/, ' failed'), { id, description: err instanceof Error ? err.message : String(err), action: undefined, duration: 8000 })
+    else toast.error(failed, { id, description: err instanceof Error ? err.message : String(err), action: undefined, duration: 8000 })
     return null
   } finally {
     off()
@@ -334,7 +335,7 @@ export const actions = {
         // Found cuts are kept on the media either way; this makes sure they are on show.
         useTimelineView.getState().set({ cutGuides: true })
         toast.success(tt('Found {0}', plural(r.cuts.length, 'scene cut')), { description: tt('Shown as guides in the clip. Trims, moves and the blade snap to them.') })
-      } else toast.success(`${action === 'split' ? 'Split at' : 'Marked'} ${plural(r.cuts.length, 'scene cut')}`)
+      } else toast.success(action === 'split' ? tt('Split at {0}', plural(r.cuts.length, 'scene cut')) : tt('Marked {0}', plural(r.cuts.length, 'scene cut')))
     } catch (err) {
       if (!(err instanceof AnalysisCancelled)) toast.error(tt('Scene detection failed'), { description: err instanceof Error ? err.message : String(err) })
     }
@@ -345,7 +346,7 @@ export const actions = {
     const clip = clipId ? getProject().clips[clipId] : targetClips(['video']).find((c) => c.assetId)
     if (!clip) return void toast(tt('Select a video clip first'))
     try {
-      const r = await withProgress('Stabilizing', (onProgress, signal) => stabilizeClip(clip.id, {}, onProgress, signal))
+      const r = await withProgress(tt('Stabilizing'), (onProgress, signal) => stabilizeClip(clip.id, {}, onProgress, signal))
       toast.success(tt('Stabilized'), { description: r.zoom > 1.001 ? tt('Zoomed in {0}% to hide the moving edges.', Math.round((r.zoom - 1) * 100)) : undefined })
     } catch (err) {
       if (!(err instanceof AnalysisCancelled)) toast.error(tt('Couldn’t stabilize'), { description: err instanceof Error ? err.message : String(err) })
@@ -441,12 +442,12 @@ export const actions = {
   async textBehindSubject(clipId: string, subject: Subject = 'person') {
     const sel = ui().selection.map((id) => getProject().clips[id]).filter(Boolean)
     const title = sel.find((c) => c.kind === 'text')
-    await withMatteProgress(tt('Putting the text behind the subject…'), (o) => textBehindSubject(clipId, { ...o, subject, titleId: title?.id }))
+    await withMatteProgress(tt('Putting the text behind the subject…'), tt('Couldn’t put the text behind the subject'), (o) => textBehindSubject(clipId, { ...o, subject, titleId: title?.id }))
   },
 
   /** Cuts a clip down to its subject, or (invert) removes the subject. */
   async cutOutSubject(clipId: string, subject: Subject = 'person', invert = false) {
-    await withMatteProgress(invert ? tt('Removing the subject…') : tt('Cutting out the subject…'), (o) => cutOutSubject(clipId, { ...o, subject, invert }))
+    await withMatteProgress(invert ? tt('Removing the subject…') : tt('Cutting out the subject…'), invert ? tt('Couldn’t remove the subject') : tt('Couldn’t cut out the subject'), (o) => cutOutSubject(clipId, { ...o, subject, invert }))
   },
 
   /** Finds a music clip's beat (tempo, beats and downbeats); its waveform then shows them and cuts snap to them. */

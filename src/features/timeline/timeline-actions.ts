@@ -156,7 +156,7 @@ export const timelineActions = {
     const first = r.failed[0]
     if (!r.done) toast.error(tt('“{0}” couldn’t be done to {1}', macro.name, ids.length === 1 ? tt('that clip') : tt('any of those clips')), { description: first ? `“${first.name}”: ${first.why}.` : undefined, duration: 7000 })
     else
-      toast.success(`“${macro.name}” on ${plural(r.done, 'clip')}`, {
+      toast.success(tt('“{0}” on {1}', macro.name, plural(r.done, 'clip')), {
         description: first ? tt('{0} left as {1} — “{2}”: {3}.', plural(r.failed.length, 'clip'), r.failed.length === 1 ? tt('it was') : tt('they were'), first.name, first.why) : tt('One undo step.'),
         duration: first ? 7000 : 2500,
       })

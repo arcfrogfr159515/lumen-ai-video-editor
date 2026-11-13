@@ -11,6 +11,8 @@ import './styles/index.css'
 
 // Before anything is drawn.
 theme.applyTheme()
+// The page says which language it is in: a screen reader picks its voice by it, and the browser its Chinese font.
+document.documentElement.lang = language
 installDecoderRepair()
 // The system's own dialogs (Open, Save, "Save changes?") are shown by the main process: in this window's language.
 desktop?.system.setLanguage?.(language)
