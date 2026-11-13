@@ -42,7 +42,17 @@ vi.mock('@/lib/platform', () => ({
   },
 }))
 
-vi.mock('sonner', () => ({ toast: Object.assign(() => {}, { error: () => {}, success: () => {}, info: () => {}, warning: () => {} }) }))
+const warnings: { title: string; description?: string }[] = []
+const dismissed: unknown[] = []
+vi.mock('sonner', () => ({
+  toast: Object.assign(() => {}, {
+    error: () => {},
+    success: () => {},
+    info: () => {},
+    warning: (title: string, opts?: { description?: string }) => void warnings.push({ title, description: opts?.description }),
+    dismiss: (id: unknown) => void dismissed.push(id),
+  }),
+}))
 // The transport runs on animation frames, which only a browser has.
 vi.mock('@/editor/playback', () => ({ playback: { pause: () => {}, seek: () => {} } }))
 
@@ -58,6 +68,7 @@ const tick = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms))
 beforeEach(() => {
   disk.clear()
   calls.cleared = calls.autosaved = calls.closed = 0
+  warnings.length = dismissed.length = 0
   dialog = null
   saveTakes = 20
   useEditor.getState().loadProject(createEmptyProject('Film'))
@@ -162,5 +173,51 @@ describe('saving', () => {
     expect(isDirty()).toBe(true)
     expect(calls.cleared).toBe(0)
     desktop!.project.save = save
+  })
+})
+
+describe('the recovery copy', () => {
+  it('is said to be missing when it can’t be written — once, and again for what is edited after a save', async () => {
+    const interval = vi.spyOn(globalThis, 'setInterval').mockReturnValue(0 as never)
+    await startSession()
+    interval.mockRestore()
+    useSession.setState({ path: FILE, savedVersion: useEditor.getState().version, home: false })
+    const { desktop } = await import('@/lib/platform')
+    const autosave = desktop!.project.autosave
+    const full = () => Promise.reject(new Error("Error invoking remote method 'lumen:project:autosave': Error: ENOSPC: no space left on device, write"))
+    desktop!.project.autosave = (snap) => (snap === null ? autosave(snap) : full())
+    const quiet = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.useFakeTimers()
+    try {
+      // Two seconds after an edit the copy is written. It can't be: that is said, with the reason as the disk gave it.
+      mark('one')
+      await vi.advanceTimersByTimeAsync(2100)
+      expect(warnings).toHaveLength(1)
+      expect(warnings[0].description).toContain('(ENOSPC: no space left on device, write)')
+      expect(quiet).toHaveBeenCalledTimes(1)
+      // The next edit fails the same way, and isn't said again.
+      mark('two')
+      await vi.advanceTimersByTimeAsync(2100)
+      expect(warnings).toHaveLength(1)
+      expect(quiet).toHaveBeenCalledTimes(2)
+      // Saved, the file holds it all. What is edited from here on is unprotected again — and said again.
+      const saving = saveProject()
+      await vi.advanceTimersByTimeAsync(50)
+      expect(await saving).toBe(true)
+      mark('three')
+      await vi.advanceTimersByTimeAsync(2100)
+      expect(warnings).toHaveLength(2)
+      // The disk has room again: the copy is written and the warning is taken back.
+      desktop!.project.autosave = autosave
+      mark('four')
+      await vi.advanceTimersByTimeAsync(2100)
+      expect(calls.autosaved).toBe(1)
+      expect(dismissed).toHaveLength(1)
+      expect(warnings).toHaveLength(2)
+    } finally {
+      vi.useRealTimers()
+      quiet.mockRestore()
+      desktop!.project.autosave = autosave
+    }
   })
 })

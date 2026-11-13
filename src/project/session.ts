@@ -67,7 +67,9 @@ function snapshot() {
 function markSaved(path: string | null, version: number) {
   useSession.setState({ path, savedVersion: version })
   syncWindow()
-  if (useEditor.getState().version === version) void desktop?.project.autosave(null)
+  // A copy that couldn't be written is said again for what is edited from here on.
+  unprotected = false
+  if (useEditor.getState().version === version) dropRecovery()
   else scheduleAutosave()
 }
 
@@ -106,7 +108,7 @@ async function settleChanges(): Promise<boolean> {
 export async function newProject(settings: Partial<ProjectSettings>, name = 'Untitled') {
   if (!(await settleChanges())) return false
   load(createEmptyProject(name, settings), null)
-  void desktop?.project.autosave(null)
+  dropRecovery()
   return true
 }
 
@@ -288,12 +290,43 @@ function syncWindow() {
   desktop.project.setState(state)
 }
 
+/**
+ * The recovery copy couldn't be written (a full disk, a folder that can't be written to): what isn't saved is
+ * no longer safe from a crash, and that is the one thing the copy is for. Said once, not every two seconds.
+ */
+let unprotected = false
+const RECOVERY_TOAST = 'lumen-recovery-copy'
+
+async function writeRecovery() {
+  if (!desktop) return
+  try {
+    await desktop.project.autosave({ text: serialize(getProject()), path: useSession.getState().path, name: getProject().name })
+    if (unprotected) toast.dismiss(RECOVERY_TOAST)
+    unprotected = false
+  } catch (err) {
+    console.warn('Couldn’t write the recovery copy', err)
+    if (unprotected) return
+    unprotected = true
+    toast.warning(tt('Lumen can’t keep a recovery copy'), {
+      id: RECOVERY_TOAST,
+      description: tt('What you haven’t saved would be lost if Lumen closed unexpectedly — save the project. ({0})', errorText(err)),
+      action: { label: tt('Save'), onClick: () => void saveProject() },
+      duration: 30000,
+    })
+  }
+}
+
+/** The file holds everything: the recovery copy has nothing to add. One that can't be removed is only offered once more. */
+function dropRecovery() {
+  void desktop?.project.autosave(null).catch((err: unknown) => console.warn('Couldn’t remove the recovery copy', err))
+}
+
 let autosaveTimer: ReturnType<typeof setTimeout> | undefined
 function scheduleAutosave() {
   clearTimeout(autosaveTimer)
   autosaveTimer = setTimeout(() => {
-    if (!desktop || !isDirty() || useSession.getState().home) return
-    void desktop.project.autosave({ text: serialize(getProject()), path: useSession.getState().path, name: getProject().name })
+    if (!isDirty() || useSession.getState().home) return
+    void writeRecovery()
   }, 2000)
 }
 
@@ -303,7 +336,8 @@ let lastSnapshot = Date.now()
 function maybeSnapshot() {
   if (!desktop || !isDirty() || useSession.getState().home || Date.now() - lastSnapshot < SNAPSHOT_EVERY) return
   lastSnapshot = Date.now()
-  void desktop.project.snapshot({ text: serialize(getProject()), path: useSession.getState().path, kind: 'auto' }).catch(() => {})
+  // A version that couldn't be stored takes nothing away from the project; it is in the log.
+  void desktop.project.snapshot({ text: serialize(getProject()), path: useSession.getState().path, kind: 'auto' }).catch((err: unknown) => console.warn('Couldn’t store a version', err))
 }
 
 let started = false

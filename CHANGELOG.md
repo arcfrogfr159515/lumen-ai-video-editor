@@ -23,6 +23,7 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 
 ### Fixed
 
+- **A recovery copy that couldn't be written was never mentioned.** With a full disk, or a data folder that can't be written to, the copy made two seconds after each edit failed without a word, and what looked protected from a crash wasn't. Lumen now says so — once, with the reason and a Save button, and again for what is edited after a save — and takes the message back when a copy is written again. A version that couldn't be stored is in the log.
 - **When the editor's process crashed, the window stayed blank** — nothing said so, and nothing brought it back. Lumen now says the editor stopped and offers to reopen it, where the unsaved changes are offered back from the recovery copy, or to close Lumen and keep that copy for the next start.
 - **An error nothing caught in Lumen's own process showed a stack trace in a system box**, each time it happened. The box now says what happened in a sentence, in the window's language, names the log file, and comes up at most once a minute.
 - **A build of this fork updated itself from the project it was forked from**, so the next release there would have replaced it — and what this fork adds with it — the next time it was closed. Builds now update from this repository's Releases page (`build.publish` in `package.json`), the About dialog links to that same page, and the release workflow refuses to publish when the two differ.
