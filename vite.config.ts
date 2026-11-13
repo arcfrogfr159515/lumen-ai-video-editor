@@ -34,13 +34,16 @@ function contentSecurityPolicy(): Plugin {
 
 // `vite`            → Electron app with HMR
 // `vite --mode web` → the same UI in a plain browser tab (fast iteration, future web build)
-const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string; build: { publish: { owner: string; repo: string }[] } }
+// The repository electron-builder writes into the installer as its update feed. The editor links to the same
+// one, so a fork that changes `build.publish` changes both.
+const [feed] = pkg.build.publish
 
 export default defineConfig(({ mode }) => {
   const web = mode === 'web'
   return {
     base: './',
-    define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+    define: { __APP_VERSION__: JSON.stringify(pkg.version), __RELEASES_URL__: JSON.stringify(`https://github.com/${feed.owner}/${feed.repo}/releases`) },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

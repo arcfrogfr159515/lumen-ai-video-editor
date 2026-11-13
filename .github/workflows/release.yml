@@ -28,6 +28,14 @@ jobs:
           $version = node -p "require('./package.json').version"
           if ("v$version" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} doesn't match package.json version $version" }
 
+      # Installed copies update from the repository named in build.publish. A fork that still names the
+      # project it was forked from would publish installers that replace themselves with that project's releases.
+      - name: Check the update feed is this repository
+        shell: pwsh
+        run: |
+          $feed = node -p "const [p] = require('./package.json').build.publish; p.owner + '/' + p.repo"
+          if ($feed -ne "${{ github.repository }}") { throw "build.publish in package.json names $feed, but this release is published on ${{ github.repository }}" }
+
       - run: npm ci
       - run: npm test
       # Typecheck, build, fetch the Electron binary (npm ci doesn't) and make the installer.

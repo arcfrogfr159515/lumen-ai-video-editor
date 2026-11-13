@@ -67,4 +67,6 @@ Tests run in plain Node: media engines that need a GPU or a canvas are faked per
 2. Move the `Unreleased` notes in [`CHANGELOG.md`](CHANGELOG.md) under the new version, and optionally write `docs/releases/vX.Y.Z.md` for the Releases page.
 3. Commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`. The [Release workflow](.github/workflows/release.yml) builds the installer and publishes it with checksums.
 
+Installed copies update from the repository named in `build.publish` in `package.json`, and the About dialog links to its Releases page. A fork that publishes its own builds names itself there — otherwise its installers would replace themselves with the releases of the project it was forked from. The Release workflow refuses to publish when the two differ.
+
 By contributing you agree that your work is released under the project's [MIT license](LICENSE).

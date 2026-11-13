@@ -9,7 +9,8 @@ import type { UpdateState } from '@shared/app'
 import { APP_VERSION, desktop } from '@/lib/platform'
 import { tt } from '@/lib/i18n'
 
-export const RELEASES_URL = 'https://github.com/Mas-inx/lumen-ai-video-editor/releases'
+/** The Releases page this build updates from — the same repository the installer's update feed names. */
+export const RELEASES_URL: string = typeof __RELEASES_URL__ === 'string' ? __RELEASES_URL__ : ''
 export const releaseUrl = (version: string) => `${RELEASES_URL}/tag/v${version}`
 
 export const useUpdates = create<UpdateState>(() => ({ status: desktop ? 'idle' : 'unsupported', current: APP_VERSION }))

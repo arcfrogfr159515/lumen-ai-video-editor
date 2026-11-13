@@ -157,7 +157,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "Mas-inx",
+        "owner": "arcfrogfr159515",
         "repo": "lumen-ai-video-editor",
         "releaseType": "release"
       }

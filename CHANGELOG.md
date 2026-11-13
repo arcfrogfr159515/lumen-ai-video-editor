@@ -22,6 +22,7 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 
 ### Fixed
 
+- **A build of this fork updated itself from the project it was forked from**, so the next release there would have replaced it — and what this fork adds with it — the next time it was closed. Builds now update from this repository's Releases page (`build.publish` in `package.json`), the About dialog links to that same page, and the release workflow refuses to publish when the two differ.
 - **Scene detection found next to nothing in footage cut with transitions.** A shot change counted only as one frame jumping well clear of the two either side of it, so a cut reached through a zoom blur, a wipe or a dissolve — most of the cuts in short-form video — went by unseen. Shot changes are now also read from how the picture's colours change over a little under half a second, which finds those; a one-frame flash, which jumps like a cut, is told from one by the picture coming back; and no cut is made closer to either end of the clip than the shortest shot, so the last frame is no longer split off on its own.
 
 ## [1.7.0] — 2026-11-11
