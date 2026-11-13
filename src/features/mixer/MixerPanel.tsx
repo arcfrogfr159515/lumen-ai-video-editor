@@ -123,7 +123,7 @@ function Strip({
           <span
             key={f.label}
             className={cn(
-              'grid h-4 flex-1 place-items-center rounded-[4px] text-2xs/[inherit] font-bold tracking-wide',
+              'grid h-4 flex-1 place-items-center rounded-sm text-2xs/[inherit] font-bold tracking-wide',
               f.on ? 'bg-accent/20 text-accent-2' : f.present ? 'bg-ink/[0.06] text-fg-4 line-through' : 'bg-ink/[0.035] text-fg-4/60',
             )}
           >
@@ -222,7 +222,7 @@ function Fader({ value, name, onChange }: { value: number; name: string; onChang
       ))}
       <span
         data-thumb
-        className="absolute left-1/2 h-3 w-5 -translate-x-1/2 translate-y-1/2 cursor-grab rounded-[4px] bg-[linear-gradient(180deg,#f4f4f5,#b9b9bf)] shadow-[0_2px_6px_rgb(from_var(--color-shade)_r_g_b/0.6),inset_0_-1px_0_rgb(from_var(--color-shade)_r_g_b/0.25)] active:cursor-grabbing"
+        className="absolute left-1/2 h-3 w-5 -translate-x-1/2 translate-y-1/2 cursor-grab rounded-sm bg-[linear-gradient(180deg,#f4f4f5,#b9b9bf)] shadow-[0_2px_6px_rgb(from_var(--color-shade)_r_g_b/0.6),inset_0_-1px_0_rgb(from_var(--color-shade)_r_g_b/0.25)] active:cursor-grabbing"
         style={{ bottom: `calc(${faderPos(value) * 100}% * 0.94 + 3%)` }}
       >
         <span className="pointer-events-none absolute top-1/2 right-1 left-1 h-px -translate-y-1/2 bg-shade/50" />
@@ -274,11 +274,11 @@ function Meter({ target }: { target: Target }) {
         title={tt('Clipped — click to reset')}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => delete e.currentTarget.dataset.on}
-        className="hit-24 h-1.5 w-full rounded-[2px] bg-ink/[0.07] data-[on=true]:bg-danger data-[on=true]:shadow-[0_0_6px_var(--color-danger)]"
+        className="hit-24 h-1.5 w-full rounded-xs bg-ink/[0.07] data-[on=true]:bg-danger data-[on=true]:shadow-[0_0_6px_var(--color-danger)]"
       />
       <div className="flex min-h-0 flex-1 gap-[3px]">
         {[0, 1].map((i) => (
-          <div key={i} className="relative w-[7px] overflow-hidden rounded-[2px] bg-shade/55 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
+          <div key={i} className="relative w-[7px] overflow-hidden rounded-xs bg-shade/55 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]">
             <div ref={i ? barR : barL} className="absolute inset-0 bg-[linear-gradient(to_top,#2fcf7e_0%,#2fcf7e_62%,#e6e238_76%,#f5a524_88%,#ef4444_96%)]" style={{ clipPath: 'inset(100% 0 0 0)' }} />
             <div ref={i ? holdR : holdL} className="absolute inset-x-0 h-[2px] bg-ink/85 opacity-0" />
           </div>

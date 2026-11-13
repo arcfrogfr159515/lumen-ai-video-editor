@@ -35,7 +35,7 @@ function PresetShape({ preset, active }: { preset: CanvasPreset; active: boolean
   return (
     <span className="grid size-10 shrink-0 place-items-center">
       <span
-        className={cn('rounded-[4px] transition-colors', active ? 'bg-accent/20 shadow-[inset_0_0_0_1.5px_var(--color-accent)]' : 'bg-ink/[0.04] shadow-[inset_0_0_0_1.5px_rgb(from_var(--color-ink)_r_g_b/0.25)]')}
+        className={cn('rounded-sm transition-colors', active ? 'bg-accent/20 shadow-[inset_0_0_0_1.5px_var(--color-accent)]' : 'bg-ink/[0.04] shadow-[inset_0_0_0_1.5px_rgb(from_var(--color-ink)_r_g_b/0.25)]')}
         style={{ width: w, height: h }}
       />
     </span>

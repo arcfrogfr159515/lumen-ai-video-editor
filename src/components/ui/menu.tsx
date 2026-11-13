@@ -9,7 +9,7 @@ const contentClass =
   'popover z-[100] min-w-[220px] overflow-hidden p-1 data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out'
 
 const itemClass =
-  'group/item relative flex h-8 cursor-default items-center gap-2.5 rounded-[7px] px-2 text-sm text-fg-2 outline-none select-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-40 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3 data-[highlighted]:[&_svg]:text-fg-2'
+  'group/item relative flex h-8 cursor-default items-center gap-2.5 rounded-control-sm px-2 text-sm text-fg-2 outline-none select-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-40 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3 data-[highlighted]:[&_svg]:text-fg-2'
 
 /**
  * A long context menu (a clip's has some thirty rows) is drawn dense: lower rows, names without icons, shortcuts
@@ -18,7 +18,7 @@ const itemClass =
 const Dense = createContext(false)
 const denseContentClass = 'min-w-[244px] overflow-x-hidden overflow-y-auto max-h-(--radix-context-menu-content-available-height)'
 const denseSubContentClass = 'min-w-[128px] overflow-x-hidden overflow-y-auto max-h-(--radix-context-menu-content-available-height)'
-const denseItemClass = 'h-7 gap-2 rounded-[6px] pr-2 pl-2.5'
+const denseItemClass = 'h-7 gap-2 rounded-md pr-2 pl-2.5'
 
 interface ItemProps {
   icon?: ReactNode

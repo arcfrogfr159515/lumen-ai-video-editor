@@ -64,7 +64,7 @@ function TimelineRow({ seq, open }: { seq: Sequence; open: boolean }) {
           onDragStart={onDragStart}
           onDragEnd={dnd.end}
           onDoubleClick={() => openTimeline(seq.id)}
-          className={cn('group/tl flex h-11 items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-ink/[0.04]', nestable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}
+          className={cn('group/tl flex h-11 items-center gap-2.5 rounded-card px-1.5 transition-colors hover:bg-ink/[0.04]', nestable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}
           title={open ? tt('The timeline you’re editing') : tt('Double-click to open — drag onto the timeline to nest it')}
         >
           <span className={cn('grid size-8 shrink-0 place-items-center rounded-lg', open ? 'bg-accent/15 text-accent-2' : 'bg-clip-nest/15 text-clip-nest')}>

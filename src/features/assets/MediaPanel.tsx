@@ -140,7 +140,7 @@ export function MediaPanel() {
         {assets.length > 0 && !visible.length && <p className="mt-10 text-center text-sm text-fg-4">{ttx('No media matches “{0}”.', query)}</p>}
         {marquee.box && (
           <div
-            className="pointer-events-none absolute z-20 rounded-[3px] border border-accent/70 bg-accent/10"
+            className="pointer-events-none absolute z-20 rounded-handle border border-accent/70 bg-accent/10"
             style={{ left: marquee.box.x, top: marquee.box.y, width: marquee.box.w, height: marquee.box.h }}
           />
         )}
@@ -490,7 +490,7 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
           onPointerMove={onMove}
           onPointerLeave={() => setSkim(null)}
           className={cn(
-            'relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-[box-shadow,transform] duration-200 group-hover/card:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
+            'relative aspect-video overflow-hidden rounded-card bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-[box-shadow,transform] duration-200 group-hover/card:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
             selected && 'shadow-[0_0_0_2px_var(--color-accent)] group-hover/card:shadow-[0_0_0_2px_var(--color-accent),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
           )}
         >
@@ -611,7 +611,7 @@ function AudioRow({ asset, used, order }: { asset: Asset; used: boolean; order: 
         onDoubleClick={add}
         aria-selected={selected}
         className={cn(
-          'group/row flex h-12 cursor-grab items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-ink/[0.04] active:cursor-grabbing',
+          'group/row flex h-12 cursor-grab items-center gap-2.5 rounded-card px-1.5 transition-colors hover:bg-ink/[0.04] active:cursor-grabbing',
           selected && 'bg-accent/[0.08] shadow-[inset_0_0_0_1px_rgb(from_var(--color-accent)_r_g_b/0.45)] hover:bg-accent/[0.11]',
         )}
       >

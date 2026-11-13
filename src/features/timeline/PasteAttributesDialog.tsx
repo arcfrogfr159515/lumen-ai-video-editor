@@ -91,7 +91,7 @@ export function PasteAttributesDialog() {
               onClick={() => toggle(a)}
               className={cn('flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors', on ? 'bg-accent/10' : 'hover:bg-ink/[0.04]')}
             >
-              <span className={cn('grid size-4 shrink-0 place-items-center rounded-[5px] ring-1 ring-inset', on ? 'bg-accent text-accent-fg ring-accent' : 'ring-line-2')}>
+              <span className={cn('grid size-4 shrink-0 place-items-center rounded-chip ring-1 ring-inset', on ? 'bg-accent text-accent-fg ring-accent' : 'ring-line-2')}>
                 {on && <Check className="size-3" strokeWidth={3} />}
               </span>
               <span className="min-w-0 flex-1">

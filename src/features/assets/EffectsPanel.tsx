@@ -25,7 +25,7 @@ const CHECKER = 'repeating-conic-gradient(#3a3a40 0% 25%, #242428 0% 50%) 50% / 
 export function EffectPreview({ kind, src, className }: { kind: EffectKind; src: string; className?: string }) {
   if (kind === 'chromaKey' || kind === 'lumaKey')
     return (
-      <div className={cn('relative aspect-video overflow-hidden rounded-[10px]', className)} style={{ background: CHECKER }}>
+      <div className={cn('relative aspect-video overflow-hidden rounded-card', className)} style={{ background: CHECKER }}>
         <img
           src={src}
           alt=""
@@ -40,7 +40,7 @@ export function EffectPreview({ kind, src, className }: { kind: EffectKind; src:
       </div>
     )
   return (
-    <div className={cn('relative aspect-video overflow-hidden rounded-[10px] bg-shade', className)}>
+    <div className={cn('relative aspect-video overflow-hidden rounded-card bg-shade', className)}>
       <img
         src={src}
         alt=""
@@ -86,7 +86,7 @@ export function EffectsPanel() {
       className="group/fx text-left"
     >
       {fx.is3d ? (
-        <div className="relative aspect-video overflow-hidden rounded-[10px] bg-[#0c0d0b] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/fx:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]">
+        <div className="relative aspect-video overflow-hidden rounded-card bg-[#0c0d0b] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/fx:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]">
           <Preview3D key={art.key} active={hovered === fx.kind} rest={1.2} draw={(canvas, t) => drawEffectPreview(canvas, fx.kind, t)} />
           <span className="absolute top-1.5 left-1.5 rounded-md bg-shade/55 px-1.5 py-0.5 text-2xs/[inherit] font-bold tracking-wide text-on-media backdrop-blur-sm">3D</span>
         </div>

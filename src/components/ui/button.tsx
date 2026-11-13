@@ -23,7 +23,7 @@ const sizes: Record<Size, string> = {
   xs: 'h-6 px-2 text-xs [&_svg]:size-3.5',
   sm: 'h-7 px-2.5 text-sm [&_svg]:size-3.5',
   md: 'h-8 px-3 text-sm [&_svg]:size-4',
-  lg: 'h-10 px-4 text-md rounded-[10px] [&_svg]:size-4',
+  lg: 'h-10 px-4 text-md rounded-card [&_svg]:size-4',
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -42,9 +42,9 @@ type IconSize = 'xs' | 'sm' | 'md' | 'lg'
 
 const iconSizes: Record<IconSize, string> = {
   xs: 'size-6 rounded-md [&_svg]:size-3.5',
-  sm: 'size-7 rounded-[7px] [&_svg]:size-4',
+  sm: 'size-7 rounded-control-sm [&_svg]:size-4',
   md: 'size-8 [&_svg]:size-[17px]',
-  lg: 'size-9 rounded-[10px] [&_svg]:size-[18px]',
+  lg: 'size-9 rounded-card [&_svg]:size-[18px]',
 }
 
 export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

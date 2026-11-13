@@ -41,6 +41,9 @@
   --text-xl--line-height: 28px;
   --text-2xl: 26px;
   --text-2xl--line-height: 32px;
+  /* The one number that is read from across the room: an export's percentage. */
+  --text-3xl: 30px;
+  --text-3xl--line-height: 36px;
 
   /* What is drawn over the surfaces — hairlines, the wash of a hovered or selected control, the brightest
      controls themselves — is ink at some strength, and what darkens is shade. Written this way (never as white or
@@ -99,9 +102,19 @@
   --spacing-rail: 62px;
   --spacing-rail-item: 52px;
 
+  /* Corners, from the panel down to a drag handle: with Tailwind's own xs (2), sm (4), md (6), lg (8), xl (12) and
+     2xl (16), the scale the interface is drawn on. A corner is given by its name, not as a number. */
   --radius-panel: 14px;
   --radius-card: 10px;
+  /* A track that holds controls: a 6 px thumb and the 3 px around it. */
+  --radius-group: 9px;
   --radius-control: 8px;
+  /* A 28 px control, a menu row, a clip. */
+  --radius-control-sm: 7px;
+  /* A checkbox, a key cap. */
+  --radius-chip: 5px;
+  /* A drag handle, a marquee, a swatch. */
+  --radius-handle: 3px;
 
   --shadow-panel:
     0 0 0 1px rgb(from var(--color-ink) r g b / 0.045), inset 0 1px 0 0 rgb(from var(--color-ink) r g b / 0.035),

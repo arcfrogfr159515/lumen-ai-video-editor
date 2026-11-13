@@ -248,7 +248,7 @@ function Word({ word, selected, matched }: { word: ScriptWord; selected: boolean
       <span
         data-word={word.index}
         className={cn(
-          'cursor-pointer rounded-[4px] px-[1.5px] py-[1px] transition-colors hover:bg-ink/[0.08] data-[now]:text-fg data-[now]:underline data-[now]:decoration-accent data-[now]:decoration-2 data-[now]:underline-offset-4',
+          'cursor-pointer rounded-sm px-[1.5px] py-[1px] transition-colors hover:bg-ink/[0.08] data-[now]:text-fg data-[now]:underline data-[now]:decoration-accent data-[now]:decoration-2 data-[now]:underline-offset-4',
           matched && 'bg-snap/25 text-fg',
           selected && 'bg-accent/30 text-fg',
         )}

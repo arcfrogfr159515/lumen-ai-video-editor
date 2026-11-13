@@ -54,7 +54,7 @@ export function TrackLane({ track, width }: { track: Track; width: number }) {
       {track.kind === 'audio' && !track.locked && <CrossfadeHandles trackId={track.id} />}
       {ghost && (
         <div
-          className="pointer-events-none absolute top-[3px] bottom-[3px] z-20 flex items-center overflow-hidden rounded-[7px] border-2 border-dashed px-2 text-xs/[inherit] font-medium text-on-media/90"
+          className="pointer-events-none absolute top-[3px] bottom-[3px] z-20 flex items-center overflow-hidden rounded-control-sm border-2 border-dashed px-2 text-xs/[inherit] font-medium text-on-media/90"
           style={{
             left: (ghost.start / fps) * pps,
             width: Math.max(8, (ghost.duration / fps) * pps),
@@ -87,7 +87,7 @@ function TransitionDrop({ trackId }: { trackId: string }) {
   return (
     <>
       <div
-        className="pointer-events-none absolute top-[2px] bottom-[2px] z-[14] rounded-[6px] bg-accent/25 shadow-[inset_0_0_0_1.5px_var(--color-accent)]"
+        className="pointer-events-none absolute top-[2px] bottom-[2px] z-[14] rounded-md bg-accent/25 shadow-[inset_0_0_0_1.5px_var(--color-accent)]"
         style={{ left: ((clip.start - lead) / fps) * pps, width: Math.max(6, (duration / fps) * pps) }}
       />
       <div className="pointer-events-none absolute top-0 bottom-0 z-[15] w-px bg-accent" style={{ left: (clip.start / fps) * pps }} />
@@ -163,8 +163,8 @@ function TransitionBadge({ clipId }: { clipId: string }) {
       <div
         className={cn(
           'pointer-events-none absolute top-[3px] bottom-[3px] z-[11]',
-          align === 'after' && 'rounded-l-[7px] bg-[linear-gradient(90deg,rgb(from_var(--color-ink)_r_g_b/0.26),rgb(from_var(--color-ink)_r_g_b/0.04))]',
-          align === 'before' && 'rounded-r-[7px] bg-[linear-gradient(90deg,rgb(from_var(--color-ink)_r_g_b/0.04),rgb(from_var(--color-ink)_r_g_b/0.26))]',
+          align === 'after' && 'rounded-l-control-sm bg-[linear-gradient(90deg,rgb(from_var(--color-ink)_r_g_b/0.26),rgb(from_var(--color-ink)_r_g_b/0.04))]',
+          align === 'before' && 'rounded-r-control-sm bg-[linear-gradient(90deg,rgb(from_var(--color-ink)_r_g_b/0.04),rgb(from_var(--color-ink)_r_g_b/0.26))]',
           align === 'center' && 'bg-[linear-gradient(90deg,rgb(from_var(--color-ink)_r_g_b/0.04),rgb(from_var(--color-ink)_r_g_b/0.26),rgb(from_var(--color-ink)_r_g_b/0.04))]',
         )}
         style={{ left: from, width: w }}
@@ -174,7 +174,7 @@ function TransitionBadge({ clipId }: { clipId: string }) {
           <button
             type="button"
             title={`${name} · ${formatDuration(tr.duration, fps)}`}
-            className="absolute bottom-[6px] z-[12] grid size-4 -translate-x-1/2 place-items-center rounded-[5px] bg-surface-5 text-fg shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_4px_10px_rgb(from_var(--color-shade)_r_g_b/0.5)] outline-none transition-transform hover:scale-110 data-[state=open]:bg-accent data-[state=open]:text-accent-fg"
+            className="absolute bottom-[6px] z-[12] grid size-4 -translate-x-1/2 place-items-center rounded-chip bg-surface-5 text-fg shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_4px_10px_rgb(from_var(--color-shade)_r_g_b/0.5)] outline-none transition-transform hover:scale-110 data-[state=open]:bg-accent data-[state=open]:text-accent-fg"
             style={{ left: x }}
           >
             <Blend className="size-2.5" />

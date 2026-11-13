@@ -240,7 +240,7 @@ function ProjectInspector() {
                 )}
               >
                 <span className="grid h-7 place-items-center">
-                  <span className={cn('rounded-[3px] border-[1.5px]', active ? 'border-accent-2' : 'border-fg-4')} style={{ width: ratio >= 1 ? 26 : 26 * ratio, height: ratio >= 1 ? 26 / ratio : 26 }} />
+                  <span className={cn('rounded-handle border-[1.5px]', active ? 'border-accent-2' : 'border-fg-4')} style={{ width: ratio >= 1 ? 26 : 26 * ratio, height: ratio >= 1 ? 26 / ratio : 26 }} />
                 </span>
                 {c.id === '4k' ? '4K' : c.id}
               </button>

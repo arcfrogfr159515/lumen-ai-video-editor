@@ -171,7 +171,7 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
             <ContextMenu.Item
               key={k.id}
               onSelect={() => patch({ kind: k.id === 'plain' ? null : k.id })}
-              className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
+              className="flex h-8 items-center gap-2 rounded-control-sm px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
             >
               <svg width="9" height="12" viewBox="0 0 9 12" aria-hidden className="shrink-0">
                 <path d={MARKER_SHAPE[k.id]} fill={kind === k.id ? color : 'currentColor'} opacity={kind === k.id ? 1 : 0.5} />
@@ -183,21 +183,21 @@ function MarkerFlag({ marker, x }: { marker: Marker; x: number }) {
           {marker.kind === 'todo' && (
             <ContextMenu.Item
               onSelect={() => patch({ done: !marker.done })}
-              className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
+              className="flex h-8 items-center gap-2 rounded-control-sm px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
             >
               <Check className="size-4" /> {marker.done ? tt('Reopen') : tt('Tick off')}
             </ContextMenu.Item>
           )}
           <ContextMenu.Item
             onSelect={() => useUI.getState().setLeftTab('notes')}
-            className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
+            className="flex h-8 items-center gap-2 rounded-control-sm px-2 text-sm text-fg-2 outline-none data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-fg"
           >
             <PencilLine className="size-4" />{' '}{tt('Rename or add a note…')}
           </ContextMenu.Item>
           <div className="mx-1 my-1 h-px bg-line" />
           <ContextMenu.Item
             onSelect={() => dispatch('marker.remove', { id: marker.id })}
-            className="flex h-8 items-center gap-2 rounded-[7px] px-2 text-sm text-danger outline-none data-[highlighted]:bg-ink/[0.07]"
+            className="flex h-8 items-center gap-2 rounded-control-sm px-2 text-sm text-danger outline-none data-[highlighted]:bg-ink/[0.07]"
           >
             <Trash className="size-4" />{' '}{tt('Remove marker')}
           </ContextMenu.Item>
@@ -248,14 +248,14 @@ function RangeBand() {
   return (
     <div
       data-range
-      className="absolute top-0 z-[5] h-[11px] cursor-grab rounded-b-[3px] bg-accent/25 shadow-[inset_0_-1.5px_0_var(--color-accent)]"
+      className="absolute top-0 z-[5] h-[11px] cursor-grab rounded-b-handle bg-accent/25 shadow-[inset_0_-1.5px_0_var(--color-accent)]"
       style={{ left: x0, width: Math.max(2, x1 - x0) }}
       onPointerDown={(e) => drag(e, 'both')}
       title={tt('In {0} · Out {1} · {2}', formatTimecode(range.in, fps), formatTimecode(range.out, fps), formatDuration(range.out - range.in, fps))}
     >
       {x1 - x0 > 70 && <span className="pointer-events-none absolute inset-x-2 top-px truncate text-center font-mono text-2xs leading-[10px] font-semibold text-accent-2">{formatDuration(range.out - range.in, fps)}</span>}
-      <span onPointerDown={(e) => drag(e, 'in')} className="absolute -left-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-l-[2px] border-l-2 border-accent" aria-label={tt('In point')} />
-      <span onPointerDown={(e) => drag(e, 'out')} className="absolute -right-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-r-[2px] border-r-2 border-accent" aria-label={tt('Out point')} />
+      <span onPointerDown={(e) => drag(e, 'in')} className="absolute -left-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-l-xs border-l-2 border-accent" aria-label={tt('In point')} />
+      <span onPointerDown={(e) => drag(e, 'out')} className="absolute -right-[3px] top-0 h-[18px] w-[7px] cursor-ew-resize rounded-r-xs border-r-2 border-accent" aria-label={tt('Out point')} />
     </div>
   )
 }

@@ -217,7 +217,7 @@ function PlanStrip({ plan }: { plan: AutoDirectPlan }) {
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-fg-3">
         {plan.angles.map((name, i) => (
           <span key={name} className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-[3px]" style={{ background: ANGLE_COLORS[i % ANGLE_COLORS.length] }} />
+            <span className="size-2.5 rounded-handle" style={{ background: ANGLE_COLORS[i % ANGLE_COLORS.length] }} />
             {name} <span className="text-fg-4 tabular">{Math.round(plan.summary.share[i] * 100)}%</span>
           </span>
         ))}

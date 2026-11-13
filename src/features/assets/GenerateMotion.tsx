@@ -176,7 +176,7 @@ export function GenerateMotion() {
             <button key={t.id} type="button" onClick={() => setTemplate(t.id)} className="group/tpl text-left">
               <div
                 className={cn(
-                  'relative aspect-[16/9] overflow-hidden rounded-[10px] bg-[radial-gradient(120%_100%_at_30%_0%,#22261a,#0f100d)] transition-shadow',
+                  'relative aspect-[16/9] overflow-hidden rounded-card bg-[radial-gradient(120%_100%_at_30%_0%,#22261a,#0f100d)] transition-shadow',
                   template === t.id ? 'shadow-[0_0_0_2px_var(--color-accent)]' : 'shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] group-hover/tpl:shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16)]',
                 )}
               >

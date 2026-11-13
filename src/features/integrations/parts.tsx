@@ -46,7 +46,7 @@ export function IconTile({ children, tone, size = 'md' }: { children: ReactNode;
     higgsfield: 'bg-[linear-gradient(135deg,#d4ff3f,#44d17a)] text-ink-fg shadow-[0_8px_24px_-10px_rgb(120_220_90/0.7)]',
   }[tone]
   return (
-    <span className={cn('grid shrink-0 place-items-center text-on-media', size === 'md' ? 'size-11 rounded-[13px] [&_svg]:size-5' : 'size-7 rounded-[8px] [&_svg]:size-3.5', bg)}>
+    <span className={cn('grid shrink-0 place-items-center text-on-media', size === 'md' ? 'size-11 rounded-[13px] [&_svg]:size-5' : 'size-7 rounded-lg [&_svg]:size-3.5', bg)}>
       {children}
     </span>
   )
@@ -94,7 +94,7 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
             onDragEnd={dnd.end}
             className="group/gen min-w-0 cursor-grab active:cursor-grabbing"
           >
-            <div className="checker relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
+            <div className="checker relative aspect-video overflow-hidden rounded-card bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]">
               {thumb ? (
                 <img src={thumb} alt="" draggable={false} className="h-full w-full object-contain" />
               ) : (

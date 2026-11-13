@@ -69,7 +69,7 @@ function LookCard({ look, src, active }: { look: Look; src?: string; active: boo
     >
       <div
         className={cn(
-          'relative overflow-hidden rounded-[10px] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/look:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
+          'relative overflow-hidden rounded-card shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/look:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.18),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
           active && 'shadow-[0_0_0_2px_var(--color-accent),0_0_0_5px_rgb(from_var(--color-accent)_r_g_b/0.2)]',
         )}
       >

@@ -18,7 +18,7 @@ export function Select<T extends string>({ value, onChange, options, className, 
       <RadixSelect.Trigger
         aria-label={rest['aria-label']}
         className={cn(
-          'group/select inline-flex min-w-0 items-center justify-between gap-2 rounded-[7px] bg-ink/[0.045] px-2 text-sm text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] outline-none transition-colors hover:bg-ink/[0.07] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.08]',
+          'group/select inline-flex min-w-0 items-center justify-between gap-2 rounded-control-sm bg-ink/[0.045] px-2 text-sm text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] outline-none transition-colors hover:bg-ink/[0.07] focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.08]',
           size === 'sm' ? 'h-7' : 'h-8',
           className,
         )}

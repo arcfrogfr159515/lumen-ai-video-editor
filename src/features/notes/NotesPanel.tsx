@@ -188,7 +188,7 @@ function MarkerRow({ marker, fps }: { marker: Marker; fps: number }) {
             aria-checked={Boolean(marker.done)}
             aria-label={marker.done ? tt('Reopen') : tt('Tick off')}
             onClick={() => patch({ done: !marker.done })}
-            className={cn('grid size-4 shrink-0 place-items-center rounded-[5px] outline-none ring-1 ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-accent/60', marker.done ? 'bg-ok text-ink-fg ring-ok' : 'ring-warn/70 hover:bg-warn/15')}
+            className={cn('grid size-4 shrink-0 place-items-center rounded-chip outline-none ring-1 ring-inset transition-colors focus-visible:ring-2 focus-visible:ring-accent/60', marker.done ? 'bg-ok text-ink-fg ring-ok' : 'ring-warn/70 hover:bg-warn/15')}
           >
             {marker.done && <Check className="size-3" strokeWidth={3} />}
           </button>

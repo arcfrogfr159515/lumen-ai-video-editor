@@ -143,7 +143,7 @@ export function Generate3D() {
               type="button"
               onClick={() => setTemplate(id)}
               className={cn(
-                'flex flex-col items-center gap-1 rounded-[10px] py-2 text-2xs font-medium transition-colors [&_svg]:size-4',
+                'flex flex-col items-center gap-1 rounded-card py-2 text-2xs font-medium transition-colors [&_svg]:size-4',
                 template === id ? 'bg-ink/[0.08] text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)]' : 'text-fg-3 hover:bg-ink/[0.04] hover:text-fg-2',
               )}
             >

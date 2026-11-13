@@ -149,7 +149,7 @@ function RegionOverlay({ width, height, region, drawing, onChange }: { width: nu
     >
       {shown && shown.width > 0 && shown.height > 0 && (
         <div
-          className="pointer-events-none absolute rounded-[3px] shadow-[0_0_0_9999px_rgb(from_var(--color-shade)_r_g_b/0.58)] ring-2 ring-accent"
+          className="pointer-events-none absolute rounded-handle shadow-[0_0_0_9999px_rgb(from_var(--color-shade)_r_g_b/0.58)] ring-2 ring-accent"
           style={{ left: fit.left + shown.x * fit.k, top: fit.top + shown.y * fit.k, width: shown.width * fit.k, height: shown.height * fit.k }}
         >
           <span className="absolute -top-5 left-0 rounded bg-accent px-1 text-2xs font-semibold text-accent-fg tabular">

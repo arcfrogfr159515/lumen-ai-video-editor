@@ -100,7 +100,7 @@ function SfxRow({ sfx }: { sfx: SfxDef }) {
       onDragStart={(e) => dnd.start(e, { type: 'sfx', sfxId: sfx.id }, sfx.name)}
       onDragEnd={dnd.end}
       onDoubleClick={() => void add()}
-      className="group/row flex h-12 cursor-grab items-center gap-2.5 rounded-[10px] px-1.5 transition-colors hover:bg-ink/[0.04] active:cursor-grabbing"
+      className="group/row flex h-12 cursor-grab items-center gap-2.5 rounded-card px-1.5 transition-colors hover:bg-ink/[0.04] active:cursor-grabbing"
     >
       <button
         type="button"

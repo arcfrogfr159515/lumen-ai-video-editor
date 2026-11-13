@@ -492,7 +492,7 @@ function Overlays() {
       )}
       {marquee && (
         <div
-          className="pointer-events-none absolute z-[24] rounded-[3px] border border-accent/80 bg-accent/10"
+          className="pointer-events-none absolute z-[24] rounded-handle border border-accent/80 bg-accent/10"
           style={{ left: marquee.x0, top: marquee.y0, width: marquee.x1 - marquee.x0, height: marquee.y1 - marquee.y0 }}
         />
       )}
@@ -521,8 +521,8 @@ function TrimMarker() {
   const bracket = 'absolute top-[2px] bottom-[2px] w-[7px] border-y-[3px] border-accent'
   return (
     <div data-trim-cut={side} className="pointer-events-none absolute z-[23]" style={{ left: x, top, height }}>
-      {side !== 'in' && <span className={cn(bracket, 'right-0 rounded-r-[4px] border-r-[3px]')} />}
-      {side !== 'out' && <span className={cn(bracket, 'left-0 rounded-l-[4px] border-l-[3px]')} />}
+      {side !== 'in' && <span className={cn(bracket, 'right-0 rounded-r-sm border-r-[3px]')} />}
+      {side !== 'out' && <span className={cn(bracket, 'left-0 rounded-l-sm border-l-[3px]')} />}
       <span className="absolute -top-[18px] left-1/2 -translate-x-1/2 rounded-md bg-accent px-1.5 py-0.5 font-mono text-2xs leading-none font-semibold whitespace-nowrap text-accent-fg tabular">
         {moved === 0 ? '±0' : `${moved > 0 ? '+' : '−'}${Math.abs(moved)}f`}
       </span>

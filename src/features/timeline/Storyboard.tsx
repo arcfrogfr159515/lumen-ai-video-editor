@@ -322,13 +322,13 @@ function Card({
           onPointerDown={onPointerDown}
           onDoubleClick={onOpen}
           aria-selected={selected}
-          className={cn('group/card relative w-[168px] shrink-0 cursor-grab select-none rounded-[10px] transition-[opacity,transform] active:cursor-grabbing', lifted && 'scale-[0.97] opacity-40')}
+          className={cn('group/card relative w-[168px] shrink-0 cursor-grab select-none rounded-card transition-[opacity,transform] active:cursor-grabbing', lifted && 'scale-[0.97] opacity-40')}
         >
           {dropBefore && <span className="pointer-events-none absolute inset-y-0 -left-[6px] w-[3px] rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />}
           {dropAfter && <span className="pointer-events-none absolute inset-y-0 -right-[6px] w-[3px] rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />}
           <div
             className={cn(
-              'relative aspect-video overflow-hidden rounded-[10px] bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow',
+              'relative aspect-video overflow-hidden rounded-card bg-surface-3 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow',
               selected && 'shadow-[0_0_0_2px_var(--color-accent)]',
               playing && !selected && 'shadow-[0_0_0_1.5px_rgb(from_var(--color-ink)_r_g_b/0.6)]',
             )}

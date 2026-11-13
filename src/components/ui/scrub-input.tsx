@@ -99,7 +99,7 @@ export function ScrubInput({
       onPointerUp={onPointerUp}
       onKeyDown={onKeyDown}
       className={cn(
-        'group/scrub relative flex h-7 min-w-0 cursor-ew-resize items-center gap-1.5 rounded-[7px] bg-ink/[0.045] px-2 text-sm tabular text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] outline-none transition-colors hover:bg-ink/[0.07] focus-visible:ring-2 focus-visible:ring-accent/60',
+        'group/scrub relative flex h-7 min-w-0 cursor-ew-resize items-center gap-1.5 rounded-control-sm bg-ink/[0.045] px-2 text-sm tabular text-fg shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)] outline-none transition-colors hover:bg-ink/[0.07] focus-visible:ring-2 focus-visible:ring-accent/60',
         disabled && 'pointer-events-none opacity-40',
         editing && 'cursor-text bg-surface-4 ring-2 ring-accent/60',
         className,

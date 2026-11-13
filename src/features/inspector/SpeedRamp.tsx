@@ -190,7 +190,7 @@ export function SpeedRamp({ clip }: { clip: Clip }) {
             data-curve-handle={`${h.segment}:${h.which}`}
             onPointerDown={(e) => dragHandleOf(e, h.segment, h.which)}
             title={tt('Drag to shape the curve')}
-            className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-[3px] bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.6)] transition-transform hover:scale-125 active:cursor-grabbing"
+            className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-handle bg-ink shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.6)] transition-transform hover:scale-125 active:cursor-grabbing"
             style={{ left: pct(toX(h.pos.at), W), top: pct(toY(h.pos.speed), H) }}
           />
         ))}

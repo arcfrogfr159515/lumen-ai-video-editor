@@ -102,7 +102,7 @@ function CaptionCard({ spec, busy, disabled, onPick }: { spec: CaptionStyleSpec;
   const words = sample.text.split(' ')
   return (
     <button type="button" onClick={onPick} disabled={disabled} className="group/cap text-left disabled:opacity-50" title={spec.description}>
-      <div className="relative flex aspect-video items-end justify-center overflow-hidden rounded-[10px] bg-[linear-gradient(180deg,#2a2d22,#141512_75%)] px-2 pb-[16%] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/cap:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]">
+      <div className="relative flex aspect-video items-end justify-center overflow-hidden rounded-card bg-[linear-gradient(180deg,#2a2d22,#141512_75%)] px-2 pb-[16%] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/cap:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]">
         <span
           className={`max-w-full text-center leading-tight text-balance transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.2,0.9,0.25,1.25)] ${CAPTION_HOVER[spec.id]}`}
           style={captionPreview(spec)}
@@ -163,7 +163,7 @@ function TitleCard({ preset }: { preset: TitlePreset }) {
       className="group/title cursor-pointer"
     >
       {preset.is3d ? (
-        <div className="relative aspect-video overflow-hidden rounded-[10px] bg-[radial-gradient(ellipse_at_30%_20%,#23261b,#111210_70%)] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/title:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]">
+        <div className="relative aspect-video overflow-hidden rounded-card bg-[radial-gradient(ellipse_at_30%_20%,#23261b,#111210_70%)] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/title:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)]">
           <Preview3D active={hover} rest={0.6} draw={(canvas, t) => drawTitlePreview(canvas, preset.id, t)} />
           <span className="absolute top-1.5 left-1.5 rounded-md bg-shade/55 px-1.5 py-0.5 text-2xs/[inherit] font-bold tracking-wide text-on-media backdrop-blur-sm">3D</span>
           <span className="absolute top-1.5 right-1.5 grid size-6 scale-90 place-items-center rounded-full bg-ink text-ink-fg opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover/title:scale-100 group-hover/title:opacity-100">
@@ -172,7 +172,7 @@ function TitleCard({ preset }: { preset: TitlePreset }) {
         </div>
       ) : (
       <div
-        className={`relative flex aspect-video items-center overflow-hidden rounded-[10px] bg-[radial-gradient(ellipse_at_30%_20%,#23261b,#111210_70%)] px-2.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/title:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)] ${alignLeft ? 'items-end justify-start pb-3' : 'justify-center'}`}
+        className={`relative flex aspect-video items-center overflow-hidden rounded-card bg-[radial-gradient(ellipse_at_30%_20%,#23261b,#111210_70%)] px-2.5 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)] transition-shadow duration-200 group-hover/title:shadow-[0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.16),0_10px_24px_-10px_rgb(from_var(--color-shade)_r_g_b/0.9)] ${alignLeft ? 'items-end justify-start pb-3' : 'justify-center'}`}
       >
         <span className="line-clamp-2 max-w-full leading-tight text-balance transition-transform duration-500 ease-out group-hover/title:scale-[1.06]" style={previewStyle(preset)}>
           {preset.sample}

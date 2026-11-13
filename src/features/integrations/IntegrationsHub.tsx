@@ -134,7 +134,7 @@ function Sidebar({ selected, onSelect }: { selected: Selection; onSelect: (s: Se
       {catalog.map((c) => (
         <NavItem key={c.id} active={selected === `catalog:${c.id}`} onClick={() => onSelect(`catalog:${c.id}`)} icon={<ServerGlyph config={c} />} label={c.name} hint={tt('Not added')} muted />
       ))}
-      <NavItem active={selected === 'add'} onClick={() => onSelect('add')} icon={<span className="grid size-7 place-items-center rounded-[8px] border border-dashed border-line-3 text-fg-3"><Plus className="size-3.5" /></span>} label={tt('Add a server')} hint={tt('Any MCP URL or command')} />
+      <NavItem active={selected === 'add'} onClick={() => onSelect('add')} icon={<span className="grid size-7 place-items-center rounded-lg border border-dashed border-line-3 text-fg-3"><Plus className="size-3.5" /></span>} label={tt('Add a server')} hint={tt('Any MCP URL or command')} />
 
       <NavLabel>{tt('For AI agents')}</NavLabel>
       <NavItem active={selected === 'agents'} onClick={() => onSelect('agents')} icon={<IconTile tone="lumen" size="sm"><Waypoints /></IconTile>} label={tt('Lumen MCP server')} hint={bridge.running ? tt('On') : tt('Off')} status={bridge.running ? 'ready' : undefined} />
@@ -162,7 +162,7 @@ function NavItem({ active, onClick, icon, label, hint, status, muted }: { active
       type="button"
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2.5 rounded-[10px] px-2 py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60',
+        'flex items-center gap-2.5 rounded-card px-2 py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/60',
         active ? 'bg-ink/[0.07] shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.05)]' : 'hover:bg-ink/[0.04]',
         muted && !active && 'opacity-70',
       )}

@@ -437,7 +437,7 @@ function Item({
       keywords={keywords}
       forceMount={forceMount}
       onSelect={onSelect}
-      className="flex h-10 cursor-default items-center gap-3 rounded-[9px] px-2.5 text-sm text-fg-2 select-none data-[selected=true]:bg-ink/[0.07] data-[selected=true]:text-fg [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3"
+      className="flex h-10 cursor-default items-center gap-3 rounded-group px-2.5 text-sm text-fg-2 select-none data-[selected=true]:bg-ink/[0.07] data-[selected=true]:text-fg [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-fg-3"
     >
       {icon}
       <span className="min-w-0 flex-1 truncate">{children}</span>

@@ -367,8 +367,8 @@ function Scrubber({ time, duration, marks, onSeek, onMark }: { time: number; dur
       <div ref={ref} data-source-scrubber onPointerDown={(e) => drag(e, 'seek')} className="relative h-5 cursor-pointer touch-none">
         <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-ink/[0.09]" />
         {(marks?.in !== undefined || marks?.out !== undefined) && <div className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-accent/60" style={{ left: pct(a), width: `calc(${pct(b)} - ${pct(a)})` }} />}
-        {marks?.in !== undefined && <span data-mark="in" onPointerDown={(e) => drag(e, 'in')} className="absolute top-0 h-5 w-2 -translate-x-full cursor-ew-resize rounded-l-[3px] border-y-2 border-l-2 border-accent" style={{ left: pct(a) }} aria-label={tt('In point')} />}
-        {marks?.out !== undefined && <span data-mark="out" onPointerDown={(e) => drag(e, 'out')} className="absolute top-0 h-5 w-2 cursor-ew-resize rounded-r-[3px] border-y-2 border-r-2 border-accent" style={{ left: pct(b) }} aria-label={tt('Out point')} />}
+        {marks?.in !== undefined && <span data-mark="in" onPointerDown={(e) => drag(e, 'in')} className="absolute top-0 h-5 w-2 -translate-x-full cursor-ew-resize rounded-l-handle border-y-2 border-l-2 border-accent" style={{ left: pct(a) }} aria-label={tt('In point')} />}
+        {marks?.out !== undefined && <span data-mark="out" onPointerDown={(e) => drag(e, 'out')} className="absolute top-0 h-5 w-2 cursor-ew-resize rounded-r-handle border-y-2 border-r-2 border-accent" style={{ left: pct(b) }} aria-label={tt('Out point')} />}
         <span className="pointer-events-none absolute top-0 h-5 w-[2px] -translate-x-1/2 rounded-full bg-ink shadow-[0_0_6px_rgb(from_var(--color-ink)_r_g_b/0.6)]" style={{ left: pct(time) }} />
       </div>
     </div>

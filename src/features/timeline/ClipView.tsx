@@ -64,7 +64,7 @@ export const ClipView = memo(function ClipView({ clipId, locked }: { clipId: str
       data-clip-id={clip.id}
       onDoubleClick={clip.sequenceId ? () => openTimeline(clip.sequenceId!, true) : undefined}
       className={cn(
-        'group/clip absolute overflow-hidden rounded-[7px] transition-[box-shadow,filter] duration-150',
+        'group/clip absolute overflow-hidden rounded-control-sm transition-[box-shadow,filter] duration-150',
         'shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.08)] hover:brightness-110',
         selected && 'z-10 shadow-[inset_0_0_0_2px_#fff,0_0_0_1px_var(--clip),0_10px_28px_-8px_var(--clip)]',
         lifted && 'z-[25] cursor-grabbing opacity-95 shadow-[inset_0_0_0_2px_#fff,0_18px_40px_-12px_rgb(from_var(--color-shade)_r_g_b/0.9)]',
@@ -394,7 +394,7 @@ function NestBody({ clip, seq, inPoint, duration, width, height }: { clip: Clip;
           return (
             <span
               key={bar.id}
-              className="absolute rounded-[2px]"
+              className="absolute rounded-xs"
               style={{
                 left: `${bar.left}%`,
                 width: `max(2px, ${bar.width}%)`,
