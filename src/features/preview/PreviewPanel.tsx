@@ -188,9 +188,10 @@ function Transport() {
     <div className="shrink-0 px-4 pt-1 pb-3">
       <ScrubBar />
       <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center">
-        <div className="flex items-baseline gap-1.5 font-mono tabular">
-          <LiveTimecode fps={fps} className="text-base/[inherit] font-medium text-fg" />
-          <span className="text-xs text-fg-4">/ {formatTimecode(duration, fps)}</span>
+        {/* In a narrow viewer the length goes under the time, whole — not "/" on one line and the timecode on the next. */}
+        <div className="flex flex-wrap items-baseline gap-x-1.5 font-mono tabular">
+          <LiveTimecode fps={fps} className="text-base/[inherit] font-medium whitespace-nowrap text-fg" />
+          <span className="text-xs whitespace-nowrap text-fg-4">/ {formatTimecode(duration, fps)}</span>
         </div>
         <div className="flex items-center gap-1">
           <IconButton label={tt('Go to start')} shortcut="home" onClick={actions.goToStart}>

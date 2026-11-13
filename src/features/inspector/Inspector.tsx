@@ -97,12 +97,14 @@ function ClipInspector({ clip }: { clip: Clip }) {
             }}
             className="-ml-1 w-full truncate rounded-md bg-transparent px-1 py-0.5 text-md font-semibold text-fg outline-none hover:bg-ink/[0.04] focus:bg-ink/[0.06] focus:ring-1 focus:ring-accent/60"
           />
-          <div className="mt-0.5 flex items-center gap-1.5 text-2xs text-fg-4">
-            <span className="rounded bg-ink/[0.06] px-1 py-px font-medium text-fg-3">{KIND_LABEL[clip.kind]}</span>
-            <span className="font-mono tabular">
-              {formatTimecode(clip.start, fps)} → {formatTimecode(clipEnd(clip), fps)}
-            </span>
-            <span>· {formatDuration(clip.duration, fps)}</span>
+          {/* What doesn't fit on the line goes to the next whole: the kind, a timecode and the length are never broken
+              in two (a Chinese word breaks between any two characters). The dot before the length is drawn in the
+              gap to its left, where the row cuts it off when the length starts a line. */}
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 overflow-hidden text-2xs text-fg-4">
+            <span className="shrink-0 rounded bg-ink/[0.06] px-1 py-px font-medium whitespace-nowrap text-fg-3">{KIND_LABEL[clip.kind]}</span>
+            <span className="font-mono whitespace-nowrap tabular">{formatTimecode(clip.start, fps)} →</span>
+            <span className="font-mono whitespace-nowrap tabular">{formatTimecode(clipEnd(clip), fps)}</span>
+            <span className="relative ml-0.5 whitespace-nowrap before:absolute before:-left-1.5 before:content-['·']">{formatDuration(clip.duration, fps)}</span>
           </div>
         </div>
         <Menu>
