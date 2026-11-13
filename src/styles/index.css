@@ -73,6 +73,9 @@
   --color-well-2: rgb(from var(--color-shade) r g b / 0.25);
   /* What is laid over the part of a strip that is out of view, so the part in view stands out. */
   --color-dim: rgb(from var(--color-shade) r g b / 0.38);
+  /* What a graph is drawn on. A curve's lines and its red, green and blue are drawn for a dark ground, as a
+     picture in the viewer is — so the ground stays dark on paper, and what sits on it is on-media. */
+  --color-instrument: rgb(from var(--color-shade) r g b / 0.35);
 
   /* Text, from what matters most to least. Every step reads at 4.5:1 or better on the surfaces text sits on
      (canvas to surface-4); what was fg-4 before, too faint to read, is fg-disabled: for controls that are off
@@ -212,6 +215,7 @@
   --color-well: rgb(from var(--color-ink) r g b / 0.035);
   --color-well-2: rgb(from var(--color-ink) r g b / 0.065);
   --color-dim: rgb(from var(--color-ink) r g b / 0.12);
+  --color-instrument: #1c1d1a;
 
   --color-fg: #191a14;
   --color-fg-2: #3f4038;

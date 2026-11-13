@@ -9,6 +9,7 @@ import { sourceFrameAt, type Timed } from '@/editor/timing'
 import type { Asset } from '@/editor/types'
 import { filmstripFrame, type Filmstrip } from '@/engine/decode'
 import { sequenceFrameUrl } from '@/engine/media'
+import { onThemeChange } from '@/lib/theme'
 
 // ─── Thumbnails of stills ────────────────────────────────────────────────
 // Posters, photos and image-sequence frames, decoded once at thumbnail size
@@ -75,6 +76,8 @@ export const dprOf = () => Math.min(2, window.devicePixelRatio || 1)
 
 const colors = new Map<string, string>()
 let probe: HTMLElement | null = null
+// What a token resolved to in one theme isn't what it is in the other.
+onThemeChange(() => colors.clear())
 
 /**
  * A CSS colour (theme variables, color-mix…) as a value canvas understands.

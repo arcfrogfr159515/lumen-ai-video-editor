@@ -124,7 +124,7 @@ function ColorWheel({ value, onChange }: { value: Wheel; onChange: (w: Partial<W
       <span className="pointer-events-none absolute top-1/2 left-1/2 h-full w-px -translate-x-1/2 -translate-y-1/2 bg-ink/10" />
       <span
         data-puck
-        className="absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-ink bg-shade/40 shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.7)] active:cursor-grabbing"
+        className="absolute size-3 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-on-media bg-shade/40 shadow-[0_1px_4px_rgb(from_var(--color-shade)_r_g_b/0.7)] active:cursor-grabbing"
         style={{ left: `${50 + value.x * 50}%`, top: `${50 - value.y * 50}%` }}
       />
     </div>
@@ -223,7 +223,7 @@ export function CurvesSection({ clips }: { clips: Clip[] }) {
       <div className="space-y-2">
         <Segmented stretch value={channel} onChange={setChannel} options={CHANNELS.map((c) => ({ value: c.value, label: c.label }))} />
         <div className="relative">
-          <svg ref={svg} viewBox={`0 0 ${S} ${S}`} className="block aspect-square w-full touch-none rounded-lg bg-shade/35 shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" onPointerDown={addPoint}>
+          <svg ref={svg} viewBox={`0 0 ${S} ${S}`} className="block aspect-square w-full touch-none rounded-lg bg-instrument shadow-[inset_0_0_0_1px_rgb(from_var(--color-ink)_r_g_b/0.06)]" onPointerDown={addPoint}>
             {[0.25, 0.5, 0.75].map((f) => (
               <g key={f} stroke="white" strokeOpacity={0.07}>
                 <line x1={f * S} x2={f * S} y1={0} y2={S} />

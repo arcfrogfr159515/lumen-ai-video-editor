@@ -14,7 +14,9 @@ import { Tip } from '@/components/ui/tooltip'
 import { useLayout } from './layout'
 import { HEADER_W, RULER_H } from './model'
 import { paintRenderBar, RENDER_BAR_H } from './render-bar'
+import { cssColor } from './strips'
 import { useViewport } from './viewport'
+import { onThemeChange } from '@/lib/theme'
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
@@ -52,6 +54,9 @@ export function Ruler({ width, laneViewport }: { width: number; laneViewport: nu
   const renders = useRenders((s) => s.version)
   const rendering = useRenders((s) => s.job?.current ?? null)
   const renderRes = useUI((s) => s.renderRes)
+  // The ruler is painted by hand, in the theme's colours: painted again when the theme changes.
+  const [theme, setTheme] = useState(0)
+  useEffect(() => onThemeChange(() => setTheme((n) => n + 1)), [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -72,9 +77,14 @@ export function Ruler({ width, laneViewport }: { width: number; laneViewport: nu
     // Past-the-end shading
     const endX = (end / fps) * pps - scrollLeft
     if (endX < laneViewport) {
-      ctx.fillStyle = 'rgba(0,0,0,0.22)'
+      ctx.fillStyle = cssColor('var(--color-shade)')
+      ctx.globalAlpha = 0.22
       ctx.fillRect(Math.max(0, endX), 0, laneViewport - Math.max(0, endX), RULER_H)
+      ctx.globalAlpha = 1
     }
+    // Ticks are ink, as every hairline is: white on graphite, near-black on paper (where white ticks were invisible).
+    const ink = cssColor('var(--color-ink)')
+    const text = cssColor('var(--color-fg-4)')
 
     const startSec = Math.max(0, Math.floor(scrollLeft / pps / minor) * minor)
     const endSec = (scrollLeft + laneViewport) / pps
@@ -84,16 +94,18 @@ export function Ruler({ width, laneViewport }: { width: number; laneViewport: nu
       const x = Math.round(t * pps - scrollLeft) + 0.5
       const isMajor = Math.abs(t / major - Math.round(t / major)) < 1e-4
       const mid = !isMajor && Math.abs((t * 2) / major - Math.round((t * 2) / major)) < 1e-4
-      ctx.fillStyle = isMajor ? 'rgba(255,255,255,0.34)' : mid ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.11)'
+      ctx.fillStyle = ink
+      ctx.globalAlpha = isMajor ? 0.34 : mid ? 0.2 : 0.11
       const h = isMajor ? 10 : mid ? 7 : 4
       ctx.fillRect(x - 0.5, RULER_H - RENDER_BAR_H - h, 1, h)
+      ctx.globalAlpha = 1
       if (isMajor) {
-        ctx.fillStyle = '#7d7d88'
+        ctx.fillStyle = text
         ctx.fillText(label(t, major, fps), x + 5, 13)
       }
     }
     paintRenderBar(ctx, project, { pps, scrollLeft, width: laneViewport, y: RULER_H - RENDER_BAR_H, rendering })
-  }, [pps, fps, laneViewport, scrollLeft, end, project, renders, rendering, renderRes])
+  }, [pps, fps, laneViewport, scrollLeft, end, project, renders, rendering, renderRes, theme])
 
   return (
     <div data-ruler className="relative shrink-0 border-b border-line bg-surface" style={{ width, height: RULER_H }}>
