@@ -28,7 +28,7 @@ Lumen is released under the [MIT license](LICENSE). It is built on, and its inst
 | [ai](https://ai-sdk.dev/docs) | 7.0.111 | Apache-2.0 |
 | [clsx](lukeed/clsx) | 2.1.1 | MIT |
 | [cmdk](https://github.com/pacocoursey/cmdk#readme) | 1.1.1 | MIT |
-| [electron](https://github.com/electron/electron) | 44.4.3 | MIT |
+| [electron](https://github.com/electron/electron) | 44.11.3 | MIT |
 | [electron-updater](https://github.com/electron-userland/electron-builder) | 6.8.9 | MIT |
 | [gifenc](https://github.com/mattdesl/gifenc) | 1.0.3 | MIT |
 | [gsap](https://gsap.com) | 3.15.0 | GSAP Standard License |

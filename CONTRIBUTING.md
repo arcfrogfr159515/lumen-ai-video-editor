@@ -45,6 +45,12 @@ Add an entry to the right file in `src/integrations/tools/`:
 - Group multi-step edits in `useEditor.getState().transaction(...)`, and roll back with `savepoint()` / `rollbackTo()` if a step fails.
 - Cover it in [`src/integrations/tools/tools.test.ts`](src/integrations/tools/tools.test.ts).
 
+### Where a dependency goes
+
+`dependencies` are what Lumen reads from `node_modules` while it runs — the AI and MCP SDKs and the updater, which the main process loads, and packages whose files it serves. electron-builder copies them into the installer as they are. What the editor's window is made of — React, Radix, three.js, Mediabunny — is under `devDependencies`, beside the build tools: Vite bundles it into the app, and listing it under `dependencies` would ship it a second time as loose packages.
+
+So `devDependencies` doesn't mean "not shipped". Anything that asks what is in the product has to look at both: `npm audit` rather than `npm audit --omit=dev` (CI runs the first), and [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) lists both.
+
 ## Tests
 
 ```bash
@@ -58,7 +64,7 @@ Tests run in plain Node: media engines that need a GPU or a canvas are faked per
 ## Pull requests
 
 - Keep each PR focused on one change, and describe how you checked it.
-- CI runs the typecheck, the tests and a Windows build on every PR.
+- CI runs the typecheck, the tests (on Linux and on Windows) and a Windows build on every push and every PR, and says when `npm audit` has a high-severity advisory.
 - For UI changes, add a screenshot. Use the design tokens (`accent`, `ai`, `fg-*`, `surface-*`) rather than raw colours.
 
 ## Releasing (maintainers)

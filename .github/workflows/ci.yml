@@ -1,21 +1,23 @@
 name: CI
 
 on:
+  # Every branch, not only main: a fork's working branch is checked as it is pushed, before there is a pull request.
   push:
-    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
+# One run per branch: a push and the pull request it belongs to don't both run to the end.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   check:
     name: Typecheck and test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       # The unit tests run in plain Node; they don't need the Electron binary.
       ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
@@ -28,10 +30,15 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      # Said, not enforced: an advisory published today would fail every branch for something none of them changed.
+      # Everything is looked at, not only `dependencies` — what Vite bundles into the app is under devDependencies.
+      - name: Dependency advisories
+        run: npm audit --audit-level=high || echo "::warning title=npm audit::High-severity advisories in the dependency tree - run npm audit for the list."
 
   build:
-    name: Build the Windows app
+    name: Test and build on Windows
     runs-on: windows-latest
+    timeout-minutes: 30
     needs: check
     steps:
       - uses: actions/checkout@v5
@@ -40,5 +47,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # Lumen is a Windows app. Paths, renames and locked files behave differently there, so the tests run there too.
+      - run: npm test
       # Typecheck, build, fetch the Electron binary (npm ci doesn't) and package the app.
       - run: npm run pack
