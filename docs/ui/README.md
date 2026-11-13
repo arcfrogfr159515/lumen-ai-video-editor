@@ -10,6 +10,7 @@ Screenshots of the desktop app in the states it can be in, taken by a script fro
 | `after-zh/` | A selection in Simplified Chinese |
 | `after-zh-light/` | Chinese and light together |
 | [`CONTROLS.md`](CONTROLS.md) | Every control of every screen, before against after |
+| `before/2026-11-13/`, `after/2026-11-13/` | A second round, in Chinese at 1500×950: 17 screens before and after — see [`REVIEW-2026-11-13.md`](REVIEW-2026-11-13.md) and [`CONTROLS-2026-11-13.md`](CONTROLS-2026-11-13.md) |
 
 The three screens in `before/` that have no counterpart in `after/` were taken by a second script that measured the interface (`90-…`, `91-…`, `92-…`); what they showed is in the table below.
 
