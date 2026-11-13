@@ -49,7 +49,8 @@ export const AUDIO_EXT = ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'oga', 'opus', 'fla
 export const IMAGE_EXT = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'avif', 'bmp', 'svg']
 
 export const mimeOf = (file: string) => MIME[path.extname(file).toLowerCase()] ?? 'application/octet-stream'
-const isMedia = (file: string) => /^(video|audio|image)\//.test(mimeOf(file))
+/** A file of a kind Lumen plays, going by its name: video, sound or a picture. */
+export const isMedia = (file: string) => /^(video|audio|image)\//.test(mimeOf(file))
 
 /** The URL the editor loads a file from: the library host for Lumen's own media, the file host otherwise. */
 export function urlFor(abs: string) {
@@ -254,18 +255,30 @@ export function reveal(target: string) {
   if (abs && fs.existsSync(abs)) shell.showItemInFolder(abs)
 }
 
+/**
+ * Opens a finished export in the system's player, or a folder in the file manager. Nothing else: to the system,
+ * "opening" a program or a script is running it, and the path comes from the page.
+ */
 export async function openPath(target: string) {
   const abs = path.resolve(target)
-  if (fs.existsSync(abs)) await shell.openPath(abs)
+  let stat: fs.Stats
+  try {
+    stat = fs.statSync(abs)
+  } catch {
+    return
+  }
+  if (stat.isDirectory() || (stat.isFile() && isMedia(abs))) await shell.openPath(abs)
 }
 
 const safeName = (name: string) => name.replace(/[<>:"/\\|?*\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'media'
 
 /** Writes bytes the editor produced (snapshots, recordings, synthesized sounds) into the media library. */
 export function saveMedia(folder: MediaFolder, fileName: string, data: Uint8Array): MediaFileInfo {
+  // The library holds media. The name comes from the page, and the bytes with it: not a program, not a script.
+  if (!isMedia(fileName)) throw new Error('Not the name of a media file')
   const dir = ensureDir(path.join(mediaRoot(), folder))
   const ext = path.extname(fileName).toLowerCase()
-  const base = safeName(path.basename(fileName, ext))
+  const base = safeName(path.basename(fileName, path.extname(fileName)))
   const abs = path.join(dir, `${base}-${randomUUID().slice(0, 8)}${ext}`)
   fs.writeFileSync(abs, data)
   const info = fileInfo(abs)

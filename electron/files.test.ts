@@ -4,14 +4,19 @@ import path from 'node:path'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 
 type Handler = (req: Request) => Promise<Response>
-const env = vi.hoisted(() => ({ root: '', handler: null as ((req: Request) => Promise<Response>) | null }))
+const env = vi.hoisted(() => ({ root: '', handler: null as ((req: Request) => Promise<Response>) | null, opened: [] as string[] }))
 
 vi.mock('electron', () => ({
   app: { getPath: (name: string) => path.join(env.root, name), getVersion: () => '1.0.0' },
   dialog: {},
   BrowserWindow: class {},
   net: {},
-  shell: {},
+  shell: {
+    openPath: async (target: string) => {
+      env.opened.push(target)
+      return ''
+    },
+  },
   protocol: {
     handle: (_scheme: string, fn: Handler) => {
       env.handler = fn
@@ -20,7 +25,7 @@ vi.mock('electron', () => ({
 }))
 
 env.root = fs.mkdtempSync(path.join(os.tmpdir(), 'lumen-files-test-'))
-const { fileInfo, registerMediaProtocol, saveMedia, urlFor } = await import('./files')
+const { fileInfo, openPath, registerMediaProtocol, saveMedia, urlFor } = await import('./files')
 registerMediaProtocol()
 const serve = (url: string, init?: RequestInit) => env.handler!(new Request(url, init))
 
@@ -89,5 +94,28 @@ describe('lumen-media protocol', () => {
     fs.writeFileSync(path.join(env.root, 'userData', 'secret.txt'), 'nope')
     const res = await serve('lumen-media://local/..%2F..%2Fsecret.txt')
     expect(res.status).toBe(404)
+  })
+})
+
+describe('what the page may have written and opened', () => {
+  it('saves media into the library, and nothing that isn’t', () => {
+    const library = path.join(env.root, 'userData', 'media', 'generated')
+    const before = fs.readdirSync(library)
+    for (const name of ['setup.exe', 'run.bat', 'macro.ps1', 'page.html', 'no extension', 'clip.mp4.cmd']) expect(() => saveMedia('generated', name, bytes), name).toThrow(/media file/)
+    expect(fs.readdirSync(library)).toEqual(before)
+    expect(saveMedia('generated', 'Voice.WAV', bytes).name).toMatch(/^Voice-[0-9a-f]{8}\.wav$/)
+  })
+
+  it('opens a finished export or a folder — never a program or a script', async () => {
+    const dir = path.dirname(file)
+    for (const name of ['setup.exe', 'run.bat', 'shortcut.lnk', 'notes.txt']) {
+      fs.writeFileSync(path.join(dir, name), 'x')
+      await openPath(path.join(dir, name))
+    }
+    await openPath(path.join(dir, 'not there.mp4'))
+    expect(env.opened).toEqual([])
+    await openPath(file)
+    await openPath(dir)
+    expect(env.opened).toEqual([file, dir])
   })
 })

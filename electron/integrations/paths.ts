@@ -40,6 +40,8 @@ export const fileUrl = (absPath: string) => `${MEDIA_SCHEME}://${FILE_HOST}/${en
 
 // Paths the editor may read: files the user imported or that an opened project references.
 const allowed = new Set<string>()
+/** What an allowed folder gives: the frames of an image sequence, not whatever else is in it. */
+const FRAME = /\.(png|jpe?g|webp|avif|bmp|gif)$/i
 const key = (abs: string) => (process.platform === 'win32' ? path.resolve(abs).toLowerCase() : path.resolve(abs))
 
 export function allowPath(abs: string) {
@@ -71,7 +73,7 @@ export function mediaPath(url: string): string | null {
     const abs = path.resolve(decodeURIComponent(parsed.pathname.replace(/^\/+/, '')))
     if (allowed.has(key(abs)) || isInside(abs, mediaRoot())) return abs
     // Frames of an allowed image sequence live in an allowed folder.
-    if (allowed.has(key(path.dirname(abs)))) return abs
+    if (FRAME.test(abs) && allowed.has(key(path.dirname(abs)))) return abs
     return null
   }
   return null

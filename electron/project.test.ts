@@ -20,7 +20,7 @@ vi.mock('electron', () => ({
 
 env.root = fs.mkdtempSync(path.join(os.tmpdir(), 'lumen-project-test-'))
 const { forgetRecent, openProject, projectFromArgv, readRecovery, recentProjects, saveProject, writeRecovery } = await import('./project')
-const { fileUrl } = await import('./integrations/paths')
+const { fileUrl, mediaPath } = await import('./integrations/paths')
 
 afterAll(() => fs.rmSync(env.root, { recursive: true, force: true }))
 
@@ -98,6 +98,54 @@ describe('opening', () => {
     const opened = (await openProject(null, s.file))!
     expect(opened.missing).toEqual(['a1'])
     expect(JSON.parse(opened.text).assets.a1.source.missing).toBe(true)
+  })
+
+  it('makes readable only the media a project names — not whatever file it points at', async () => {
+    // A project file comes from anywhere. This one says its "media" are a key file, a proxy that is a database and
+    // an original that is a script: opening it must not hand any of them to the window.
+    const s = scene()
+    const key = path.join(s.dir, 'id_rsa')
+    const database = path.join(s.dir, 'Login Data.sqlite')
+    const script = path.join(s.dir, 'run.bat')
+    for (const f of [key, database, script]) fs.writeFileSync(f, 'private')
+    const project = JSON.parse(s.text)
+    project.assets.a2 = { id: 'a2', name: 'key', kind: 'video', source: { type: 'file', url: fileUrl(key), path: key, mime: 'video/mp4', fileName: 'id_rsa', size: 7 } }
+    project.assets.a1.proxy = { path: database, width: 960, height: 540 }
+    project.assets.a1.conformedFrom = { path: script }
+    saveProject(s.file, JSON.stringify(project))
+
+    const opened = (await openProject(null, s.file))!
+    const assets = JSON.parse(opened.text).assets
+    // The key is missing media, to be relinked or removed; the real sound plays as before.
+    expect(opened.missing).toEqual(['a2'])
+    expect(assets.a2.source.missing).toBe(true)
+    expect(assets.a1.source.missing).toBeUndefined()
+    expect(assets.a1.proxy).toBeUndefined()
+    expect(assets.a1.conformedFrom.url).toBeUndefined()
+    expect(mediaPath(fileUrl(s.media))).toBe(s.media)
+    for (const f of [key, database, script]) expect(mediaPath(fileUrl(f)), path.basename(f)).toBeNull()
+  })
+
+  it('reads the frames of an image sequence from its folder, and nothing else in it', async () => {
+    const s = scene()
+    const frames = path.join(s.dir, 'frames')
+    fs.mkdirSync(frames)
+    for (const f of ['shot_0001.png', 'shot_0002.png', 'poster.jpg', 'notes.txt', 'passwords.kdbx']) fs.writeFileSync(path.join(frames, f), 'x')
+    const project = JSON.parse(s.text)
+    project.assets.a3 = { id: 'a3', name: 'shot', kind: 'video', source: { type: 'sequence', base: '', dir: frames, pattern: 'shot_%04d.png', frameCount: 2, fps: 30, posterFile: 'poster.jpg' } }
+    fs.writeFileSync(s.file, JSON.stringify({ format: 'lumen-project', version: 1, app: 'Lumen 1.0.0', savedAt: '', project }))
+
+    const opened = (await openProject(null, s.file))!
+    expect(opened.missing).toEqual([])
+    const src = JSON.parse(opened.text).assets.a3.source
+    expect(mediaPath(`${src.base}shot_0001.png`)).toBe(path.join(frames, 'shot_0001.png'))
+    expect(mediaPath(src.poster)).toBe(path.join(frames, 'poster.jpg'))
+    expect(mediaPath(`${src.base}notes.txt`)).toBeNull()
+    expect(mediaPath(`${src.base}passwords.kdbx`)).toBeNull()
+    // Saved again, the folder is found from where a frame would be.
+    saveProject(s.file, opened.text)
+    const stored = JSON.parse(fs.readFileSync(s.file, 'utf8')) as Stored
+    expect(stored.project.assets.a3.source).toMatchObject({ dir: frames, relDir: 'frames', posterFile: 'poster.jpg' })
   })
 
   it('rejects files that aren’t Lumen projects, or are from a newer Lumen', async () => {

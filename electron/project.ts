@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { app, BrowserWindow, dialog } from 'electron'
 import { APP_IPC, type CloseChoice, type OpenedProject, type RecentProject, type RecoveryInfo, type VersionKind } from '../shared/app'
-import { fileInfo, urlFor } from './files'
+import { fileInfo, isMedia, urlFor } from './files'
 import { allowPath, ensureDir, mediaPath, readJson, userDir, writeFileAtomic, writeJson } from './integrations/paths'
 import { readVersionText, writeVersion } from './versions'
 import { mt } from './i18n'
@@ -89,7 +89,8 @@ function toStored(project: StoredProject, projectPath: string): StoredProject {
         delete src.url
       }
     } else if (src.type === 'sequence') {
-      const absDir = src.dir ?? (src.base ? mediaPath(src.base + '_') : null)
+      // The folder is where a frame would be: an allowed folder answers for its frames, so the stand-in is named like one.
+      const absDir = src.dir ?? (src.base ? mediaPath(src.base + '_.png') : null)
       if (absDir) {
         const d = src.dir ?? path.dirname(absDir)
         src.dir = d
@@ -105,6 +106,13 @@ function toStored(project: StoredProject, projectPath: string): StoredProject {
   return project
 }
 
+/**
+ * A file a project may name as its media: one that is there, of a kind Lumen plays. Naming a path in a project is
+ * what makes it readable to the editor, and a project file comes from anywhere — a download, an attachment. One
+ * that names a key file or a database gets it back as missing media, not as something the window can read.
+ */
+const playable = (file: string | null | undefined): file is string => typeof file === 'string' && file !== '' && isMedia(file) && fs.existsSync(file)
+
 /** Resolves every media reference against the disk, registers it for reading and restores URLs. */
 function fromStored(project: StoredProject, projectPath: string | null): { project: StoredProject; missing: string[] } {
   const dir = projectPath ? path.dirname(projectPath) : null
@@ -114,7 +122,7 @@ function fromStored(project: StoredProject, projectPath: string | null): { proje
     if (!asset || typeof asset !== 'object') continue
     // Proxies live in Lumen's own folder; one that's gone is simply made again when needed.
     const proxy = asset.proxy
-    if (proxy?.path && fs.existsSync(proxy.path)) {
+    if (playable(proxy?.path)) {
       allowPath(proxy.path)
       proxy.url = urlFor(proxy.path)
     } else if (proxy) delete asset.proxy
@@ -122,7 +130,7 @@ function fromStored(project: StoredProject, projectPath: string | null): { proje
     // missing media — the asset plays its copy — only something "Use the original" will say when asked.
     const from = asset.conformedFrom
     if (from) {
-      const original = [from.path, dir && from.relPath ? path.resolve(dir, from.relPath) : null].find((p): p is string => Boolean(p) && fs.existsSync(p!))
+      const original = [from.path, dir && from.relPath ? path.resolve(dir, from.relPath) : null].find(playable)
       if (original) {
         from.path = original
         from.url = urlFor(original)
@@ -133,7 +141,7 @@ function fromStored(project: StoredProject, projectPath: string | null): { proje
     if (!src) continue
     if (src.type === 'file') {
       const candidates = [src.path, dir && src.relPath ? path.resolve(dir, src.relPath) : null, src.url ? mediaPath(src.url) : null].filter((p): p is string => Boolean(p))
-      const found = candidates.find((p) => fs.existsSync(p))
+      const found = candidates.find(playable)
       if (found) {
         src.path = found
         src.url = urlFor(found)
@@ -148,7 +156,7 @@ function fromStored(project: StoredProject, projectPath: string | null): { proje
         missing.push(id)
       }
     } else if (src.type === 'sequence') {
-      const fromBase = src.base ? mediaPath(src.base + '_') : null
+      const fromBase = src.base ? mediaPath(src.base + '_.png') : null
       const candidates = [src.dir, dir && src.relDir ? path.resolve(dir, src.relDir) : null, fromBase ? path.dirname(fromBase) : null].filter((p): p is string => Boolean(p))
       const found = candidates.find((p) => fs.existsSync(p))
       const use = found ?? candidates[0]
