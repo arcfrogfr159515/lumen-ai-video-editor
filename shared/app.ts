@@ -185,6 +185,7 @@ export const APP_IPC = {
   relaunch: 'lumen:app:relaunch',
   language: 'lumen:app:language',
   theme: 'lumen:app:theme',
+  showLog: 'lumen:app:show-log',
 
   /** main → renderer */
   openRequest: 'lumen:project:open-request',
@@ -362,6 +363,8 @@ export interface AppAPI {
     setLanguage(language: 'en' | 'zh-CN'): void
     /** Tells the main process which theme the window is in: its caption buttons and background follow. */
     setTheme(theme: 'dark' | 'light'): void
+    /** Shows Lumen's log — what went wrong, and when — in the system's file manager. */
+    showLog(): Promise<void>
   }
   updates: {
     state(): Promise<UpdateState>

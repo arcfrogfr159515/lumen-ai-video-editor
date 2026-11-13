@@ -13,6 +13,7 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 - **A “More edit” dropdown on the timeline toolbar** (as CapCut's has): Freeze frame, Reverse, Mirror, Rotate — the same quick edits as the clip menu's Basic editing, on the selected clip or the one under the playhead.
 - **Shortcuts can be changed.** In Keyboard shortcuts (`?`), click a shortcut's keys and press the new ones; Esc leaves it as it was. Keys another shortcut is on are asked about first, and then moved. A shortcut can be taken off its keys, put back on the ones it came with, or all of them at once. The changes are kept on this computer, and menus, tooltips and the command palette show the keys a shortcut has now. In a text field, a shortcut moved onto a letter leaves the letter to the text.
 - **Smart scene split has a shortcut**, Alt+S, shown in the clip's menu: it splits the selected clip — or the one under the playhead — at its shot changes.
+- **A log of what went wrong.** An installed Lumen had no console to say it to. Exceptions and failed promises in Lumen's own process, the editor's errors and warnings, and a crashed editor or graphics process are now written to `logs/lumen.log` in Lumen's data folder: when, how bad, from where, what. It holds at most two files of 1 MB; a line said over and over is written once and counted. About Lumen has a Log row that shows the file, to send with a bug report.
 
 ### Changed
 
@@ -22,6 +23,8 @@ Every notable change to Lumen, newest first. The format follows [Keep a Changelo
 
 ### Fixed
 
+- **When the editor's process crashed, the window stayed blank** — nothing said so, and nothing brought it back. Lumen now says the editor stopped and offers to reopen it, where the unsaved changes are offered back from the recovery copy, or to close Lumen and keep that copy for the next start.
+- **An error nothing caught in Lumen's own process showed a stack trace in a system box**, each time it happened. The box now says what happened in a sentence, in the window's language, names the log file, and comes up at most once a minute.
 - **A build of this fork updated itself from the project it was forked from**, so the next release there would have replaced it — and what this fork adds with it — the next time it was closed. Builds now update from this repository's Releases page (`build.publish` in `package.json`), the About dialog links to that same page, and the release workflow refuses to publish when the two differ.
 - **Scene detection found next to nothing in footage cut with transitions.** A shot change counted only as one frame jumping well clear of the two either side of it, so a cut reached through a zoom blur, a wipe or a dissolve — most of the cuts in short-form video — went by unseen. Shot changes are now also read from how the picture's colours change over a little under half a second, which finds those; a one-frame flash, which jumps like a cut, is told from one by the picture coming back; and no cut is made closer to either end of the clip than the shortest shot, so the last frame is no longer split off on its own.
 

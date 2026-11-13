@@ -14,7 +14,8 @@ import { registerJobListener } from './integrations/jobs'
 import { disconnectAll } from './integrations/mcp'
 import { MEDIA_SCHEME } from './integrations/paths'
 import { initBridge, stopBridge } from './integrations/server'
-import { guardClose, projectFromArgv } from './project'
+import { initLog, watchEditor } from './log'
+import { closeNow, guardClose, projectFromArgv } from './project'
 import { initUpdater } from './updater'
 
 const isMac = process.platform === 'darwin'
@@ -43,6 +44,8 @@ const primary = app.requestSingleInstanceLock()
 // starting, and until then this file runs on. Nothing below may start an editor in it: it would open a window,
 // register the protocols and start the servers a second time, on the first one's profile.
 if (!primary) app.quit()
+// What goes wrong from here on is written down — by the Lumen that runs on this profile, not by a second one on its way out.
+if (primary) initLog()
 
 let mainWindow: BrowserWindow | null = null
 let startupFile = projectFromArgv(process.argv)
@@ -82,6 +85,7 @@ function createWindow() {
   })
   mainWindow = win
 
+  watchEditor(win, closeNow)
   registerJobListener(win)
   initBridge(win, isTrustedUrl)
   initIngest(win)

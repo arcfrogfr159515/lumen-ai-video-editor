@@ -55,4 +55,4 @@ body:
     id: extra
     attributes:
       label: Anything else
-      description: Screenshots, a small project file, or the Copilot's error message. Please remove anything private (API keys, personal media).
+      description: Screenshots, a small project file, the Copilot's error message, or Lumen's log (Lumen menu › About › Log › Show the file). Please remove anything private (API keys, personal media, file names you'd rather not share — the log names the files that failed).

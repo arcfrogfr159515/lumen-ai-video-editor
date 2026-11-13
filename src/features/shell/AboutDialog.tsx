@@ -4,17 +4,24 @@ import { LogoMark } from '@/components/brand'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { useUI } from '@/editor/ui-store'
-import { APP_VERSION, platform } from '@/lib/platform'
+import { APP_VERSION, desktop, platform } from '@/lib/platform'
 import { checkForUpdates, installUpdate, RELEASES_URL, releaseUrl, useUpdates } from '@/lib/updates'
 import { tt } from '@/lib/i18n'
 
 export function AboutDialog() {
   const open = useUI((s) => s.aboutOpen)
   const setOpen = useUI((s) => s.setAboutOpen)
-  const rows: [string, string][] = [
+  // The log is what went wrong, and when: the file to send with a bug report.
+  const log = desktop && (
+    <button type="button" onClick={() => void desktop?.system.showLog()} className="rounded-sm text-accent-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-accent/60">
+      {tt('Show the file')}
+    </button>
+  )
+  const rows: [string, ReactNode][] = [
     [tt('Version'), APP_VERSION],
     ...(platform.versions ? ([['Electron', platform.versions.electron], ['Chromium', platform.versions.chrome]] as [string, string][]) : []),
     [tt('Platform'), platform.isWindows ? 'Windows' : platform.isMac ? 'macOS' : 'Linux'],
+    ...(log ? ([[tt('Log'), log]] as [string, ReactNode][]) : []),
   ]
   return (
     <Dialog open={open} onOpenChange={setOpen} title={tt('About Lumen')} className="w-[min(420px,calc(100vw-32px))]">

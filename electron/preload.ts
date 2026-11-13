@@ -225,6 +225,7 @@ const appApi: AppAPI = {
     relaunch: () => ipcRenderer.send(APP_IPC.relaunch),
     setLanguage: (language) => ipcRenderer.send(APP_IPC.language, language),
     setTheme: (theme) => ipcRenderer.send(APP_IPC.theme, theme),
+    showLog: () => invoke(APP_IPC.showLog),
   },
   updates: {
     state: () => invoke(APP_IPC.updateState),

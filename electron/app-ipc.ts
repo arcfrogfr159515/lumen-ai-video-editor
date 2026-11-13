@@ -16,6 +16,7 @@ import { closeNow, confirmDiscard, forgetRecent, openProject, openVersion, readR
 import { checkForUpdates, installUpdate, updateState } from './updater'
 import { setLanguage } from './i18n'
 import { setTheme } from './appearance'
+import { showLog } from './log'
 
 const FOLDERS: MediaFolder[] = ['snapshots', 'recordings', 'sfx', 'generated']
 
@@ -168,6 +169,7 @@ export function registerAppIpc(isTrustedUrl: (url: string) => boolean, getStartu
   })
   on(APP_IPC.language, (_win, language: unknown) => setLanguage(language))
   on(APP_IPC.theme, (_win, theme: unknown) => setTheme(theme))
+  handle(APP_IPC.showLog, () => showLog())
 
   handle(APP_IPC.updateState, () => updateState())
   handle(APP_IPC.updateCheck, () => checkForUpdates())
