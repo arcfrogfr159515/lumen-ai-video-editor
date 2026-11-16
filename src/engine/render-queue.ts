@@ -79,12 +79,13 @@ export function stopQueue(cancelCurrent = false) {
 }
 
 async function runJob(job: QueueJob) {
-  if (!desktop) throw new Error(tt('Rendering needs the desktop app.'))
   runningId = job.id
   controller = new AbortController()
   const started = performance.now()
   update(job.id, { status: 'running', progress: 0, message: tt('Starting…'), error: undefined })
   try {
+    // Thrown out here, this used to stop the whole queue and leave the job looking like it was still waiting.
+    if (!desktop) throw new Error(tt('Rendering needs the desktop app.'))
     const handle = await desktop.export.open(job.target.token)
     update(job.id, { target: { ...job.target, path: handle.path } })
     const res = await runExport(
@@ -138,8 +139,9 @@ export async function retryJob(id: string) {
   return true
 }
 
+/** Removes exports that finished. Failed and cancelled jobs stay, so they can be retried. */
 export function clearFinished() {
-  useRenderQueue.setState((s) => ({ jobs: s.jobs.filter((j) => j.status === 'queued' || j.status === 'running') }))
+  useRenderQueue.setState((s) => ({ jobs: s.jobs.filter((j) => j.status !== 'done') }))
 }
 
 export const queueCounts = (jobs: QueueJob[]) => ({

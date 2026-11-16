@@ -44,7 +44,7 @@ export function RenderQueueDialog() {
         <div className="flex-1 text-xs text-fg-4">
           {counts.running ? tt('Rendering · {0} waiting', counts.queued) : counts.queued ? tt('{0} waiting', counts.queued) : jobs.length ? tt('{0} done{1}', counts.done, counts.failed ? (' ' + tt('· {0} failed', counts.failed)) : '') : ''}
         </div>
-        {jobs.some((j) => j.status !== 'queued' && j.status !== 'running') && (
+        {counts.done > 0 && (
           <Button variant="ghost" onClick={clearFinished}>
             {tt('Clear finished')}
           </Button>
