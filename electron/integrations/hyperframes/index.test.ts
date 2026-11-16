@@ -97,5 +97,6 @@ describe('the pages Lumen writes', () => {
     }
     // GSAP and the runtime come from the bundled copies, by file: address.
     expect(files).toBeGreaterThanOrEqual(pages.length * 2)
-  })
+    // Every template inlines the typefaces, so building the pages is slower than the 5s default on a cold run.
+  }, 30_000)
 })

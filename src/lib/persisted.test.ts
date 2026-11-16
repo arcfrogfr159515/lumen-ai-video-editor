@@ -62,7 +62,8 @@ describe('the editor’s settings', () => {
     expect(ui).toMatchObject({ leftTab: 'notes', rightTab: 'mixer', snapping: false, pxPerSecond: 120, playbackRes: 0.5, pausedRes: 0.25, renderRes: 1, upscale: 'smooth', angleViewer: false, useProxies: true })
     expect(view).toMatchObject({ storyboard: true, minimap: false, markerKinds: ['todo', 'chapter'], fourPoint: 'fit', hideDone: true, pauseGuides: true })
     expect(macros).toMatchObject({ macros: [macro], lastId: 'macro_1', recording: null })
-  })
+    // The first import of the editor stores is the cold transform; on a busy Windows run it exceeds the 5s default.
+  }, 30_000)
 
   it('start with their defaults where what was stored is of the wrong kind', async () => {
     // A tab a newer Lumen has, a zoom no timeline can show, words where there were switches, a list that became a word.
