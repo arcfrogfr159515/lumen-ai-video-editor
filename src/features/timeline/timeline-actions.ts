@@ -4,7 +4,7 @@
  */
 import { toast } from 'sonner'
 import { runMacro, startRecording, stopRecording, useMacros } from '@/editor/macro-store'
-import { clipsAt, framesIn } from '@/editor/ops'
+import { clipsAt, clipsOnTrack, framesIn, isMagneticTrack, resolveMoveDelta, withGroups } from '@/editor/ops'
 import { audioRole, pickTrack } from '@/editor/placement'
 import { cutSpokenWords } from '@/editor/smart'
 import { playback, usePlayback } from '@/editor/playback'
@@ -37,6 +37,32 @@ function targetClips(accept: (c: Clip) => boolean = () => true): Clip[] {
     .filter(accept)
     .sort((a, b) => (order.get(a.trackId) ?? 0) - (order.get(b.trackId) ?? 0))
     .slice(0, 1)
+}
+
+/**
+ * One step of a reorder. Selected clips swap with the neighbour in `dir`, so a
+ * run of them moves as a block and two selected clips never trade places.
+ */
+function shiftSelection(order: readonly string[], selected: ReadonlySet<string>, dir: -1 | 1): string[] {
+  const next = [...order]
+  if (dir > 0) {
+    for (let i = next.length - 2; i >= 0; i--) {
+      if (selected.has(next[i]) && !selected.has(next[i + 1])) {
+        const swap = next[i]
+        next[i] = next[i + 1]
+        next[i + 1] = swap
+      }
+    }
+  } else {
+    for (let i = 1; i < next.length; i++) {
+      if (selected.has(next[i]) && !selected.has(next[i - 1])) {
+        const swap = next[i - 1]
+        next[i - 1] = next[i]
+        next[i] = swap
+      }
+    }
+  }
+  return next
 }
 
 /** What a take switch did to the clip's length or the take's start, for a toast. */
@@ -240,5 +266,62 @@ export const timelineActions = {
   reselectFootage() {
     ui().setTool('slip')
     toast(tt('Slip tool'), { description: tt('Drag the clip sideways to play another part of its footage. V brings back the select tool.'), duration: 4500 })
+  },
+
+  /**
+   * Slides the selection by `frames` (negative is earlier). The same move as a drag:
+   * grouped clips come along, locked tracks stay, and a clip that would land on
+   * another slides to the nearest gap instead of covering it. The main track is
+   * packed edge to edge, so a few frames there would be packed straight back —
+   * the selection moves that many places along the track instead, and clips
+   * grouped with it keep their offset. A run of presses is one undo step.
+   * The storyboard has its own Alt+arrow for cards, so this does nothing there.
+   */
+  nudgeSelection(frames: number) {
+    if (!frames || timelineView().storyboard) return
+    const p = getProject()
+    const ids = withGroups(p, ui().selection).filter((id) => p.clips[id])
+    if (!ids.length) return void toast(tt('Select a clip'))
+    const locked = (trackId: string) => Boolean(p.tracks.find((t) => t.id === trackId)?.locked)
+    const editable = ids.filter((id) => !locked(p.clips[id].trackId))
+    if (!editable.length) {
+      const name = p.tracks.find((t) => t.id === p.clips[ids[0]].trackId)?.name ?? ''
+      return void toast(tt('{0} is locked', name))
+    }
+
+    const selected = new Set(editable)
+    const dir: -1 | 1 = frames > 0 ? 1 : -1
+    const moves: { id: string; start: number }[] = []
+    for (const track of p.tracks) {
+      if (!isMagneticTrack(p, track.id) || track.locked) continue
+      const clips = clipsOnTrack(p, track.id)
+      if (!clips.some((c) => selected.has(c.id))) continue
+      let order = clips.map((c) => c.id)
+      for (let step = 0; step < Math.abs(frames); step++) order = shiftSelection(order, selected, dir)
+      if (order.every((id, i) => id === clips[i].id)) continue
+      // Ranks sort into the new order; the command's half-frame nudge and the
+      // pack that follows turn them into edge-to-edge starts.
+      order.forEach((id, i) => moves.push({ id, start: i + 1 }))
+    }
+
+    const magneticGroups = new Set(ids.filter((id) => isMagneticTrack(p, p.clips[id].trackId) && p.clips[id].groupId).map((id) => p.clips[id].groupId as string))
+    const free = editable.filter((id) => {
+      const c = p.clips[id]
+      return !isMagneticTrack(p, c.trackId) && !(c.groupId && magneticGroups.has(c.groupId))
+    })
+    if (free.length) {
+      const proposed = free.map((id) => {
+        const c = p.clips[id]
+        return { id, start: c.start + frames, duration: c.duration, trackId: c.trackId }
+      })
+      // Already the position the drag would settle on, so the command accepts it as given.
+      const delta = resolveMoveDelta(p, proposed, 0)
+      const landed = proposed.map((m) => ({ id: m.id, start: Math.round(m.start + delta) }))
+      if (landed.some((m) => m.start !== p.clips[m.id].start)) moves.push(...landed.filter((m) => m.start >= 0))
+    }
+    if (!moves.length) return
+
+    const res = dispatch('clip.move', { moves, mode: 'free' }, { coalesce: dir > 0 ? 'nudge-later' : 'nudge-earlier' })
+    if (!res.ok) toast.error(res.error)
   },
 }
