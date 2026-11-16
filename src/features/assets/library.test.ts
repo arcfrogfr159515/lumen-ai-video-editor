@@ -5,10 +5,9 @@ import { mediaCounts, visibleMedia, type MediaView } from './library'
 function file(partial: Partial<Asset> & Pick<Asset, 'id' | 'name'>): Asset {
   return {
     kind: 'video',
-    source: { type: 'file', url: 'u', mime: 'video/mp4', fileName: `${partial.name}.mp4`, size: 1 },
     addedAt: 0,
+    source: { type: 'file', url: 'u', mime: 'video/mp4', fileName: `${partial.name}.mp4`, size: 1 },
     ...partial,
-    source: partial.source ?? { type: 'file', url: 'u', mime: 'video/mp4', fileName: `${partial.name}.mp4`, size: 1 },
   }
 }
 
