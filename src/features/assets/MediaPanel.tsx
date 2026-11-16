@@ -4,13 +4,15 @@ import { useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEven
 import { useShallow } from 'zustand/react/shallow'
 import { Button, IconButton } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { ContextContent, ContextItem, ContextRoot, ContextSeparator, ContextTrigger } from '@/components/ui/menu'
 import { describeTiming, isUneven } from '@/editor/frame-rate'
 import { placeAsset } from '@/editor/placement'
 import { monitorLevel, onMonitorChange, usePlayback } from '@/editor/playback'
 import { dispatch, useEditor } from '@/editor/store'
-import type { Asset, AssetKind } from '@/editor/types'
-import { useUI } from '@/editor/ui-store'
+import type { Asset } from '@/editor/types'
+import { useUI, type MediaShelf } from '@/editor/ui-store'
+import { mediaCounts, visibleMedia, type MediaKindFilter } from './library'
 import { dnd } from '@/features/dnd'
 import { useTimelineView } from '@/editor/timeline-view'
 import { timelineActions } from '@/features/timeline/timeline-actions'
@@ -29,24 +31,30 @@ import { TimelinesSection } from './TimelinesSection'
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
-type Filter = 'all' | AssetKind
+/** A shelf chip toggles itself off back to the whole library. */
+function ShelfChip({ shelf, current, count, children }: { shelf: MediaShelf; current: MediaShelf; count: number; children: ReactNode }) {
+  return (
+    <Chip active={current === shelf} count={count} onClick={() => useUI.getState().setMediaShelf(current === shelf ? 'library' : shelf)}>
+      {children}
+    </Chip>
+  )
+}
 
 export function MediaPanel() {
   // Subject mattes belong to their footage, not the library.
-  const assets = useEditor(useShallow((s) => Object.values(s.project.assets).filter((a) => !a.matteOf).sort((a, b) => b.addedAt - a.addedAt)))
+  const assets = useEditor(useShallow((s) => Object.values(s.project.assets).filter((a) => !a.matteOf)))
   const used = useEditor(useShallow((s) => [...new Set(Object.values(s.project.clips).map((c) => c.assetId).filter(Boolean))] as string[]))
+  const mediaSort = useUI((s) => s.mediaSort)
+  const mediaShelf = useUI((s) => s.mediaShelf)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<Filter>('all')
+  const [filter, setFilter] = useState<MediaKindFilter>('all')
   const [dragOver, setDragOver] = useState(false)
+  const usedSet = useMemo(() => new Set(used), [used])
 
-  const counts = useMemo(() => {
-    const c = { all: assets.length, video: 0, image: 0, audio: 0 }
-    for (const a of assets) c[a.kind]++
-    return c
-  }, [assets])
-
-  const visible = assets.filter(
-    (a) => (filter === 'all' || a.kind === filter) && (!query || `${a.name} ${a.tags?.join(' ') ?? ''}`.toLowerCase().includes(query.toLowerCase())),
+  const counts = useMemo(() => mediaCounts(assets, usedSet, filter), [assets, usedSet, filter])
+  const visible = useMemo(
+    () => visibleMedia(assets, usedSet, { kind: filter, shelf: mediaShelf, sort: mediaSort, query }),
+    [assets, usedSet, filter, mediaShelf, mediaSort, query],
   )
   const visual = visible.filter((a) => a.kind !== 'audio')
   const audio = visible.filter((a) => a.kind === 'audio')
@@ -96,7 +104,20 @@ export function MediaPanel() {
         </Button>
       </PanelHeader>
       <div className="space-y-2.5 px-3.5 pb-2">
-        <SearchInput value={query} onChange={setQuery} placeholder={tt('Search media, tags…')} />
+        <div className="flex items-center gap-2">
+          <SearchInput className="min-w-0 flex-1" value={query} onChange={setQuery} placeholder={tt('Search media, tags…')} />
+          <Select
+            aria-label={tt('Sort media')}
+            value={mediaSort}
+            onChange={(sort) => useUI.getState().setMediaSort(sort)}
+            className="w-36 shrink-0"
+            options={[
+              { value: 'newest', label: tt('Newest first') },
+              { value: 'name', label: tt('By name') },
+              { value: 'longest', label: tt('Longest first') },
+            ]}
+          />
+        </div>
         {/* Where the panel is too narrow for all four, they go onto a second line rather than off the edge. */}
         <div className="flex flex-wrap gap-1">
           <Chip active={filter === 'all'} onClick={() => setFilter('all')} count={counts.all}>
@@ -111,6 +132,17 @@ export function MediaPanel() {
           <Chip active={filter === 'audio'} onClick={() => setFilter('audio')} count={counts.audio}>
             {tt('Audio')}
           </Chip>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          <ShelfChip shelf="unused" current={mediaShelf} count={counts.unused}>
+            {tt('Unused')}
+          </ShelfChip>
+          <ShelfChip shelf="offline" current={mediaShelf} count={counts.offline}>
+            {tt('Offline')}
+          </ShelfChip>
+          <ShelfChip shelf="favorites" current={mediaShelf} count={counts.favorites}>
+            {tt('Favorites')}
+          </ShelfChip>
         </div>
       </div>
 
@@ -137,7 +169,11 @@ export function MediaPanel() {
             </div>
           </>
         )}
-        {assets.length > 0 && !visible.length && <p className="mt-10 text-center text-sm text-fg-4">{ttx('No media matches “{0}”.', query)}</p>}
+        {assets.length > 0 && !visible.length && (
+          <p className="mt-10 text-center text-sm text-fg-4">
+            {query.trim() ? ttx('No media matches “{0}”.', query) : tt('Nothing in this view.')}
+          </p>
+        )}
         {marquee.box && (
           <div
             className="pointer-events-none absolute z-20 rounded-handle border border-accent/70 bg-accent/10"

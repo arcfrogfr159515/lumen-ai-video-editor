@@ -36,6 +36,10 @@ export const RENDER_RES: { value: RenderRes; label: string; hint: string }[] = [
 
 /** How lower-resolution pictures (previews, renders) are scaled up to the viewer. */
 export type Upscale = 'sharp' | 'smooth'
+/** How the Media panel orders cards. */
+export type MediaSort = 'newest' | 'name' | 'longest'
+/** An extra cut of the Media panel, on top of the kind chips. */
+export type MediaShelf = 'library' | 'unused' | 'offline' | 'favorites'
 
 /** The box being placed to track motion, in project pixels (top-left based) at the playhead. */
 export interface TrackEdit {
@@ -85,6 +89,10 @@ interface UIState {
   multicam: { assetIds: string[] } | null
   /** The camera-angle strip under the preview (for multicam clips). */
   angleViewer: boolean
+  /** Media panel order, remembered with the rest of the layout. */
+  mediaSort: MediaSort
+  /** Media panel shelf (unused, offline, favorites), remembered with the layout. */
+  mediaShelf: MediaShelf
   /** Placing a box to track motion (hides the other gizmos). */
   trackEdit: TrackEdit | null
   /** A timeline being renamed. */
@@ -124,6 +132,8 @@ interface UIState {
   setQueueOpen: (v: boolean) => void
   setMulticam: (v: { assetIds: string[] } | null) => void
   setAngleViewer: (v: boolean) => void
+  setMediaSort: (v: MediaSort) => void
+  setMediaShelf: (v: MediaShelf) => void
   setTrackEdit: (v: TrackEdit | null) => void
   setRenamingTimeline: (id: string | null) => void
   setPaletteOpen: (v: boolean) => void
@@ -136,7 +146,7 @@ interface UIState {
 }
 
 /** What is remembered between sessions. */
-type KeptUI = Pick<UIState, 'leftTab' | 'rightTab' | 'snapping' | 'pxPerSecond' | 'showGuides' | 'useProxies' | 'playbackRes' | 'pausedRes' | 'autoProxies' | 'renderRes' | 'upscale' | 'backgroundRender' | 'usePreviews' | 'angleViewer'>
+type KeptUI = Pick<UIState, 'leftTab' | 'rightTab' | 'snapping' | 'pxPerSecond' | 'showGuides' | 'useProxies' | 'playbackRes' | 'pausedRes' | 'autoProxies' | 'renderRes' | 'upscale' | 'backgroundRender' | 'usePreviews' | 'angleViewer' | 'mediaSort' | 'mediaShelf'>
 
 export const useUI = create<UIState>()(
   persist(
@@ -164,6 +174,8 @@ export const useUI = create<UIState>()(
       queueOpen: false,
       multicam: null,
       angleViewer: true,
+      mediaSort: 'newest',
+      mediaShelf: 'library',
       trackEdit: null,
       renamingTimeline: null,
       paletteOpen: false,
@@ -208,6 +220,8 @@ export const useUI = create<UIState>()(
       setQueueOpen: (queueOpen) => set({ queueOpen }),
       setMulticam: (multicam) => set({ multicam }),
       setAngleViewer: (angleViewer) => set({ angleViewer }),
+      setMediaSort: (mediaSort) => set({ mediaSort }),
+      setMediaShelf: (mediaShelf) => set({ mediaShelf }),
       setTrackEdit: (trackEdit) => set({ trackEdit, ...(trackEdit ? { cropMode: false, maskEdit: null } : {}) }),
       setRenamingTimeline: (renamingTimeline) => set({ renamingTimeline }),
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
@@ -242,6 +256,8 @@ export const useUI = create<UIState>()(
         backgroundRender: flag,
         usePreviews: flag,
         angleViewer: flag,
+        mediaSort: choice('newest', 'name', 'longest'),
+        mediaShelf: choice('library', 'unused', 'offline', 'favorites'),
       }),
       partialize: (s): KeptUI => ({
         leftTab: s.leftTab,
@@ -258,6 +274,8 @@ export const useUI = create<UIState>()(
         backgroundRender: s.backgroundRender,
         usePreviews: s.usePreviews,
         angleViewer: s.angleViewer,
+        mediaSort: s.mediaSort,
+        mediaShelf: s.mediaShelf,
       }),
     },
   ),
