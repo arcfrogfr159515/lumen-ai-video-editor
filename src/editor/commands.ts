@@ -1775,6 +1775,12 @@ export const commands = {
       const from = plainSequence(p, i.sequenceId)
       if (from.settings.fps !== p.settings.fps) throw new CommandError(tt('“{0}” runs at {1} fps and this timeline at {2} — their frames don’t line up', from.name, from.settings.fps, p.settings.fps))
       const clipIds = takeHunk(p, from, { a: [i.a.start, i.a.end], b: [i.b.start, i.b.end], kind: i.a.end === i.a.start ? 'added' : i.b.end === i.b.start ? 'removed' : 'changed' })
+      // The other timeline may hold a clip that plays this one — nothing here plays it, so it was free to. Copied
+      // in, this timeline would play itself: what adding and pasting a clip refuse. (Refused, nothing is taken.)
+      for (const clipId of clipIds) {
+        const c = p.clips[clipId]
+        if (c?.sequenceId && wouldLoop(p, openSequenceId(p), c.sequenceId)) throw new CommandError(tt('“{0}” already contains this timeline — taking it from “{1}” would make a loop', c.name, from.name))
+      }
       return { clipIds }
     },
   }),

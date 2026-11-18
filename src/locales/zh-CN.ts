@@ -34,6 +34,7 @@ const zhCN: Record<string, string> = {
   'A picture from {0}. It is fetched when you ask for it.': '来自 {0} 的图片。点击后才会加载。',
   '“{0}” already contains this timeline — nesting it here would make a loop': '“{0}”已经包含这条时间线——嵌套到这里会形成循环',
   '“{0}” already contains this timeline — pasting it here would make a loop': '“{0}”已经包含这条时间线——粘贴到这里会形成循环',
+  '“{0}” already contains this timeline — taking it from “{1}” would make a loop': '“{0}”已经包含这条时间线——从“{1}”取过来会形成循环',
   '“{0}” already has its sound on its own clip': '“{0}”的声音已经在它自己的片段上了',
   '“{0}” can’t be decoded for {1} from {2} s in (the file is damaged there). The picture before it is held.': '“{0}”从第 {2} 秒起有 {1} 无法解码（文件在那里损坏了）。将保持它之前的画面。',
   '"{0}" can\'t go on {1}': '“{0}”不能放在 {1} 上',
