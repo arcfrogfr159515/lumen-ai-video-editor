@@ -3,8 +3,8 @@
  * downbeats once (kept on the media item), and lays clips out on the beat.
  */
 import { clipBeats, musicClip, type TimelineBeat } from '@/editor/beat-grid'
-import { clipEnd, sourceFrames } from '@/editor/ops'
-import { dispatch, getProject, useEditor } from '@/editor/store'
+import { clipEnd, clipsOnTrack, isMagneticTrack, overlaps, sourceFrames } from '@/editor/ops'
+import { dispatch, getProject, rollbackTo, savepoint, useEditor } from '@/editor/store'
 import type { Asset, Clip } from '@/editor/types'
 import { loadAudio } from '@/engine/audio-engine'
 import { detectBeats, type BeatGrid } from '@/engine/beats'
@@ -74,10 +74,20 @@ export async function cutToBeats(clipIds: string[], opts: { every?: number; musi
   if (i < 0) throw new Error(tt('There are no beats after that point.'))
   const fps = getProject().settings.fps
   const placed: MontageResult['placed'] = []
+  // All of it or none. A move that was refused (a locked track), or that landed a clip somewhere else than on its
+  // beat (the place was taken), used to pass unnoticed: the clip was then cut to end where it should have ended on
+  // the beat — a frame of it was left, wherever it had landed — and every clip was said to have been placed.
+  let failed = ''
   useEditor.getState().transaction(tt('Cut {0} clips to the beat', clips.length), 'user', () => {
+    const mark = savepoint()
+    const stop = (why: string) => {
+      failed = why
+      if (mark) rollbackTo(mark)
+    }
     // Out of the way first, so clips never overlap mid-move.
     const parking = Math.max(...Object.values(getProject().clips).map(clipEnd)) + fps * 10
-    dispatch('clip.move', { moves: clips.map((c, k) => ({ id: c.id, start: parking + k * fps * 60 })), mode: 'free' })
+    const parked = dispatch('clip.move', { moves: clips.map((c, k) => ({ id: c.id, start: parking + k * fps * 60 })), mode: 'free' })
+    if (!parked.ok) return stop(parked.error)
     for (const c of clips) {
       if (i >= beats.length - 1) break
       const j = Math.min(beats.length - 1, i + every)
@@ -95,11 +105,30 @@ export async function cutToBeats(clipIds: string[], opts: { every?: number; musi
         length = beats[k].frame - start
         used = k - i
       }
-      dispatch('clip.move', { moves: [{ id: c.id, start }], mode: 'free' })
-      dispatch('clip.trim', { id: c.id, edge: 'end', frame: start + length })
+      if (isMagneticTrack(getProject(), current.trackId)) {
+        // The main track packs itself around whatever is put on it: the clip goes in, and ends on its beat.
+        const moved = dispatch('clip.move', { moves: [{ id: c.id, start }], mode: 'free' })
+        if (!moved.ok) return stop(moved.error)
+        const cut = dispatch('clip.trim', { id: c.id, edge: 'end', frame: start + length })
+        if (!cut.ok) return stop(cut.error)
+      } else {
+        // Cut to length where it is parked, then put on its beat. Moved at its full length, a clip longer than its
+        // place has room for went to wherever it fitted instead.
+        const cut = dispatch('clip.trim', { id: c.id, edge: 'end', frame: current.start + length })
+        if (!cut.ok) return stop(cut.error)
+        const moved = dispatch('clip.move', { moves: [{ id: c.id, start }], mode: 'free' })
+        if (!moved.ok) return stop(moved.error)
+        const now = getProject()
+        const landed = now.clips[c.id]
+        if (landed.start !== start) {
+          const blocker = clipsOnTrack(now, landed.trackId).find((o) => o.id !== c.id && overlaps(start, start + length, o.start, clipEnd(o)))
+          return stop(tt('“{0}” is in the way on {1}: there is no room there for “{2}” on the beat.', blocker?.name ?? '?', now.tracks.find((t) => t.id === landed.trackId)?.name ?? '', c.name))
+        }
+      }
       placed.push({ clip_id: c.id, start_seconds: Math.round((start / fps) * 1000) / 1000, beats: used })
       i += used
     }
   })
+  if (failed) throw new Error(failed)
   return { music: music.id, bpm: grid.bpm, placed }
 }

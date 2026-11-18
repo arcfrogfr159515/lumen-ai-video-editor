@@ -60,6 +60,7 @@ const zhCN: Record<string, string> = {
   '“{0}” is a freeze frame — there’s no motion in it.': '“{0}”是定格帧——其中没有运动。',
   '“{0}” is an image — it has no sound.': '“{0}”是图片——没有声音。',
   '“{0}” is audio — it has no pictures.': '“{0}”是音频——没有画面。',
+  '“{0}” is in the way on {1}: there is no room there for “{2}” on the beat.': '“{0}”在 {1} 上挡住了位置：那里放不下按节拍排列的“{2}”。',
   '“{0}” is nested in {1}': '“{0}”被嵌套在 {1} 中',
   '“{0}” is nested in {1} — remove it there first': '“{0}”被嵌套在 {1} 中——请先在那里移除它',
   '“{0}” is offline — its file can’t be found.': '“{0}”已离线——找不到它的文件。',
