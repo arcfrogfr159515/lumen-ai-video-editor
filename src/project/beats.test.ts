@@ -10,6 +10,7 @@ const { useEditor } = await import('@/editor/store')
 const { add, addAsset, freshProject, run, spans, trackId } = await import('@/editor/test-helpers')
 
 let ids: string[]
+let music: string
 
 beforeEach(() => {
   freshProject('Montage')
@@ -18,7 +19,7 @@ beforeEach(() => {
   addAsset('song', 60, 'audio')
   run('asset.update', { id: 'song', patch: { beats: { bpm: 120, times, downbeats: times.filter((_, i) => i % 4 === 0), confidence: 1 } } })
   addAsset('pictures', 60)
-  add('Music', 0, 1800, { assetId: 'song' })
+  music = add('Music', 0, 1800, { assetId: 'song' })
   // Three shots of a second each, one after another over the main track.
   ids = [add('Overlay', 0, 30, { assetId: 'pictures' }), add('Overlay', 30, 30, { assetId: 'pictures' }), add('Overlay', 60, 30, { assetId: 'pictures' })]
 })
@@ -56,6 +57,25 @@ describe('clips cut to the beat', () => {
     const res = await cutToBeats(ids, { every: 4 })
     expect(said(res)).toEqual([[0, 4], [2, 4], [4, 4]])
     expect(spans('Overlay')).toEqual([[0, 60], [60, 120], [120, 180], [185, 285]])
+  })
+
+  it('follow one after another when the beats run out before the clips do, and the last one on a beat is said to be as long as it is', async () => {
+    // Three seconds of music: beats at 0, 15 … 75.
+    run('clip.trim', { id: music, edge: 'end', frame: 90 })
+    const res = await cutToBeats(ids, { every: 4 })
+    // The first shot gets its four beats; the second the one beat that is left — and was said to have four. The
+    // third had none, and was left where it had been put out of the way: two minutes past the end of the film.
+    expect(said(res)).toEqual([[0, 4], [2, 1]])
+    expect(spans('Overlay')).toEqual([[0, 60], [60, 75], [75, 105]])
+  })
+
+  it('aren’t moved at all when there is no beat left for the first of them', async () => {
+    run('clip.trim', { id: music, edge: 'end', frame: 90 })
+    const before = steps()
+    // From the last beat on there is nowhere for a clip to end: every clip was put out of the way, and left there.
+    await expect(cutToBeats(ids, { every: 4, from: 75 })).rejects.toThrow(/no beats after that point/)
+    expect(spans('Overlay')).toEqual([[0, 30], [30, 60], [60, 90]])
+    expect(steps()).toBe(before)
   })
 
   it('aren’t said to have been, on a track that is locked', async () => {

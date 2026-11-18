@@ -71,7 +71,8 @@ export async function cutToBeats(clipIds: string[], opts: { every?: number; musi
   const every = Math.max(1, Math.round(opts.every ?? 2))
   const from = opts.from ?? Math.min(...clips.map((c) => c.start))
   let i = beats.findIndex((b) => b.frame >= from && (!opts.downbeat || b.down))
-  if (i < 0) throw new Error(tt('There are no beats after that point.'))
+  // (A clip runs from one beat to another: from the last beat on there is none to run to.)
+  if (i < 0 || i >= beats.length - 1) throw new Error(tt('There are no beats after that point.'))
   const fps = getProject().settings.fps
   const placed: MontageResult['placed'] = []
   // All of it or none. A move that was refused (a locked track), or that landed a clip somewhere else than on its
@@ -97,7 +98,8 @@ export async function cutToBeats(clipIds: string[], opts: { every?: number; musi
       // Media that runs out sooner ends early, on the last beat it reaches.
       const media = current.assetId ? sourceFrames(getProject(), current) : Infinity
       const available = Number.isFinite(media) ? (media - current.inPoint) / Math.max(0.01, current.speed) : Infinity
-      let used = every
+      // (The last clip the beats reach gets the beats that are left, and is said to have those.)
+      let used = j - i
       if (length > available) {
         let k = i + 1
         while (k < j && beats[k].frame - start <= available) k++
@@ -127,6 +129,15 @@ export async function cutToBeats(clipIds: string[], opts: { every?: number; musi
       }
       placed.push({ clip_id: c.id, start_seconds: Math.round((start / fps) * 1000) / 1000, beats: used })
       i += used
+    }
+    // The clips the beats ran out for follow the last one that got its beats, one after another, at the length
+    // they have. They were left where they had been put out of the way: minutes past the end of the film.
+    let cursor = placed.length ? clipEnd(getProject().clips[placed[placed.length - 1].clip_id]) : 0
+    for (const c of clips) {
+      if (placed.some((p) => p.clip_id === c.id)) continue
+      const moved = dispatch('clip.move', { moves: [{ id: c.id, start: cursor }], mode: 'free' })
+      if (!moved.ok) return stop(moved.error)
+      cursor = clipEnd(getProject().clips[c.id])
     }
   })
   if (failed) throw new Error(failed)
