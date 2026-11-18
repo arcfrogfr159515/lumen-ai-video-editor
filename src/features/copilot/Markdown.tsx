@@ -194,7 +194,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
 }
 
 /** A small "copy" button that confirms with a check. */
-export function CopyButton({ text, className, label = 'Copy' }: { text: string | (() => string); className?: string; label?: string }) {
+export function CopyButton({ text, className, label = tt('Copy') }: { text: string | (() => string); className?: string; label?: string }) {
   const [copied, setCopied] = useState(false)
   const copy = () => {
     void navigator.clipboard.writeText(typeof text === 'function' ? text() : text).then(() => {
