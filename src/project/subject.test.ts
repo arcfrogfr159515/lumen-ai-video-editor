@@ -36,4 +36,26 @@ describe('text behind the subject', () => {
     useEditor.getState().undo()
     expect(getProject().tracks.map((t) => t.id)).toEqual(before)
   })
+
+  it('leaves nothing behind when it can’t be finished', async () => {
+    freshProject('旅行短片')
+    addAsset('footage', 10)
+    addAsset('matte', 10, 'video', { matteOf: { assetId: 'footage', subject: 'person', from: 0, to: 300 } })
+    const top = run('track.add', { kind: 'video', name: 'B-roll', index: 0 }) as string
+    const clipId = run('clip.add', { trackId: top, kind: 'video', start: 0, duration: 90, assetId: 'footage' }) as string
+    // The footage's track is locked: its copy can't be taken off it to the track above the title.
+    run('track.update', { id: top, patch: { locked: true } })
+    const before = getProject()
+    const steps = useEditor.getState().past.length
+
+    await expect(textBehindSubject(clipId, { text: '你好' })).rejects.toThrow(/锁定/)
+
+    // The title, its track, an empty track for the subject and a copy of the footage — on the locked track — were
+    // all left on the timeline, as a step named “Text behind subject”.
+    const p = getProject()
+    expect(p.tracks.map((t) => t.name)).toEqual(before.tracks.map((t) => t.name))
+    expect(Object.keys(p.clips)).toEqual(Object.keys(before.clips))
+    expect(p.clips).toEqual(before.clips)
+    expect(useEditor.getState().past).toHaveLength(steps)
+  })
 })

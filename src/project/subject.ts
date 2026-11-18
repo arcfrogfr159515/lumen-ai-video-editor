@@ -4,7 +4,7 @@
  * subject cut out on top of the title, so the words sit behind the person.
  */
 import { placeTitle } from '@/editor/placement'
-import { dispatch, getProject, useEditor, type ActionSource } from '@/editor/store'
+import { dispatch, getProject, rollbackTo, savepoint, useEditor, type ActionSource } from '@/editor/store'
 import type { Clip } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { subjectMatte, type MatteProgress, type Subject } from './segment'
@@ -49,7 +49,7 @@ export async function textBehindSubject(clipId: string, opts: SubjectOptions & {
   const source = opts.source ?? 'user'
   let subjectClipId = ''
   let titleClipId = ''
-  useEditor.getState().transaction(tt('Text behind subject'), source, () => {
+  const build = () => {
     const index = (trackId: string) => getProject().tracks.findIndex((t) => t.id === trackId)
     const base = getProject().clips[clipId]
 
@@ -89,6 +89,18 @@ export async function textBehindSubject(clipId: string, opts: SubjectOptions & {
     ok(dispatch('clip.move', { moves: [{ id: copy, start: base.start, trackId: top }], mode: 'overwrite' }, { source }))
     ok(dispatch('clip.update', { ids: [copy], patch: { matte, name: tt('{0} — subject', base.name), audio: { volume: -60 } } }, { source }))
     subjectClipId = copy
+  }
+  useEditor.getState().transaction(tt('Text behind subject'), source, () => {
+    // All of it or none. A step that was refused part-way (the footage is on a locked track, say) left what had
+    // been made so far on the timeline: the title, a track for it, an empty track for the subject and a copy of
+    // the footage.
+    const mark = savepoint()
+    try {
+      build()
+    } catch (err) {
+      if (mark) rollbackTo(mark)
+      throw err
+    }
   })
   useUI.getState().select([titleClipId])
   return { subjectClipId, titleClipId }
