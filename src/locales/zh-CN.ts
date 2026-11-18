@@ -3031,6 +3031,7 @@ const zhCN: Record<string, string> = {
   'to must be outside the stretch being moved': 'to 必须在被移动的范围之外',
   'To next': '到下一点',
   'To-do': '待办',
+  'To-do {0}': '待办 {0}',
   'To-dos': '待办',
   'Today': '今天',
   'Toggle {0}': '开关{0}',

@@ -24,7 +24,7 @@ export const markerKindInfo = (kind: MarkerFilter) => MARKER_KINDS.find((k) => k
 /** The label a new marker of a kind gets when none is given. */
 export function defaultMarkerLabel(markers: readonly Marker[], kind: MarkerFilter) {
   const n = markers.filter((m) => markerKindOf(m) === kind).length + 1
-  return kind === 'chapter' ? tt('Chapter {0}', n) : kind === 'todo' ? `To-do ${n}` : kind === 'comment' ? tt('Comment {0}', n) : tt('Marker {0}', markers.length + 1)
+  return kind === 'chapter' ? tt('Chapter {0}', n) : kind === 'todo' ? tt('To-do {0}', n) : kind === 'comment' ? tt('Comment {0}', n) : tt('Marker {0}', markers.length + 1)
 }
 
 export interface MarkerQuery {
