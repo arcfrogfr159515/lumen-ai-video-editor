@@ -15,13 +15,13 @@ import { discardRecovery, forgetRecent, newProject, openProject, recover, showHo
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
-function timeAgo(ms: number) {
+export function timeAgo(ms: number) {
   const s = Math.max(0, (Date.now() - ms) / 1000)
   if (s < 60) return tt('just now')
   if (s < 3600) return tt('{0} min ago', Math.floor(s / 60))
   if (s < 86400) return tt('{0} h ago', Math.floor(s / 3600))
   const d = Math.floor(s / 86400)
-  if (d < 7) return d === 1 ? 'yesterday' : tt('{0} days ago', d)
+  if (d < 7) return d === 1 ? tt('yesterday') : tt('{0} days ago', d)
   return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 

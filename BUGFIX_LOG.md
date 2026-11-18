@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R13 | Clearing the timecode in the ruler's corner and pressing Enter, or clicking away, sent the playhead to the start of the timeline; nothing typed should move nothing | `parseTimecode` turns each piece of what was typed into a number, and as a number an empty piece is 0 — so an empty field was the time 0, not “not a time” | `src/lib/time.test.ts` (new; the first tests of `parseTimecode`) | this round |
+| R14 | In a Chinese window the home screen said “yesterday”, in English, for a project opened a day ago — between “3 小时前” and “2 天前” | `timeAgo` wrote the word as it is instead of looking it up (`tt`), and the dictionary had no entry for it; the test that checks the dictionary only sees what is looked up | `src/features/home/HomeScreen.test.ts` (new; runs with the window's language set to Chinese) | this round |
+| R13 | Clearing the timecode in the ruler's corner and pressing Enter, or clicking away, sent the playhead to the start of the timeline; nothing typed should move nothing | `parseTimecode` turns each piece of what was typed into a number, and as a number an empty piece is 0 — so an empty field was the time 0, not “not a time” | `src/lib/time.test.ts` (new; the first tests of `parseTimecode`) | `bda4064` |
 | R12 | A sound effect played after it had been stopped — Play, then Stop before the first sound (a double click on the button) — with the button saying nothing was playing; and two effects asked for one right after the other played one over the other, the first with nothing that could stop it. Stopped is stopped, and only the last one asked for plays | `auditionSfx` stops what is sounding, then waits for the effect to be rendered (a moment, the first time) and starts it — without asking whether a Stop or another effect came in that moment | `src/project/audition.test.ts` (new) | `f6b539b` |
 | R11 | A page's title or description with an apostrophe in it was cut there — “It's a Wonderful Life” was “It” — in what the Copilot reads of a page, in the cards under its replies, and in the name a video imported by link is given | `meta` read a `<meta>` tag's `content` up to the first quote of either kind, not to the quote that opened it | `electron/integrations/web.test.ts` › “what a page says of itself” | `7afdf69` |
 | R10 | Importing a skill folder that sits under `node_modules` (a skill shipped in a package), or whose own name begins with a dot, failed with “Cannot destructure property 'body' of 'info(...)' as it is null” and left nothing imported; it should be imported like any other | `importSkill` decided what a copy leaves out — hidden files, installed packages — by each file's whole path, the path of the folder being imported included, so for such a folder everything was left out. It is now decided by where a file is inside the skill | `electron/integrations/skills.test.ts` (new; the first tests of importing a skill) | `f74d463` |
@@ -25,7 +26,13 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 ## Next — seen while reading, not yet reproduced
 
-Nothing waiting.
+Words the interface shows without looking them up, as R14's was — found by reading, each still to be shown by a test:
+
+| Seen | Where |
+|---|---|
+| The readout drawn while dragging in the timeline says “Insert at” / “Overwrite at”, “ripple” / “Ctrl ripple”, “Fade in” / “Fade out” in English | `src/features/timeline/usePointerController.ts` lines 264, 348, 508 |
+| A Copilot step that was stopped says “stopped” | `src/features/copilot/CopilotPanel.tsx` line 516 |
+| The file name offered for exported markers ends in “chapters” / “markers” | `src/features/notes/NotesPanel.tsx` line 284 |
 
 Read and found sound (rounds 10–13): `src/lib/keybindings.ts`, `src/lib/persisted.ts`, `src/editor/frame-rate.ts`, `src/editor/placement.ts`, `src/editor/playback.ts`, `src/editor/lut.ts`, `electron/log.ts`, `electron/render-cache.ts`, `electron/app-ipc.ts`, `electron/integrations/html.ts`, `electron/integrations/ai/media-gen.ts`, `src/project/subtitle-files.ts`, `src/project/media-import.ts`, `src/integrations/tools/footage.ts`, `src/integrations/tools/kit.ts`. `formatDuration` says “60s” for 59.6 s and “10.0s” for 9.96 s: a matter of style, left alone. A link preview for a page with no title gets no card (the window leaves out cards without a title): taken as meant.
 

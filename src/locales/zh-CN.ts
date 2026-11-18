@@ -3178,6 +3178,7 @@ const zhCN: Record<string, string> = {
   'Y is animated separately': 'Y 轴已单独设置动画',
   'Yellow': '黄色',
   'Yesterday': '昨天',
+  'yesterday': '昨天',
   'You are now on the branch. Edit it, then compare to take back what works.': '你现在在分支上。尽管编辑，之后再比较，把效果更好的部分取回来。',
   'You are on a branch': '你在分支上',
   'You stopped this reply.': '你停止了这条回复。',
