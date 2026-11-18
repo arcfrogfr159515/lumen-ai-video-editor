@@ -73,7 +73,7 @@ export function BrainPicker() {
       <PopoverContent align="start" className="w-[340px] p-0">
         <Command loop className="flex flex-col">
           <Command.Input placeholder={tt('Search models…')} className="h-10 border-b border-line bg-transparent px-3.5 text-sm text-fg outline-none placeholder:text-fg-4" />
-          <Command.List className="max-h-[420px] overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-2xs/[inherit] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-fg-4 [&_[cmdk-group-heading]]:uppercase">
+          <Command.List label={tt('Suggestions')} className="max-h-[420px] overflow-y-auto p-1.5 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-2xs/[inherit] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-fg-4 [&_[cmdk-group-heading]]:uppercase">
             <Command.Empty className="px-3 py-6 text-center text-xs text-fg-4">{tt('No models match.')}</Command.Empty>
 
             <Command.Group heading={tt('Default')}>

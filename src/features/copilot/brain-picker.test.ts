@@ -53,3 +53,12 @@ describe('“Automatic” in the Copilot’s model picker, in a window in Chines
     expect(words).not.toContain('使用 Claude Code')
   })
 })
+
+describe('the list of the Copilot’s model picker, to a screen reader, in a window in Chinese', () => {
+  it('has a Chinese name', () => {
+    const html = renderToString(createElement(BrainPicker))
+    const names = [...html.matchAll(/<[^>]*\brole="listbox"[^>]*>/g)].map((list) => /\baria-label="([^"]*)"/.exec(list[0])?.[1])
+    // Given no name, the list took the library's own, which is English: “Suggestions”.
+    expect(names).toEqual(['建议'])
+  })
+})
