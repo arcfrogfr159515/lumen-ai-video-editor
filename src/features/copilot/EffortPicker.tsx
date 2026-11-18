@@ -4,7 +4,12 @@ import { EFFORT_INFO, type Effort } from '@shared/ai'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { LOCAL_AGENT_NAMES, setEffort, targetEfforts, useAi } from '@/integrations/ai'
 import { cn } from '@/lib/cn'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
+
+// The list of levels is shared with the main process and written in English: a level's name and its line are
+// looked up here, where they are shown ("Low" is also a band of the equalizer, hence the name's context).
+export const effortLabel = (effort: Effort) => ttc('effort', EFFORT_INFO[effort].label)
+export const effortHint = (effort: Effort) => tt(EFFORT_INFO[effort].hint)
 
 /** How hard the chosen model thinks. Only shown when that model has an effort setting. */
 export function EffortPicker() {
@@ -34,7 +39,7 @@ export function EffortPicker() {
           className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 font-medium text-fg-3 outline-none transition-colors hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 data-[state=open]:bg-ink/[0.07] data-[state=open]:text-fg"
         >
           <Gauge className={cn('size-3', current && 'text-accent-2')} />
-          {current ? EFFORT_INFO[current].label : tt('Default')}
+          {current ? effortLabel(current) : tt('Default')}
           <ChevronDown className="size-3 text-fg-4" />
         </button>
       </PopoverTrigger>
@@ -43,9 +48,9 @@ export function EffortPicker() {
           <div className="text-sm font-semibold text-fg">{tt('Effort')}</div>
           <p className="mt-0.5 text-2xs leading-relaxed text-fg-4">{tt('How hard the model thinks before it edits. Higher is slower and uses more of your plan or credits.')}</p>
         </div>
-        <Option title={tt('Default')} hint={defaultEffort ? `${EFFORT_INFO[defaultEffort].label}${source}` : tt('The model’s own setting')} selected={!current} onSelect={() => pick(undefined)} />
+        <Option title={tt('Default')} hint={defaultEffort ? `${effortLabel(defaultEffort)}${source}` : tt('The model’s own setting')} selected={!current} onSelect={() => pick(undefined)} />
         {levels.map((effort) => (
-          <Option key={effort} title={EFFORT_INFO[effort].label} hint={EFFORT_INFO[effort].hint} selected={current === effort} onSelect={() => pick(effort)} />
+          <Option key={effort} title={effortLabel(effort)} hint={effortHint(effort)} selected={current === effort} onSelect={() => pick(effort)} />
         ))}
       </PopoverContent>
     </Popover>
