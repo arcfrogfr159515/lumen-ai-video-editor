@@ -2,7 +2,7 @@
  * What the Media panel lists: kind, shelf, search and sort. Pure, so the
  * panel and the tests share one set of rules.
  */
-import type { Asset, AssetKind } from '@/editor/types'
+import type { Asset, AssetKind, Project } from '@/editor/types'
 
 export type MediaKindFilter = 'all' | AssetKind
 /** library: everything that passed the kind filter. The others narrow it. */
@@ -22,6 +22,28 @@ const byName = (a: Asset, b: Asset) => a.name.localeCompare(b.name, undefined, {
 export function mediaHaystack(asset: Asset): string {
   const file = asset.source.type === 'file' ? asset.source.fileName : asset.source.pattern
   return `${asset.name} ${asset.tags?.join(' ') ?? ''} ${file}`.toLowerCase()
+}
+
+/**
+ * The media the open timeline uses: what the “used” dot marks, and what the Unused shelf leaves out. A clip that
+ * plays a nested timeline uses what that timeline's clips use, however far down: nested, a clip is still in the
+ * film. (Only the clips lying on the open timeline were counted — nest two of them, and their media was listed as
+ * unused, beside media that is, and removing it from there took them out of the film.)
+ */
+export function usedMedia(project: Pick<Project, 'clips' | 'sequences'>): string[] {
+  const used = new Set<string>()
+  const seen = new Set<string>()
+  const walk = (clips: Project['clips']) => {
+    for (const c of Object.values(clips)) {
+      if (c.assetId) used.add(c.assetId)
+      if (!c.sequenceId || seen.has(c.sequenceId)) continue
+      seen.add(c.sequenceId)
+      const nested = project.sequences?.[c.sequenceId]
+      if (nested) walk(nested.clips)
+    }
+  }
+  walk(project.clips)
+  return [...used]
 }
 
 export function sortMedia(assets: readonly Asset[], sort: MediaSort): Asset[] {

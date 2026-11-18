@@ -13,7 +13,7 @@ import { dispatch, useEditor } from '@/editor/store'
 import type { Asset } from '@/editor/types'
 import { useUI, type MediaShelf } from '@/editor/ui-store'
 import { onPreviewChange, previewing, togglePreview } from './audio-preview'
-import { mediaCounts, visibleMedia, type MediaKindFilter } from './library'
+import { mediaCounts, usedMedia, visibleMedia, type MediaKindFilter } from './library'
 import { dnd } from '@/features/dnd'
 import { useTimelineView } from '@/editor/timeline-view'
 import { timelineActions } from '@/features/timeline/timeline-actions'
@@ -44,7 +44,7 @@ function ShelfChip({ shelf, current, count, children }: { shelf: MediaShelf; cur
 export function MediaPanel() {
   // Subject mattes belong to their footage, not the library.
   const assets = useEditor(useShallow((s) => Object.values(s.project.assets).filter((a) => !a.matteOf)))
-  const used = useEditor(useShallow((s) => [...new Set(Object.values(s.project.clips).map((c) => c.assetId).filter(Boolean))] as string[]))
+  const used = useEditor(useShallow((s) => usedMedia(s.project)))
   const mediaSort = useUI((s) => s.mediaSort)
   const mediaShelf = useUI((s) => s.mediaShelf)
   const [query, setQuery] = useState('')

@@ -62,7 +62,9 @@ export function removeMedia(ids: string[]) {
   if (!ids.length) return
   const project = getProject()
   const set = new Set(ids)
-  const clips = Object.values(project.clips).filter((c) => c.assetId && set.has(c.assetId)).length
+  // On every timeline, as the command removes them: the open one, the others, the nested ones. (Counted on the open
+  // one alone, media used only inside a nested timeline went “Removed 1 media item” — and its clip with it, unsaid.)
+  const clips = [project.clips, ...Object.values(project.sequences ?? {}).map((seq) => seq.clips)].flatMap((all) => Object.values(all)).filter((c) => c.assetId && set.has(c.assetId)).length
   const res = dispatch('asset.remove', { ids })
   if (!res.ok) return void toast.error(res.error)
   clearMediaSelection()
