@@ -85,36 +85,87 @@ export const followsRipple = (track: RippleFlags) => !track.locked && track.sync
 /** The tracks an edit that ripples the whole timeline moves. */
 export const rippleTracks = (p: Project) => p.tracks.filter(followsRipple)
 
-/** A draft's value as it stands, plain; anything else as it is. An untouched draft answers with what it was made from. */
-const plain = <T>(value: T): T => (isDraft(value) ? ((current as (draft: unknown) => unknown)(value) as T) : value)
-
-/**
- * A project's clips, for reading. A command runs on a draft, and a draft answers each clip read from it with a
- * draft of that clip — so going through every clip after every command (which normalizeProject does) made a draft
- * of every clip, each of which then had to be looked over again when the command ended: an edit cost as much as
- * the project was large (13 ms a step at 4,000 clips, measured). Read plain, the clips a command left alone are
- * the very objects they were, and only a clip that has to change is written to, through the draft.
- */
-const clipsOf = (p: Project): Readonly<Record<string, Clip>> => plain(p.clips)
-
 export function packTrack(p: Project, trackId: string) {
-  const onTrack: Clip[] = []
-  for (const c of Object.values(clipsOf(p))) if (c.trackId === trackId) onTrack.push(c)
-  onTrack.sort((a, b) => a.start - b.start)
   let cursor = 0
-  for (const c of onTrack) {
-    if (c.start !== cursor) p.clips[c.id].start = cursor
+  for (const c of clipsOnTrack(p, trackId)) {
+    if (c.start !== cursor) c.start = cursor
     cursor += c.duration
   }
 }
 
 /** Packs magnetic tracks; with the state before the edit, grouped clips elsewhere follow their magnetic partners. */
 export function normalizeProject(p: Project, before?: Project) {
-  // A command that changed no clip and no track (a marker, a media item, the mixer's master): what was packed
-  // before it still is, and nothing has moved for a group to follow.
-  if (before && isDraft(p) && plain(p.clips) === before.clips && plain(p.tracks) === before.tracks) return
   for (const t of p.tracks) if (isMagnetic(t)) packTrack(p, t.id)
   if (before) syncGroups(p, before)
+}
+
+/**
+ * What normalizeProject would change, worked out without changing anything: the clips that have to move, and
+ * where to. For a project that is plain — as a command leaves it, not the draft the command ran on.
+ *
+ * The store asks this after every command. It used to run normalizeProject on the command's draft, and a draft
+ * answers each clip read from it with a draft of that clip, each of which is looked over again when the command
+ * ends: every edit cost as much as the project was large (7 ms at 4,000 clips for a marker, which moves nothing).
+ * Plain clips are read for next to nothing, and a command that left the clips and the tracks as they were is
+ * answered at once.
+ */
+export function normalizeMoves(p: Project, before?: Project): Map<string, Frame> {
+  const moves = new Map<string, Frame>()
+  // No clip and no track changed: what was packed before the command still is, and nothing has moved for a group to follow.
+  if (before && p.clips === before.clips && p.tracks === before.tracks) return moves
+  const magnetic = new Set<string>()
+  for (const t of p.tracks) if (isMagnetic(t)) magnetic.add(t.id)
+  if (!magnetic.size) return moves
+  const clips = Object.values(p.clips)
+
+  // packTrack, for each magnetic track.
+  const onTrack = new Map<string, Clip[]>()
+  for (const c of clips) {
+    if (!magnetic.has(c.trackId)) continue
+    const list = onTrack.get(c.trackId)
+    if (list) list.push(c)
+    else onTrack.set(c.trackId, [c])
+  }
+  for (const list of onTrack.values()) {
+    list.sort((a, b) => a.start - b.start)
+    let cursor = 0
+    for (const c of list) {
+      if (c.start !== cursor) moves.set(c.id, cursor)
+      cursor += c.duration
+    }
+  }
+  if (!before) return moves
+
+  // syncGroups: each group's clips are listed once, and only if a grouped clip on a magnetic track moved at all.
+  // (Looked for among all the clips for every clip that moved, a ripple through a long main track took the square of its length.)
+  let groups: Map<string, Clip[]> | null = null
+  const membersOf = (groupId: string): Clip[] => {
+    if (!groups) {
+      groups = new Map()
+      for (const c of clips) {
+        if (!c.groupId) continue
+        const list = groups.get(c.groupId)
+        if (list) list.push(c)
+        else groups.set(c.groupId, [c])
+      }
+    }
+    return groups.get(groupId) ?? []
+  }
+  for (const m of clips) {
+    if (!m.groupId || !magnetic.has(m.trackId)) continue
+    const was = before.clips[m.id]
+    const start = moves.get(m.id) ?? m.start
+    if (!was || !magnetic.has(was.trackId) || was.start === start) continue
+    for (const x of membersOf(m.groupId)) {
+      if (x.id === m.id || magnetic.has(x.trackId)) continue
+      const xWas = before.clips[x.id]
+      if (!xWas || xWas.groupId !== m.groupId) continue
+      moves.set(x.id, Math.max(0, start + (xWas.start - was.start)))
+    }
+  }
+  // A follower told to go where it already is has nothing to do.
+  for (const [id, to] of moves) if (p.clips[id].start === to) moves.delete(id)
+  return moves
 }
 
 // A clip made shorter by a short take remembers the length of its place (`takeSlot`), to get it back with a
@@ -149,31 +200,15 @@ export function fitToMedia(p: Project, clip: Clip) {
 export function syncGroups(p: Project, before: Project) {
   const magnetic = new Set(p.tracks.filter(isMagnetic).map((t) => t.id))
   if (!magnetic.size) return
-  const clips = Object.values(clipsOf(p))
-  // Each group's clips, listed once, and only if a grouped clip on a magnetic track has moved at all. (Looked for
-  // among all the clips for every clip that moved, a ripple through a long main track took the square of its length.)
-  let groups: Map<string, Clip[]> | null = null
-  const membersOf = (groupId: string): Clip[] => {
-    if (!groups) {
-      groups = new Map()
-      for (const c of clips) {
-        if (!c.groupId) continue
-        const list = groups.get(c.groupId)
-        if (list) list.push(c)
-        else groups.set(c.groupId, [c])
-      }
-    }
-    return groups.get(groupId) ?? []
-  }
-  for (const m of clips) {
+  for (const m of Object.values(p.clips)) {
     if (!m.groupId || !magnetic.has(m.trackId)) continue
     const was = before.clips[m.id]
     if (!was || !magnetic.has(was.trackId) || was.start === m.start) continue
-    for (const x of membersOf(m.groupId)) {
-      if (x.id === m.id || magnetic.has(x.trackId)) continue
+    for (const x of Object.values(p.clips)) {
+      if (x.id === m.id || x.groupId !== m.groupId || magnetic.has(x.trackId)) continue
       const xWas = before.clips[x.id]
       if (!xWas || xWas.groupId !== m.groupId) continue
-      p.clips[x.id].start = Math.max(0, m.start + (xWas.start - was.start))
+      x.start = Math.max(0, m.start + (xWas.start - was.start))
     }
   }
 }

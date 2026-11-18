@@ -7,7 +7,7 @@ import { create } from 'zustand'
 import { commands, CommandError, type AnyCommand, type CommandInput, type CommandName } from './commands'
 import { DEFAULT_TEXT, DEFAULT_TRANSFORM } from './defaults'
 import { createEmptyProject } from './new-project'
-import { normalizeProject } from './ops'
+import { normalizeMoves, normalizeProject } from './ops'
 import type { Clip, Project } from './types'
 
 enablePatches()
@@ -145,8 +145,19 @@ export const useEditor = create<EditorState>()((set, get) => ({
     try {
       ;[next, patches, inverse] = produceWithPatches(before, (draft) => {
         result = def.run(draft, parsed.data)
-        normalizeProject(draft, before)
       })
+      // The timeline's standing rules (the main track packed edge to edge, grouped clips following their partner
+      // there), kept after every command: what has to move is worked out on the project as the command left it —
+      // plain, so nothing is drafted for the asking — and only what has to move is then moved, as part of the same edit.
+      const moves = normalizeMoves(next, before)
+      if (moves.size) {
+        const [settled, more, undoMore] = produceWithPatches(next, (draft) => {
+          for (const [id, start] of moves) draft.clips[id].start = start
+        })
+        next = settled
+        patches = [...patches, ...more]
+        inverse = [...undoMore, ...inverse]
+      }
     } catch (err) {
       if (err instanceof CommandError) return { ok: false, error: err.message }
       throw err
