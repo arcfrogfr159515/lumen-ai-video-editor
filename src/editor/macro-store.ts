@@ -110,8 +110,10 @@ export function stopRecording(name?: string): Macro | null {
     return null
   }
   const taken = new Set(macros.map((m) => m.name.toLowerCase()))
-  let label = name?.trim() || tt('Macro')
-  for (let n = 2; taken.has(label.toLowerCase()); n++) label = `${name?.trim() || 'Macro'} ${n}`
+  const given = name?.trim()
+  let label = given || tt('Macro')
+  // (With no name given, the second was "Macro 2" — the English word as written — after a first named in the window's language.)
+  for (let n = 2; taken.has(label.toLowerCase()); n++) label = given ? `${given} ${n}` : tt('Macro {0}', n)
   const macro: Macro = { id: uid('macro'), name: label, steps: recording.steps.map(({ command, input, title }) => ({ command, input, title })), createdAt: Date.now(), fps: getProject().settings.fps }
   useMacros.setState({ macros: [...macros, macro], lastId: macro.id, recording: null })
   return macro
