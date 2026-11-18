@@ -51,6 +51,29 @@ describe('importing files', () => {
     expect(said.success).toEqual(['Imported 2 files'])
   })
 
+  it('brings in once a file that is dropped again while it is still being read', async () => {
+    // A long file takes a moment to read, and nothing shows in the library until it has been: dropped a second time
+    // in that moment, it wasn't in the project yet for either import, and both added it.
+    const [first, second] = await Promise.all([importMediaFiles([file('D:/shoot/long.mp4')]), importMediaFiles([file('D:/shoot/long.mp4')])])
+    expect(library()).toEqual(['D:/shoot/long.mp4'])
+    expect(first).toHaveLength(1)
+    expect(second.map((a) => a.id)).toEqual(first.map((a) => a.id))
+    // The import that found it there by then doesn't say it imported anything, and doesn't leave "Importing…" up.
+    expect(said.success).toEqual(['Imported 1 file'])
+    expect(said.dismissed).toBe(1)
+  })
+
+  it('brings in what is new of two overlapping imports, each file once', async () => {
+    const [first, second] = await Promise.all([
+      importMediaFiles([file('D:/shoot/a.mp4'), file('D:/shoot/b.mp4')]),
+      importMediaFiles([file('D:/shoot/b.mp4'), file('D:/shoot/c.mp4')]),
+    ])
+    expect(library().sort()).toEqual(['D:/shoot/a.mp4', 'D:/shoot/b.mp4', 'D:/shoot/c.mp4'])
+    expect(first.map((a) => a.name).sort()).toEqual(['a', 'b'])
+    expect(second.map((a) => a.name).sort()).toEqual(['b', 'c'])
+    expect(said.success.sort()).toEqual(['Imported 1 file', 'Imported 2 files'])
+  })
+
   it('skips a file that is in the project already, and gives the one that is', async () => {
     const [first] = await importMediaFiles([file('D:/shoot/a.mp4')])
     const again = await importMediaFiles([file('d:/SHOOT/A.mp4'), file('D:/shoot/c.mp4')])

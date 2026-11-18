@@ -68,11 +68,13 @@ export interface ImportFailure {
  */
 export async function importMediaFiles(files: MediaFileInfo[], failures: ImportFailure[] = []): Promise<Asset[]> {
   if (!files.length) return []
-  const byPath = new Map(
-    Object.values(getProject().assets)
-      .filter((a) => a.source.type === 'file' && a.source.path)
-      .map((a) => [(a.source as { path: string }).path.toLowerCase(), a]),
-  )
+  const inProject = () =>
+    new Map(
+      Object.values(getProject().assets)
+        .filter((a) => a.source.type === 'file' && a.source.path)
+        .map((a) => [(a.source as { path: string }).path.toLowerCase(), a]),
+    )
+  const byPath = inProject()
   const existing: Asset[] = []
   // A file named twice is one file. A folder and a file in it, both given, name it twice — what is in a folder is
   // listed without looking at what else was given — and it stood in the media library twice.
@@ -95,7 +97,17 @@ export async function importMediaFiles(files: MediaFileInfo[], failures: ImportF
       return null
     }
   })
-  const assets = results.filter((a): a is Asset => Boolean(a))
+  // Reading a file takes a moment, and what the project holds is asked again once it has been read. A file dropped a
+  // second time in that moment — nothing shows in the library until it has been read — wasn't in the project yet
+  // for either import, and both added it.
+  const arrived = inProject()
+  const assets = results
+    .filter((a): a is Asset => Boolean(a))
+    .filter((a) => {
+      const hit = a.source.type === 'file' && a.source.path ? arrived.get(a.source.path.toLowerCase()) : undefined
+      if (hit) existing.push(hit)
+      return !hit
+    })
   if (assets.length) {
     useEditor.getState().transaction(tt('Import {0}', plural(assets.length, 'file')), 'user', () => {
       for (const asset of assets) dispatch('asset.add', { asset })
@@ -112,6 +124,8 @@ export async function importMediaFiles(files: MediaFileInfo[], failures: ImportF
   }
   if (failed.length === 1 && !assets.length) toast.error(tt('Couldn’t import {0}', failed[0].name), { id, description: failed[0].reason })
   else if (failed.length) toast.error(tt('Imported {0}, couldn’t import {1}', assets.length, failed.length), { id, description: failed.map((f) => `${f.name}: ${f.reason}`).join('\n') })
+  // Everything it was reading came in meanwhile: there is nothing of its own to say.
+  else if (id && !assets.length) toast.dismiss(id)
   else if (id) toast.success(tt('Imported {0}', plural(assets.length, 'file')), { id })
   return [...assets, ...existing]
 }
