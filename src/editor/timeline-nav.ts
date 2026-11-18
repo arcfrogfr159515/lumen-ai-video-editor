@@ -49,7 +49,14 @@ export function startTimelineNav() {
     }
     const now = openSequenceId(s.project)
     const was = openSequenceId(prev.project)
-    if (now === was) return
+    if (now === was) {
+      // The same timeline at another frame rate: every clip, keyframe and marker is re-timed, and the playhead
+      // stays on the moment it was on. It kept its frame number: at twice the frames a second it stood half as far
+      // into the film, at fewer it could stand past the end.
+      const [from, to] = [prev.project.settings.fps, s.project.settings.fps]
+      if (from !== to && from > 0) playback.seek((usePlayback.getState().frame * to) / from)
+      return
+    }
     // Each timeline keeps its own playhead.
     playheads.set(was, usePlayback.getState().frame)
     playback.pause()
