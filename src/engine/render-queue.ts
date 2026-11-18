@@ -55,10 +55,23 @@ export function queueExport(job: Pick<QueueJob, 'label' | 'detail' | 'project' |
   return full
 }
 
-/** Starts working through the queue (a no-op while it already is). Resolves when it stops. */
-export async function startQueue() {
-  if (useRenderQueue.getState().active) return
+/** The loop working through the queue, while there is one: there is only ever one. */
+let working: Promise<void> | null = null
+
+/**
+ * Starts working through the queue (a no-op while it already is). Resolves when it stops.
+ *
+ * Whether it "already is" was told by `active` — which Stop clears at once, while the loop goes on until the job that
+ * is rendering has finished. Started again in between, the queue had a second loop beside the first. Each waits for
+ * an export to end before it takes a job, but a job isn't an export yet while its file is being opened: in that
+ * moment the other loop took one too, and one of the two failed with "Another export is already running".
+ */
+export function startQueue(): Promise<void> {
   useRenderQueue.setState({ active: true })
+  return (working ??= work().finally(() => (working = null)))
+}
+
+async function work() {
   try {
     for (;;) {
       if (!useRenderQueue.getState().active) break

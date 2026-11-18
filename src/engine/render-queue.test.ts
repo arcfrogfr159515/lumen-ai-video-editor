@@ -14,6 +14,8 @@ const harness = vi.hoisted(() => {
     forgotten: [] as string[],
     opened: [] as string[],
     picked: null as ExportTarget | null,
+    /** How long opening a job's file takes, in milliseconds (it is a call to the main process). */
+    openTakes: 0,
   }
   return { ExportCancelled, state, desk }
 })
@@ -25,6 +27,7 @@ vi.mock('@/lib/platform', () => ({
       export: {
         open: async (token: string) => {
           harness.desk.opened.push(token)
+          if (harness.desk.openTakes) await new Promise((r) => setTimeout(r, harness.desk.openTakes))
           return { id: 'handle', path: `C:/out/${token}.mp4`, token }
         },
         forget: async (token: string) => {
@@ -66,6 +69,7 @@ describe('the render queue', () => {
     harness.desk.forgotten = []
     harness.desk.opened = []
     harness.desk.picked = null
+    harness.desk.openTakes = 0
     harness.state.running = false
     harness.state.run = (_project, _settings, handle) => Promise.resolve({ path: handle.path, size: 4 })
   })
@@ -160,6 +164,52 @@ describe('the render queue', () => {
     harness.desk.picked = { token: 'again', path: 'D:/films/bad.mp4', folder: false }
     expect(await retryJob(job.id)).toBe(true)
     expect(useRenderQueue.getState().jobs[0]).toMatchObject({ status: 'queued', error: undefined, target: harness.desk.picked, progress: 0 })
+  })
+
+  it('is worked through by one loop, however often it is stopped and started while a job renders', async () => {
+    // Stop, then Start again before the job that was rendering had finished: the queue didn't look active, so a
+    // second loop began beside the first. Each waits for an export to end before taking the next job — but a job
+    // is not yet an export while its file is being opened. In that moment the other loop took a job too, and one
+    // of the two failed: "Another export is already running".
+    vi.useFakeTimers()
+    harness.desk.on = true
+    harness.desk.openTakes = 50
+    let inside = 0
+    const finish: Record<string, () => void> = {}
+    // As the real export does: one at a time, and a second one is refused.
+    harness.state.run = async (_project, _settings, handle) => {
+      if (inside) throw new Error('Another export is already running — wait for it to finish.')
+      inside++
+      harness.state.running = true
+      try {
+        await new Promise<void>((resolve) => (finish[handle.path] = resolve))
+      } finally {
+        inside--
+        harness.state.running = false
+      }
+      return { path: handle.path, size: 4 }
+    }
+    for (const name of ['one', 'two', 'three']) add(name)
+    const first = startQueue()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(statuses()[0]).toEqual(['one', 'running'])
+    stopQueue(false)
+    const second = startQueue()
+    // The first job ends just before a waiting loop would look again (it looks once a second).
+    await vi.advanceTimersByTimeAsync(990)
+    finish['C:/out/one.mp4']?.()
+    for (let i = 0; i < 4; i++) {
+      await vi.advanceTimersByTimeAsync(1000)
+      for (const path of Object.keys(finish)) finish[path]()
+    }
+    await Promise.all([first, second])
+    expect(statuses()).toEqual([
+      ['one', 'done'],
+      ['two', 'done'],
+      ['three', 'done'],
+    ])
+    expect(useRenderQueue.getState().active).toBe(false)
+    vi.useRealTimers()
   })
 
   it('waits while another export is already running, instead of starting a second one', async () => {
