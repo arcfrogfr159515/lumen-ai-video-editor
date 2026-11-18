@@ -6,7 +6,7 @@ import { current, isDraft } from 'immer'
 import { clamp } from '@/lib/math'
 import { uid } from '@/lib/id'
 import { createClip, createTrack, TRACK_HEIGHTS } from './defaults'
-import { ANIMATABLE, propAt } from './keyframes'
+import { ANIMATABLE, evalKeyframes, propAt } from './keyframes'
 import { consumed, consumedAt, localForConsumed, sourceFrameAt, speedAt, splitInPoints } from './timing'
 import type { AnimatableProp, Clip, ClipKind, Frame, Project, Track, Transition } from './types'
 import { tt } from '@/lib/i18n'
@@ -404,12 +404,28 @@ function shiftFollow(clip: Clip, by: number) {
   for (const m of clip.masks ?? []) if (m.follow) m.follow.start += by
 }
 
+/**
+ * Keyframes are in clip frames: they move with the clip's head, and those that fall before it or past the clip's
+ * end are let go. Where one is let go, the curve it held up is cut — so, as a cut through a clip does, a keyframe
+ * is left at that edge with the value the curve had there. Without it, what remains of the clip moved otherwise
+ * than it did: a push in trimmed part-way through was over from the first frame, and one trimmed off whole put
+ * the picture back where it is without keyframes. (A speed ramp is left as it was: its keyframes say which
+ * footage shows when, which is another matter than where the picture is.)
+ */
 function shiftKeyframes(clip: Clip, by: number) {
   for (const prop of ANIMATABLE) {
     const kfs = clip.keyframes[prop]
     if (!kfs) continue
-    const shifted = kfs.map((k) => ({ ...k, frame: k.frame + by })).filter((k) => k.frame >= 0 && k.frame <= clip.duration)
-    if (shifted.length) clip.keyframes[prop] = shifted
+    const moved = kfs.map((k) => ({ ...k, frame: k.frame + by }))
+    const kept = moved.filter((k) => k.frame >= 0 && k.frame <= clip.duration)
+    if (prop !== 'speed' && moved.length) {
+      const before = moved.filter((k) => k.frame < 0)
+      const after = moved.filter((k) => k.frame > clip.duration)
+      // The curve from the last keyframe let go at the head runs on to the next one with the easing it had.
+      if (before.length && kept[0]?.frame !== 0) kept.unshift({ frame: 0, value: evalKeyframes(moved, 0), easing: before[before.length - 1].easing })
+      if (after.length && kept[kept.length - 1]?.frame !== clip.duration) kept.push({ frame: clip.duration, value: evalKeyframes(moved, clip.duration), easing: 'linear' })
+    }
+    if (kept.length) clip.keyframes[prop] = kept
     else delete clip.keyframes[prop]
   }
 }

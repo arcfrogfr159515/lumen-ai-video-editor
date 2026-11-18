@@ -283,6 +283,18 @@ describe('taking a stretch from one version into the other', () => {  it('makes 
     expect(left()).toEqual([])
   })
 
+  it('brings a move of the picture across, from where it begins', () => {
+    const b = named('B').id
+    run('keyframe.set', { clipId: b, prop: 'scale', frame: 20, value: 1, easing: 'linear' })
+    run('keyframe.set', { clipId: b, prop: 'scale', frame: 60, value: 1.4, easing: 'linear' })
+    run('sequence.open', { id: main })
+    const before = left()
+    expect(before.map((h) => [h.kind, ...h.a])).toEqual([['changed', 121, 200]])
+    // What is taken begins part-way through the push in: it goes on from there, as it does in the branch.
+    take(before[0])
+    expect(left()).toEqual([])
+  })
+
   it('brings a stretch the other version added, with what is over it', () => {
     run('timeline.threePointEdit', { assetId: 'other', trackId: trackId('Main'), at: 200, sourceIn: 30, sourceOut: 90, mode: 'insert' })
     add('Titles', 210, 40, { kind: 'text', name: 'New title' })
