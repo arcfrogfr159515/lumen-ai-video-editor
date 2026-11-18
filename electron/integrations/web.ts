@@ -192,7 +192,9 @@ export const meta = (html: string, name: string) => {
   const re = new RegExp(`<meta[^>]+(?:name|property)=["']${name}["'][^>]*>`, 'i')
   // On the tidied page, where a "<" can't run on past its own tag (see html.ts).
   const tag = re.exec(tidy(html))?.[0]
-  const content = tag && /content=["']([^"']*)["']/i.exec(tag)?.[1]
+  // The value ends at the quote that opened it. Read to the first quote of either kind, "It's a Wonderful Life" was "It".
+  const value = tag ? /content=(?:"([^"]*)"|'([^']*)')/i.exec(tag) : null
+  const content = value ? (value[1] ?? value[2]) : undefined
   return content ? decodeEntities(content).trim() : undefined
 }
 

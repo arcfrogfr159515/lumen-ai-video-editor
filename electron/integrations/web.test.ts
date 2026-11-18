@@ -31,7 +31,7 @@ vi.mock('node:dns/promises', () => ({
   },
 }))
 
-const { blockedHost, blockedIp, browsing, checkUrl, leadsInside, parseSearch } = await import('./web')
+const { blockedHost, blockedIp, browsing, checkUrl, leadsInside, meta, parseSearch } = await import('./web')
 
 beforeEach(() => {
   env.resolves = [{ address: '93.184.216.34', family: 4 }]
@@ -121,6 +121,22 @@ describe('search results', () => {
     // "%ZZ" is not an escape. Read as one it threw, and the whole search failed for one result.
     const html = result('https%3A%2F%2Fone.example%2Fa', 'One') + result('https%3A%2F%2Fbad.example%2F100%ZZ', 'Bad') + result('https%3A%2F%2Ftwo.example%2Fb', 'Two')
     expect(parseSearch(html, 8).map((r) => r.url)).toEqual(['https://one.example/a', 'https://two.example/b'])
+  })
+})
+
+describe('what a page says of itself', () => {
+  it('is read to the quote that closes it, whichever kind of quote is inside', () => {
+    // It was read up to the first quote of either kind: a title with an apostrophe in it stopped there.
+    expect(meta('<head><meta property="og:title" content="It\'s a Wonderful Life"></head>', 'og:title')).toBe("It's a Wonderful Life")
+    expect(meta('<meta content="Don\'t stop — here\'s why" name="description">', 'description')).toBe("Don't stop — here's why")
+    expect(meta(`<meta name='description' content='She said "cut" twice'>`, 'description')).toBe('She said "cut" twice')
+  })
+
+  it('is read as before where there is no such quote', () => {
+    expect(meta('<meta name="description" content="Plain &amp; simple, isn&#39;t it">', 'description')).toBe("Plain & simple, isn't it")
+    expect(meta("<meta property='og:site_name' content='Example'>", 'og:site_name')).toBe('Example')
+    expect(meta('<meta name="description" content="">', 'description')).toBeUndefined()
+    expect(meta('<meta name="keywords" content="a, b">', 'description')).toBeUndefined()
   })
 })
 
