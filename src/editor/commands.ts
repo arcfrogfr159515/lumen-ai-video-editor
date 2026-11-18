@@ -1146,6 +1146,7 @@ export const commands = {
     title: () => tt('Edit effect'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
+      assertEditable(p, clip)
       const fx = clip.effects.find((e) => e.id === i.effectId)
       if (!fx) throw new CommandError(tt('Effect not found'))
       const { params, ...rest } = i.patch
@@ -1160,6 +1161,7 @@ export const commands = {
     title: () => tt('Remove effect'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
+      assertEditable(p, clip)
       if (!clip.effects.some((e) => e.id === i.effectId)) throw new CommandError(tt('"{0}" has no effect {1}', clip.name, i.effectId))
       clip.effects = clip.effects.filter((e) => e.id !== i.effectId)
     },
@@ -1203,6 +1205,7 @@ export const commands = {
     title: () => tt('Remove mask'),
     run(p, i) {
       const clip = getClip(p, i.clipId)
+      assertEditable(p, clip)
       if (!clip.masks?.some((m) => m.id === i.maskId)) throw new CommandError(tt('“{0}” has no mask {1}', clip.name, i.maskId))
       clip.masks = clip.masks.filter((m) => m.id !== i.maskId)
       if (!clip.masks.length) delete clip.masks
@@ -1240,6 +1243,7 @@ export const commands = {
     title: (i) => tt('Remove {0} keyframe', propName(i.prop)),
     run(p, i) {
       const clip = getClip(p, i.clipId)
+      assertEditable(p, clip)
       const kfs = clip.keyframes[i.prop]
       if (!kfs) return
       const removed = kfs.find((k) => k.frame === i.frame)
@@ -1259,6 +1263,7 @@ export const commands = {
     title: (i) => tt('Clear {0} animation', propName(i.prop)),
     run(p, i) {
       const clip = getClip(p, i.clipId)
+      assertEditable(p, clip)
       const first = clip.keyframes[i.prop]?.[0]
       if (first) setBase(clip, i.prop, first.value)
       delete clip.keyframes[i.prop]
