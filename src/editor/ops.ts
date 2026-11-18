@@ -790,10 +790,14 @@ export function adjacentAfter(p: Project, clip: Clip): Clip | undefined {
  */
 export function overwriteRange(p: Project, trackId: string, a: Frame, b: Frame, exclude: ReadonlySet<string> = new Set()) {
   if (b <= a) return
+  // The groups of the clips that go whole: one left with a single clip isn't a group any more (as when a clip is
+  // deleted). Its mate went on showing that it was linked — to a clip that had been covered.
+  const gone: string[] = []
   for (const c of clipsOnTrack(p, trackId, exclude)) {
     const end = clipEnd(c)
     if (end <= a || c.start >= b) continue
     if (c.start >= a && end <= b) {
+      if (c.groupId) gone.push(c.groupId)
       delete p.clips[c.id]
       continue
     }
@@ -809,6 +813,7 @@ export function overwriteRange(p: Project, trackId: string, a: Frame, b: Frame, 
       c.transitionIn = null
     }
   }
+  dropLoneGroups(p, gone)
 }
 
 /** Opens a gap of `len` frames at `at` on a track (insert edit): a clip across `at` is cut, everything from `at` on moves right. */

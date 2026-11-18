@@ -9,7 +9,7 @@ import { current, isDraft, produce } from 'immer'
 import { uid } from '@/lib/id'
 import { createClip, createTrack } from './defaults'
 import { defaultTracks } from './new-project'
-import { adjacentBefore, clipEnd, clipsOnTrack, cloneClip, isMagneticTrack, overlaps, setClipEnd, setClipStart, withGroups } from './ops'
+import { adjacentBefore, clipEnd, clipsOnTrack, cloneClip, dropLoneGroups, isMagneticTrack, overlaps, setClipEnd, setClipStart, withGroups } from './ops'
 import { isRamped } from './timing'
 import type { Clip, Frame, Project, ProjectSettings, Sequence, Track } from './types'
 import { tt } from '@/lib/i18n'
@@ -372,5 +372,7 @@ export function unnestClip(p: Project, id: string): string[] {
     p.clips[copy.id] = copy
     added.push(copy.id)
   }
+  // Of two clips grouped inside, only one may lie in the stretch the nested clip showed: come out alone, it is in no group.
+  dropLoneGroups(p, groups.values())
   return added
 }

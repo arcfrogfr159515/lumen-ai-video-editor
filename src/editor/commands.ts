@@ -1418,7 +1418,8 @@ export const commands = {
     title: () => tt('Remove track'),
     run(p, i) {
       getTrack(p, i.id)
-      for (const c of Object.values(p.clips)) if (c.trackId === i.id) delete p.clips[c.id]
+      // Deleted as clips are: a clip elsewhere that was grouped with one of them alone is no longer in a group.
+      deleteClips(p, Object.values(p.clips).filter((c) => c.trackId === i.id).map((c) => c.id), false)
       p.tracks = p.tracks.filter((t) => t.id !== i.id)
     },
   }),
@@ -1656,13 +1657,14 @@ export const commands = {
       const ids = new Set(i.ids)
       // A media item's subject mattes go with it.
       for (const a of Object.values(p.assets)) if (a.matteOf && ids.has(a.matteOf.assetId)) ids.add(a.id)
-      for (const c of Object.values(p.clips)) if (c.assetId && ids.has(c.assetId)) delete p.clips[c.id]
+      // Deleted as clips are: a clip that was grouped with one of them alone is no longer in a group.
+      deleteClips(p, Object.values(p.clips).filter((c) => c.assetId && ids.has(c.assetId)).map((c) => c.id), false)
       // …and from the timelines that aren't open.
       for (const seq of Object.values(p.sequences ?? {})) {
         const gone = Object.values(seq.clips).filter((c) => c.assetId && ids.has(c.assetId))
         if (!gone.length) continue
         const was = isDraft(seq) ? current(seq) : structuredClone(seq)
-        for (const c of gone) delete seq.clips[c.id]
+        deleteClips({ ...p, tracks: seq.tracks, clips: seq.clips } as Project, gone.map((c) => c.id), false)
         // The open timeline's main track closes up after every command, and what is linked to its clips follows
         // them. One that isn't open gets no such tidying: it was left with a hole where the clips had been, on a
         // track that has none — to close by itself at the next edit made there, whatever that edit was.
