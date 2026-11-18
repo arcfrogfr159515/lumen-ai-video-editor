@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { propAt } from './keyframes'
 import { add, addAsset, clip, freshProject, run } from './test-helpers'
+import { sourceFrameAt, speedAt } from './timing'
 
 let id: string
 
@@ -57,5 +58,28 @@ describe('a clip whose picture moves, trimmed at its head', () => {
     run('clip.trim', { id, edge: 'start', frame: 90 })
     expect(clip(id)).toMatchObject({ start: 90, duration: 110 })
     expect(sizes(100, 200)).toEqual(before)
+  })
+})
+
+describe('a clip that changes speed, trimmed at its head', () => {
+  /** Which frame of its footage the clip shows at each frame of the timeline from `from` to `to`, and how fast it is playing there. */
+  const playing = (from: number, to: number) => Array.from({ length: to - from }, (_, i) => ({ footage: sourceFrameAt(clip(id), from + i - clip(id).start), speed: speedAt(clip(id), from + i - clip(id).start) }))
+
+  it('goes on showing the footage it showed, at the speeds it had', () => {
+    // From its own speed to twice that, over its whole length.
+    run('clip.setSpeedRamp', { id, points: [{ at: 0, speed: 1, easing: 'linear' }, { at: 1, speed: 2, easing: 'linear' }] })
+    const end = clip(id).start + clip(id).duration
+    const before = playing(120, end)
+    expect(before[0].speed).toBeCloseTo(1.3, 1)
+    // Its first 20 frames come off, and with them the keyframe the ramp began at: what remained played at twice
+    // its speed from its first frame — other footage than before at every frame, and past where the clip had ended.
+    run('clip.trim', { id, edge: 'start', frame: 120 })
+    expect(clip(id).start + clip(id).duration).toBe(end)
+    const after = playing(120, end)
+    for (const [i, frame] of after.entries()) {
+      expect(frame.speed, `speed at ${120 + i}`).toBeCloseTo(before[i].speed, 2)
+      // The footage it starts on is a whole frame: within one of where it was.
+      expect(Math.abs(frame.footage - before[i].footage), `footage at ${120 + i}`).toBeLessThan(1)
+    }
   })
 })

@@ -408,9 +408,9 @@ function shiftFollow(clip: Clip, by: number) {
  * Keyframes are in clip frames: they move with the clip's head, and those that fall before it or past the clip's
  * end are let go. Where one is let go, the curve it held up is cut — so, as a cut through a clip does, a keyframe
  * is left at that edge with the value the curve had there. Without it, what remains of the clip moved otherwise
- * than it did: a push in trimmed part-way through was over from the first frame, and one trimmed off whole put
- * the picture back where it is without keyframes. (A speed ramp is left as it was: its keyframes say which
- * footage shows when, which is another matter than where the picture is.)
+ * than it did: a push in trimmed part-way through was over from the first frame, one trimmed off whole put the
+ * picture back where it is without keyframes, and a clip ramping up to twice its speed played at twice its speed
+ * from its first frame — other footage than before, to past where it had ended.
  */
 function shiftKeyframes(clip: Clip, by: number) {
   for (const prop of ANIMATABLE) {
@@ -418,7 +418,7 @@ function shiftKeyframes(clip: Clip, by: number) {
     if (!kfs) continue
     const moved = kfs.map((k) => ({ ...k, frame: k.frame + by }))
     const kept = moved.filter((k) => k.frame >= 0 && k.frame <= clip.duration)
-    if (prop !== 'speed' && moved.length) {
+    if (moved.length) {
       const before = moved.filter((k) => k.frame < 0)
       const after = moved.filter((k) => k.frame > clip.duration)
       // The curve from the last keyframe let go at the head runs on to the next one with the easing it had.
