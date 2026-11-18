@@ -5,6 +5,7 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { net } from 'electron'
 import type { GeneratedAsset, ImageGenRequest, Job, MediaModels, VideoGenRequest } from '../../../shared/integrations'
+import { wordSpans } from '../../../shared/words'
 import { steadyFetch, within } from '../deadline'
 import { createJob, failJob, finishJob, isCancelled, updateJob } from '../jobs'
 import { ensureDir, mediaRoot, mediaUrl } from '../paths'
@@ -56,14 +57,16 @@ function fileAsset(abs: string, kind: GeneratedAsset['kind'], mime: string, name
   }
 }
 
-const nameFrom = (prompt: string) =>
-  prompt
-    .replace(/[^\p{L}\p{N}\s'-]/gu, ' ')
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 5)
-    .join(' ')
-    .replace(/^./, (c) => c.toUpperCase()) || 'Generated'
+/**
+ * A name for what a prompt asked for: its first five words, without its marks. (Words as each script has them: taken
+ * for what stands between spaces, a Chinese prompt was one word, and the picture and its job were called by all of it.)
+ */
+function nameFrom(prompt: string) {
+  const plain = prompt.replace(/[^\p{L}\p{N}\s'-]/gu, ' ')
+  const words = wordSpans(plain).slice(0, 5)
+  const name = words.length ? plain.slice(words[0][0], words[words.length - 1][1]).replace(/\s+/g, ' ') : ''
+  return name.replace(/^./, (c) => c.toUpperCase()) || 'Generated'
+}
 
 // ─── Model lists ─────────────────────────────────────────────────────────
 
