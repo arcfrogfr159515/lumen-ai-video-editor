@@ -116,6 +116,19 @@ export function docxText(file: Buffer): string {
 
 // ─── Saving and reading ──────────────────────────────────────────────────
 
+/**
+ * A text file's bytes as text: UTF-8 — or UTF-16 where the file opens with the mark that says so (what Notepad
+ * saves as “Unicode”). Read as UTF-8 all the same, such a file had an empty character after every letter and was
+ * refused as not being a text file.
+ */
+function fileText(bytes: Buffer): string {
+  const order = bytes[0] === 0xff && bytes[1] === 0xfe ? 'low' : bytes[0] === 0xfe && bytes[1] === 0xff ? 'high' : null
+  if (!order) return bytes.toString('utf8').replace(/^\uFEFF/, '')
+  // Two bytes to a unit: a file cut off in the middle of one is read as far as it goes.
+  const units = Buffer.from(bytes.subarray(2, bytes.length - (bytes.length % 2)))
+  return (order === 'high' ? units.swap16() : units).toString('utf16le')
+}
+
 /** Keeps a file for a conversation. Throws, in words for the user, when it's a kind or size a message can't take. */
 export function saveAttachment(conversationId: string, input: AttachmentInput): ChatAttachment {
   if (!safe(conversationId)) throw new Error(mt('No chat to attach to.'))
@@ -130,7 +143,7 @@ export function saveAttachment(conversationId: string, input: AttachmentInput): 
   let bytes = Buffer.from(input.data.buffer, input.data.byteOffset, input.data.byteLength)
   let chars: number | undefined
   if (kind === 'text') {
-    const text = what === 'docx' ? docxText(bytes) : bytes.toString('utf8').replace(/^﻿/, '')
+    const text = what === 'docx' ? docxText(bytes) : fileText(bytes)
     if (text.includes('\u0000')) throw new Error(mt('“{0}” isn’t a text file.', name))
     bytes = Buffer.from(text, 'utf8')
     // Never cut a document short without saying so: it's taken whole or not at all.
