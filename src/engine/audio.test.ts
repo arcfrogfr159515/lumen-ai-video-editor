@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createClip } from '@/editor/defaults'
 import { activeRegions, clipGainAt, computePeaks } from './audio-engine'
 import { videoBitrate } from './export'
-import { encodeWav } from './wav'
+import { encodeWav, pcm16, WAV_HEADER_BYTES, WAV_MAX_DATA_BYTES, wavHeader } from './wav'
 
 /** Just enough of an AudioBuffer for the analysis and encoding code. */
 function buffer(channels: Float32Array[], sampleRate: number): AudioBuffer {
@@ -89,6 +89,28 @@ describe('encodeWav', () => {
     expect(v.getUint32(28, true)).toBe(48000 * 4)
     const samples = Array.from({ length: 8 }, (_, i) => v.getInt16(44 + i * 2, true))
     expect(samples).toEqual([0, 0, 16383, -16384, -32768, 32767, 32767, -32768])
+  })
+
+  it('is the same file written a stretch at a time, the header last', () => {
+    // How a long export is written: each block's sound at its place, then the header once the length is known.
+    const whole = Float32Array.from({ length: 1000 }, (_, i) => Math.sin(i / 7))
+    const other = Float32Array.from({ length: 1000 }, (_, i) => Math.cos(i / 11) * 1.2)
+    const at = (from: number, to: number) => buffer([whole.slice(from, to), other.slice(from, to)], 48000)
+    const file = new Uint8Array(WAV_HEADER_BYTES + 1000 * 4)
+    let frames = 0
+    for (const [from, to] of [[0, 480], [480, 960], [960, 1000]]) {
+      file.set(pcm16(at(from, to)), WAV_HEADER_BYTES + frames * 4)
+      frames += to - from
+    }
+    file.set(wavHeader(frames, 2, 48000), 0)
+    expect(file).toEqual(encodeWav(at(0, 1000)))
+  })
+
+  it('says how much a WAV can hold', () => {
+    // 32-bit sizes: a little over six hours of 48 kHz stereo.
+    expect(WAV_MAX_DATA_BYTES / (48000 * 4) / 3600).toBeGreaterThan(6)
+    expect(WAV_MAX_DATA_BYTES / (48000 * 4) / 3600).toBeLessThan(6.5)
+    expect(new DataView(wavHeader(10, 1, 16000).buffer).getUint32(40, true)).toBe(20)
   })
 })
 

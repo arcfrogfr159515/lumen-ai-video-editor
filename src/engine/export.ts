@@ -44,7 +44,7 @@ import {
 import { LoudnessMeter } from './loudness'
 import { withVideoFrames } from './media'
 import { FrameFeeder } from './stills'
-import { encodeWav } from './wav'
+import { pcm16, WAV_HEADER_BYTES, WAV_MAX_DATA_BYTES, wavHeader } from './wav'
 import { tt } from '@/lib/i18n'
 
 export { CODECS_FOR, encoderSupport, videoBitrate, type CodecAvailability, type ExportVideoCodec } from './encoders'
@@ -274,12 +274,7 @@ async function renderTo(source: Project, settings: ExportSettings, handle: Expor
     check()
     const mixOpts = settings.loudness && settings.format !== 'gif' && hasAudio(project) ? await normalization(project, range, settings.loudness, onProgress, check) : {}
 
-    if (settings.format === 'wav') {
-      const mix = await renderMix(project, range[0] / project.settings.fps, range[1] / project.settings.fps, mixOpts)
-      check()
-      await api.export.write(handle.id, 0, encodeWav(mix))
-      return await api.export.finish(handle.id)
-    }
+    if (settings.format === 'wav') return await exportWav(project, range, handle, onProgress, check, mixOpts)
     if (settings.format === 'gif') return await exportGif(project, settings, range, handle, onProgress, check)
     return await exportMedia(project, settings, range, handle, onProgress, check, mixOpts)
   } catch (err) {
@@ -288,6 +283,47 @@ async function renderTo(source: Project, settings: ExportSettings, handle: Expor
   } finally {
     api.export.progress(null)
   }
+}
+
+/** Seconds of sound a WAV export renders and writes at a time. */
+const WAV_BLOCK_SECONDS = 10
+
+/**
+ * WAV, rendered and written a stretch at a time. The whole mix used to be rendered into one buffer, turned into
+ * one array of bytes and sent to the main process in one piece: an hour of stereo is 1.4 GB as it is mixed and
+ * 0.7 GB as a file, at the same time, and a long timeline's export ended with the editor out of memory. The
+ * blocks join seamlessly (renderMix sees to that), as they do in every other format.
+ */
+async function exportWav(project: Project, range: [number, number], handle: ExportHandle, onProgress: (p: ExportProgress) => void, check: () => void, mixOpts: MixOptions) {
+  const api = desktop!
+  const fps = project.settings.fps
+  const start = range[0] / fps
+  const duration = (range[1] - range[0]) / fps
+  const blocks = Math.max(1, Math.ceil(duration / WAV_BLOCK_SECONDS))
+  const progress = makeProgress(onProgress, blocks)
+  let frames = 0
+  let channels = 2
+  let sampleRate = 48000
+  for (let b = 0; b < blocks; b++) {
+    check()
+    const t0 = b * WAV_BLOCK_SECONDS
+    const mix = await renderMix(project, start + t0, start + Math.min(duration, t0 + WAV_BLOCK_SECONDS), mixOpts)
+    channels = mix.numberOfChannels
+    sampleRate = mix.sampleRate
+    const sound = pcm16(mix)
+    const at = frames * channels * 2
+    // A WAV says how long it is in 32 bits: a little over six hours of stereo. Said here, not found out by a player.
+    if (at + sound.byteLength > WAV_MAX_DATA_BYTES) throw new Error(tt('A WAV file can’t hold more than about six hours of sound. Export M4A instead, or a shorter stretch.'))
+    await api.export.write(handle.id, WAV_HEADER_BYTES + at, sound)
+    frames += mix.length
+    progress(b + 1)
+  }
+  check()
+  // The header says how much sound follows it, which is known now.
+  await api.export.write(handle.id, 0, wavHeader(frames, channels, sampleRate))
+  progress(blocks, true)
+  onProgress({ phase: 'finishing', done: 1, total: 1, speed: 0, eta: 0, message: tt('Finishing file…') })
+  return await api.export.finish(handle.id)
 }
 
 /** The picture's encoder failed (as opposed to the disk, the decoder or the compositor). */

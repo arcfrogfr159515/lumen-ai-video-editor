@@ -2036,6 +2036,7 @@ const zhCN: Record<string, string> = {
   'Preparing audio…': '正在准备音频…',
   'Preparing…': '正在准备…',
   'An export is running': '正在导出',
+  'A WAV file can’t hold more than about six hours of sound. Export M4A instead, or a shorter stretch.': 'WAV 文件最多只能容纳约六小时的声音。请改为导出 M4A，或导出较短的一段。',
   'The render queue is rendering': '渲染队列正在渲染',
   'Exports are waiting in the render queue': '渲染队列中还有等待的导出',
   'A recording is in progress': '正在录制',
