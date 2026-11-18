@@ -30,6 +30,13 @@ interface Entry {
   transport?: Transport
   auth?: LumenOAuthProvider
   connecting?: Promise<void>
+  /**
+   * How often this server was told to disconnect. A connection that was being made when it was told isn't kept:
+   * starting a server's program takes a while, and until it had answered there was nothing to drop — disconnected,
+   * removed or pointed elsewhere in that moment, the server came up connected all the same (a removed one with
+   * its program left running and nothing that could stop it).
+   */
+  dropped: number
   stderr: string[]
 }
 
@@ -49,7 +56,7 @@ function load() {
       setSecret(headerSecret(config.id), JSON.stringify(config.headers))
       delete config.headers
     }
-    entries.set(config.id, { config, status: 'disconnected', tools: [], stderr: [] })
+    entries.set(config.id, { config, status: 'disconnected', tools: [], dropped: 0, stderr: [] })
   }
 }
 
@@ -113,9 +120,9 @@ export async function saveServer(config: McpServerConfig): Promise<McpServerStat
     const connection = (c: McpServerConfig) => JSON.stringify({ ...c, agentTools: undefined, description: undefined })
     const changed = connection(existing.config) !== connection(config)
     existing.config = config
-    if (changed && existing.client) await disconnectServer(config.id)
+    if (changed && (existing.client || existing.connecting)) await disconnectServer(config.id)
   } else {
-    entries.set(config.id, { config, status: 'disconnected', tools: [], stderr: [] })
+    entries.set(config.id, { config, status: 'disconnected', tools: [], dropped: 0, stderr: [] })
   }
   persist()
   return listServers()
@@ -217,24 +224,42 @@ export async function connectServer(id: string): Promise<McpServerState> {
   if (e.client && e.status === 'connected') return snapshot(e)
   if (!e.connecting) {
     e.connecting = (async () => {
+      const dropped = e.dropped
+      /** Told to disconnect while this was connecting: whatever it has connected is let go of. True when it was. */
+      const letGo = async () => {
+        if (e.dropped === dropped) return false
+        const client = e.client
+        e.client = undefined
+        e.transport = undefined
+        e.tools = []
+        e.status = 'disconnected'
+        await client?.close().catch(() => {})
+        return true
+      }
       e.status = 'connecting'
       e.error = undefined
       emit(e)
       try {
         await open(e)
+        if (await letGo()) return
         e.status = 'connected'
       } catch (err) {
+        // Whatever went wrong, it went wrong with a connection nobody wants any more.
+        if (await letGo()) return
         if (err instanceof UnauthorizedError && e.auth?.authorizationCode && e.transport instanceof StreamableHTTPClientTransport) {
           // The browser is open on the service's sign-in page; wait for it to come back.
           e.status = 'needs-auth'
           emit(e)
           try {
             const code = await e.auth.authorizationCode
+            if (await letGo()) return
             await e.transport.finishAuth(code)
             e.auth.authorizationCode = null
             await open(e)
+            if (await letGo()) return
             e.status = 'connected'
           } catch (authErr) {
+            if (await letGo()) return
             e.status = 'error'
             e.error = message(authErr)
           }
@@ -257,6 +282,7 @@ export async function connectServer(id: string): Promise<McpServerState> {
 export async function disconnectServer(id: string): Promise<McpServerState> {
   const e = entry(id)
   const client = e.client
+  e.dropped++
   e.client = undefined
   e.transport = undefined
   e.status = 'disconnected'
