@@ -89,6 +89,25 @@ describe('Word documents', () => {
     expect(docxText(docx(xml))).toBe('Cast\nAnn\tDirector\nTom\tEditor')
   })
 
+  it('leave out where a picture sits, and keep what a text box says', () => {
+    // A picture that text wraps round says where it is in tags with numbers and words between them.
+    const place = '<wp:positionH relativeFrom="column"><wp:posOffset>1905000</wp:posOffset></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:align>top</wp:align></wp:positionV>'
+    const size = '<wp14:sizeRelH relativeFrom="margin"><wp14:pctWidth>0</wp14:pctWidth></wp14:sizeRelH><wp14:sizeRelV relativeFrom="margin"><wp14:pctHeight>0</wp14:pctHeight></wp14:sizeRelV>'
+    const picture = `<w:r><w:drawing><wp:anchor distT="0" distB="0" simplePos="0" relativeHeight="251658240"><wp:simplePos x="0" y="0"/>${place}<wp:extent cx="2743200" cy="1828800"/><wp:docPr id="1" name="Picture 1"/>${size}</wp:anchor></w:drawing></w:r>`
+    const xml = document(para('Scene one'), `<w:p>${picture}<w:r><w:t>The opening shot.</w:t></w:r></w:p>`, para('Scene two'))
+    expect(docxText(docx(xml))).toBe('Scene one\nThe opening shot.\nScene two')
+    // A text box is a drawing too, with paragraphs of its own inside the paragraph it is anchored to.
+    const box = `<w:r><w:drawing><wp:anchor>${place}<a:graphic><a:graphicData><wps:wsp><wps:txbx><w:txbxContent><w:p><w:r><w:t>In the box</w:t></w:r></w:p></w:txbxContent></wps:txbx></wps:wsp></a:graphicData></a:graphic>${size}</wp:anchor></w:drawing></w:r>`
+    const boxed = docxText(docx(document(`<w:p><w:r><w:t xml:space="preserve">Before </w:t></w:r>${box}<w:r><w:t>after.</w:t></w:r></w:p>`, para('The end.'))))
+    expect(boxed).toBe('Before In the box\nafter.\nThe end.')
+  })
+
+  it('keep what an equation says, and aren’t thrown by a run with nothing in it', () => {
+    const equation = '<m:oMath><m:r><m:t>E=mc</m:t></m:r><m:sSup><m:e><m:r><m:t/></m:r></m:e><m:sup><m:r><m:t>2</m:t></m:r></m:sup></m:sSup></m:oMath>'
+    const xml = document(`<w:p><w:r><w:t xml:space="preserve">Energy: </w:t></w:r>${equation}<w:r><w:t/></w:r><w:r><w:t>.</w:t></w:r></w:p>`, para('Next'))
+    expect(docxText(docx(xml))).toBe('Energy: E=mc2.\nNext')
+  })
+
   it('read numbered characters, and leave a number that isn’t one as it is', () => {
     expect(docxText(docx(document(para('caf&#233; &#x1F3AC; &#xe9;'))))).toBe('café 🎬 é')
     // &#1114112; is past the last character there is: it used to end the read with "Invalid code point".

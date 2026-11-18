@@ -84,23 +84,26 @@ export function unzipEntry(zip: Buffer, name: string): Buffer | null {
 
 const XML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: '’' }
 
+/**
+ * Where a Word document keeps what it says: the text of a run (and of an equation, a drawn shape, and the words a
+ * tracked change took out), a tab that was typed, a line break, the end of a paragraph. Whatever else stands
+ * between two tags is the document describing itself — what a field is told to do (HYPERLINK "…", PAGE), where
+ * a picture sits (<wp:posOffset>1905000</wp:posOffset>) — and isn't text. A paragraph's tab stops are named like
+ * a tab that was typed, so the list of them is matched first, and gives nothing.
+ */
+const SAID = /<w:tabs\b[^>]*>[\s\S]*?<\/w:tabs>|<(?:w:t|w:delText|m:t|a:t)\b[^>]*\/>|<(w:t|w:delText|m:t|a:t)\b[^>]*>([\s\S]*?)<\/\1>|<w:(tab|br|cr)\b[^>]*\/>|<\/w:(p)>/g
+
 /** The text of a Word document: paragraphs, line breaks and tabs, without the formatting. */
 export function docxText(file: Buffer): string {
   const xml = unzipEntry(file, 'word/document.xml')?.toString('utf8')
   if (!xml) throw new Error(mt('That Word document couldn’t be read. Save it as PDF or text and attach that.'))
-  return xml
-    .replace(/<w:p[ >][\s\S]*?<\/w:p>/g, (para) => {
-      const text = para
-        // What a field is told to do (HYPERLINK "…", PAGE, TOC \o "1-3") sits beside what it shows, and isn't text.
-        .replace(/<w:instrText\b[^>]*>[\s\S]*?<\/w:instrText>/g, '')
-        // Where the paragraph's tab stops are is said in tags named like a tab that was typed.
-        .replace(/<w:tabs\b[^>]*>[\s\S]*?<\/w:tabs>/g, '')
-        .replace(/<w:tab\b[^>]*\/>/g, '\t')
-        .replace(/<w:(?:br|cr)\b[^>]*\/>/g, '\n')
-        .replace(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>|<[^>]+>/g, (_tag, run: string | undefined) => run ?? '')
-      return `${text}\n`
-    })
-    .replace(/<[^>]+>/g, '')
+  let text = ''
+  for (const said of xml.matchAll(SAID)) {
+    if (said[2] !== undefined) text += said[2]
+    else if (said[3]) text += said[3] === 'tab' ? '\t' : '\n'
+    else if (said[4]) text += '\n'
+  }
+  return text
     .replace(/&(amp|lt|gt|quot|apos);/g, (_m, name: string) => XML_ENTITIES[name])
     .replace(/&#(x[0-9a-f]+|\d+);/gi, (m, code: string) => {
       const point = /^x/i.test(code) ? parseInt(code.slice(1), 16) : Number(code)
