@@ -15,7 +15,6 @@ import { takeHunk } from './diff'
 import { closeGaps, FLASH_FRAMES } from './gaps'
 import { ANIMATABLE, evalKeyframes, inRange } from './keyframes'
 import { defaultMarkerLabel, markerKindInfo, markerKindOf } from './markers'
-import { retimePath } from './motion'
 import { MOTION_PRESETS, mergeKeyframes, presetKeyframes, PRESET_IDS } from './motion-presets'
 import { EFFECTS } from './presets'
 import {
@@ -42,6 +41,7 @@ import {
   removeRange,
   reattachAudio,
   resolveMoveDelta,
+  retimeClip,
   rippleInsert,
   rippleTrimClip,
   rollEdit,
@@ -2218,30 +2218,8 @@ export const commands = {
       if (fps && fps !== p.settings.fps) {
         const r = fps / p.settings.fps
         const sc = (f: number) => Math.round(f * r)
-        for (const c of Object.values(p.clips)) {
-          // Each end of a clip goes to the frame nearest where it was, so two clips that touched still touch. Its
-          // start and its length used to be rounded apart: both up, a clip ended a frame into the one after it —
-          // and a run of short clips on the main track came out longer than what ran beside them.
-          const end = sc(c.start + c.duration)
-          c.start = sc(c.start)
-          c.duration = Math.max(1, end - c.start)
-          c.inPoint = sc(c.inPoint)
-          c.audio.fadeIn = sc(c.audio.fadeIn)
-          c.audio.fadeOut = sc(c.audio.fadeOut)
-          c.animation.in.duration = Math.max(1, sc(c.animation.in.duration))
-          c.animation.out.duration = Math.max(1, sc(c.animation.out.duration))
-          if (c.transitionIn) c.transitionIn.duration = Math.max(2, sc(c.transitionIn.duration))
-          for (const kfs of Object.values(c.keyframes)) kfs?.forEach((k) => (k.frame = sc(k.frame)))
-          // A tracked path has a point a frame: it gets the points of the new frames (`retimePath`).
-          if (c.follow) c.follow = retimePath(c.follow, r)
-          for (const m of c.masks ?? []) if (m.follow) m.follow = retimePath(m.follow, r)
-          // Alternate takes are kept in frames too: where each starts in its footage, its ramp, the length of the place.
-          for (const t of c.takes ?? []) {
-            t.inPoint = sc(t.inPoint)
-            t.ramp?.forEach((k) => (k.frame = sc(k.frame)))
-          }
-          if (c.takeSlot !== undefined) c.takeSlot = Math.max(1, sc(c.takeSlot))
-        }
+        // Every clip, as one pasted from a timeline at another rate is (`retimeClip`).
+        for (const c of Object.values(p.clips)) retimeClip(c, r)
         for (const m of p.markers) m.frame = sc(m.frame)
         if (p.range) p.range = { in: sc(p.range.in), out: Math.max(sc(p.range.in) + 1, sc(p.range.out)) }
         p.settings.fps = fps

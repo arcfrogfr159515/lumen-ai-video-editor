@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand'
 import type { ClipSnapshot, EditMode } from './commands'
-import { clipEnd } from './ops'
+import { clipEnd, retimeClip } from './ops'
 import { dispatch, getProject, rollbackTo, savepoint, useEditor } from './store'
 import type { Asset, Clip, Project } from './types'
 import { tt } from '@/lib/i18n'
@@ -16,6 +16,8 @@ export interface ClipboardData {
   /** Where the copied span started and ended on the timeline. */
   start: number
   end: number
+  /** The frame rate of the timeline they were copied on: what their frames are frames of. */
+  fps: number
 }
 
 export const useClipboard = create<{
@@ -45,6 +47,7 @@ export function copyClips(project: Project, ids: string[]): number {
       assets: structuredClone([...assetIds].map((id) => project.assets[id]).filter(Boolean)),
       start: Math.min(...clips.map((c) => c.start)),
       end: Math.max(...clips.map(clipEnd)),
+      fps: project.settings.fps,
     },
     // What was copied last is what attributes are pasted from.
     attributes: null,
@@ -72,8 +75,21 @@ export function pasteClips(at: number, mode: EditMode = 'free'): { ok: true; ids
     const project = getProject()
     const mark = savepoint()
     for (const asset of data.assets) if (!project.assets[asset.id]) dispatch('asset.add', { asset })
+    // A clip counts in frames of the timeline it was copied on. On a timeline at another rate — another one of the
+    // project, another project — it is the same clip: as long in seconds, from the same moment of its footage.
+    // (Pasted as it was, two seconds copied at 30 a second were one second at 60, from half as far into the footage.)
+    const ratio = project.settings.fps / data.fps
+    const clips =
+      ratio === 1
+        ? data.clips
+        : data.clips.map((c) => {
+            // What was copied stays as it was copied: it may be pasted again, on a timeline at yet another rate.
+            const copy = structuredClone(c)
+            retimeClip(copy, ratio)
+            return copy
+          })
     // Clips are plain project data; the snapshot schema checks them on the way in.
-    const res = dispatch('clip.paste', { clips: data.clips as unknown as ClipSnapshot[], at, mode })
+    const res = dispatch('clip.paste', { clips: clips as unknown as ClipSnapshot[], at, mode })
     result = res.ok ? { ok: true, ids: res.result as string[] } : { ok: false, error: res.error }
     // A paste that fails leaves no media behind.
     if (!res.ok && mark) rollbackTo(mark)

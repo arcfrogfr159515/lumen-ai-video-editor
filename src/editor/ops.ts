@@ -7,7 +7,7 @@ import { clamp } from '@/lib/math'
 import { uid } from '@/lib/id'
 import { createClip, createTrack, TRACK_HEIGHTS } from './defaults'
 import { ANIMATABLE, evalKeyframes, inRange, propAt } from './keyframes'
-import { followOffset } from './motion'
+import { followOffset, retimePath } from './motion'
 import { consumed, consumedAt, localForConsumed, sourceFrameAt, speedAt, splitInPoints } from './timing'
 import { ROLE_TRACK } from './track-roles'
 import type { AnimatableProp, Clip, ClipKind, Frame, Keyframe, Project, Track, Transition } from './types'
@@ -63,6 +63,38 @@ export function sourceFrames(p: Project, clip: Pick<Clip, 'assetId' | 'sequenceI
 
 export function cloneClip(c: Clip): Clip {
   return structuredClone(isDraft(c) ? current(c) : c)
+}
+
+/**
+ * Takes a clip from a timeline at one frame rate to one at another, in place: `ratio` is the new rate over the old.
+ * Everything a clip counts in frames goes with it — where it lies and how long, where in its footage it starts, its
+ * fades, its transition, its keyframes, the paths it follows, its takes — so it shows the same footage for the
+ * same time.
+ */
+export function retimeClip(c: Clip, ratio: number) {
+  const sc = (f: number) => Math.round(f * ratio)
+  // Each end of a clip goes to the frame nearest where it was, so two clips that touched still touch. Its
+  // start and its length used to be rounded apart: both up, a clip ended a frame into the one after it —
+  // and a run of short clips on the main track came out longer than what ran beside them.
+  const end = sc(c.start + c.duration)
+  c.start = sc(c.start)
+  c.duration = Math.max(1, end - c.start)
+  c.inPoint = sc(c.inPoint)
+  c.audio.fadeIn = sc(c.audio.fadeIn)
+  c.audio.fadeOut = sc(c.audio.fadeOut)
+  c.animation.in.duration = Math.max(1, sc(c.animation.in.duration))
+  c.animation.out.duration = Math.max(1, sc(c.animation.out.duration))
+  if (c.transitionIn) c.transitionIn.duration = Math.max(2, sc(c.transitionIn.duration))
+  for (const kfs of Object.values(c.keyframes)) kfs?.forEach((k) => (k.frame = sc(k.frame)))
+  // A tracked path has a point a frame: it gets the points of the new frames (`retimePath`).
+  if (c.follow) c.follow = retimePath(c.follow, ratio)
+  for (const m of c.masks ?? []) if (m.follow) m.follow = retimePath(m.follow, ratio)
+  // Alternate takes are kept in frames too: where each starts in its footage, its ramp, the length of the place.
+  for (const t of c.takes ?? []) {
+    t.inPoint = sc(t.inPoint)
+    t.ramp?.forEach((k) => (k.frame = sc(k.frame)))
+  }
+  if (c.takeSlot !== undefined) c.takeSlot = Math.max(1, sc(c.takeSlot))
 }
 
 // ─── Magnetic main track ─────────────────────────────────────────────────
