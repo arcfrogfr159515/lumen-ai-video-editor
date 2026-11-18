@@ -149,7 +149,9 @@ export function wordAt(words: readonly ScriptWord[], frame: Frame): ScriptWord |
 
 // ─── Finding words ───────────────────────────────────────────────────────
 
-const FILLERS = new Set(['um', 'umm', 'uhm', 'uh', 'uhh', 'er', 'erm', 'ah', 'eh', 'hm', 'hmm', 'mm', 'mmm', 'mhm', '嗯', '呃', '额', '唔', 'えー', 'あのー', 'euh', 'ehm', 'äh', 'ähm', 'este', 'pues'])
+// (额 was here: it is written for a hesitation now and then, and in 金额, 余额, 额外, 名额 every day — where a word is
+// a character, it was cut out of each of them. A sound that is also part of words is not "only that".)
+const FILLERS = new Set(['um', 'umm', 'uhm', 'uh', 'uhh', 'er', 'erm', 'ah', 'eh', 'hm', 'hmm', 'mm', 'mmm', 'mhm', '嗯', '呃', '唔', 'えー', 'あのー', 'euh', 'ehm', 'äh', 'ähm', 'este', 'pues'])
 
 /** Hesitation sounds: the indexes of words that are only that. */
 export function fillerWords(words: readonly ScriptWord[]): number[] {

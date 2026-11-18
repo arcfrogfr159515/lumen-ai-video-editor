@@ -33,6 +33,15 @@ describe('words', () => {
     expect(findPhrase(words(), '서울에서 촬영합니다')).toEqual([[4, 5]])
   })
 
+  it('are hesitations only when they are nothing else: not a character that everyday words are written with', () => {
+    // 额 is written for a hesitation now and then — and in 金额, 余额, 额外, 名额 every day. Counted as a filler
+    // wherever it was said, "Fillers" would have cut it out of each of those words.
+    addAsset('money', 20, 'video', { transcript: transcript([1, 3, '嗯，这笔金额呃超出了余额'], [4, 6, '额外的名额']) })
+    add('Main', 0, 600, { assetId: 'money' })
+    const w = words()
+    expect(fillerWords(w).map((i) => w[i].text)).toEqual(['嗯，', '呃'])
+  })
+
   it('are not stumbles when a character is doubled in a script written without spaces', () => {
     // 谢谢, 妈妈, 看看, ここ, いい: the character twice is the word. Taken for a word said twice, the first of each
     // was to be cut by "Stumbles" — 谢谢大家 would have become 谢大家.
