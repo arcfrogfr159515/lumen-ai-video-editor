@@ -497,7 +497,7 @@ function ServerGlyphLarge({ config }: { config: Pick<McpServerConfig, 'transport
   return <IconTile tone="mcp">{config.transport === 'http' ? <Server /> : <Terminal />}</IconTile>
 }
 
-function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id: string) => void }) {
+export function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id: string) => void }) {
   const [busy, setBusy] = useState(false)
   const [key, setKey] = useState('')
   const [address, setAddress] = useState(entry.url ?? '')
@@ -519,7 +519,8 @@ function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id:
   }
   return (
     <div>
-      <PaneHeader icon={<ServerGlyphLarge config={entry} />} title={entry.name} subtitle={entry.tagline} />
+      {/* The catalogue is shared with the main process and written in English: its sentences are looked up here. */}
+      <PaneHeader icon={<ServerGlyphLarge config={entry} />} title={entry.name} subtitle={tt(entry.tagline)} />
       <Card>
         <dl className="grid grid-cols-[110px_1fr] gap-x-4 gap-y-2.5 text-sm">
           <dt className="text-fg-4">{tt('Connection')}</dt>
@@ -537,7 +538,7 @@ function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id:
           {entry.requirement && (
             <>
               <dt className="text-fg-4">{tt('You’ll need')}</dt>
-              <dd className="text-fg-2">{entry.requirement}</dd>
+              <dd className="text-fg-2">{tt(entry.requirement)}</dd>
             </>
           )}
         </dl>
@@ -545,7 +546,7 @@ function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id:
       {entry.urlHint && (
         <div className="mt-4">
           <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={entry.url} className="font-mono text-xs" spellCheck={false} />
-          <p className="mt-1.5 text-2xs leading-relaxed text-fg-4">{entry.urlHint}</p>
+          <p className="mt-1.5 text-2xs leading-relaxed text-fg-4">{tt(entry.urlHint)}</p>
         </div>
       )}
       {entry.auth === 'key' && (
@@ -558,7 +559,7 @@ function CatalogPane({ entry, onAdded }: { entry: McpCatalogEntry; onAdded: (id:
               </a>
             )}
           </div>
-          {entry.keyHint && <p className="mt-1.5 text-2xs leading-relaxed text-fg-4">{entry.keyHint}</p>}
+          {entry.keyHint && <p className="mt-1.5 text-2xs leading-relaxed text-fg-4">{tt(entry.keyHint)}</p>}
         </div>
       )}
       <div className="mt-6 flex items-center gap-3">
