@@ -15,7 +15,7 @@ import { desktop } from '@/lib/platform'
 import { multicamFromAssets, scenesInClip, stabilizeClip, trackMotion } from '@/project/analysis-actions'
 import { saveSubtitles } from '@/project/subtitle-files'
 import { dispatch } from '@/editor/store'
-import { assetById, bool, clampNum, clipById, frameArg, list, num, number, obj, oneOf, seconds, str, text, toFrame, type AgentTool } from './kit'
+import { assetById, bool, clampNum, clipById, frameArg, list, num, number, obj, oneOf, seconds, str, strings, text, toFrame, type AgentTool } from './kit'
 
 const ai = { source: 'ai' as const }
 
@@ -131,7 +131,10 @@ export const FOOTAGE_TOOLS: AgentTool[] = [
       ['asset_ids'],
     ),
     run: async (a) => {
-      const ids = (a.asset_ids as unknown[]).map(String)
+      // What a model sends isn't checked against the schema: a call without the recordings is told so, in the tool's
+      // own words — not with the error the code trips over, or the name the command has for them (`angles`).
+      const ids = strings(a, 'asset_ids')
+      if (ids.length < 2) throw new Error('Give asset_ids: a list of two or more video assets, recordings of the same moment (get_project → media has their ids).')
       ids.forEach((id) => assetById(id))
       const audioId = text(a, 'audio_asset_id')
       const audio = audioId ? ids.indexOf(audioId) : undefined
