@@ -216,10 +216,14 @@ export const CAPTION_STYLES: CaptionStyleSpec[] = [
 
 export const captionStyle = (id: CaptionStyle | undefined) => CAPTION_STYLES.find((s) => s.id === id) ?? CAPTION_STYLES[0]
 
+/** What ends a phrase, in any script: . ! ? and the marks Chinese and Japanese end theirs with. (Known by . ! ? alone, a phrase that ends in ？ or ！ had no word in the accent colour.) */
+const PHRASE_END = /[.!?。！？]$/
+const ASKS_OR_EXCLAIMS = /[!?！？]$/
+
 /** Words that carry the line get the accent colour (word-by-word captions): long words, numbers, and the end of a phrase. */
 export function keyWord(word: string, last: boolean) {
   const bare = word.replace(/[^\p{L}\p{N}]/gu, '')
-  return bare.length >= 7 || /\d/.test(bare) || (last && /[!?]$/.test(word))
+  return bare.length >= 7 || /\d/.test(bare) || (last && ASKS_OR_EXCLAIMS.test(word))
 }
 
 /**
@@ -274,7 +278,7 @@ export function layCaptions(
               content: l.text,
               size,
               uppercase: opts.uppercase ?? style.text.uppercase ?? false,
-              ...(style.id === 'word' && keyWord(l.text, i === sorted.length - 1 || /[.!?]$/.test(l.text)) ? { color: accent } : {}),
+              ...(style.id === 'word' && keyWord(l.text, i === sorted.length - 1 || PHRASE_END.test(l.text)) ? { color: accent } : {}),
             },
             transform: { y },
             animation: style.animation,

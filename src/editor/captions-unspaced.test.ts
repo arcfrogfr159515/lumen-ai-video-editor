@@ -80,6 +80,30 @@ describe('captions of speech in a script written without spaces', () => {
   })
 })
 
+describe('the words that carry a line, one word at a time', () => {
+  const coloured = () => {
+    const track = getProject().tracks.find((t) => t.role === 'captions')!
+    return clipsOnTrack(getProject(), track.id)
+      .filter((c) => c.text!.color === '#ff0055')
+      .map((c) => c.text!.content)
+  }
+
+  it('are the last of a question or an exclamation, whichever marks the script ends them with', () => {
+    // The end of a phrase was known by ! and ? alone: one that ends in ？ or ！ had no word in the accent colour.
+    says('你来吗？太好了！我们走。')
+    addCaptions({ style: 'word', accent: '#ff0055' })
+    expect(captions().join('')).toBe('你来吗？太好了！我们走。')
+    expect(coloured()).toEqual(captions().filter((line) => /[？！]$/.test(line)))
+    expect(coloured().length).toBe(2)
+  })
+
+  it('are as before in a script that ends them with ! and ?', () => {
+    says('We built it in 30 days! Did you see? It works.')
+    addCaptions({ style: 'word', accent: '#ff0055' })
+    expect(coloured()).toEqual(['30', 'days!', 'see?'])
+  })
+})
+
 describe('captions of speech in a script written with spaces', () => {
   it('are as before', () => {
     says('Today we  build a video editor from scratch together')
