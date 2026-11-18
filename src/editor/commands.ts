@@ -713,8 +713,11 @@ export const commands = {
         if (wouldLoop(p, openSequenceId(p), i.sequenceId)) throw new CommandError(tt('“{0}” already contains this timeline — nesting it here would make a loop', seq.name))
         nestedName = seq.name
       }
-      const inPoint = i.inPoint ?? 0
-      const available = i.sequenceId ? sourceFrames(p, { sequenceId: i.sequenceId }) - inPoint : source?.duration !== undefined ? framesIn(source.duration, p.settings.fps) - inPoint : Infinity
+      const length = i.sequenceId ? sourceFrames(p, { sequenceId: i.sequenceId }) : source?.duration !== undefined ? framesIn(source.duration, p.settings.fps) : Infinity
+      // No further in than the media's last frame, as a take is (`addTake`). Asked to start past its end, the clip
+      // was made a frame long all the same — of footage that isn't there.
+      const inPoint = Math.max(0, Math.min(i.inPoint ?? 0, length === Infinity ? Infinity : Math.max(0, length - 1)))
+      const available = length - inPoint
       const duration = Math.max(1, Math.min(i.duration, available))
       let start: number
       if (i.mode === 'free' || isMagneticTrack(p, track.id)) start = findFreeStart(p, track.id, i.start, duration)
