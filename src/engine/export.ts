@@ -27,6 +27,7 @@ import { desktop } from '@/lib/platform'
 import { prepareAudio, renderMix, type MixOptions } from './audio-engine'
 import { renderFrame } from './compositor'
 import { collectHeld } from './decode'
+import { timelineFrameAt } from './export-frames'
 import { holdFonts } from './fonts'
 import {
   chooseEncoder,
@@ -488,7 +489,7 @@ async function encodeMedia(
       // Frames whose start time falls inside this block.
       for (; frame < totalFrames && frame / settings.fps < t1 - 1e-9; frame++) {
         check()
-        const projectFrame = range[0] + (frame / settings.fps) * projectFps
+        const projectFrame = timelineFrameAt(frame, settings.fps, projectFps, range[0])
         await feeder!.prepare(projectFrame)
         withVideoFrames(feeder!.frame, () => renderFrame(ctx!, project, projectFrame, { transparent: alpha }))
         await encoding(videoSource!.add(frame / settings.fps, 1 / settings.fps))
@@ -529,7 +530,7 @@ async function exportFrames(project: Project, settings: ExportSettings, range: [
   try {
     for (let i = 0; i < total; i++) {
       check()
-      const projectFrame = range[0] + (i / settings.fps) * projectFps
+      const projectFrame = timelineFrameAt(i, settings.fps, projectFps, range[0])
       await feeder.prepare(projectFrame)
       withVideoFrames(feeder.frame, () => renderFrame(ctx, project, projectFrame, { transparent }))
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
@@ -567,7 +568,7 @@ async function exportGif(project: Project, settings: ExportSettings, range: [num
   try {
     for (let i = 0; i < total; i++) {
       check()
-      const projectFrame = range[0] + (i / fps) * projectFps
+      const projectFrame = timelineFrameAt(i, fps, projectFps, range[0])
       await feeder.prepare(projectFrame)
       withVideoFrames(feeder.frame, () => renderFrame(ctx, project, projectFrame))
       const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height)
