@@ -2201,8 +2201,12 @@ export const commands = {
         const r = fps / p.settings.fps
         const sc = (f: number) => Math.round(f * r)
         for (const c of Object.values(p.clips)) {
+          // Each end of a clip goes to the frame nearest where it was, so two clips that touched still touch. Its
+          // start and its length used to be rounded apart: both up, a clip ended a frame into the one after it —
+          // and a run of short clips on the main track came out longer than what ran beside them.
+          const end = sc(c.start + c.duration)
           c.start = sc(c.start)
-          c.duration = Math.max(1, sc(c.duration))
+          c.duration = Math.max(1, end - c.start)
           c.inPoint = sc(c.inPoint)
           c.audio.fadeIn = sc(c.audio.fadeIn)
           c.audio.fadeOut = sc(c.audio.fadeOut)
