@@ -7,10 +7,9 @@ import { cancelJob, clearFinished, queueCounts, removeJob, retryJob, startQueue,
 import { cn } from '@/lib/cn'
 import { desktop } from '@/lib/platform'
 import { tt } from '@/lib/i18n'
+import { fmtTime } from './times'
 
 const fmtBytes = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`)
-const fmtTime = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${Math.max(1, Math.round(s))}s`)
-
 const STATUS: Record<QueueJob['status'], { label: string; className: string }> = {
   queued: { label: tt('Waiting'), className: 'bg-ink/[0.07] text-fg-3' },
   running: { label: tt('Rendering'), className: 'bg-ai/15 text-ai-2' },

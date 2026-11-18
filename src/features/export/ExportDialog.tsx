@@ -39,6 +39,7 @@ import { desktop } from '@/lib/platform'
 import { formatDuration } from '@/lib/time'
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
+import { fmtEta } from './times'
 
 const QUALITY_LABEL = (q: number) => (q < 30 ? tt('Draft') : q < 60 ? tt('Good') : q < 85 ? tt('High') : tt('Master'))
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2)
@@ -65,8 +66,6 @@ function sizesFor(pw: number, ph: number): Size[] {
 }
 
 const fmtBytes = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`)
-const fmtEta = (s: number) => (s >= 3600 ? `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m` : s >= 60 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${Math.max(1, Math.round(s))}s`)
-
 type State = { kind: 'idle' } | { kind: 'running'; progress: ExportProgress } | { kind: 'done'; result: ExportResult; seconds: number } | { kind: 'error'; message: string }
 
 /** A remembered-between-exports choice (loudness target, captions file). */
