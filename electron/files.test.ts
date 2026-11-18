@@ -25,7 +25,7 @@ vi.mock('electron', () => ({
 }))
 
 env.root = fs.mkdtempSync(path.join(os.tmpdir(), 'lumen-files-test-'))
-const { fileInfo, openPath, registerMediaProtocol, saveMedia, urlFor } = await import('./files')
+const { fileInfo, openPath, registerMediaProtocol, saveMedia, urlFor, urlForPath } = await import('./files')
 registerMediaProtocol()
 const serve = (url: string, init?: RequestInit) => env.handler!(new Request(url, init))
 
@@ -94,6 +94,34 @@ describe('lumen-media protocol', () => {
     fs.writeFileSync(path.join(env.root, 'userData', 'secret.txt'), 'nope')
     const res = await serve('lumen-media://local/..%2F..%2Fsecret.txt')
     expect(res.status).toBe(404)
+  })
+})
+
+describe('what the page may have made readable by naming its path', () => {
+  const dir = path.join(env.root, 'Named')
+  fs.mkdirSync(dir, { recursive: true })
+  const write = (name: string) => {
+    const full = path.join(dir, name)
+    fs.writeFileSync(full, 'secret')
+    return full
+  }
+
+  it('is media and subtitles — not a key file, a database or a document', async () => {
+    for (const name of ['id_rsa', 'Login Data.sqlite', 'notes.txt', 'config.json', 'page.html', 'clip.mp4.exe']) {
+      const full = write(name)
+      expect(urlForPath(full), name).toBeNull()
+      // Not answered, and not let through either: the address the page would make for it itself is refused.
+      expect((await serve(urlFor(full))).status, name).toBe(404)
+    }
+  })
+
+  it('still answers for what the editor reads by path', async () => {
+    for (const name of ['Recording.mp4', 'Voice.m4a', 'Still.PNG', 'Captions.srt', 'Captions.VTT']) {
+      const info = urlForPath(write(name))
+      expect(info?.name, name).toBe(name)
+      expect((await serve(info!.url)).status, name).toBe(200)
+    }
+    expect(urlForPath(path.join(dir, 'not there.mp4'))).toBeNull()
   })
 })
 

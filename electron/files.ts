@@ -286,6 +286,16 @@ export function saveMedia(folder: MediaFolder, fileName: string, data: Uint8Arra
   return info
 }
 
+/** Subtitle files, which the Copilot's subtitle import reads from a path. */
+const SUBTITLES = /\.(srt|vtt)$/i
+
+/**
+ * The URL of a file the editor names by its path: a recording, a proxy or a copy it has just written, or subtitles
+ * to import. Asking is what makes the file readable to the window, and the path comes from the page — so it is
+ * answered only for what the window has a use for, media and subtitles. Anything else (a key file, a browser's
+ * database) is answered as not there, as a project that names it is.
+ */
 export function urlForPath(p: string): MediaFileInfo | null {
-  return fileInfo(path.resolve(p))
+  const abs = path.resolve(p)
+  return isMedia(abs) || SUBTITLES.test(abs) ? fileInfo(abs) : null
 }
