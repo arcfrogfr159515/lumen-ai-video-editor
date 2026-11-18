@@ -5,7 +5,7 @@
  * the footage changes. Trying an alternative is one keystroke, not a drag.
  */
 import { uid } from '@/lib/id'
-import { clipEnd, clipsOnTrack, fitToMedia, framesIn, isMagneticTrack, sourceFrames, trackAccepts } from './ops'
+import { clipEnd, clipsOnTrack, fitToMedia, framesIn, isMagneticTrack, keyframesWithin, sourceFrames, trackAccepts } from './ops'
 import { MAX_SPEED, MIN_SPEED } from './timing'
 import type { Asset, Clip, ClipTake, Frame, Project } from './types'
 import { tt } from '@/lib/i18n'
@@ -173,10 +173,11 @@ export function switchTake(p: Project, clip: Clip, takeId: string): SwitchResult
   fitToMedia(p, clip)
   if (clip.duration < slot) clip.takeSlot = slot
   else delete clip.takeSlot
-  // Keyframes past the new end have nothing to animate.
+  // A keyframe past the new end is let go — with one left at the end, where the curve towards it is cut: it is
+  // what the frames before the end were moving towards.
   for (const [prop, kfs] of Object.entries(clip.keyframes)) {
     if (prop === 'speed' || !kfs) continue
-    const kept = kfs.filter((k) => k.frame <= clip.duration)
+    const kept = keyframesWithin(kfs, clip.duration)
     if (kept.length) clip.keyframes[prop as keyof Clip['keyframes']] = kept
     else delete clip.keyframes[prop as keyof Clip['keyframes']]
   }

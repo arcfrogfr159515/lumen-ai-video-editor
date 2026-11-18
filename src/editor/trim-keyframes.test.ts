@@ -61,6 +61,23 @@ describe('a clip whose picture moves, trimmed at its head', () => {
   })
 })
 
+describe('a clip whose picture moves, made shorter by a take that is shorter', () => {
+  it('goes on moving as it did over the frames that are left', () => {
+    // A push in from its 20th frame towards its 80th.
+    key(20, 1)
+    key(80, 1.6)
+    const before = sizes(100, 160)
+    expect(before.at(-1)).toBe(1.39)
+    // Another take, of two seconds: the clip can only be sixty frames long with it. The keyframe at its 80th frame
+    // is past its new end — and “has nothing to animate”, so it went: but it is what the push in was heading for,
+    // and without it the picture stood still.
+    addAsset('short', 2)
+    run('take.add', { clipId: id, assetId: 'short' })
+    expect(clip(id)).toMatchObject({ start: 100, duration: 60, assetId: 'short' })
+    expect(sizes(100, 160)).toEqual(before)
+  })
+})
+
 describe('a clip that changes speed, trimmed at its head', () => {
   /** Which frame of its footage the clip shows at each frame of the timeline from `from` to `to`, and how fast it is playing there. */
   const playing = (from: number, to: number) => Array.from({ length: to - from }, (_, i) => ({ footage: sourceFrameAt(clip(id), from + i - clip(id).start), speed: speedAt(clip(id), from + i - clip(id).start) }))

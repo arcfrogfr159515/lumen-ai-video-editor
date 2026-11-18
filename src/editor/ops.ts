@@ -8,7 +8,7 @@ import { uid } from '@/lib/id'
 import { createClip, createTrack, TRACK_HEIGHTS } from './defaults'
 import { ANIMATABLE, evalKeyframes, propAt } from './keyframes'
 import { consumed, consumedAt, localForConsumed, sourceFrameAt, speedAt, splitInPoints } from './timing'
-import type { AnimatableProp, Clip, ClipKind, Frame, Project, Track, Transition } from './types'
+import type { AnimatableProp, Clip, ClipKind, Frame, Keyframe, Project, Track, Transition } from './types'
 import { tt } from '@/lib/i18n'
 
 export const clipEnd = (c: Pick<Clip, 'start' | 'duration'>) => c.start + c.duration
@@ -185,10 +185,12 @@ export function fitToMedia(p: Project, clip: Clip) {
   if (consumed(clip) <= available + 0.5) return
   clip.duration = Math.max(1, Math.floor(localForConsumed(clip, available) + 1e-6))
   delete clip.takeSlot
+  // What moves the picture and the sound goes on as it did up to the new end: a keyframe past it is let go, with
+  // one left at the end where the curve towards it is cut.
   for (const prop of ANIMATABLE) {
     if (prop === 'speed') continue
     const kfs = clip.keyframes[prop]
-    if (kfs) clip.keyframes[prop] = kfs.filter((k) => k.frame <= clip.duration)
+    if (kfs) clip.keyframes[prop] = keyframesWithin(kfs, clip.duration)
   }
 }
 
@@ -405,26 +407,37 @@ function shiftFollow(clip: Clip, by: number) {
 }
 
 /**
- * Keyframes are in clip frames: they move with the clip's head, and those that fall before it or past the clip's
- * end are let go. Where one is let go, the curve it held up is cut — so, as a cut through a clip does, a keyframe
- * is left at that edge with the value the curve had there. Without it, what remains of the clip moved otherwise
- * than it did: a push in trimmed part-way through was over from the first frame, one trimmed off whole put the
- * picture back where it is without keyframes, and a clip ramping up to twice its speed played at twice its speed
- * from its first frame — other footage than before, to past where it had ended.
+ * The keyframes of one property that a clip of `duration` frames keeps: those within it. One that falls before
+ * its start or past its end is let go — but the curve it held up is cut there, so, as a cut through a clip does,
+ * a keyframe is left at that edge with the value the curve had. Without it, what remains of the clip moves
+ * otherwise than it did: a push in cut part-way through is over, or never comes.
+ */
+export function keyframesWithin(kfs: Keyframe[], duration: Frame): Keyframe[] {
+  const kept = kfs.filter((k) => k.frame >= 0 && k.frame <= duration)
+  if (!kfs.length) return kept
+  const before = kfs.filter((k) => k.frame < 0)
+  const after = kfs.filter((k) => k.frame > duration)
+  // The curve from the last keyframe let go at the head runs on to the next one with the easing it had.
+  if (before.length && kept[0]?.frame !== 0) kept.unshift({ frame: 0, value: evalKeyframes(kfs, 0), easing: before[before.length - 1].easing })
+  if (after.length && kept[kept.length - 1]?.frame !== duration) kept.push({ frame: duration, value: evalKeyframes(kfs, duration), easing: 'linear' })
+  return kept
+}
+
+/**
+ * Keyframes are in clip frames: they move with the clip's head, and those that then fall before it or past the
+ * clip's end are let go (`keyframesWithin`). Let go with nothing left at the edge, a push in trimmed part-way
+ * through was over from the first frame, one trimmed off whole put the picture back where it is without
+ * keyframes, and a clip ramping up to twice its speed played at twice its speed from its first frame — other
+ * footage than before, to past where it had ended.
  */
 function shiftKeyframes(clip: Clip, by: number) {
   for (const prop of ANIMATABLE) {
     const kfs = clip.keyframes[prop]
     if (!kfs) continue
-    const moved = kfs.map((k) => ({ ...k, frame: k.frame + by }))
-    const kept = moved.filter((k) => k.frame >= 0 && k.frame <= clip.duration)
-    if (moved.length) {
-      const before = moved.filter((k) => k.frame < 0)
-      const after = moved.filter((k) => k.frame > clip.duration)
-      // The curve from the last keyframe let go at the head runs on to the next one with the easing it had.
-      if (before.length && kept[0]?.frame !== 0) kept.unshift({ frame: 0, value: evalKeyframes(moved, 0), easing: before[before.length - 1].easing })
-      if (after.length && kept[kept.length - 1]?.frame !== clip.duration) kept.push({ frame: clip.duration, value: evalKeyframes(moved, clip.duration), easing: 'linear' })
-    }
+    const kept = keyframesWithin(
+      kfs.map((k) => ({ ...k, frame: k.frame + by })),
+      clip.duration,
+    )
     if (kept.length) clip.keyframes[prop] = kept
     else delete clip.keyframes[prop]
   }
