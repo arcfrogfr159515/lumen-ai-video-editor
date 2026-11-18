@@ -36,20 +36,37 @@ export function parseSkill(text: string): { name?: string; description?: string;
     const kv = /^([A-Za-z][\w-]*):\s*(.*)$/.exec(line)
     if (kv) {
       key = kv[1].toLowerCase()
-      fields[key] = unquote(kv[2])
+      const said = kv[2].trim()
+      // The sign of a folded or kept block (">", "|-") isn't part of a description. In quotes it is text like any other.
+      fields[key] = key === 'description' && !inQuotes(said) ? said.replace(/^[>|]-?\s*/, '') : unquote(said)
     } else if (key && /^\s+\S/.test(line)) {
       // A folded continuation line.
       fields[key] = `${fields[key]} ${line.trim()}`.trim()
     }
   }
   const body = src.slice(m[0].length).trim()
-  return { name: fields.name || undefined, description: fields.description?.replace(/^[>|]-?\s*/, '') || undefined, body }
+  return { name: fields.name || undefined, description: fields.description || undefined, body }
 }
 
-function unquote(v: string) {
-  const t = v.trim()
-  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) return t.slice(1, -1)
-  return t
+function inQuotes(t: string) {
+  return t.length > 1 && ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'")))
+}
+
+function unquote(t: string) {
+  if (!inQuotes(t)) return t
+  const inner = t.slice(1, -1)
+  // Between double quotes, a quote or a backslash that is part of the text has a backslash before it.
+  return t[0] === '"' ? inner.replace(/\\(["\\])/g, '$1') : inner
+}
+
+/**
+ * A name or description as its line in the frontmatter says it. One that begins with a quote, ">" or "|" goes
+ * between double quotes: written as it is, the reader takes its first character for a sign — a value between two
+ * quotes lost them, and a description that began with ">" lost that.
+ */
+function scalar(s: string) {
+  const t = s.replace(/\s+/g, ' ').trim()
+  return /^["'>|]/.test(t) ? `"${t.replace(/[\\"]/g, '\\$&')}"` : t
 }
 
 /** A skill's description when its frontmatter has none: the first real paragraph. */
@@ -63,8 +80,7 @@ export function fallbackDescription(body: string) {
 
 /** SKILL.md text for a name, description and instructions. */
 export function writeSkill(name: string, description: string, body: string) {
-  const line = (s: string) => s.replace(/\s+/g, ' ').trim()
-  return `---\nname: ${line(name)}\ndescription: ${line(description)}\n---\n\n${body.trim()}\n`
+  return `---\nname: ${scalar(name)}\ndescription: ${scalar(description)}\n---\n\n${body.trim()}\n`
 }
 
 /** Names Windows keeps for devices: a folder can't be called one of them. */

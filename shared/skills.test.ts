@@ -20,6 +20,33 @@ describe('SKILL.md', () => {
     expect(parseSkill(text)).toEqual({ name: 'my skill', description: 'Use for tests and more', body: 'Do the thing.' })
   })
 
+  it('reads back the name and description it wrote, whatever they begin with', () => {
+    // A value between two quotes lost them; a description that began with ">" or "|" lost that.
+    const said = [
+      '"Fast" cuts and "slow"',
+      "'90s tape look, as in 'Be Kind Rewind'",
+      '> 60 fps footage that has to play at 24',
+      '| pipes | in | a | table |',
+      '"C:\\clips" and "D:\\"',
+      '"',
+      '>',
+    ]
+    for (const words of said) expect(parseSkill(writeSkill(words, words, 'Body'))).toEqual({ name: words, description: words, body: 'Body' })
+    // What begins like any other sentence is written as it always was.
+    expect(writeSkill('Titles', 'Use for "Acme" titles: big > small', 'Body')).toBe('---\nname: Titles\ndescription: Use for "Acme" titles: big > small\n---\n\nBody\n')
+  })
+
+  it('reads a skill written by hand as it did', () => {
+    const read = (description: string) => parseSkill(`---\nname: n\ndescription: ${description}\n---\nBody`).description
+    expect(read('>-\n  Folded\n  again')).toBe('Folded again')
+    expect(read('|\n  Kept as lines')).toBe('Kept as lines')
+    expect(read('"He said "cut" twice"')).toBe('He said "cut" twice')
+    expect(read("'In single quotes'")).toBe('In single quotes')
+    // In quotes, a ">" is text, and an escaped quote is a quote.
+    expect(read('"> not a fold"')).toBe('> not a fold')
+    expect(read('"She said \\"cut\\""')).toBe('She said "cut"')
+  })
+
   it('makes folder names and fallback descriptions', () => {
     expect(skillSlug('Brand Titles — Acme!')).toBe('brand-titles-acme')
     expect(skillSlug('***')).toBe('skill')
