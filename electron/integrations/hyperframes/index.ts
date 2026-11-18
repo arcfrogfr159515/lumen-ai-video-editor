@@ -16,6 +16,12 @@ import { buildTemplate, fontFaces, TEMPLATE_NAMES, templateDuration } from './te
  * No FFmpeg or headless-Chrome download needed.
  */
 
+/**
+ * The longest a motion graphic is rendered, in seconds — whether the length was asked for or is the composition's
+ * own. Every frame is a picture on disk: a composition that says it lasts two hours would be 216 000 of them.
+ */
+export const MOTION_MAX_SECONDS = 120
+
 const PARTITION = 'lumen-motion'
 /** Remote hosts a composition may load from (fonts and common animation libraries). */
 const ALLOWED_HOSTS = /(^|\.)(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)$/
@@ -179,7 +185,8 @@ async function render(jobId: string, req: MotionRenderRequest, label: string, ou
     await waitFor(win, 'window.__playerReady && window.__player', 20_000, ask)
     const duration = req.duration ?? (req.template === 'custom' ? Number(await ask(win.webContents.executeJavaScript('window.__player.getDuration()'))) : templateDuration(req.template, req.params))
     if (!Number.isFinite(duration) || duration <= 0) throw new Error('The composition has no duration.')
-    const frames = Math.max(1, Math.round(duration * fps))
+    // A length that is asked for is kept within the limit before it gets here; the composition's own is what its page says.
+    const frames = Math.max(1, Math.round(Math.min(duration, MOTION_MAX_SECONDS) * fps))
     updateJob(jobId, { message: `Rendering ${frames} frames` })
 
     for (let i = 0; i < frames; i++) {

@@ -256,4 +256,18 @@ describe('a motion render', () => {
     expect(fs.existsSync(media('hyperframes', job.id))).toBe(false)
     expect(fs.existsSync(scratch('hyperframes', job.id))).toBe(false)
   })
+
+  it('renders no more of a composition than of a clip whose length is given', async () => {
+    // A length that is asked for is kept to two minutes whoever asks. A composition rendered at its own length —
+    // which is what its page says it is — was rendered for as long as that: two hours here, 216 000 pictures.
+    env.page.frames = 2 * 60 * 60 * 30
+    // Stopped at its second picture: how many it meant to draw is what is looked at.
+    env.cancelAt = 1
+    const started = await renderMotion({ template: 'custom', params: {}, html: '<html><body></body></html>', width: 320, height: 180, fps: 30 })
+    env.jobId = started.id
+    const job = await settled(started.id)
+    expect(job.status).toBe('cancelled')
+    expect(job.message).toBe(`Frame 1 of ${120 * 30}`)
+    expect(fs.existsSync(media('hyperframes', started.id))).toBe(false)
+  })
 })

@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { IPC, type BlenderRenderRequest, type ImageGenRequest, type McpServerConfig, type MotionRenderRequest, type Provenance, type VideoGenRequest, type WebVideoOptions } from '../../shared/integrations'
 import { detectBlender, renderBlender, runLive, setBlenderPath } from './blender'
-import { renderMotion } from './hyperframes'
+import { MOTION_MAX_SECONDS, renderMotion } from './hyperframes'
 import { cancelJob, listJobs } from './jobs'
 import { keychainSettled } from './secrets'
 import { callToolForAgent, connectServer, disconnectServer, listServers, removeServer, saveServer, signOut, startToolCall } from './mcp'
@@ -207,7 +207,7 @@ function sanitizeMotion(req: MotionRenderRequest): MotionRenderRequest {
   return {
     ...frameSpec(req),
     params: req.params && typeof req.params === 'object' ? req.params : {},
-    duration: req.duration === undefined ? undefined : clampNum(req.duration, 0.1, 120, 5),
+    duration: req.duration === undefined ? undefined : clampNum(req.duration, 0.1, MOTION_MAX_SECONDS, 5),
     html: typeof req.html === 'string' ? req.html : undefined,
   }
 }
