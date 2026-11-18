@@ -203,11 +203,14 @@ export async function recover() {
   }
   // Recovered work isn't on disk yet: keep it marked as unsaved.
   useSession.setState({ savedVersion: -1, recovery: null })
+  // Taken: the copy is the open project's own from here on.
+  offerOnDisk = false
   syncWindow()
 }
 
 export async function discardRecovery() {
   useSession.setState({ recovery: null })
+  offerOnDisk = false
   await desktop?.project.discardRecovery()
 }
 
@@ -305,6 +308,8 @@ async function writeRecovery() {
   if (!desktop) return
   try {
     await desktop.project.autosave({ text: serialize(getProject()), path: useSession.getState().path, name: getProject().name })
+    // There is one copy, and the project that is open needed it: what the last run left is no longer there.
+    offerOnDisk = false
     if (unprotected) toast.dismiss(RECOVERY_TOAST)
     unprotected = false
   } catch (err) {
@@ -320,8 +325,17 @@ async function writeRecovery() {
   }
 }
 
+/**
+ * The copy on disk is the one the last run left behind when it closed unexpectedly, found as this one started and
+ * still on offer: neither taken nor turned down. It is not this project's to throw away. (Opening a project, making
+ * a new one or saving deleted it — "the changes were saved or given up" — though nobody had been asked: started by
+ * opening a project file, Lumen never showed the offer, and by the next start there was nothing left to offer.)
+ */
+let offerOnDisk = false
+
 /** The file holds everything: the recovery copy has nothing to add. One that can't be removed is only offered once more. */
 function dropRecovery() {
+  if (offerOnDisk) return
   void desktop?.project.autosave(null).catch((err: unknown) => console.warn('Couldn’t remove the recovery copy', err))
 }
 
@@ -376,6 +390,11 @@ export async function startSession() {
   syncWindow()
   const [startup, recovery] = await Promise.all([desktop.project.startupFile(), desktop.project.recovery()])
   useSession.setState({ recovery })
+  offerOnDisk = Boolean(recovery)
   await refreshRecent()
-  if (startup) await openProject(startup)
+  if (startup) {
+    await openProject(startup)
+    // The start screen is where what wasn't saved is offered back. Opened straight into a project, it was never seen.
+    if (useSession.getState().recovery) showHome(true)
+  }
 }
