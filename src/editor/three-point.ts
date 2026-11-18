@@ -131,8 +131,8 @@ export function resolveEdit(pts: EditPoints, fps: number, mode: FourPointMode = 
 /** What an edit will do, in a line. */
 export function describeEdit(edit: ResolvedEdit, fps: number, timecode: (frame: Frame) => string): string {
   const secs = (f: number) => `${(f / fps).toFixed(f % fps === 0 ? 0 : 2)} s`
-  const kind = edit.points >= 4 ? tt('Four-point') : edit.points === 3 ? tt('Three-point') : edit.points === 0 ? tt('At the playhead') : `${edit.points}-point`
-  const parts = [`${kind}: ${secs(edit.duration)} at ${timecode(edit.start)}`]
+  const kind = edit.points >= 4 ? tt('Four-point') : edit.points === 3 ? tt('Three-point') : edit.points === 0 ? tt('At the playhead') : tt('{0}-point', edit.points)
+  const parts = [tt('{0}: {1} at {2}', kind, secs(edit.duration), timecode(edit.start))]
   if (edit.speed !== 1) parts.push(tt('fitted at {0}×', edit.speed))
   if (edit.backtimed) parts.push(tt('backtimed from the out point'))
   if (edit.short) parts.push(tt('{0} short — the source runs out', secs(edit.short)))
