@@ -169,6 +169,9 @@ export async function relinkAsset(assetId: string) {
   try {
     const fresh = await assetFromFile(file)
     if (fresh.kind !== asset.kind) throw new MediaError(tt('That’s {0} — pick the {1} file this media came from.', fresh.kind === 'image' ? tt('an image') : tt('a {0} file', fresh.kind), asset.kind))
+    // A proxy is a copy of the file it was made from. The same file found somewhere else (its size and date say so)
+    // keeps it; another file's pictures are not the proxy's, and the preview would go on playing the old ones.
+    const sameFile = file.size === asset.source.size && file.mtime === asset.source.mtime
     dispatch('asset.update', {
       id: assetId,
       patch: {
@@ -176,6 +179,7 @@ export async function relinkAsset(assetId: string) {
         ...(fresh.duration ? { duration: fresh.duration } : {}),
         ...(fresh.width ? { width: fresh.width, height: fresh.height } : {}),
         ...(fresh.hasAudio !== undefined ? { hasAudio: fresh.hasAudio } : {}),
+        ...(getProject().assets[assetId]?.proxy && !sameFile ? { proxy: null } : {}),
       },
     })
     toast.success(tt('Relinked {0}', asset.name))
