@@ -37,7 +37,9 @@ export interface ScriptLine {
 
 // ─── Words ───────────────────────────────────────────────────────────────
 
-const CJK = '\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}\\p{Script=Hangul}'
+// The scripts written without spaces between words: Chinese and Japanese. (Korean was among them here, and was cut
+// into its syllables — but Korean puts spaces between its words, and they are its words like any spelled ones.)
+const CJK = '\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}'
 const TOKEN = new RegExp(`[${CJK}]|[^\\s${CJK}]+`, 'gu')
 const SPOKEN = /[\p{L}\p{N}]/u
 

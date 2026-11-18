@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R25 | “Copy script” wrote a line that begins with a spelled word and goes on in Chinese with a space between every character — “OK， 我 们 开 始 吧” — and ran together the spelled words of a line that begins in Chinese — “我们用FinalCut剪辑” | `scriptText` chose between “a space between words” and “none” once for the whole line, by its first word. It is chosen between each two words now: a space between two that are spelled, none beside a character | `src/editor/text-edit.test.ts` › “are written out with a space between two spelled words…” | this round |
+| R26 | A Korean transcript came apart into syllables in text-based editing: the Script panel showed, and “Copy script” copied, “안 녕 하 세 요 여 러 분” for “안녕하세요 여러분”, and the spaces that were between its words were gone | `tokenize` cut Korean a character at a time, as it does the scripts written without spaces — but Korean is written with them. Hangul is out of that list now: Korean words are the words between spaces | `src/editor/text-edit.test.ts` › “are the words of a script written with spaces…” | this round |
+| R25 | “Copy script” wrote a line that begins with a spelled word and goes on in Chinese with a space between every character — “OK， 我 们 开 始 吧” — and ran together the spelled words of a line that begins in Chinese — “我们用FinalCut剪辑” | `scriptText` chose between “a space between words” and “none” once for the whole line, by its first word. It is chosen between each two words now: a space between two that are spelled, none beside a character | `src/editor/text-edit.test.ts` › “are written out with a space between two spelled words…” | `eb71ff8` |
 | R24 | In a Chinese window, words the Copilot cut out of what is said were “Cut 4 spoken words” in the History | `cut_spoken_text` gave the step a name written as it is, where the same cut made by hand is named through `tt`. It is looked up now | `src/integrations/tools/cut-spoken-text.test.ts` (new; runs with the window's language set to Chinese) | `a096ac4` |
 | R23 | In a Chinese window a batch of edits by the Copilot was “AI edit (2 steps)” in the History when the Copilot gave it no name of its own | `batch_edit` wrote the name as it is. It is read by the user, in the History, and is looked up now; a name the Copilot gives is kept as given | `src/integrations/tools/batch-edit.test.ts` (new; also the first tests that a batch is one step, and that a refused batch changes nothing) | `7d85c60` |
 | R22 | In a Chinese window a change in the mixer was “Volume · 人声”, “Edit EQ · 人声”, “Edit compressor · master” in the History and in Undo's name | The title of `mix.update` was put together from English words as written, the master's name among them. Each is a sentence given to `tt` now, and the master is called what the mixer's own strip calls it | `src/editor/history-labels.test.ts` › “says a change in the mixer in Chinese…” | `c16bd32` |
@@ -37,10 +38,7 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 ## Next — seen while reading, not yet reproduced
 
-| Seen | Where | What to check |
-|---|---|---|
-| What the Copilot is told is said (`get_script`), and what it is told it cut (`text_cut`), is the words joined with a space each: Chinese with a space between every character | `src/integrations/tools/craft.ts` line 137 and the result of `cut_spoken_text` | That a Chinese line comes back as it is written. For the model to read, not the user |
-| Korean is cut into its syllables as Chinese is into characters, though it is written with spaces between words: the Script panel draws a space after every syllable, and the spaces that were there are gone | `src/editor/text-edit.ts` `TOKEN` (Hangul is in it) and `ScriptPanel.tsx` `UNSPACED` (Hangul is not) | With a Korean transcript: what the panel and “Copy script” show |
+Nothing waiting.
 
 Words the interface shows without looking them up (R14–R24): every one found is fixed. Scanned for, and now clean: words between tags; `title` / `aria-label` / `placeholder` attributes; either-or words in the interface's code; the names in the tables of presets, effects and sounds; the titles of commands; names given to History steps and to tracks. The scans match the ways of writing they were made for — a word shown some other way would not have been seen.
 
@@ -77,3 +75,4 @@ Read and found sound: WebVTT cues timed without hours (`00:01.000 --> 00:02.500`
 | Item | Why |
 |---|---|
 | UX-04: the font stack names no Chinese face | On inspection it already resolves to the system's Chinese interface face through `system-ui` with `lang="zh-CN"` |
+| `get_script` tells the Copilot what is said with a space between every word — in Chinese, between every character | Taken as meant: every word has an index the Copilot cuts by, and the spaces are what show it where one word ends and the next begins. It is read by the model, not the user |

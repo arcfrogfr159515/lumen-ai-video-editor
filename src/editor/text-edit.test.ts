@@ -22,6 +22,17 @@ describe('words', () => {
     expect(plain('“Plan,”')).toBe('plan')
   })
 
+  it('are the words of a script written with spaces, whichever script that is', () => {
+    // Korean was cut into its syllables, as Chinese is into its characters. But Korean is written with spaces
+    // between its words: they were lost, and the script was shown, and copied, with a space after every syllable.
+    expect(tokenize('안녕하세요 여러분, 반갑습니다.')).toEqual(['안녕하세요', '여러분,', '반갑습니다.'])
+    addAsset('korean', 20, 'video', { transcript: transcript([1, 3, '안녕하세요 여러분, 반갑습니다.'], [4, 6, '오늘은 서울에서 촬영합니다']) })
+    add('Main', 0, 600, { assetId: 'korean' })
+    expect(scriptText(script())).toBe('안녕하세요 여러분, 반갑습니다.\n오늘은 서울에서 촬영합니다')
+    expect(words()).toHaveLength(6)
+    expect(findPhrase(words(), '서울에서 촬영합니다')).toEqual([[4, 5]])
+  })
+
   it('are read off the timeline, each with the frames it is said in', () => {
     const id = add('Overlay', 100, 300, { assetId: 'talk' })
     const lines = script()
