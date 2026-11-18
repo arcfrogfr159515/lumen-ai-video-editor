@@ -78,8 +78,14 @@ export function formatSrt(cues: Cue[]) {
   return cues.map((c, i) => `${i + 1}\n${stamp(c.start, ',')} --> ${stamp(c.end, ',')}\n${held(c.text)}\n`).join('\n')
 }
 
+/**
+ * A caption's text as WebVTT says it. There "&" begins an escape and "<" a tag, and a line with "-->" in it says when
+ * a cue shows: written as they were, "a<b then b>a" lost its middle to whoever read the file. (SRT has no escapes.)
+ */
+const vttText = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 export function formatVtt(cues: Cue[]) {
-  return `WEBVTT\n\n${cues.map((c) => `${stamp(c.start, '.')} --> ${stamp(c.end, '.')}\n${held(c.text)}\n`).join('\n')}`
+  return `WEBVTT\n\n${cues.map((c) => `${stamp(c.start, '.')} --> ${stamp(c.end, '.')}\n${vttText(held(c.text))}\n`).join('\n')}`
 }
 
 export type SubtitleFormat = 'srt' | 'vtt'

@@ -88,6 +88,25 @@ describe('subtitle files', () => {
     expect(parseSubtitles(formatSrt(timelineCues(getProject()))).map((c) => c.text)).toEqual(['Chapter one\nThe beginning'])
   })
 
+  it('writes WebVTT in which a caption’s “&”, “<” and “>” are text', () => {
+    // Written as they were, the format takes "<b then b>" for a tag, "&amp;" for an escape and "-->" for a line of timing.
+    const cues = [
+      { start: 1, end: 2, text: 'if a<b then b>a' },
+      { start: 3, end: 4, text: 'Tom & Jerry <3' },
+      { start: 5, end: 6, text: 'Write &amp; for an ampersand' },
+      { start: 7, end: 8, text: '<i>not slanted</i>\nA --> B' },
+    ]
+    const vtt = formatVtt(cues)
+    expect(parseSubtitles(vtt)).toEqual(cues)
+    expect(vtt).toContain('\nif a&lt;b then b&gt;a\n')
+    expect(vtt).toContain('\nTom &amp; Jerry &lt;3\n')
+    expect(vtt).toContain('\nWrite &amp;amp; for an ampersand\n')
+    // Only the four lines that say when a cue shows have an arrow in them.
+    expect(vtt.split('\n').filter((l) => l.includes('-->'))).toHaveLength(4)
+    // SRT has no way to say any of this: it is written as it was.
+    expect(formatSrt(cues.slice(1, 2))).toBe('1\n00:00:03,000 --> 00:00:04,000\nTom & Jerry <3\n')
+  })
+
   it('lays cues on a Captions track, and a second file on a track of its own', () => {
     const fps = getProject().settings.fps
     const first = importSubtitles(SRT, { name: 'English' })
