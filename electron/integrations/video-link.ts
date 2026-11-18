@@ -9,7 +9,7 @@ import { app, net } from 'electron'
 import type { TranscriptSegment, WebVideo, WebVideoOptions, WebVideoPicture } from '../../shared/integrations'
 import { elements, firstElement, tidy as tidyPage, tidyTags } from './html'
 import { allowPath, fileUrl, workDir } from './paths'
-import { absolute, attribute, checkUrl, decodeEntities, isCancelledRedirect, meta, redirectTarget, strip, UA } from './web'
+import { absolute, attribute, checkUrl, decodeEntities, isCancelledRedirect, meta, pageText, redirectTarget, strip, UA } from './web'
 
 /**
  * Watching a linked video for the Copilot without bringing it into the project:
@@ -1313,7 +1313,8 @@ async function watchElsewhere(url: URL, want: Wanted): Promise<WebVideo> {
       const gone = reply.res.status === 404 || reply.res.status === 410
       blocked = `${reply.url.hostname} answered ${reply.res.status} — ${gone ? 'there is nothing at that address.' : 'it may need sign-in or turn automated visits away.'}`
     } else {
-      const page = parseVideoPage((await read(reply.res, PAGE_BYTES)).toString('utf8'), reply.url)
+      // In the encoding the page is written in, as a page being read is: one on a site in GBK was called "����".
+      const page = parseVideoPage(pageText(await read(reply.res, PAGE_BYTES), (reply.res.headers.get('content-type') || 'text/html').toLowerCase()), reply.url)
       const players = page.embeds.map((e) => parseUrl(e)).filter((u): u is URL => Boolean(u))
       // A page that just carries a YouTube player: watch that video.
       const [youtube, ...others] = [...new Set(players.map(youtubeId).filter((id): id is string => Boolean(id)))]
