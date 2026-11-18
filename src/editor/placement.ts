@@ -26,13 +26,22 @@ export type { AudioRole }
 // By what a track is called — in English or in Chinese, whichever language the project was made in (`ROLE_TRACK`).
 const ROLE_NAME: Record<AudioRole, string> = { voice: tt('Voice'), music: tt('Music'), sfx: tt('Sound effects') }
 
+// What a file is called in Chinese, for the same kinds of sound. Only the English words were looked for: 背景音乐 was
+// no kind of sound at all, and went to the first audio track there is — the one for speech. (Chinese has no spaces
+// to end a word at, so these are looked for anywhere in the name.)
+const NAMED_IN_CHINESE: Record<AudioRole, RegExp> = {
+  sfx: /音效|效果音/,
+  music: /音乐|配乐|歌曲|伴奏/,
+  voice: /人声|配音|旁白|语音|对白|解说|采访|播客|录音/,
+}
+
 /** What kind of sound an audio asset is — from its tags, where it came from, its transcript or its name. Null when it can't tell. */
 export function audioRole(asset: Asset): AudioRole | null {
   const source = `${asset.provenance?.integration ?? ''} ${asset.provenance?.tool ?? ''}`.toLowerCase()
   const name = asset.name.toLowerCase()
-  if (asset.tags?.includes('sfx') || /sfx|sound[-_ ]?(effect|generation)/.test(source) || /\b(sfx|whoosh|swoosh|impact|riser|hit|click|pop|ding|foley)\b/.test(name)) return 'sfx'
-  if (asset.tags?.includes('music') || /music|song|soundtrack/.test(source) || /\b(music|song|soundtrack|score|beat|bgm|instrumental)\b/.test(name)) return 'music'
-  if (asset.transcript?.length || /speech|voice|tts|record/.test(source) || /\b(voice|vo|voiceover|narration|narrator|interview|podcast|recording)\b/.test(name)) return 'voice'
+  if (asset.tags?.includes('sfx') || /sfx|sound[-_ ]?(effect|generation)/.test(source) || /\b(sfx|whoosh|swoosh|impact|riser|hit|click|pop|ding|foley)\b/.test(name) || NAMED_IN_CHINESE.sfx.test(name)) return 'sfx'
+  if (asset.tags?.includes('music') || /music|song|soundtrack/.test(source) || /\b(music|song|soundtrack|score|beat|bgm|instrumental)\b/.test(name) || NAMED_IN_CHINESE.music.test(name)) return 'music'
+  if (asset.transcript?.length || /speech|voice|tts|record/.test(source) || /\b(voice|vo|voiceover|narration|narrator|interview|podcast|recording)\b/.test(name) || NAMED_IN_CHINESE.voice.test(name)) return 'voice'
   return null
 }
 
