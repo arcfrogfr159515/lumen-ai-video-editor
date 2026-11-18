@@ -16,8 +16,12 @@ export function formatTimecode(frame: number, fps: number, withFrames = true) {
 /** Human, compact duration: "4.5s", "1:05", "1:02:03". */
 export function formatDuration(frames: number, fps: number) {
   const sec = frames / fps
-  if (sec < 60) return `${sec < 10 ? sec.toFixed(1) : Math.round(sec)}s`
+  // Rounded before the form is chosen: 9.97 s is "10s" and 59.7 s is "1:00", as ten seconds and a minute are —
+  // not "10.0s" and "60s".
+  const tenths = sec.toFixed(1)
+  if (Number(tenths) < 10) return `${tenths}s`
   const total = Math.round(sec)
+  if (total < 60) return `${total}s`
   const h = Math.floor(total / 3600)
   const m = Math.floor(total / 60) % 60
   const s = total % 60
