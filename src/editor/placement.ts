@@ -35,10 +35,23 @@ const NAMED_IN_CHINESE: Record<AudioRole, RegExp> = {
   voice: /人声|配音|旁白|语音|对白|解说|采访|播客|录音/,
 }
 
+/**
+ * A file's name as the words it is made of: files are named with underscores between their words, with numbers on
+ * them, or with capitals running the words together ("background_music", "whoosh_01", "EpicMusic"). A word was
+ * looked for between two word boundaries, and an underscore and a digit are word characters: such a name had no
+ * word in it, and the file went to the first audio track there is — the one for speech.
+ */
+const nameWords = (name: string) =>
+  name
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/[_\d]+/g, ' ')
+    .toLowerCase()
+
 /** What kind of sound an audio asset is — from its tags, where it came from, its transcript or its name. Null when it can't tell. */
 export function audioRole(asset: Asset): AudioRole | null {
   const source = `${asset.provenance?.integration ?? ''} ${asset.provenance?.tool ?? ''}`.toLowerCase()
-  const name = asset.name.toLowerCase()
+  const name = nameWords(asset.name)
   if (asset.tags?.includes('sfx') || /sfx|sound[-_ ]?(effect|generation)/.test(source) || /\b(sfx|whoosh|swoosh|impact|riser|hit|click|pop|ding|foley)\b/.test(name) || NAMED_IN_CHINESE.sfx.test(name)) return 'sfx'
   if (asset.tags?.includes('music') || /music|song|soundtrack/.test(source) || /\b(music|song|soundtrack|score|beat|bgm|instrumental)\b/.test(name) || NAMED_IN_CHINESE.music.test(name)) return 'music'
   if (asset.transcript?.length || /speech|voice|tts|record/.test(source) || /\b(voice|vo|voiceover|narration|narrator|interview|podcast|recording)\b/.test(name) || NAMED_IN_CHINESE.voice.test(name)) return 'voice'
