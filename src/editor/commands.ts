@@ -520,6 +520,9 @@ function plainSequence(p: Project, id: string): Sequence {
   return isDraft(seq) ? current(seq) : seq
 }
 
+/** The clips of every timeline of the project: the open one's, then those that aren't open. For what belongs to the project as a whole. */
+const everyTimelinesClips = (p: Project): Record<string, Clip>[] => [p.clips, ...Object.values(p.sequences ?? {}).map((seq) => seq.clips)]
+
 function applyPatch(p: Project, clip: Clip, patch: ClipPatch) {
   const { transform, color, audio, text, animation, speed, crop, masks, angle, follow, stabilize, matte, label, speaker, note, tasks, ...flat } = patch
   Object.assign(clip, flat)
@@ -1558,7 +1561,9 @@ export const commands = {
     run(p, i) {
       if (!p.luts?.[i.id]) throw new CommandError(tt('LUT {0} not found', i.id))
       delete p.luts[i.id]
-      for (const c of Object.values(p.clips)) if (c.color.lut?.id === i.id) delete c.color.lut
+      // On every timeline, open or not: the LUT is the project's. (Only the open one's clips lost it — the others
+      // went on naming a LUT that wasn't there: graded by nothing, and still shown as graded.)
+      for (const clips of everyTimelinesClips(p)) for (const c of Object.values(clips)) if (c.color.lut?.id === i.id) delete c.color.lut
     },
   }),
 
@@ -1580,7 +1585,8 @@ export const commands = {
     run(p, i) {
       if (!p.fonts?.[i.id]) throw new CommandError(tt('Font {0} not found', i.id))
       delete p.fonts[i.id]
-      for (const c of Object.values(p.clips)) if (c.text?.font === `custom:${i.id}`) c.text.font = 'sans'
+      // On every timeline, open or not, as for a LUT: a title on another one kept the name of a font that was gone.
+      for (const clips of everyTimelinesClips(p)) for (const c of Object.values(clips)) if (c.text?.font === `custom:${i.id}`) c.text.font = 'sans'
     },
   }),
 
