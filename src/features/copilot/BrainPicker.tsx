@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { PROVIDERS, type CopilotTarget, type LocalAgentId, type LocalAgentState } from '@shared/ai'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { chooseTarget, LOCAL_AGENT_NAMES, loadModels, signInLocal, targetLabel, targetReady, useAi } from '@/integrations/ai'
+import { autoTarget, chooseTarget, LOCAL_AGENT_NAMES, loadModels, signInLocal, targetLabel, targetReady, useAi } from '@/integrations/ai'
 import { openIntegrations, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
 import { tt } from '@/lib/i18n'
@@ -81,7 +81,7 @@ export function BrainPicker() {
                 value="Automatic best available"
                 icon={<Sparkles className="size-3.5" />}
                 title={tt('Automatic')}
-                hint={targetLabel(null).subtitle === 'automatic' ? tt('Uses {0}', targetLabel(null).title) : tt('Uses the first brain you connect')}
+                hint={autoTarget() ? tt('Uses {0}', targetLabel(null).title) : tt('Uses the first brain you connect')}
                 selected={target === null}
                 onSelect={() => choose(null)}
               />
