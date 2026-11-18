@@ -1387,10 +1387,15 @@ export const commands = {
       'Mix a track (its id) or the master bus ("master"): fader volume in dB (-60 to +12), pan (-1 left to 1 right), and processing in this order — EQ (low cut Hz, low / mid / high shelves and bell in dB with their frequencies), compressor (threshold dB, ratio, attack and release ms, make-up dB) and limiter (ceiling dBFS). Pass null for a processor to remove it; fields you leave out keep their values.',
     input: z.object({ target: z.union([z.literal('master'), id]), patch: busPatch }),
     title: (i, p) => {
-      const name = i.target === 'master' ? 'master' : (p.tracks.find((t) => t.id === i.target)?.name ?? 'track')
+      // Each a sentence the dictionary has. Put together from English words as written, a Chinese History said "Volume · master".
+      const name = i.target === 'master' ? tt('master') : (p.tracks.find((t) => t.id === i.target)?.name ?? tt('track'))
       const [key] = Object.keys(i.patch)
-      const what = key === 'volume' ? 'volume' : key === 'pan' ? 'pan' : key === 'eq' ? 'EQ' : key === 'compressor' ? 'compressor' : key === 'limiter' ? 'limiter' : 'mix'
-      return `${what === 'volume' || what === 'pan' ? `${what[0].toUpperCase()}${what.slice(1)}` : what === 'mix' ? 'Mix' : `Edit ${what}`} · ${name}`
+      if (key === 'volume') return tt('Volume · {0}', name)
+      if (key === 'pan') return tt('Pan · {0}', name)
+      if (key === 'eq') return tt('Edit EQ · {0}', name)
+      if (key === 'compressor') return tt('Edit compressor · {0}', name)
+      if (key === 'limiter') return tt('Edit limiter · {0}', name)
+      return tt('Mix · {0}', name)
     },
     run(p, i) {
       let bus: BusMix

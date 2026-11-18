@@ -49,4 +49,19 @@ describe('what the History calls an edit, in a Chinese window', () => {
     run('clip.trim', { id, edge: 'start', frame: 50, ripple: true })
     expect(lastStep()).toBe('波纹修剪开头')
   })
+
+  it('says a change in the mixer in Chinese, and whose it is', () => {
+    // "Volume · master", "Edit EQ · 人声": what was changed was English words as written, and so was the master's name.
+    const voice = getProject().tracks.find((t) => t.kind === 'audio')!
+    run('mix.update', { target: voice.id, patch: { volume: -6 } })
+    expect(lastStep()).toBe(`音量 · ${voice.name}`)
+    run('mix.update', { target: voice.id, patch: { pan: 0.2 } })
+    expect(lastStep()).toBe(`声像 · ${voice.name}`)
+    run('mix.update', { target: voice.id, patch: { eq: { lowCut: 80 } } })
+    expect(lastStep()).toBe(`编辑均衡器 · ${voice.name}`)
+    run('mix.update', { target: 'master', patch: { compressor: { threshold: -20 } } })
+    expect(lastStep()).toBe('编辑压缩器 · 母版')
+    run('mix.update', { target: 'master', patch: { limiter: { ceiling: -2 } } })
+    expect(lastStep()).toBe('编辑限制器 · 母版')
+  })
 })
