@@ -94,42 +94,68 @@ interface Word {
   end: number
 }
 
+// The scripts written without spaces between words: Chinese and Japanese (as the editor's script has them — see
+// `text-edit.ts`). What was said was put together as if every language spelled its words apart: Chinese came out as
+// "我们 开车 去 山里" — "我 们 开 车" from a service that times each character — in the transcript, the captions
+// and the script; a sentence that ends in 。 ran on into the next; and a voiceover's text, which has no spaces, was
+// one word as long as the voiceover.
+const UNSPACED = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+/** What stands beside its neighbour without a space: a character of such a script, or one of its punctuation marks (，。「」… and the full-width forms). */
+const TIGHT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\u3000-\u303f\uff00-\uffef]/u
+const SENTENCE_END = /[.!?…。！？]["”')\]」』]*$/
+const SPOKEN = /[\p{L}\p{N}]/u
+
+/** Words as a line of text: a space between two of them, but none where either is of a script written without. */
+function written(words: Word[]) {
+  let text = ''
+  for (const w of words) {
+    const apart = text && !TIGHT.test([...text].at(-1) ?? '') && !TIGHT.test([...w.text][0] ?? '')
+    text += apart ? ` ${w.text}` : w.text
+  }
+  return text
+}
+
 /** Groups words into caption-sized phrases: sentence ends, long pauses, or ~10 words. */
 export function phrases(words: Word[]): TranscriptSegment[] {
   const out: TranscriptSegment[] = []
   let cur: Word[] = []
   const flush = () => {
     if (!cur.length) return
-    out.push({ start: cur[0].start, end: cur[cur.length - 1].end, text: cur.map((w) => w.text).join(' ') })
+    out.push({ start: cur[0].start, end: cur[cur.length - 1].end, text: written(cur) })
     cur = []
   }
   words.forEach((w, i) => {
     const prev = words[i - 1]
     if (prev && cur.length && w.start - prev.end > 0.6) flush()
     cur.push(w)
-    if (/[.!?…]["”')\]]*$/.test(w.text) || cur.length >= 10) flush()
+    if (SENTENCE_END.test(w.text) || cur.length >= 10) flush()
   })
   flush()
   return out
 }
 
-/** Character alignment (TTS) → words. */
+/**
+ * Character alignment (TTS) → words: what stands between two spaces, and in a script written without spaces each
+ * character (with the punctuation that follows it).
+ */
 function wordsFromAlignment(a: { characters: string[]; character_start_times_seconds: number[]; character_end_times_seconds: number[] }): Word[] {
   const words: Word[] = []
   let text = ''
   let start = 0
   let end = 0
+  const close = () => {
+    if (text) words.push({ text, start, end })
+    text = ''
+  }
   a.characters.forEach((ch, i) => {
-    if (/\s/.test(ch)) {
-      if (text) words.push({ text, start, end })
-      text = ''
-      return
-    }
+    if (/\s/.test(ch)) return close()
+    // A new word begins at a character of such a script, and at a letter that follows one.
+    if (text && SPOKEN.test(ch) && (UNSPACED.test(ch) || UNSPACED.test(text))) close()
     if (!text) start = a.character_start_times_seconds[i]
     text += ch
     end = a.character_end_times_seconds[i]
   })
-  if (text) words.push({ text, start, end })
+  close()
   return words
 }
 
