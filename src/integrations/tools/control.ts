@@ -18,7 +18,7 @@ import { queueExport } from '@/engine/render-queue'
 import { tt } from '@/lib/i18n'
 import { desktop } from '@/lib/platform'
 import { saveProject, saveProjectAs, useSession } from '@/project/session'
-import { bool, clampNum, int, list, num, number, obj, oneOf, seconds, str, text, toFrame, trackById, type AgentTool } from './kit'
+import { bool, clampNum, frameProgress, int, list, num, number, obj, oneOf, seconds, str, text, toFrame, trackById, type AgentTool } from './kit'
 
 const ai = { source: 'ai' as const }
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2)
@@ -320,7 +320,7 @@ export const CONTROL_TOOLS: AgentTool[] = [
           settings,
           handle,
           (prog) => {
-            if (prog.phase === 'rendering' && prog.total) ctx?.progress?.(`${Math.round((prog.done / prog.total) * 100)}% — frame ${prog.done} of ${prog.total}`)
+            if (prog.phase === 'rendering' && prog.total) ctx?.progress?.(frameProgress(prog.done, prog.total))
             else if (prog.message) ctx?.progress?.(prog.message)
             if (prog.phase === 'rendering' && prog.total) toast.loading(tt('Exporting… {0}%', Math.round((prog.done / prog.total) * 100)), { id, ...said })
           },

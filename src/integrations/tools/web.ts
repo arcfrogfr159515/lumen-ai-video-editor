@@ -9,6 +9,7 @@ import type { WebVideo, WebVideoOptions, WebVideoPicture } from '@shared/integra
 import { framesAt, probeMedia } from '@/engine/decode'
 import { canvasBase64, contactSheet } from '@/engine/stills'
 import { api } from '@/integrations/store'
+import { tt } from '@/lib/i18n'
 import { bool, clampNum, int, num, number, obj, str, text, withImages, type AgentTool, type ToolArgs, type ToolContext, type ToolImage } from './kit'
 import { label } from './vision'
 
@@ -166,7 +167,7 @@ export async function watchWebVideo(a: ToolArgs, ctx?: ToolContext, watch: Watch
   const from = number(a, 'from_seconds')
   const to = number(a, 'to_seconds')
   if (from !== undefined && to !== undefined && to <= from) throw new Error('to_seconds has to be after from_seconds.')
-  ctx?.progress?.('Opening the video…')
+  ctx?.progress?.(tt('Opening the video…'))
   // A stopped reply stops the watch too: its requests and its download end in the main process.
   const signal = ctx?.signal
   const id = signal ? crypto.randomUUID() : undefined
@@ -186,7 +187,7 @@ export async function watchWebVideo(a: ToolArgs, ctx?: ToolContext, watch: Watch
       stills = await tileStills(video.tiles)
       if (!stills.length) notes.push('The preview frames couldn’t be decoded, so there are no pictures of the video.')
     } else if (video.file) {
-      ctx?.progress?.('Looking through the video…')
+      ctx?.progress?.(tt('Looking through the video…'))
       const seen = await fileStills(video.file, count, from, to, duration)
       stills = seen.stills
       duration ??= seen.duration

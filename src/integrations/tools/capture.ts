@@ -354,7 +354,7 @@ export const CAPTURE_TOOLS: AgentTool[] = [
       const wait = number(a, 'wait_seconds') ? waitSeconds(a, ctx, 0) : 0
       const until = performance.now() + wait * 1000
       while (performance.now() < until && recorderBusy() && !ctx?.signal?.aborted) {
-        ctx?.progress?.(`Recording · ${Math.round(useRecorder.getState().stats.seconds)} s`)
+        ctx?.progress?.(tt('Recording · {0} s', Math.round(useRecorder.getState().stats.seconds)))
         await sleep(Math.min(500, until - performance.now()), ctx?.signal)
       }
       return status()
@@ -397,7 +397,7 @@ export const CAPTURE_TOOLS: AgentTool[] = [
     }),
     run: async (a, ctx) => {
       if (useRecorder.getState().phase === 'idle') throw new Error('No recording is running.')
-      ctx?.progress?.('Finishing the recording…')
+      ctx?.progress?.(tt('Finishing the recording…'))
       const place = text(a, 'place') as 'timeline' | 'library' | 'none' | undefined
       const at = number(a, 'at_seconds')
       const result = await stopRecording({
@@ -492,13 +492,13 @@ export async function recordStudioTake(a: ToolArgs, ctx?: ToolContext) {
   if (recorderBusy()) throw new Error('A recording is already running. Call stop_recording first.')
   const source = gameWindow(await refreshSources(false), text(a, 'window'))
   if (source.kind !== 'window') throw new Error('The game has to be a window: set it to windowed or borderless in its settings.')
-  ctx?.progress?.('Starting the recorder…')
+  ctx?.progress?.(tt('Starting the recorder…'))
   const settings = await settingsFrom({ ...a, cursor: false, click_data: false, audio: text(a, 'audio') ?? 'app', quality: number(a, 'quality') ?? 80, countdown_seconds: 0 }, source)
   const started = await startRecording({ settings: { ...settings, hideLumen: false, minimize: false }, name: text(a, 'name') ?? `Take ${new Date().toLocaleTimeString([], { hour12: false }).replace(/:/g, '.')}`, by: 'ai' })
   try {
     // A game plays (and is heard) only while it is the active window.
     const front = await desktop!.capture.focus(source.hwnd).catch(() => false)
-    ctx?.progress?.('Filming the take…')
+    ctx?.progress?.(tt('Filming the take…'))
     const args: Record<string, unknown> = { wait_seconds: 50 }
     for (const key of ['target', 'path_id', 'from_frame', 'to_frame', 'preroll_seconds', 'postroll_seconds']) if (a[key] !== undefined && a[key] !== null) args[key] = a[key]
     let take = await callStudio(server.config.id, 'film_take', args)
@@ -508,13 +508,13 @@ export async function recordStudioTake(a: ToolArgs, ctx?: ToolContext) {
         await callStudio(server.config.id, 'cancel_job', { job_id: take.job_id }).catch(() => {})
         throw new Error('Stopped.')
       }
-      ctx?.progress?.(`Filming the take · ${Math.round(useRecorder.getState().stats.seconds)} s`)
+      ctx?.progress?.(tt('Filming the take · {0} s', Math.round(useRecorder.getState().stats.seconds)))
       take = { ...take, ...(await callStudio(server.config.id, 'job_status', { job_id: take.job_id, wait_seconds: 20 })) }
     }
     const result = (take.result && typeof take.result === 'object' ? (take.result as StudioTake) : take) as StudioTake
     if (take.error || result.error || take.status === 'failed' || take.status === 'cancelled') throw new Error(`The studio didn’t finish the take: ${String(take.error ?? result.error ?? take.status)}`)
     if (typeof result.started_at_unix_ms !== 'number' || typeof result.ended_at_unix_ms !== 'number') throw new Error('The studio didn’t say when the take started and ended, so it can’t be trimmed. The recording was thrown away.')
-    ctx?.progress?.('Finishing the recording…')
+    ctx?.progress?.(tt('Finishing the recording…'))
     void desktop!.capture.focus().catch(() => {})
     const at = number(a, 'at_seconds')
     const done = await stopRecording({

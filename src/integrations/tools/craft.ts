@@ -209,8 +209,8 @@ export const CRAFT_TOOLS: AgentTool[] = [
       if (wide !== undefined && wide > cameras) throw new Error(`“${targets.seq.name}” has ${cameras} cameras; there is no camera ${wide}.`)
       let motion: (number[] | undefined)[] | undefined
       if (a.watch_picture === true) {
-        ctx?.progress?.('Watching the cameras…')
-        motion = await angleMotion(p, targets.seq, (done) => ctx?.progress?.(`Watching the cameras… ${Math.round(done * 100)}%`), ctx?.signal)
+        ctx?.progress?.(tt('Watching the cameras…'))
+        motion = await angleMotion(p, targets.seq, (done) => ctx?.progress?.(tt('Watching the cameras… {0}%', Math.round(done * 100))), ctx?.signal)
       }
       const plan = planAutoDirect(
         getProject(),

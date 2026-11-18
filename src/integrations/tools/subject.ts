@@ -4,7 +4,7 @@
  */
 import { getProject } from '@/editor/store'
 import { cutOutSubject, textBehindSubject } from '@/project/subject'
-import { obj, oneOf, str, text, type AgentTool } from './kit'
+import { frameProgress, obj, oneOf, str, text, type AgentTool } from './kit'
 
 export const SUBJECT_TOOLS: AgentTool[] = [
   {
@@ -30,7 +30,7 @@ export const SUBJECT_TOOLS: AgentTool[] = [
     run: async (a, ctx) => {
       const clipId = text(a, 'clip_id') ?? ''
       // The model's one-time download and each frame show on the tool's step; stopping the turn stops the cut-out.
-      const live = { signal: ctx?.signal, onProgress: (p: { done: number; total: number }) => p.total && ctx?.progress?.(`${Math.round((p.done / p.total) * 100)}% — frame ${p.done} of ${p.total}`) }
+      const live = { signal: ctx?.signal, onProgress: (p: { done: number; total: number }) => p.total && ctx?.progress?.(frameProgress(p.done, p.total)) }
       const subject = a.subject === 'any' ? 'any' : 'person'
       const mode = text(a, 'mode') ?? 'text-behind'
       if (mode === 'text-behind') {

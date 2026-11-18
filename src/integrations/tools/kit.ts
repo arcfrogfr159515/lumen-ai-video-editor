@@ -8,6 +8,7 @@ import { projectDuration } from '@/editor/ops'
 import { usePlayback } from '@/editor/playback'
 import { getProject } from '@/editor/store'
 import type { Asset, Clip, Track } from '@/editor/types'
+import { tt } from '@/lib/i18n'
 import { formatTimecode } from '@/lib/time'
 
 export type ToolArgs = Record<string, unknown>
@@ -18,9 +19,15 @@ export interface ToolContext {
   maxWait?: number
   /** Aborts when the user stops the Copilot turn that made this call: long work should stop with it. */
   signal?: AbortSignal
-  /** Says how the work is getting on; the chat shows it on the tool's step. */
+  /**
+   * Says how the work is getting on; the chat shows it on the tool's step. It is for the user alone — the model
+   * never reads it — so it is said in the window's language, unlike what a tool answers.
+   */
   progress?: (message: string) => void
 }
+
+/** How far work that goes frame by frame has got, for `progress`: "40% — frame 12 of 30". */
+export const frameProgress = (done: number, total: number) => tt('{0}% — frame {1} of {2}', Math.round((done / total) * 100), done, total)
 
 export interface AgentTool extends BridgeTool {
   run: (args: ToolArgs, ctx?: ToolContext) => Promise<unknown>
