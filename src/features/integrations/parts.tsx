@@ -127,10 +127,40 @@ export function JobMedia({ job, single }: { job: Job; single?: boolean }) {
   )
 }
 
+/**
+ * The file a link names, for showing: the last piece of its address, read as escaped where it can be. What a tool
+ * calls a link is whatever its server wrote — an address whose name has a "%" that isn't an escape, a bare file
+ * name, a path — and taking it apart unguarded threw while the row was being drawn, which took the whole dialog
+ * down with it. What can't be taken apart is shown as it is written.
+ */
+export function linkFileName(raw: string): string {
+  let url: URL
+  try {
+    url = new URL(raw)
+  } catch {
+    return raw
+  }
+  const last = url.pathname.split('/').pop() || url.hostname
+  try {
+    return decodeURIComponent(last)
+  } catch {
+    return last
+  }
+}
+
+/** The host a link is on, or nothing when it isn't an address. */
+function linkHost(raw: string): string {
+  try {
+    return new URL(raw).hostname
+  } catch {
+    return ''
+  }
+}
+
 export function LinkRow({ link, provenance }: { link: McpLink; provenance: GeneratedAsset['provenance'] }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle')
-  const url = new URL(link.url)
-  const file = decodeURIComponent(url.pathname.split('/').pop() || url.hostname)
+  const file = linkFileName(link.url)
+  const host = linkHost(link.url)
   const importIt = async () => {
     setState('busy')
     try {
@@ -147,11 +177,14 @@ export function LinkRow({ link, provenance }: { link: McpLink; provenance: Gener
       <Link2 className="size-3.5 shrink-0 text-fg-4" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-xs text-fg-2">{link.name ?? file}</div>
-        <div className="truncate text-2xs text-fg-4">{url.hostname}</div>
+        {host && <div className="truncate text-2xs text-fg-4">{host}</div>}
       </div>
-      <a href={link.url} target="_blank" rel="noreferrer" className="grid size-6 place-items-center rounded-md text-fg-4 hover:bg-ink/[0.06] hover:text-fg-2" aria-label={tt('Open in browser')}>
-        <ExternalLink className="size-3.5" />
-      </a>
+      {/* Only an address opens in a browser. */}
+      {/^https?:\/\//i.test(link.url) && (
+        <a href={link.url} target="_blank" rel="noreferrer" className="grid size-6 place-items-center rounded-md text-fg-4 hover:bg-ink/[0.06] hover:text-fg-2" aria-label={tt('Open in browser')}>
+          <ExternalLink className="size-3.5" />
+        </a>
+      )}
       <Button size="xs" variant={state === 'done' ? 'ghost' : 'secondary'} disabled={state !== 'idle'} onClick={importIt}>
         {state === 'busy' ? <LoaderCircle className="animate-spin" /> : state === 'done' ? <Check /> : <Download />}
         {state === 'done' ? tt('Imported') : tt('Import')}

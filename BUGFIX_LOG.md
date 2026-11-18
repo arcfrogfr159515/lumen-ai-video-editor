@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R3 | A web search failed outright (“URI malformed”) when one of its results had a link with a `%` that isn't an escape; that result should be left out and the others returned | `resultUrl` unwrapped the search engine's redirect with `decodeURIComponent`, unguarded, inside the loop over results | `electron/integrations/web.test.ts` › “search results” (also the first tests of `parseSearch` at all) | this round |
+| R4 | A link in a tool's result took the whole Integrations dialog down while it was drawn, when its file name had a `%` that isn't an escape (“URI malformed”) or when it wasn't an address at all (“Invalid URL”); the row should be drawn with what it can show | `LinkRow` built `new URL(link.url)` and `decodeURIComponent(...)` in its body, unguarded: an exception while a component draws unmounts everything inside its error boundary | `src/features/integrations/parts.test.ts` (draws the row) | this round |
+| R3 | A web search failed outright (“URI malformed”) when one of its results had a link with a `%` that isn't an escape; that result should be left out and the others returned | `resultUrl` unwrapped the search engine's redirect with `decodeURIComponent`, unguarded, inside the loop over results | `electron/integrations/web.test.ts` › “search results” (also the first tests of `parseSearch` at all) | `c3d67b8` |
 | R2 | A project with a damaged media address (a `%` that isn't an escape, no path) didn't open at all — “URI malformed” — and what held one couldn't be saved; it should open with that media missing, as other damage does | `mediaPath` decoded the address unguarded and threw at every caller, instead of answering “no such file” (null) as it does for any other address it can't use | `electron/project.test.ts` › “a project whose media address is damaged” | `8a50cc4` |
 | R1 | Importing media by link failed with “URI malformed” when the file's name in the address had a `%` that isn't an escape (`100%_final.png`) — after the file had been downloaded, which was then left in the library with no asset | `importUrl` named the asset with `decodeURIComponent` on the address's last segment, unguarded, as its last step | `electron/integrations/media.test.ts` › “names a file whose address isn’t properly escaped…” | `1cd441f` |
 
@@ -15,10 +16,7 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 ## Next — seen while reading, not yet reproduced
 
-The same root cause as R1–R3, in two more places (`decodeURIComponent`, unguarded):
-
-- `src/features/integrations/parts.tsx:133`: a result link whose file name has a stray `%` would throw while the panel draws.
-- `electron/integrations/video-link.ts:1259`: to be read — it may already be inside a `try`.
+Nothing waiting. Every `decodeURIComponent` in `electron/`, `src/` and `shared/` has been read: R1–R4 were the unguarded ones a person's or a tool's input reaches; `video-link.ts` was already inside a `try`; `files.ts:89` (the model cache) reads addresses only the editor itself makes.
 
 ## Suspected — not reproduced, code not touched
 
