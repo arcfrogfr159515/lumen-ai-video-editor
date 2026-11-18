@@ -14,6 +14,7 @@ import { getProject } from '@/editor/store'
 import { canvasBase64, contactSheet } from '@/engine/stills'
 import { requestApproval } from '@/integrations/approvals'
 import { api, useIntegrations } from '@/integrations/store'
+import { tt } from '@/lib/i18n'
 import { desktop } from '@/lib/platform'
 import { bool, clampNum, clipById, int, list, num, number, obj, oneOf, str, text, toFrame, waitSeconds, withImages, type AgentTool, type ToolArgs, type ToolContext, type ToolImage } from './kit'
 
@@ -26,17 +27,20 @@ export function allowAgentCapture(on: boolean) {
   allowed = on
 }
 
-/** `what` finishes the sentence "The AI wants to …". */
+/**
+ * `what` finishes the sentence "The AI wants to …". The question is for the user, in the window's language —
+ * unlike what a tool tells the model, which stays as written.
+ */
 async function permit(what: string) {
   if (!desktop) throw new Error('Recording needs Lumen’s desktop app.')
   if (allowed) return
   const ok = await requestApproval({
-    title: 'Let the AI see and record your screen?',
-    detail: `${what}. If you allow it, it can list your screens and open windows (with small pictures of them) and record any of them, with sound, until you close Lumen.`,
-    requester: 'The AI',
-    note: 'A recording is saved on this computer and added to the project. A red dot in the title bar shows whenever one is running, and you can stop it there.',
-    confirm: 'Allow for this session',
-    deny: 'Don’t allow',
+    title: tt('Let the AI see and record your screen?'),
+    detail: tt('{0}. If you allow it, it can list your screens and open windows (with small pictures of them) and record any of them, with sound, until you close Lumen.', what),
+    requester: tt('The AI'),
+    note: tt('A recording is saved on this computer and added to the project. A red dot in the title bar shows whenever one is running, and you can stop it there.'),
+    confirm: tt('Allow for this session'),
+    deny: tt('Don’t allow'),
   })
   if (!ok) throw new Error('The user didn’t allow screen recording. Ask them before trying again.')
   allowed = true
@@ -287,7 +291,7 @@ export const CAPTURE_TOOLS: AgentTool[] = [
       'What can be recorded on this computer: every screen and every open window, with its id, size and the app it belongs to — and one picture of them all, numbered in the same order. Call it to find the window to record (a game, a browser, an app) before start_recording. The first call asks the user to allow screen recording for this session.',
     inputSchema: obj({ kind: oneOf('Only screens, or only windows', ['screen', 'window']), query: str('Only windows whose title or app name contains this'), pictures: bool('Include the picture (default true)') }),
     run: async (a) => {
-      await permit('see what can be recorded')
+      await permit(tt('see what can be recorded'))
       const all = await refreshSources(a.pictures !== false)
       const kind = text(a, 'kind')
       const q = text(a, 'query')?.toLowerCase()
@@ -326,7 +330,7 @@ export const CAPTURE_TOOLS: AgentTool[] = [
       ['source'],
     ),
     run: async (a) => {
-      await permit(`record “${text(a, 'source') ?? 'the screen'}”`)
+      await permit(tt('record “{0}”', text(a, 'source') ?? tt('the screen')))
       if (recorderBusy()) throw new Error('A recording is already running. Call stop_recording first (or recording_status to see it).')
       const source = findSource(await refreshSources(false), text(a, 'source') ?? '')
       const started = await startRecording({ settings: await settingsFrom(a, source), name: text(a, 'name'), maxSeconds: number(a, 'max_seconds'), by: 'ai' })
@@ -484,7 +488,7 @@ export const CAPTURE_TOOLS: AgentTool[] = [
 /** One take, start to finish. A take that fails stops the recording and throws it away. */
 export async function recordStudioTake(a: ToolArgs, ctx?: ToolContext) {
   const server = studio(text(a, 'server'))
-  await permit('film a take of the game for GS Cinematic Studio')
+  await permit(tt('film a take of the game for GS Cinematic Studio'))
   if (recorderBusy()) throw new Error('A recording is already running. Call stop_recording first.')
   const source = gameWindow(await refreshSources(false), text(a, 'window'))
   if (source.kind !== 'window') throw new Error('The game has to be a window: set it to windowed or borderless in its settings.')

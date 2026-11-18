@@ -15,6 +15,7 @@ import { dispatch, getProject } from '@/editor/store'
 import { useUI } from '@/editor/ui-store'
 import { addCaptions, duckMusic, findPauses, reframe, removePauses, silentCuts, untranscribed } from '@/editor/smart'
 import { SFX } from '@/engine/sfx'
+import { tt } from '@/lib/i18n'
 import { desktop } from '@/lib/platform'
 import { sfxAsset } from '@/project/audio-library'
 import { importMediaFiles, type ImportFailure } from '@/project/media-import'
@@ -333,7 +334,7 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       ['script', 'description'],
     ),
     run: async (a, ctx) => {
-      const ok = await requestApproval({ title: 'Render an AI-written Blender scene?', detail: String(a.description), code: String(a.script), requester: 'An AI agent' })
+      const ok = await requestApproval({ title: tt('Render an AI-written Blender scene?'), detail: String(a.description), code: String(a.script), requester: tt('An AI agent') })
       if (!ok) throw new Error('The user declined to run this script.')
       return runJob(
         () =>
@@ -358,7 +359,7 @@ const INTEGRATION_TOOLS: AgentTool[] = [
     inputSchema: obj({ code: str('Python (bpy) source'), description: str('One line telling the user what it does') }, ['code', 'description']),
     run: async (a) => {
       if (!api) throw new Error('Needs the desktop app.')
-      const ok = await requestApproval({ title: 'Run code in your open Blender?', detail: String(a.description), code: String(a.code), requester: 'An AI agent' })
+      const ok = await requestApproval({ title: tt('Run code in your open Blender?'), detail: String(a.description), code: String(a.code), requester: tt('An AI agent') })
       if (!ok) throw new Error('The user declined to run this code.')
       const res = await api.blender.runLive(String(a.code))
       if (!res.ok) throw new Error(res.error)
@@ -697,7 +698,7 @@ function serverTools(s: McpServerState): AgentTool[] {
     run: async (args) => {
       if (!api) throw new Error('MCP tools need the desktop app.')
       if (tool.annotations?.destructiveHint) {
-        const ok = await requestApproval({ title: `Let the AI run “${tool.title ?? tool.name}” on ${server}?`, detail: `${tool.description ?? ''}\n\nIt can’t be undone.`, code: JSON.stringify(args, null, 2), requester: 'An AI agent' })
+        const ok = await requestApproval({ title: tt('Let the AI run “{0}” on {1}?', tool.title ?? tool.name, server), detail: `${tool.description ?? ''}\n\n${tt('It can’t be undone.')}`, code: JSON.stringify(args, null, 2), requester: tt('An AI agent') })
         if (!ok) throw new Error('The user declined.')
       }
       const r = await api.mcp.callForAgent(s.config.id, tool.name, args)
