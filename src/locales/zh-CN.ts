@@ -2928,6 +2928,7 @@ const zhCN: Record<string, string> = {
   'The macros dialog': '宏对话框',
   'The main subject (AI, GPU)': '主体（AI，GPU）',
   'the marked in-to-out stretch': '入点到出点之间的范围',
+  'The matte “{0}” is cut out with isn’t in this project': '“{0}”抠出主体用的遮罩不在这个项目里',
   'The media a clip plays: part of its file name, or its id': '片段播放的媒体：文件名的一部分，或它的 id',
   'The media of “{0}” isn\'t in this project': '“{0}”的媒体不在这个项目里',
   'The media of take “{0}” isn’t in this project any more': '镜次“{0}”的媒体已不在这个项目里',

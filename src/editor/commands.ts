@@ -967,6 +967,11 @@ export const commands = {
         clip.start = m.start + delta - (isMagneticTrack(p, m.trackId) ? 0.5 : 0)
         clip.effects = clip.effects.map((e) => ({ ...e, id: uid('fx') }))
         if (clip.assetId && !p.assets[clip.assetId]) throw new CommandError(tt('The media of “{0}” isn\'t in this project', clip.name))
+        // What clip_update refuses as a matte is refused here too — on the clip, or on a take it would come back
+        // with: nothing of a cut-out is drawn until its matte has loaded, and one that isn't here never does.
+        for (const matte of [clip.matte, ...(clip.takes ?? []).map((t) => t.matte)]) {
+          if (matte && !p.assets[matte.assetId]?.matteOf) throw new CommandError(tt('The matte “{0}” is cut out with isn’t in this project', clip.name))
+        }
         if (clip.sequenceId) {
           if (!p.sequences?.[clip.sequenceId]) throw new CommandError(clip.sequenceId === openSequenceId(p) ? tt('“{0}” plays this timeline — it can\'t go inside itself', clip.name) : tt('The timeline “{0}” plays isn\'t in this project', clip.name))
           if (wouldLoop(p, openSequenceId(p), clip.sequenceId)) throw new CommandError(tt('“{0}” already contains this timeline — pasting it here would make a loop', clip.name))
