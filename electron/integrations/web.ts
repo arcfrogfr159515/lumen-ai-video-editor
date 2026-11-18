@@ -198,6 +198,16 @@ export const meta = (html: string, name: string) => {
   return content ? decodeEntities(content).trim() : undefined
 }
 
+/**
+ * What an opening tag gives an attribute, however the page writes it: between double quotes, between single ones,
+ * or with none (as pages made small for sending do: `<a href=/guides>`). Only double quotes were read, and a page
+ * written any other way had no links and no pictures.
+ */
+export function attribute(tag: string, name: string): string | undefined {
+  const found = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'>]+))`, 'i').exec(tag)
+  return found ? (found[1] ?? found[2] ?? found[3]) || undefined : undefined
+}
+
 /** A page's readable text: the article (or main) part when there is one, without scripts, menus and footers. */
 export function readable(html: string): string {
   let body = stripComments(html)
@@ -348,14 +358,15 @@ export async function readPage(raw: string, maxChars = 12000): Promise<WebPage> 
   const text = readable(html)
   const links: { text: string; url: string }[] = []
   for (const a of elements(html, 'a')) {
-    const target = /\shref="([^"#][^"]*)"/i.exec(a.tag)?.[1]
-    if (!target) continue
+    const target = attribute(a.tag, 'href')
+    // A link to a place on the page itself leads nowhere new.
+    if (!target || target.startsWith('#')) continue
     const href = absolute(target, url)
     const label = strip(a.inner)
     if (href && label && label.length > 2 && !links.some((l) => l.url === href)) links.push({ text: label.slice(0, 80), url: href })
     if (links.length >= 40) break
   }
-  const images = [lead, ...[...tidy(html).matchAll(/<img[^>]+src="([^"]+)"/gi)].map((m) => m[1])]
+  const images = [lead, ...[...tidy(html).matchAll(/<img\s[^>]*>/gi)].map((m) => attribute(m[0], 'src'))]
     .map((src) => (src ? absolute(src, url) : null))
     .filter((src, i, all): src is string => Boolean(src) && all.indexOf(src) === i && !/\.svg(\?|$)/i.test(src!))
     .slice(0, 12)

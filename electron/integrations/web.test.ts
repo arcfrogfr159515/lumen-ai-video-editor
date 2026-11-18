@@ -8,9 +8,11 @@ const env = vi.hoisted(() => ({
   names: {} as Record<string, string>,
   lookups: [] as string[],
   filter: null as Filter | null,
+  /** What the web answers a page being read with: each test that reads one says. */
+  page: (_url: string): Response => new Response('not scripted', { status: 500 }),
 }))
 vi.mock('electron', () => ({
-  net: {},
+  net: { fetch: async (url: string) => env.page(url) },
   nativeImage: {},
   session: {
     fromPartition: () => ({
@@ -31,7 +33,7 @@ vi.mock('node:dns/promises', () => ({
   },
 }))
 
-const { blockedHost, blockedIp, browsing, checkUrl, leadsInside, meta, parseSearch } = await import('./web')
+const { blockedHost, blockedIp, browsing, checkUrl, leadsInside, meta, parseSearch, readPage } = await import('./web')
 
 beforeEach(() => {
   env.resolves = [{ address: '93.184.216.34', family: 4 }]
@@ -137,6 +139,31 @@ describe('what a page says of itself', () => {
     expect(meta("<meta property='og:site_name' content='Example'>", 'og:site_name')).toBe('Example')
     expect(meta('<meta name="description" content="">', 'description')).toBeUndefined()
     expect(meta('<meta name="keywords" content="a, b">', 'description')).toBeUndefined()
+  })
+})
+
+describe('a page read for the Copilot', () => {
+  const html = (body: string) => new Response(`<html><head><title>Field notes</title></head><body>${body}</body></html>`, { headers: { 'content-type': 'text/html; charset=utf-8' } })
+
+  it('gives its links and pictures, however the page writes them', async () => {
+    // Only what stood between double quotes was found. A page that writes href='…' — or, as many that are made
+    // small for sending do, href=… with no quotes at all — was read as having no links and no pictures.
+    env.page = () =>
+      html(`<p>Notes from the field, with what to read next.</p>
+        <a class="next" href="https://example.com/double">Double quotes</a>
+        <a href='https://example.com/single'>Single quotes</a>
+        <a href=/guides/bare class=more>No quotes</a>
+        <a href="#top">Back to the top</a> <a href='#notes'>Notes</a>
+        <img src="/img/one.png"> <img alt='two' src='/img/two.png'> <img src=/img/three.png width=40>`)
+    const page = await readPage('https://example.com/notes')
+    expect(page.title).toBe('Field notes')
+    expect(page.links).toEqual([
+      { text: 'Double quotes', url: 'https://example.com/double' },
+      { text: 'Single quotes', url: 'https://example.com/single' },
+      { text: 'No quotes', url: 'https://example.com/guides/bare' },
+    ])
+    expect(page.images).toEqual(['https://example.com/img/one.png', 'https://example.com/img/two.png', 'https://example.com/img/three.png'])
+    expect(page.text).toContain('Notes from the field')
   })
 })
 
