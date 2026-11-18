@@ -154,7 +154,7 @@ async function request(raw: string, local: boolean): Promise<Download> {
  */
 export async function importUrl(url: string, name: string | undefined, provenance: Provenance, opts: { local?: boolean } = {}): Promise<GeneratedAsset> {
   const parsed = new URL(url)
-  const { res, stop, allow, settle } = await request(url, opts.local === true)
+  const { url: reached, res, stop, allow, settle } = await request(url, opts.local === true)
   const refuse = (message: string) => {
     settle()
     stop.abort()
@@ -162,13 +162,17 @@ export async function importUrl(url: string, name: string | undefined, provenanc
   }
   if (!res.ok || !res.body) throw refuse(`Download failed (${res.status})`)
   const headerMime = res.headers.get('content-type')?.split(';')[0].trim().toLowerCase()
-  const mime = headerMime && kindOf(headerMime) ? headerMime : mimeFromName(parsed.pathname)
+  // The address that says what the file is: the one the link led to, else the link itself. A short link, or a
+  // "download" address, leads on to …/clip.mp4, often sent as plain bytes; read from the link alone, which says
+  // nothing, such a file was refused as not being media, and one that was taken was named after the link.
+  const telling = [ended(res, reached), parsed.pathname].find((p) => mimeFromName(p)) ?? parsed.pathname
+  const mime = headerMime && kindOf(headerMime) ? headerMime : mimeFromName(telling)
   if (!mime || !kindOf(mime)) throw refuse('That link isn’t an image, video or audio file.')
   const declared = Number(res.headers.get('content-length'))
   if (declared > IMPORT_LIMITS.bytes) throw refuse(TOO_BIG(declared))
   const dir = ensureDir(path.join(mediaRoot(), 'imports'))
   // The address ends in whatever its author liked: only a plain extension becomes part of a file name.
-  const fromPath = path.extname(parsed.pathname)
+  const fromPath = path.extname(telling)
   const abs = path.join(dir, `${randomUUID()}${EXT[mime] ?? (/^\.[a-z0-9]{1,8}$/i.test(fromPath) ? fromPath : '')}`)
   // Written beside its final name and moved there once whole: a download that fails leaves nothing in the library.
   const part = `${abs}.part`
@@ -199,7 +203,16 @@ export async function importUrl(url: string, name: string | undefined, provenanc
   } finally {
     settle()
   }
-  return fileAsset(abs, mime, name ?? nameInAddress(parsed.pathname), provenance)
+  return fileAsset(abs, mime, name ?? nameInAddress(telling), provenance)
+}
+
+/** The path of the address the file came from in the end: where the redirects led (a fetch that follows them itself says so on its answer). */
+function ended(res: Response, reached: URL) {
+  try {
+    return res.url ? new URL(res.url).pathname : reached.pathname
+  } catch {
+    return reached.pathname
+  }
 }
 
 /**
