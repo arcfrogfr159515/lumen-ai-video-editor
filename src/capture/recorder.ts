@@ -224,8 +224,9 @@ export function measureSource() {
 
 /** Makes the live picture match the settings (asking Chromium again only when it has to). */
 export async function syncPreview(): Promise<MediaStream | null> {
-  const { settings, helper, phase } = get()
-  if (phase !== 'idle' || !settings.sourceId) return get().stream
+  const { settings, helper, phase, open } = get()
+  // The picture is for the record window: closed while its sources were still being listed, it has nothing to show.
+  if (phase !== 'idle' || !open || !settings.sourceId) return get().stream
   const source = sourceById(settings.sourceId)
   if (!source) return get().stream
   const { audio } = effectiveAudio(settings, source, helper)
@@ -240,6 +241,12 @@ export async function syncPreview(): Promise<MediaStream | null> {
     if (previewing !== mine) {
       stopStream(stream)
       return previewing
+    }
+    // The window closed while Chromium was being asked, and nothing is recording: kept, this picture went on being
+    // captured with nobody looking at it and nothing to stop it, until the window was next opened.
+    if (!get().open && get().phase === 'idle') {
+      stopStream(stream)
+      return null
     }
     stopStream(old)
     show(stream)
