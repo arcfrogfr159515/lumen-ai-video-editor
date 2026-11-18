@@ -54,6 +54,19 @@ export function isInside(abs: string, root: string) {
   return a === r || a.startsWith(r.endsWith(path.sep) ? r : r + path.sep)
 }
 
+/**
+ * What an escaped piece of an address says, or null when it can't be read: a "%" that isn't an escape. Read
+ * unguarded it threw — at the project that held such an address (a damaged project then didn't open at all, and
+ * couldn't be saved), and at the protocol's handler. An address that can't be read names no file.
+ */
+function unescaped(piece: string): string | null {
+  try {
+    return decodeURIComponent(piece)
+  } catch {
+    return null
+  }
+}
+
 /** Maps a lumen-media URL back to a file: library files, or user files the editor was given. */
 export function mediaPath(url: string): string | null {
   let parsed: URL
@@ -64,13 +77,18 @@ export function mediaPath(url: string): string | null {
   }
   if (parsed.protocol !== `${MEDIA_SCHEME}:`) return null
   if (parsed.hostname === MEDIA_HOST) {
-    const rel = decodeURIComponent(parsed.pathname).replace(/^\/+/, '')
+    const decoded = unescaped(parsed.pathname)
+    if (decoded === null) return null
+    const rel = decoded.replace(/^\/+/, '')
     const root = mediaRoot()
     const abs = path.resolve(root, rel)
     return abs.startsWith(root + path.sep) ? abs : null
   }
   if (parsed.hostname === FILE_HOST) {
-    const abs = path.resolve(decodeURIComponent(parsed.pathname.replace(/^\/+/, '')))
+    // The slashes of the address come off before it is read: what is left may itself begin with one (a path on macOS or Linux).
+    const decoded = unescaped(parsed.pathname.replace(/^\/+/, ''))
+    if (decoded === null) return null
+    const abs = path.resolve(decoded)
     if (allowed.has(key(abs)) || isInside(abs, mediaRoot())) return abs
     // Frames of an allowed image sequence live in an allowed folder.
     if (FRAME.test(abs) && allowed.has(key(path.dirname(abs)))) return abs

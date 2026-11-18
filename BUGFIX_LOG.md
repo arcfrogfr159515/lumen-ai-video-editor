@@ -7,9 +7,18 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R1 | Importing media by link failed with “URI malformed” when the file's name in the address had a `%` that isn't an escape (`100%_final.png`) — after the file had been downloaded, which was then left in the library with no asset | `importUrl` named the asset with `decodeURIComponent` on the address's last segment, unguarded, as its last step | `electron/integrations/media.test.ts` › “names a file whose address isn’t properly escaped…” | this round |
+| R2 | A project with a damaged media address (a `%` that isn't an escape, no path) didn't open at all — “URI malformed” — and what held one couldn't be saved; it should open with that media missing, as other damage does | `mediaPath` decoded the address unguarded and threw at every caller, instead of answering “no such file” (null) as it does for any other address it can't use | `electron/project.test.ts` › “a project whose media address is damaged” | this round |
+| R1 | Importing media by link failed with “URI malformed” when the file's name in the address had a `%` that isn't an escape (`100%_final.png`) — after the file had been downloaded, which was then left in the library with no asset | `importUrl` named the asset with `decodeURIComponent` on the address's last segment, unguarded, as its last step | `electron/integrations/media.test.ts` › “names a file whose address isn’t properly escaped…” | `1cd441f` |
 
 Fixed earlier in the same audit round, each with its commit (see the audit report, section 8): BUG-01, 02, 03, 04, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15; SEC-01, 02, 03, 07; PERF-02; UX-01, 05.
+
+## Next — seen while reading, not yet reproduced
+
+The same root cause as R1 and R2, in three more places (`decodeURIComponent`, unguarded):
+
+- `electron/integrations/web.ts` `resultUrl`: one search result with a badly escaped link would fail the whole search.
+- `src/features/integrations/parts.tsx:133`: a result link whose file name has a stray `%` would throw while the panel draws.
+- `electron/integrations/video-link.ts:1259`: to be read — it may already be inside a `try`.
 
 ## Suspected — not reproduced, code not touched
 

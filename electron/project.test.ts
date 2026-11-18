@@ -54,6 +54,25 @@ type Stored = { format: string; version: number; project: { assets: Record<strin
 
 beforeEach(() => fs.rmSync(path.join(env.root, 'userData', 'recent-projects.json'), { force: true }))
 
+describe('a project whose media address is damaged', () => {
+  it('opens with that media missing, rather than not opening at all', async () => {
+    const s = scene()
+    saveProject(s.file, s.text)
+    // The file as a sync tool or an editor left it: no path any more, and an address with a "%" that isn't an escape.
+    const damaged = 'lumen-media://file/C%3A%5Cfilms%5Cvoice%ZZ.wav'
+    const stored = JSON.parse(fs.readFileSync(s.file, 'utf8')) as Stored
+    stored.project.assets.a1.source = { type: 'file', url: damaged, mime: 'audio/wav', fileName: 'voice.wav' }
+    fs.writeFileSync(s.file, JSON.stringify(stored))
+    const opened = await openProject(null, s.file)
+    expect(opened!.missing).toEqual(['a1'])
+    // And what was opened can be saved again.
+    expect(() => saveProject(s.file, opened!.text)).not.toThrow()
+    // An address that can't be read names no file — it doesn't throw at whoever asks.
+    expect(mediaPath(damaged)).toBeNull()
+    expect(mediaPath('lumen-media://local/renders/a%ZZ.png')).toBeNull()
+  })
+})
+
 describe('where a project may be saved', () => {
   it('is a .lumen file — not whatever path the page names', () => {
     const s = scene()
