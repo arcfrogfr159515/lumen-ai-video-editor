@@ -25,4 +25,26 @@ describe('SKILL.md', () => {
     expect(skillSlug('***')).toBe('skill')
     expect(fallbackDescription('# Heading\n\nFirst   real\nparagraph.\n\nSecond.')).toBe('First real paragraph.')
   })
+
+  it('gives a name in another script a folder of its own', () => {
+    // Both were "skill", so the second skill with a Chinese name was refused as already there.
+    expect(skillSlug('调色技巧')).toBe('调色技巧')
+    expect(skillSlug('短视频剪辑')).toBe('短视频剪辑')
+    // And these two were both "a".
+    expect(skillSlug('剪辑 A')).toBe('剪辑-a')
+    expect(skillSlug('调色 A')).toBe('调色-a')
+    expect(skillSlug('字幕 v2：双语')).toBe('字幕-v2双语')
+    // Accents still come off, as before.
+    expect(skillSlug('Étalonnage café')).toBe('etalonnage-cafe')
+  })
+
+  it('makes a folder name Windows can make', () => {
+    expect(skillSlug('CON')).toBe('skill-con')
+    expect(skillSlug('com1')).toBe('skill-com1')
+    expect(skillSlug('  - spaced out -  ')).toBe('spaced-out')
+    // 64 characters, counted as characters: an emoji-free name in a script outside the basic plane is not cut in half.
+    const long = skillSlug('𠀀'.repeat(80))
+    expect([...long]).toHaveLength(64)
+    expect(long).toBe('𠀀'.repeat(64))
+  })
 })

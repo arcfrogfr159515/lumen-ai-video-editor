@@ -67,16 +67,28 @@ export function writeSkill(name: string, description: string, body: string) {
   return `---\nname: ${line(name)}\ndescription: ${line(description)}\n---\n\n${body.trim()}\n`
 }
 
-/** A folder name for a skill: lowercase words joined by hyphens. */
+/** Names Windows keeps for devices: a folder can't be called one of them. */
+const DEVICE_NAME = /^(con|prn|aux|nul|com\d|lpt\d)$/
+
+/**
+ * A folder name for a skill: lowercase words joined by hyphens. Letters and digits of any script are kept — a name
+ * in Chinese is a name too. (Kept as ASCII only, "调色技巧" and "短视频剪辑" both came out as "skill", and the second
+ * one was refused as already there.)
+ */
 export function skillSlug(name: string) {
-  return (
-    name
+  const slug = [
+    ...name
       .toLowerCase()
       .normalize('NFKD')
-      .replace(/[^\w\s-]/g, '')
+      .replace(/[^\p{L}\p{N}\s_-]/gu, '')
       .trim()
       .replace(/[\s_]+/g, '-')
-      .replace(/-+/g, '-')
-      .slice(0, 64) || 'skill'
-  )
+      .replace(/-+/g, '-'),
+  ]
+    // By character, not by code unit: a cut through the middle of one leaves half a character in a folder's name.
+    .slice(0, 64)
+    .join('')
+    .replace(/^-+|-+$/g, '')
+  if (!slug) return 'skill'
+  return DEVICE_NAME.test(slug) ? `skill-${slug}` : slug
 }
