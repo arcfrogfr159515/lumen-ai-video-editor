@@ -7,6 +7,7 @@
  */
 import { clamp } from '@/lib/math'
 import { bezier, easeAt, type Easing } from './easing'
+import { keyframesWithin } from './ops'
 import { isRamped, MAX_SPEED, MIN_SPEED } from './timing'
 import type { Clip } from './types'
 import { tt } from '@/lib/i18n'
@@ -123,7 +124,10 @@ export function curvePoints(clip: Pick<Clip, 'speed' | 'duration' | 'keyframes'>
     { at: 0, speed: clip.speed, easing: 'ease' },
     { at: 1, speed: clip.speed, easing: 'ease' },
   ]
-  return clip.keyframes.speed!.map((k) => ({ at: clamp(k.frame / Math.max(1, clip.duration), 0, 1), speed: k.value, easing: k.easing }))
+  // The ramp as the clip plays it. A clip trimmed at its end keeps the keyframes past it, and they aren't points of
+  // its curve: put at the end with the others, the curve was drawn rising to speeds the clip never reaches, in the
+  // length that is left. The curve is cut at the clip's end instead, at the speed it has there.
+  return keyframesWithin(clip.keyframes.speed!, clip.duration).map((k) => ({ at: clamp(k.frame / Math.max(1, clip.duration), 0, 1), speed: k.value, easing: k.easing }))
 }
 
 /** The speed the curve gives at a moment along the clip (0..1). */

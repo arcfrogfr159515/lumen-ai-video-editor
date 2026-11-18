@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { easeAt } from './easing'
 import { curveAverage, curveLength, curvePoints, dragHandle, easingOf, footageCurve, handlePosition, handlesOf, insertPoint, movePoint, rampInput, removePoint, shapeSegment, speedOnCurve, type CurvePoint } from './speed-curve'
 import { add, addAsset, clip, freshProject, run } from './test-helpers'
-import { consumed } from './timing'
+import { consumed, speedAt } from './timing'
 
 const ramp = (...pts: [number, number, CurvePoint['easing']?][]): CurvePoint[] => pts.map(([at, speed, easing]) => ({ at, speed, easing: easing ?? 'linear' }))
 
@@ -65,6 +65,26 @@ describe('the curve', () => {
     const back = curvePoints(clip(id))
     expect(back.map((p) => p.easing)).toEqual(pts.map((p) => p.easing))
     expect(back[1].at).toBeCloseTo(0.4, 2)
+  })
+
+  it('is the ramp as the clip plays it, when the clip was trimmed at its end', () => {
+    freshProject('Curve')
+    addAsset('long', 60)
+    const id = add('Overlay', 0, 300, { assetId: 'long' })
+    // From its own speed, by way of twice that half way, up to four times — evenly.
+    run('clip.setSpeedRamp', { id, points: rampInput(ramp([0, 1], [0.5, 2], [1, 4])) })
+    const whole = clip(id).duration
+    // All but its first quarter comes off. The keyframes the ramp was heading for stay where they are, past the
+    // clip's end (a trim keeps them), and the clip now ends at one and a half times its speed — but the curve was
+    // drawn with all three points, the last two both at the end: up to four times, in the quarter that is left.
+    run('clip.trim', { id, edge: 'end', frame: Math.round(whole / 4) })
+    const c = clip(id)
+    expect(c.keyframes.speed!.map((k) => k.frame > c.duration)).toEqual([false, true, true])
+    const pts = curvePoints(c)
+    for (const at of [0, 0.25, 0.5, 0.75, 1]) expect(speedOnCurve(pts, at), `speed ${at} of the way along`).toBeCloseTo(speedAt(c, at * c.duration), 2)
+    expect(pts.map((p) => p.at)).toEqual([0, 1])
+    // “The clip comes out … long”: as long as it is.
+    expect(curveLength(pts, consumed(c))).toBe(c.duration)
   })
 
   it('shows which part of the footage plays when', () => {
