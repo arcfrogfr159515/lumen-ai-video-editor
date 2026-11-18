@@ -38,9 +38,9 @@ export interface TimelineDiff {
 
 /**
  * Everything about a clip that decides how it looks and sounds over the whole of it, apart from where it is and
- * which footage it shows. What acts on a few of its frames only — the animation it comes in or goes out with — is
- * `actingAt`'s: a cut leaves the way in on the first piece and the way out on the second, so compared piece by
- * piece a cut that changes nothing made each piece another clip.
+ * which footage it shows. What acts on a few of its frames only — the animation it comes in or goes out with, the
+ * fades of its sound — is `actingAt`'s: a cut leaves the way in on the first piece and the way out on the second,
+ * so compared piece by piece a cut that changes nothing made each piece another clip.
  */
 function lookOf(c: Clip): string {
   const { transform, color, blend, crop, text, speed, reverse, freeze, angle, keyframes } = c
@@ -73,27 +73,46 @@ function lookOf(c: Clip): string {
   )
 }
 
-/** How many frames the animation a clip comes in with (or goes out with) plays over: none when it has none. */
-function animated(c: Clip, side: 'in' | 'out') {
-  const spec = c.animation?.[side]
-  return spec && spec.preset !== 'none' ? Math.min(c.duration, Math.max(0, spec.duration)) : 0
-}
-const comingIn = (c: Clip) => animated(c, 'in')
-const goingOut = (c: Clip) => animated(c, 'out')
-
-/** Which of the two is playing at a frame of the clip's own: '' for neither. */
-function acting(c: Clip, local: number) {
-  const coming = local < comingIn(c) ? `in:${c.animation.in.preset}/${c.animation.in.duration}` : ''
-  const going = local >= c.duration - goingOut(c) ? `out:${c.animation.out.preset}/${c.animation.out.duration}` : ''
-  return coming + going
+/** Something that acts on the first frames of a clip, or on its last: what it is, and how many frames it lasts. */
+interface Passing {
+  what: string
+  frames: Frame
 }
 
-/** The same, with how far into it the frame is: counted from the clip's start for the way in, from its end for the way out. */
-function actingAt(c: Clip, local: number) {
-  const coming = local < comingIn(c) ? `in:${c.animation.in.preset}/${c.animation.in.duration}@${local}` : ''
-  const going = local >= c.duration - goingOut(c) ? `out:${c.animation.out.preset}/${c.animation.out.duration}@${c.duration - local}` : ''
-  return coming + going
+/**
+ * What a clip comes in with and what it goes out with: the animation of its picture and the fade of its sound.
+ * A cut leaves the first on the first piece and the second on the second.
+ */
+function passing(c: Clip): { head: Passing[]; tail: Passing[] } {
+  const within = (frames: number | undefined) => Math.min(c.duration, Math.max(0, frames ?? 0))
+  const list = (animation: 'in' | 'out', fade: number | undefined) => {
+    const spec = c.animation?.[animation]
+    const out: Passing[] = []
+    if (spec && spec.preset !== 'none' && within(spec.duration)) out.push({ what: `${animation}:${spec.preset}/${spec.duration}`, frames: within(spec.duration) })
+    // A fade of one frame is what taking a stretch out leaves at the join to keep the sound from clicking
+    // (`removeRange`), not a fade anyone made: it isn't a difference.
+    if (within(fade) > 1) out.push({ what: `fade ${animation}/${fade}`, frames: within(fade) })
+    return out
+  }
+  return { head: list('in', c.audio?.fadeIn), tail: list('out', c.audio?.fadeOut) }
 }
+
+const passings = new WeakMap<Clip, { head: Passing[]; tail: Passing[] }>()
+const passingOf = (c: Clip) => passings.get(c) ?? (passings.set(c, passing(c)), passings.get(c)!)
+
+/** Whether a clip comes in with anything, and whether it goes out with anything. */
+const comesIn = (c: Clip) => passingOf(c).head.length > 0
+const goesOut = (c: Clip) => passingOf(c).tail.length > 0
+
+/** What is acting at a frame of the clip's own ('' for nothing) — with `where`, also how far into it the frame is: counted from the clip's start for what it comes in with, from its end for what it goes out with. */
+function acting(c: Clip, local: number, where = false) {
+  const { head, tail } = passingOf(c)
+  let out = ''
+  for (const p of head) if (local < p.frames) out += where ? `${p.what}@${local};` : `${p.what};`
+  for (const p of tail) if (local >= c.duration - p.frames) out += where ? `${p.what}@${c.duration - local};` : `${p.what};`
+  return out
+}
+const actingAt = (c: Clip, local: number) => acting(c, local, true)
 
 const looks = new WeakMap<Clip, string>()
 const look = (c: Clip) => looks.get(c) ?? (looks.set(c, lookOf(c)), looks.get(c)!)
@@ -189,9 +208,9 @@ function slices(ls: Lane[]): Slice[] {
     for (const c of lane.clips) {
       edges.add(c.start)
       edges.add(clipEnd(c))
-      // Where the animation it comes in with ends, and the one it goes out with begins.
-      if (comingIn(c)) edges.add(c.start + comingIn(c))
-      if (goingOut(c)) edges.add(clipEnd(c) - goingOut(c))
+      // Where what it comes in with ends, and what it goes out with begins.
+      for (const p of passingOf(c).head) edges.add(c.start + p.frames)
+      for (const p of passingOf(c).tail) edges.add(clipEnd(c) - p.frames)
       end = Math.max(end, clipEnd(c))
     }
   const cuts = [...edges].filter((f) => f <= end).sort((x, y) => x - y)
@@ -207,10 +226,10 @@ function slices(ls: Lane[]): Slice[] {
         const before = clipAt(lane, start - 1)
         const after = clipAt(lane, start)
         if (!before || !after) return !before && !after
-        // Within one clip, content is broken only where an animation stops or starts acting on it.
+        // Within one clip, content is broken only where something stops or starts acting on it.
         if (before === after) return acting(before, start - 1 - before.start) === acting(after, start - after.start)
-        // From one clip to the next: not when the first goes out with an animation, or the second comes in with one.
-        if (goingOut(before) || comingIn(after)) return false
+        // From one clip to the next: not when the first goes out with something, or the second comes in with something.
+        if (goesOut(before) || comesIn(after)) return false
         if (mediaOf(before) !== mediaOf(after) || look(before) !== look(after) || before.keyframes.speed || after.keyframes.speed) return false
         return Math.abs(sourceFrameAt(before, start - before.start) - sourceFrameAt(after, 0)) < 0.51
       })

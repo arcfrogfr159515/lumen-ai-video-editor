@@ -80,6 +80,27 @@ describe('a branch', () => {
     ])
   })
 
+  it('finds a fade of a clip’s sound, where it plays', () => {
+    // A fade wasn't among what was compared: with one, the two versions were said to play the same.
+    run('clip.update', { ids: [named('D').id], patch: { audio: { fadeOut: 20 } } })
+    expect(hunks()).toEqual([['changed', 380, 400, 380, 400]])
+    run('clip.update', { ids: [named('A').id], patch: { audio: { fadeIn: 12 } } })
+    expect(hunks()).toEqual([
+      ['changed', 0, 12, 0, 12],
+      ['changed', 380, 400, 380, 400],
+    ])
+  })
+
+  it('is not made different by a cut through a clip whose sound fades in and out', () => {
+    run('clip.update', { ids: [named('B').id], patch: { audio: { fadeIn: 10, fadeOut: 10 } } })
+    run('sequence.branch', {})
+    const versions = () => diffTimelines(getProject().sequences![branch], openSequence(getProject())).hunks.map((h) => [h.kind, ...h.a, ...h.b])
+    expect(versions()).toEqual([])
+    // A cut leaves the fade in on the first piece and the fade out on the second.
+    run('clip.split', { frame: 150 })
+    expect(versions()).toEqual([])
+  })
+
   it('finds a cut that stops an animation short', () => {
     run('clip.update', { ids: [onTrack('Titles')[0].id], patch: { animation: { in: { preset: 'fade', duration: 8 } } } })
     run('sequence.branch', {})
@@ -216,6 +237,21 @@ describe('taking a stretch from one version into the other', () => {  it('makes 
     expect(left()).toEqual([])
     expect(spans('Main').at(-1)).toEqual([270, 370])
     expect(spans('Titles')).toEqual([[90, 150]])
+  })
+
+  it('brings a fade and an animation across, each on the frames it plays over', () => {
+    run('clip.update', { ids: [named('D').id], patch: { audio: { fadeOut: 20 } } })
+    run('clip.update', { ids: [onTrack('Titles')[0].id], patch: { animation: { in: { preset: 'fade', duration: 8 } } } })
+    run('sequence.open', { id: main })
+    const before = left()
+    expect(before.map((h) => [h.kind, ...h.a])).toEqual([
+      ['changed', 120, 128],
+      ['changed', 380, 400],
+    ])
+    // The later stretch first, so the earlier one is still where it was found.
+    take(before[1])
+    take(left()[0])
+    expect(left()).toEqual([])
   })
 
   it('brings a stretch the other version added, with what is over it', () => {
