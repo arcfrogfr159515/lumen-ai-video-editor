@@ -228,7 +228,12 @@ export function layCaptions(
   const accent = opts.accent ?? '#ffd84a'
   const how = { source: opts.source }
   const ids: string[] = []
-  let trackId = opts.newTrack ? null : (project.tracks.find((t) => t.role === 'captions')?.id ?? null)
+  const captions = opts.newTrack ? undefined : project.tracks.find((t) => t.role === 'captions')
+  // A locked Captions track keeps what it has and takes nothing new. The captions on it couldn't be taken off —
+  // and the new ones were put on it all the same, each slid to the nearest free place among the old ones: twice
+  // the captions, the new ones at the wrong time.
+  if (captions?.locked) throw new Error(tt('{0} is locked', captions.name))
+  let trackId = captions?.id ?? null
   useEditor.getState().transaction(opts.label, opts.source, () => {
     if (trackId) {
       const existing = clipsOnTrack(getProject(), trackId).map((c) => c.id)

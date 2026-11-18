@@ -237,6 +237,30 @@ describe('addCaptions', () => {
     expect(getProject().tracks.filter((t) => t.role === 'captions')).toHaveLength(1)
   })
 
+  it('leaves a locked Captions track as it is, and says why there are no new captions', () => {
+    const { add, withAsset, load } = setup()
+    const a = asset(8, [], {
+      transcript: [
+        { start: 0, end: 2, text: 'Welcome to the show' },
+        { start: 3, end: 7, text: 'Today we build a video editor from scratch together' },
+      ],
+    })
+    add('Voice', 'audio', 30, 240, { assetId: withAsset(a) })
+    load()
+    addCaptions({ maxWords: 5 })
+    const track = getProject().tracks.find((t) => t.role === 'captions')!
+    useEditor.getState().dispatch('track.update', { id: track.id, patch: { locked: true } })
+    const before = getProject()
+    const steps = useEditor.getState().past.length
+    // The captions there can't be taken off a locked track — but the new ones were put on it all the same, each
+    // slid to the nearest free place among the old: twice the captions, half of them at the wrong time, and
+    // “Added 4 captions” said.
+    expect(() => addCaptions({ maxWords: 8 })).toThrow(/Captions is locked/)
+    expect(getProject()).toBe(before)
+    expect(useEditor.getState().past).toHaveLength(steps)
+    expect(clipsOnTrack(getProject(), track.id).map((c) => c.text!.content)).toEqual(['Welcome to the show', 'Today we build a video', 'editor from scratch together'])
+  })
+
   it('styles captions: a few big words at a time, or one word at a time with key words in colour', () => {
     const { add, withAsset, load } = setup()
     const a = asset(4, [], { transcript: [{ start: 0, end: 3, text: 'We built it in 30 days!' }] })

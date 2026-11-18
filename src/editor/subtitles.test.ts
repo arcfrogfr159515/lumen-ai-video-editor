@@ -147,6 +147,19 @@ describe('subtitle files', () => {
     expect(() => importSubtitles('not subtitles')).toThrow(/No subtitles/)
   })
 
+  it('leaves a locked Captions track as it is: a file that would take it over is refused, another gets a track of its own', () => {
+    const first = importSubtitles(SRT, { name: 'English' })
+    dispatch('track.update', { id: first.trackId!, patch: { locked: true } })
+    const before = getProject()
+    const held = clipsOnTrack(before, first.trackId!)
+    // Its cues couldn't be taken off the locked track, and the file's were put on it among them, wherever there was room.
+    expect(() => importSubtitles(VTT, { replace: true })).toThrow(/Captions is locked/)
+    expect(getProject()).toBe(before)
+    const second = importSubtitles(VTT, { name: 'French' })
+    expect(second.trackId).not.toBe(first.trackId)
+    expect(clipsOnTrack(getProject(), first.trackId!)).toEqual(held)
+  })
+
   it('exports the timeline’s captions, re-timed for a range, and can hide them from the picture', () => {
     importSubtitles(SRT)
     const cues = timelineCues(getProject())

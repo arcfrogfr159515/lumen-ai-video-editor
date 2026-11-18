@@ -835,6 +835,7 @@ const zhCN: Record<string, string> = {
   'Corners': '圆角',
   'Couldn’t add {0}': '无法添加 {0}',
   'Couldn’t add that to Media': '无法添加到“媒体”',
+  'Couldn’t add the captions': '无法添加字幕',
   'Couldn’t add the font': '无法添加字体',
   'Couldn’t add the sound': '无法添加声音',
   'Couldn’t add the title.': '无法添加标题。',

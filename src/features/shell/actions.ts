@@ -510,9 +510,13 @@ export const actions = {
   async captionSpeech(style: CaptionStyle = 'clean') {
     const pending = untranscribed(getProject())
     if (pending.length && !(await ensureTranscripts(pending))) return
-    const r = addCaptions({ style, source: 'user' })
-    if (!r.added) toast(tt('No speech to caption'), { description: tt('Put a clip of someone talking on the timeline first.') })
-    else toast.success(tt('Added {0}', plural(r.added, 'caption')), { description: tt('They’re titles on the Captions track — edit any of them like a title.') })
+    try {
+      const r = addCaptions({ style, source: 'user' })
+      if (!r.added) toast(tt('No speech to caption'), { description: tt('Put a clip of someone talking on the timeline first.') })
+      else toast.success(tt('Added {0}', plural(r.added, 'caption')), { description: tt('They’re titles on the Captions track — edit any of them like a title.') })
+    } catch (err) {
+      toast.error(tt('Couldn’t add the captions'), { description: err instanceof Error ? err.message : String(err) })
+    }
   },
 
   /** Renders previews in to out, or of the whole timeline when nothing is marked. */
