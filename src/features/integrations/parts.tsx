@@ -30,7 +30,7 @@ export function StatusDot({ status, className }: { status: McpStatus | 'ready' |
 
 export const STATUS_LABEL: Record<McpStatus, string> = {
   connected: tt('Connected'),
-  connecting: 'Connecting…',
+  connecting: tt('Connecting…'),
   'needs-auth': tt('Waiting for sign-in'),
   error: tt('Error'),
   disconnected: tt('Not connected'),

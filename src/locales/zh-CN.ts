@@ -801,6 +801,7 @@ const zhCN: Record<string, string> = {
   'Connect Blender, HyperFrames and MCP servers so Lumen’s AI can make assets for your edit.': '连接 Blender、HyperFrames 和 MCP 服务器，让 Lumen 的 AI 为你的剪辑制作素材。',
   'Connect to see what {0} can do. Its tools show up here, in the Generate panel{1}.': '连接后即可查看 {0} 能做什么。它的工具会显示在这里、“生成”面板中{1}。',
   'Connected': '已连接',
+  'Connecting…': '正在连接…',
   'Connection': '连接',
   'Constant {0} fps copy of {1}': '{1} 的 {0} fps 恒定帧率副本',
   'Constant {0} fps{1}': '恒定 {0} fps{1}',
