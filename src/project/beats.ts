@@ -42,7 +42,12 @@ async function find(asset: Asset): Promise<BeatGrid> {
 export async function beatsOf(clip: Clip): Promise<{ grid: BeatGrid; beats: TimelineBeat[] }> {
   if (!clip.assetId) throw new Error(tt('That clip has no media to listen to.'))
   const grid = await analyzeBeats(clip.assetId)
-  return { grid, beats: clipBeats(getProject(), getProject().clips[clip.id] ?? clip) }
+  // Listening to a song the first time takes seconds, and the clip is asked for again once it is heard: its beats
+  // are where it is by then. Deleted meanwhile — or another timeline opened — it was taken as it had been, and
+  // its beats were marked, and clips cut to them, on a timeline it isn't on.
+  const now = getProject().clips[clip.id]
+  if (!now) throw new Error(tt('The clip was removed while it was being analysed.'))
+  return { grid, beats: clipBeats(getProject(), now) }
 }
 
 export interface MontageResult {
