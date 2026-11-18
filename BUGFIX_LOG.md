@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R8 | A WebVTT file written from a caption with `&`, `<` or `>` in it didn't say what the caption says: “if a<b then b>a” read back as “if aa”, and the text `&amp;` as `&`. The file should show the caption's own words | `formatVtt` wrote a caption's text as it was, and in WebVTT `&` begins an escape, `<` a tag, and `-->` on a line makes it a line of timing. The three are now written as `&amp;`, `&lt;`, `&gt;`. SRT has no escapes and is written as before | `src/editor/subtitles.test.ts` › “writes WebVTT in which a caption’s “&”, “<” and “>” are text” | this round |
+| R9 | A subtitle file's escapes were misread when it was brought in: the text `&lt;` (written `&amp;lt;`) became `<`, and `&#39;`, `&quot;`, `&#8212;`, `&lrm;` stayed in the caption as they were written | `clean` read the escapes one kind after another, `&amp;` first, so what that left was read again; and it knew four of them, none by number. They are now read in one pass | `src/editor/subtitles.test.ts` › “reads each escape in a subtitle file once…” | this round |
+| R8 | A WebVTT file written from a caption with `&`, `<` or `>` in it didn't say what the caption says: “if a<b then b>a” read back as “if aa”, and the text `&amp;` as `&`. The file should show the caption's own words | `formatVtt` wrote a caption's text as it was, and in WebVTT `&` begins an escape, `<` a tag, and `-->` on a line makes it a line of timing. The three are now written as `&amp;`, `&lt;`, `&gt;`. SRT has no escapes and is written as before | `src/editor/subtitles.test.ts` › “writes WebVTT in which a caption’s “&”, “<” and “>” are text” | `3b735bc` |
 | R7 | A subtitle file (SRT or WebVTT) written from a caption with an empty line in it — a title with a gap between its lines — held only the lines above the gap as a cue; the rest lay outside any cue and was lost to whatever read the file. The whole caption should be in its cue | `formatSrt` / `formatVtt` wrote a cue's text as it was, and an empty line is what ends a cue in both formats. The lines of a cue are now written without the empty ones, as the reader already reads them | `src/editor/subtitles.test.ts` › “writes a caption that has an empty line in it as one cue” | `6a9aeff` |
 | R6 | A skill saved with a name or description between two quotes (`"Fast" cuts and "slow"`) came back without them (`Fast" cuts and "slow`), and a description that began with `>` or `\|` came back without that; what is saved should be what is listed | `writeSkill` wrote the value as it was, and `parseSkill` took its first character for a sign: quotes around the whole value, or the mark of a folded block. Such a value now goes between double quotes, and the reader leaves a quoted `>` alone | `shared/skills.test.ts` › “reads back the name and description it wrote…”, “reads a skill written by hand as it did” | `280bc6f` |
 | R5 | An update's release notes showed `<video>` where the notes said `&lt;video&gt;`, and showed `&nbsp;`, `&#8212;`, `&#x27;` as they were written | `notesOf` read the escapes one kind after another, `&amp;` first, so what that left was read again; and it knew five escapes, none by number | `electron/updater.test.ts` › “reads each escape in the notes once…” | `71d13f4` |
@@ -20,9 +21,7 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 ## Next — seen while reading, not yet reproduced
 
-| Seen | Where | What to check |
-|---|---|---|
-| Reading a subtitle file turns `&amp;lt;` into `<`: the escapes are read one kind after another, as in R5 | `src/editor/subtitles.ts` `clean` | That the text `&lt;` (written `&amp;lt;`) reads as `&lt;` |
+Nothing waiting.
 
 Every `decodeURIComponent` in `electron/`, `src/` and `shared/` has been read: R1–R4 were the unguarded ones a person's or a tool's input reaches; `video-link.ts` was already inside a `try`; `files.ts:89` (the model cache) reads addresses only the editor itself makes.
 

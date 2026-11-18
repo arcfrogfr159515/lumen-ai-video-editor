@@ -26,17 +26,30 @@ function seconds(s: string): number | null {
   return Number(h ?? 0) * 3600 + Number(mm) * 60 + Number(ss) + Number(ms.padEnd(3, '0')) / 1000
 }
 
+const ESCAPES: Record<string, string> = { amp: '&', lt: '<', gt: '>', nbsp: ' ', quot: '"', apos: "'", lrm: '\u200e', rlm: '\u200f' }
+
+/**
+ * The escapes in a cue's text, each read once. Read one kind after another, "&amp;" first, the text "&lt;" — written
+ * "&amp;lt;" — became "<"; and the ones given by number, or that set a line's direction, were shown as written.
+ */
+function unescaped(text: string) {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, body: string) => {
+    if (body[0] !== '#') return ESCAPES[body.toLowerCase()] ?? whole
+    const code = /^#x/i.test(body) ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10)
+    if (code === 160) return ' '
+    return code > 0 && code < 0x110000 && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : whole
+  })
+}
+
 /** Removes VTT/SRT markup (<i>, <b>, <c.x>, <v Speaker>, {\an8}, timestamps) and entities. */
 function clean(text: string) {
-  return text
-    .replace(/<\d{1,2}:\d{2}[^>]*>/g, '')
-    .replace(/<v(?:\.[^\s>]+)?\s+[^>]*>/gi, '')
-    .replace(/<\/?[a-z][^>]*>/gi, '')
-    .replace(/\{\\[^}]*\}/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ')
+  return unescaped(
+    text
+      .replace(/<\d{1,2}:\d{2}[^>]*>/g, '')
+      .replace(/<v(?:\.[^\s>]+)?\s+[^>]*>/gi, '')
+      .replace(/<\/?[a-z][^>]*>/gi, '')
+      .replace(/\{\\[^}]*\}/g, ''),
+  )
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean)

@@ -107,6 +107,22 @@ describe('subtitle files', () => {
     expect(formatSrt(cues.slice(1, 2))).toBe('1\n00:00:03,000 --> 00:00:04,000\nTom & Jerry <3\n')
   })
 
+  it('reads each escape in a subtitle file once, and the ones the format has besides', () => {
+    const read = (text: string) => parseSubtitles(`WEBVTT\n\n00:01.000 --> 00:02.000\n${text}\n`)[0]?.text
+    // "&amp;lt;" is the text "&lt;". Read "&amp;" first and then what that left, it became "<".
+    expect(read('Write &amp;lt; for a less-than sign')).toBe('Write &lt; for a less-than sign')
+    expect(read('&amp;nbsp; is a space that holds')).toBe('&nbsp; is a space that holds')
+    expect(read('a &lt; b &amp; b &gt; a,&nbsp;so')).toBe('a < b & b > a, so')
+    // So a caption that talks about escapes comes back from the file written for it.
+    const cues = [{ start: 1, end: 2, text: 'In HTML, &lt; is "<" and &amp; is "&"' }]
+    expect(parseSubtitles(formatVtt(cues))).toEqual(cues)
+    // Escapes given by number, quotes, and the marks that set a line's direction were shown as they were written.
+    expect(read('It&#39;s &quot;here&quot; &#8212; &#x4F60;&#x597D;')).toBe('It\'s "here" — 你好')
+    expect(read('&rlm;שלום&lrm;')).toBe('\u200fשלום\u200e')
+    // What isn't an escape stays as it is.
+    expect(read('R&D; fish &chips; &#xZZ; &#0;')).toBe('R&D; fish &chips; &#xZZ; &#0;')
+  })
+
   it('lays cues on a Captions track, and a second file on a track of its own', () => {
     const fps = getProject().settings.fps
     const first = importSubtitles(SRT, { name: 'English' })
