@@ -936,7 +936,9 @@ export const commands = {
       assertEditable(p, clip)
       if (!i.transition) return void (clip.transitionIn = null)
       const { align, ...rest } = i.transition
-      const duration = Math.max(1, Math.min(rest.duration, maxTransition(p, clip, align)))
+      // Never under two frames, the shortest a transition can be asked for or kept: cut down to a clip of one frame
+      // it came out one frame long, and a clip with that, copied, could not be pasted.
+      const duration = Math.max(2, Math.min(rest.duration, maxTransition(p, clip, align)))
       clip.transitionIn = { ...rest, duration, ...(align && align !== 'after' ? { align } : {}) }
     },
   }),
