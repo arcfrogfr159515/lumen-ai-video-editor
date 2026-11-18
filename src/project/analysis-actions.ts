@@ -71,11 +71,17 @@ export interface SceneResult {
 /** Finds the shot changes in a clip; splits it there or adds markers (one undo step). */
 export async function scenesInClip(clipId: string, opts: { sensitivity?: number; action?: 'split' | 'markers' | 'none'; source?: 'user' | 'ai' }, onProgress?: (p: number) => void, signal?: AbortSignal): Promise<SceneResult> {
   const { clip, asset } = mediaClip(clipId)
+  const action = opts.action ?? 'split'
+  // A clip on a locked track can't be cut. Every cut was refused, and the answer was “split” all the same — so it
+  // is said, and before its footage is read rather than after.
+  const held = (c: Clip) => action === 'split' && Boolean(getProject().tracks.find((t) => t.id === c.trackId)?.locked)
+  if (held(clip)) throw new Error(tt('“{0}” is on a locked track', clip.name))
   const fps = getProject().settings.fps
   const [a, b] = sourceRange(clip, fps)
   const report = await detectScenes(asset, a, b, { sensitivity: opts.sensitivity }, onProgress, signal)
   const now = getProject().clips[clipId]
   if (!now) throw new Error(tt('The clip was removed while it was being analysed.'))
+  if (held(now)) throw new Error(tt('“{0}” is on a locked track', now.name))
   // Kept on the media, so the timeline can show the shot changes and snap to them wherever this footage plays.
   if (getProject().assets[asset.id]) dispatch('asset.update', { id: asset.id, patch: { sceneCuts: mergeSceneCuts(getProject().assets[asset.id].sceneCuts, report.cuts, a, b) } }, { history: false })
   const cuts = [
@@ -87,7 +93,6 @@ export async function scenesInClip(clipId: string, opts: { sensitivity?: number;
         .filter((f) => f > now.start && f < clipEnd(now)),
     ),
   ].sort((x, y) => x - y)
-  const action = opts.action ?? 'split'
   if (!cuts.length || action === 'none') return { cuts, applied: 'none' }
   const source = opts.source ?? 'user'
   const ids = [clipId]
