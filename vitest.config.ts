@@ -12,5 +12,14 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'electron/**/*.test.ts', 'shared/**/*.test.ts'],
+    // `npm run coverage`. Every source file counts, the ones no test loads included: a number that left those out
+    // would say how well the tested part is tested, not how much of Lumen is.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}', 'electron/**/*.ts', 'shared/**/*.ts'],
+      exclude: ['**/*.test.ts', '**/*.d.ts', 'src/editor/test-helpers.ts', 'src/editor/test-invariants.ts', 'src/locales/**', 'electron/locales/**'],
+      reporter: ['text-summary', 'json-summary'],
+      reportsDirectory: 'coverage',
+    },
   },
 })
