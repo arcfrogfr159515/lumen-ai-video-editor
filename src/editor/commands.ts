@@ -1937,7 +1937,7 @@ export const commands = {
           const keys = clip.keyframes.volume
           if (mode === 'set') {
             if (keys?.length) {
-              skipped.set(`${clip.id}:volume`, { id: clip.id, name: clip.name, why: 'its volume is keyframed — offset moves it' })
+              skipped.set(`${clip.id}:volume`, { id: clip.id, name: clip.name, why: tt('its volume is keyframed — offset moves it') })
               return false
             }
             if (clip.audio.volume === clampDb(value)) return false
@@ -1963,7 +1963,7 @@ export const commands = {
         const value = i.opacity
         each('opacity', (clip) => {
           if (clip.keyframes.opacity?.length) {
-            skipped.set(`${clip.id}:opacity`, { id: clip.id, name: clip.name, why: 'its opacity is keyframed' })
+            skipped.set(`${clip.id}:opacity`, { id: clip.id, name: clip.name, why: tt('its opacity is keyframed') })
             return false
           }
           if (clip.transform.opacity === value) return false
@@ -1977,7 +1977,7 @@ export const commands = {
           const fit = (s: number) => Math.round(Math.min(20, Math.max(0.01, s)) * 1000) / 1000
           if (mode === 'set') {
             if (keys?.length) {
-              skipped.set(`${clip.id}:scale`, { id: clip.id, name: clip.name, why: 'its scale is keyframed — scaling moves it' })
+              skipped.set(`${clip.id}:scale`, { id: clip.id, name: clip.name, why: tt('its scale is keyframed — scaling moves it') })
               return false
             }
             if (clip.transform.scale === fit(value)) return false
