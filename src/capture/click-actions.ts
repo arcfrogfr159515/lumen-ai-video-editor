@@ -58,14 +58,22 @@ export function zoomOnClicks(clipId: string, opts: ZoomOptions & { clear?: boole
     : zoomKeys(cursor, { duration: clip.duration, inPoint: clip.inPoint, fps, ...base, mediaWidth: width, mediaHeight: height, frameWidth: project.settings.width, frameHeight: project.settings.height }, opts)
   if (!opts.clear && !keys.spans.length) throw new Error(tt('There are no clicks inside this clip to zoom on.'))
   let count = 0
+  let refused = ''
+  const taken = (res: { ok: true } | { ok: false; error: string }) => {
+    if (!res.ok) refused ||= res.error
+    return res.ok
+  }
   useEditor.getState().transaction(opts.clear ? tt('Remove zooms on clicks') : tt('Zoom on clicks'), source, () => {
     for (const prop of ['scale', 'x', 'y'] as const) {
-      if (clip.keyframes[prop]?.length) dispatch('keyframe.clear', { clipId, prop }, { source })
+      if (clip.keyframes[prop]?.length) taken(dispatch('keyframe.clear', { clipId, prop }, { source }))
       for (const k of keys[prop]) {
-        if (dispatch('keyframe.set', { clipId, prop, frame: k.frame, value: k.value, easing: k.easing }, { source }).ok) count++
+        if (taken(dispatch('keyframe.set', { clipId, prop, frame: k.frame, value: k.value, easing: k.easing }, { source }))) count++
       }
     }
   })
+  // Nothing of it was taken — the clip is on a locked track, say: that is what is answered, not the zooms that
+  // would have been made (they were listed all the same, with no keyframe behind them and nothing said).
+  if (refused && !count) throw new Error(refused)
   return {
     zooms: keys.spans.map((s) => ({
       from_seconds: Math.round(((clip.start + Math.round(s.from * fps) - clip.inPoint) / fps) * 100) / 100,
