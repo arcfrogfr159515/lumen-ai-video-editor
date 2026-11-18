@@ -99,9 +99,38 @@ function onJob(job: Job) {
 
 const sourceKey = (s: GeneratedAsset['source'] | Asset['source']) => (s.type === 'sequence' ? s.base : s.type === 'file' ? s.url : '')
 
+/** The media of the open project that plays this generated file or sequence already. */
+const inProject = (g: GeneratedAsset) => Object.values(getProject().assets).find((a) => sourceKey(a.source) && sourceKey(a.source) === sourceKey(g.source))
+
+/**
+ * Jobs whose media a window has brought into a project, kept for the windows after it. The main process outlives
+ * the editor's window and lists the jobs of its session to every window that opens — the editor reloaded after a
+ * crash, or (on a Mac) a new window after the last was closed — the finished ones with what they made. Each of
+ * them brought its media in again: into whatever project the new window had open, an empty new one mostly, which
+ * then had changes to save; and media that had been removed from a project came back into it.
+ */
+const BROUGHT_IN = 'lumen.jobs.imported'
+
+function broughtIn(): string[] {
+  try {
+    const list: unknown = JSON.parse(localStorage.getItem(BROUGHT_IN) ?? '[]')
+    return Array.isArray(list) ? list.filter((id): id is string => typeof id === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function rememberBroughtIn(jobId: string) {
+  try {
+    localStorage.setItem(BROUGHT_IN, JSON.stringify([...broughtIn().filter((id) => id !== jobId), jobId].slice(-400)))
+  } catch {
+    // Nowhere to keep it: this window still knows (`imported`), the next one won't.
+  }
+}
+
 /** Turns a generated file/sequence into a project asset (probing files for duration, poster, peaks). */
 export async function addGeneratedAsset(g: GeneratedAsset): Promise<string> {
-  const existing = Object.values(getProject().assets).find((a) => sourceKey(a.source) && sourceKey(a.source) === sourceKey(g.source))
+  const existing = inProject(g)
   if (existing) return existing.id
   let extra: Partial<Asset> = {}
   let source = g.source
@@ -142,14 +171,20 @@ export async function addGeneratedAsset(g: GeneratedAsset): Promise<string> {
 
 async function importJob(job: Job) {
   useIntegrations.setState((s) => ({ imported: { ...s.imported, [job.id]: [] } }))
+  // Brought in by a window before this one: what the open project still has of it is the job's media, and nothing is added.
+  const before = broughtIn().includes(job.id)
   const ids: string[] = []
   for (const g of job.assets ?? []) {
     try {
-      ids.push(await addGeneratedAsset(g))
+      if (before) {
+        const had = inProject(g)
+        if (had) ids.push(had.id)
+      } else ids.push(await addGeneratedAsset(g))
     } catch (err) {
       toast.error(tt('Couldn’t add {0}', g.name), { description: String(err) })
     }
   }
+  if (!before) rememberBroughtIn(job.id)
   useIntegrations.setState((s) => ({ imported: { ...s.imported, [job.id]: ids } }))
 }
 
