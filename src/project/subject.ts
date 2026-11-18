@@ -51,7 +51,10 @@ export async function textBehindSubject(clipId: string, opts: SubjectOptions & {
   let titleClipId = ''
   const build = () => {
     const index = (trackId: string) => getProject().tracks.findIndex((t) => t.id === trackId)
-    const base = getProject().clips[clipId]
+    // Finding the subject takes minutes, and the clip is asked for again once it is found: deleted meanwhile — or
+    // another project opened — there was nothing to read its place from, and the reason given was
+    // “Cannot read properties of undefined (reading 'start')”.
+    const base = pictureClip(clipId)
 
     // The title: the one given, or a big bold one over the whole clip.
     const given = opts.titleId ? getProject().clips[opts.titleId] : undefined
