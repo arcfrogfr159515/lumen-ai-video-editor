@@ -229,3 +229,46 @@ describe('the frame-ingest receiver', () => {
     expect(((await late.json()) as { error: string }).error).toBe('clip_failed')
   })
 })
+
+describe('switching the receiver on and off', () => {
+  /** Whether anything answers the receiver's health check at an address. */
+  async function answers(url: string): Promise<boolean | string> {
+    // A connection kept from before the receiver was last switched off is reset when it is used again: ask once more.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const res = await fetch(`${url}/health`, { headers: auth() })
+        return res.ok || `status ${res.status}`
+      } catch (err) {
+        const code = String((err as { cause?: { code?: string } }).cause?.code ?? err)
+        if (code === 'ECONNREFUSED') return false
+        if (code !== 'ECONNRESET' || attempt) return `failed: ${code}`
+      }
+    }
+  }
+
+  it('listens once when it is started twice at once, and stops listening when it is switched off', async () => {
+    await ingest.stopIngest(false)
+    // The user's switch and an agent's ingest_start, say, in the same moment: each found nothing listening yet and
+    // opened a listener of its own. The first was then forgotten — still answering, with nothing left to close it.
+    const [first, second] = await Promise.all([ingest.startIngest(false), ingest.startIngest(false)])
+    expect(first.running && second.running).toBe(true)
+    expect(second.url).toBe(first.url)
+    expect(await answers(first.url!)).toBe(true)
+
+    await ingest.stopIngest(false)
+    expect(ingest.ingestState().running).toBe(false)
+    expect(await answers(first.url!)).toBe(false)
+    expect(await answers(second.url!)).toBe(false)
+  })
+
+  it('is off when it is switched off while it is still starting', async () => {
+    await ingest.stopIngest(false)
+    const starting = ingest.startIngest(false)
+    const stopped = await ingest.stopIngest(false)
+    const started = await starting
+    // Switched off before it had started listening, it found nothing to close — and the start then went through.
+    expect(stopped.running).toBe(false)
+    expect(ingest.ingestState().running).toBe(false)
+    expect(await answers(started.url!)).toBe(false)
+  })
+})

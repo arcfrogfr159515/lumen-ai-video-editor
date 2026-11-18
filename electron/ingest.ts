@@ -591,8 +591,16 @@ function listen(srv: http.Server, at: number) {
   })
 }
 
+/**
+ * A start that is finding its port. Nothing is listening until it has, so a second start (the user's switch and an
+ * agent's ingest_start in the same moment) would open a listener of its own and leave the first with nothing to
+ * close it — and a stop would find nothing to stop. Both wait for it instead.
+ */
+let starting: Promise<void> | null = null
+
 /** Starts the receiver. `persist` false starts it for this session only (an agent asked), leaving the user's switch alone. */
 export async function startIngest(persist = true): Promise<IngestState> {
+  while (starting) await starting
   if (server) {
     if (persist && sessionOnly) {
       sessionOnly = false
@@ -601,6 +609,17 @@ export async function startIngest(persist = true): Promise<IngestState> {
     }
     return ingestState()
   }
+  let started = () => {}
+  starting = new Promise<void>((resolve) => (started = resolve))
+  try {
+    return await listenSomewhere(persist)
+  } finally {
+    starting = null
+    started()
+  }
+}
+
+async function listenSomewhere(persist: boolean): Promise<IngestState> {
   const s = settings()
   const first = s.port ?? INGEST_DEFAULT_PORT
   const srv = http.createServer((req, res) => void handleIngestRequest(req, res))
@@ -637,6 +656,7 @@ export async function startIngest(persist = true): Promise<IngestState> {
 }
 
 export async function stopIngest(persist = true): Promise<IngestState> {
+  while (starting) await starting
   const srv = server
   server = null
   sessionOnly = false
