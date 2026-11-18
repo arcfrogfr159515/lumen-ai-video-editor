@@ -74,9 +74,10 @@ async function pump() {
       // read) it was neither queued nor cancellable: asked for again, it was made a second time, over the file the
       // preview was playing; cancelled, it was made all the same. The media list changing asks again by itself.
       let stopped = false
+      let outdated = false
       cancels.set(assetId, () => void (stopped = true))
       try {
-        await build(assetId, () => stopped)
+        outdated = (await build(assetId, () => stopped)) === 'outdated'
       } catch (err) {
         failed.add(assetId)
         if (!(err instanceof Error && err.name === 'ConversionCanceledError'))
@@ -85,6 +86,8 @@ async function pump() {
         cancels.delete(assetId)
         setProgress(assetId, null)
       }
+      // The next one comes from the file the media plays now, as it does when a proxy is let go of.
+      if (outdated) ensureProxies(getProject())
     }
   } finally {
     running = false
@@ -94,7 +97,11 @@ async function pump() {
 /** What a conversion that was cancelled throws: said the same way for one stopped before it began. */
 const cancelled = () => Object.assign(new Error('The proxy was cancelled.'), { name: 'ConversionCanceledError' })
 
-async function build(assetId: string, stopped: () => boolean) {
+/** Whether two states of a media item play the same file, wherever it is: its size and date say so (what relinking goes by). */
+const sameFile = (a: Asset, b: Asset) => a.source.type === 'file' && b.source.type === 'file' && a.source.size === b.source.size && a.source.mtime === b.source.mtime
+
+/** Makes one proxy and gives it to its media. 'outdated' when the media plays another file by the time it is made: it is not given. */
+async function build(assetId: string, stopped: () => boolean): Promise<'outdated' | void> {
   const asset = getProject().assets[assetId]
   if (!asset || asset.source.type !== 'file' || !desktop) return
   const api = desktop
@@ -127,7 +134,12 @@ async function build(assetId: string, stopped: () => boolean) {
       const done = await api.export.finish(handle.id)
       const info = await api.files.urlForPath(done.path)
       if (!info) throw new Error(tt('The proxy file went missing.'))
-      if (getProject().assets[assetId]) dispatch('asset.update', { id: assetId, patch: { proxy: { path: done.path, url: info.url, width, height } } }, { history: false })
+      const now = getProject().assets[assetId]
+      if (!now) return
+      // Making it took a while, and the media may play another file by now (relinked, a constant-frame-rate copy
+      // made of it or taken back): this is a copy of the file it had, and the preview would show that one's pictures.
+      if (!sameFile(now, asset)) return 'outdated'
+      dispatch('asset.update', { id: assetId, patch: { proxy: { path: done.path, url: info.url, width, height } } }, { history: false })
     } catch (err) {
       await api.export.abort(handle.id).catch(() => {})
       throw err

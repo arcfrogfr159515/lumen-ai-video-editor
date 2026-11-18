@@ -65,7 +65,7 @@ vi.mock('@/lib/platform', () => ({
   },
 }))
 
-const { addAsset, freshProject } = await import('@/editor/test-helpers')
+const { addAsset, freshProject, run } = await import('@/editor/test-helpers')
 const { getProject } = await import('@/editor/store')
 const { cancelProxy, ensureProxies, makeProxy, useProxyJobs } = await import('./proxies')
 
@@ -133,6 +133,49 @@ describe('making a proxy', () => {
     // Cancelled is not asked for again by itself.
     ensureProxies(getProject())
     await settle(5)
+    expect(lab.header).toBeNull()
+  })
+})
+
+describe('a proxy still being made when its media is given another file', () => {
+  /** What relinking does, and making a constant-frame-rate copy: the media plays this file from here on. */
+  const give = (url: string, size: number, mtime?: number) => run('asset.update', { id, patch: { source: { type: 'file', url, mime: 'video/mp4', fileName: url, size, ...(mtime !== undefined ? { mtime } : {}) } } })
+
+  it('is not given to the media', async () => {
+    // Heavy footage gets a proxy as soon as it is imported, and that takes minutes: relinked meanwhile, the media
+    // was handed the proxy of the file it no longer plays, and the preview showed that file's pictures.
+    makeProxy(id)
+    await reading()
+    give(`${id}-v2.mp4`, 2, 7)
+    headerRead()
+    await settle()
+    expect(lab.inits[0]).toBe(`${id}.mp4`)
+    expect(getProject().assets[id].proxy).toBeUndefined()
+  })
+
+  it('is followed by one made from the file the media plays now', async () => {
+    makeProxy(id)
+    await reading()
+    give(`${id}-v2.mp4`, 2, 7)
+    headerRead()
+    await settle()
+    // The next one is being made by now: its file's header is being read.
+    expect(lab.header).not.toBeNull()
+    headerRead()
+    await settle()
+    expect(lab.inits).toEqual([`${id}.mp4`, `${id}-v2.mp4`])
+    expect(getProject().assets[id].proxy).toMatchObject({ path: `${id}-7.mp4` })
+    expect(useProxyJobs.getState().jobs).toEqual({})
+  })
+
+  it('is given to it when the file is the same one, found somewhere else', async () => {
+    // The same size and date: it is the file the proxy is being made from.
+    makeProxy(id)
+    await reading()
+    give(`moved/${id}.mp4`, 1)
+    headerRead()
+    await settle()
+    expect(getProject().assets[id].proxy).toMatchObject({ path: `${id}-0.mp4`, width: 960, height: 540 })
     expect(lab.header).toBeNull()
   })
 })
