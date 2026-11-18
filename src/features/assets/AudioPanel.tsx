@@ -1,5 +1,5 @@
 import { AudioLines, Circle, Mic, Music, Pause, Play, Plus, Sparkles, Square, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/ui/input'
@@ -13,7 +13,7 @@ import { dnd } from '@/features/dnd'
 import { cn } from '@/lib/cn'
 import { desktop } from '@/lib/platform'
 import { formatSeconds } from '@/lib/time'
-import { auditionSfx, cancelRecording, finishRecording, inputLevel, sfxAsset, startRecording, stopAudition, type Recording } from '@/project/audio-library'
+import { auditionSfx, cancelRecording, currentRecording, finishRecording, inputLevel, sfxAsset, startRecording, stopAudition, type Recording } from '@/project/audio-library'
 import { useGenerate } from './generate-store'
 import { PanelHeader, scrollArea, SectionLabel } from './shared'
 import { locale, tm, tt } from '@/lib/i18n'
@@ -170,12 +170,12 @@ function voiceTrack() {
 }
 
 function RecordCard() {
-  const [rec, setRec] = useState<Recording | null>(null)
+  // A recording outlives this card: one started before the panel was switched away is taken up again here.
+  const [rec, setRec] = useState<Recording | null>(currentRecording)
   const [level, setLevel] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [playAlong, setPlayAlong] = useState(true)
   const [saving, setSaving] = useState(false)
-  const startFrame = useRef(0)
 
   useEffect(() => {
     if (!rec) return
@@ -191,8 +191,7 @@ function RecordCard() {
 
   const start = async () => {
     try {
-      startFrame.current = usePlayback.getState().frame
-      const r = await startRecording()
+      const r = await startRecording(undefined, usePlayback.getState().frame)
       setRec(r)
       if (playAlong) playback.play()
     } catch {
@@ -208,7 +207,7 @@ function RecordCard() {
     try {
       const asset = await finishRecording(rec, tt('Voiceover {0}', stamp))
       if (asset) {
-        const id = placeAsset(asset.id, startFrame.current, { trackId: voiceTrack() })
+        const id = placeAsset(asset.id, rec.at, { trackId: voiceTrack() })
         if (id) useUI.getState().select([id])
         toast.success(tt('Voiceover recorded'), { description: tt('{0} · added at the playhead', formatSeconds(asset.duration ?? 0)) })
       }

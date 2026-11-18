@@ -58,7 +58,7 @@ vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: async () => new Strea
 vi.stubGlobal('AudioContext', Context)
 vi.stubGlobal('MediaRecorder', Recorder)
 
-const { cancelRecording, finishRecording, startRecording } = await import('./audio-library')
+const { cancelRecording, currentRecording, finishRecording, startRecording } = await import('./audio-library')
 
 beforeEach(() => {
   Object.assign(mic, { live: 0, contexts: 0, failAt: '', recorderState: 'recording' })
@@ -72,6 +72,31 @@ describe('recording from the microphone', () => {
     cancelRecording(rec)
     // Cancelling twice (the dialog closing after the button) is harmless.
     cancelRecording(rec)
+  })
+
+  it('is one recording when it is asked for twice before the microphone has answered', async () => {
+    // A double click on Record: the card still reads "Record" until the microphone answers the first.
+    const [first, second] = await Promise.all([startRecording(), startRecording()])
+    expect(mic).toMatchObject({ live: 1, contexts: 1 })
+    expect(second).toBe(first)
+    cancelRecording(first)
+  })
+
+  it('is still there for the card that comes back to it, until it is finished or cancelled', async () => {
+    // The card goes away with its panel (another tab is opened) and is drawn anew when the panel comes back.
+    expect(currentRecording()).toBeNull()
+    const rec = await startRecording(undefined, 120)
+    expect(currentRecording()).toBe(rec)
+    // It knows where on the timeline it started: the card that started it may not be the one that adds it.
+    expect(rec.at).toBe(120)
+    expect(await startRecording()).toBe(rec)
+    expect(mic).toMatchObject({ live: 1, contexts: 1 })
+    cancelRecording(rec)
+    expect(currentRecording()).toBeNull()
+    const next = await startRecording()
+    expect(next).not.toBe(rec)
+    expect(await finishRecording(next, 'Take 2')).toBeNull()
+    expect(currentRecording()).toBeNull()
   })
 
   it('lets the microphone go when recording can’t be set up', async () => {

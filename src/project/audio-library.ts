@@ -138,10 +138,38 @@ export interface Recording {
   context: AudioContext
   startedAt: number
   chunks: Blob[]
+  /** The timeline frame the take started at: where it lands when it is added. */
+  at: number
 }
 
-/** Starts recording from the microphone (raw, no processing — clean-up is the editor's job). */
-export async function startRecording(deviceId?: string): Promise<Recording> {
+/**
+ * The voiceover being recorded, when one is. It is kept here, not by the card that started it: the card goes away
+ * with its panel (another tab is opened), and a recording nothing knew of any more kept the microphone open and
+ * went on recording, with nothing left to stop it by.
+ */
+let current: Recording | null = null
+/** The microphone has been asked for and hasn't answered yet. */
+let opening: Promise<Recording> | null = null
+
+export const currentRecording = () => current
+
+const forget = (rec: Recording) => {
+  if (current === rec) current = null
+}
+
+/**
+ * Starts recording from the microphone (raw, no processing — clean-up is the editor's job), at timeline frame `at`.
+ * One at a time: asked again while one runs or is on its way — a second press before the microphone has answered
+ * — it answers with that one, not with a second microphone.
+ */
+export function startRecording(deviceId?: string, at = 0): Promise<Recording> {
+  if (current) return Promise.resolve(current)
+  return (opening ??= open(deviceId, at)
+    .then((rec) => (current = rec))
+    .finally(() => void (opening = null)))
+}
+
+async function open(deviceId: string | undefined, at: number): Promise<Recording> {
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { deviceId: deviceId ? { exact: deviceId } : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
   })
@@ -152,7 +180,7 @@ export async function startRecording(deviceId?: string): Promise<Recording> {
     analyser.fftSize = 1024
     context.createMediaStreamSource(stream).connect(analyser)
     const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '', audioBitsPerSecond: 256_000 })
-    const rec: Recording = { stream, recorder, analyser, context, startedAt: performance.now(), chunks: [] }
+    const rec: Recording = { stream, recorder, analyser, context, startedAt: performance.now(), chunks: [], at }
     recorder.ondataavailable = (e) => e.data.size && rec.chunks.push(e.data)
     recorder.start(250)
     return rec
@@ -191,6 +219,7 @@ export async function finishRecording(rec: Recording, name: string): Promise<Ass
     }
   } finally {
     release(rec.stream, rec.context)
+    forget(rec)
   }
   if (!rec.chunks.length || !desktop) return null
   const decoded = await new OfflineAudioContext(1, 1, 48000).decodeAudioData(await new Blob(rec.chunks).arrayBuffer())
@@ -221,5 +250,6 @@ export function cancelRecording(rec: Recording) {
     if (rec.recorder.state !== 'inactive') rec.recorder.stop()
   } finally {
     release(rec.stream, rec.context)
+    forget(rec)
   }
 }
