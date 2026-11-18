@@ -5,7 +5,7 @@ import { callEditorTool, editorTools, editorWindow } from '../editor-rpc'
 import { forgetAttachments, readAttachment } from './attachments'
 import { deleteHistory, readHistory, writeHistory } from './chats'
 import { claudeEfforts, effortSettings, geminiEfforts, openaiEfforts, type ModelApi } from './effort'
-import { forgetLocalSession, runLocal, stopLocal } from './local-agents'
+import { forgetLocalSession, runLocal, stopAllLocal, stopLocal } from './local-agents'
 import { languageModel, MissingKeyError } from './providers'
 
 /**
@@ -39,6 +39,12 @@ export async function startAgentRun(req: AgentRunRequest) {
 export function stopAgentRun(runId: string) {
   controllers.get(runId)?.abort()
   stopLocal(runId)
+}
+
+/** Lumen is closing: every reply still being written ends here, and the agents Lumen started with it. */
+export function stopAllAgentRuns() {
+  for (const controller of controllers.values()) controller.abort()
+  stopAllLocal()
 }
 
 export function forgetConversation(conversationId: string) {

@@ -11,7 +11,8 @@ import { applyGraphicsSettings } from './gpu'
 import { systemLanguages } from './i18n'
 import { initIngest, stopIngest } from './ingest'
 import { registerIntegrationIpc } from './integrations/ipc'
-import { registerJobListener } from './integrations/jobs'
+import { stopAllAgentRuns } from './integrations/ai/agent'
+import { cancelAllJobs, registerJobListener } from './integrations/jobs'
 import { disconnectAll } from './integrations/mcp'
 import { MEDIA_SCHEME } from './integrations/paths'
 import { initBridge, stopBridge } from './integrations/server'
@@ -88,6 +89,17 @@ function createWindow() {
   mainWindow = win
 
   watchEditor(win, closeNow)
+  // The page is gone — its process died, or it was loaded again: what it was doing in this process ends with it.
+  // Files being exported are closed and removed (a recording's is closed and kept, to be recovered), and the
+  // recorder lets go of its keys, the display and its helpers.
+  const editorGone = () => {
+    stopCapture()
+    abortAllExports()
+  }
+  win.webContents.on('render-process-gone', editorGone)
+  win.webContents.on('did-start-navigation', (details: { isMainFrame?: boolean; isSameDocument?: boolean }, _url?: string, isInPlace?: boolean, isMainFrame?: boolean) => {
+    if ((details?.isMainFrame ?? isMainFrame) && !(details?.isSameDocument ?? isInPlace)) editorGone()
+  })
   registerJobListener(win)
   initBridge(win, isTrustedUrl)
   initIngest(win)
@@ -177,6 +189,9 @@ app.on('before-quit', () => {
   if (!primary) return
   stopCapture()
   abortAllExports()
+  // Nothing Lumen started is left running behind it: renders, generations, the agents answering a chat.
+  cancelAllJobs()
+  stopAllAgentRuns()
   void disconnectAll()
   void stopBridge(false)
   void stopIngest(false)

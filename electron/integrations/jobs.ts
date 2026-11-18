@@ -68,6 +68,14 @@ export function cancelJob(id: string) {
   updateJob(id, { status: 'cancelled' })
 }
 
+/**
+ * Lumen is closing: whatever is still being rendered or generated is stopped. Left alone, a Blender started for a
+ * render went on rendering after Lumen had gone, into a folder nothing would ever read or remove.
+ */
+export function cancelAllJobs() {
+  for (const job of [...jobs.values()]) if (job.status === 'running') cancelJob(job.id)
+}
+
 export const isCancelled = (id: string) => jobs.get(id)?.status === 'cancelled'
 
 export const getJob = (id: string) => jobs.get(id)

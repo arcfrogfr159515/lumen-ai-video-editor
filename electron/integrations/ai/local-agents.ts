@@ -259,20 +259,30 @@ export async function signInLocal(id: LocalAgentId): Promise<LocalAgentState> {
 // ─── Runs ────────────────────────────────────────────────────────────────
 
 // Each chat's Claude Code session / Codex thread, kept across restarts so a chat carries on where it left off.
-const sessions = loadSessions()
+let kept: Map<string, string> | null = null
+/**
+ * Read when first asked for, not as this file loads: by then Lumen has settled which profile it runs on. (Read
+ * at load, an automated test run — which names a profile of its own — read the user's real one.)
+ */
+const sessions = () => (kept ??= loadSessions())
 const children = new Map<string, ChildProcess>()
 const stopped = new Set<string>()
 
 function remember(key: string, session: string) {
-  if (sessions.get(key) === session) return
-  sessions.delete(key)
-  sessions.set(key, session)
-  saveSessions(sessions)
+  if (sessions().get(key) === session) return
+  sessions().delete(key)
+  sessions().set(key, session)
+  saveSessions(sessions())
 }
 
 export const forgetLocalSession = (conversationId: string) => {
-  for (const key of [...sessions.keys()]) if (key.endsWith(`:${conversationId}`)) sessions.delete(key)
-  saveSessions(sessions)
+  for (const key of [...sessions().keys()]) if (key.endsWith(`:${conversationId}`)) sessions().delete(key)
+  saveSessions(sessions())
+}
+
+/** Lumen is closing: no agent it started is left running behind it. */
+export function stopAllLocal() {
+  for (const runId of [...children.keys()]) stopLocal(runId)
 }
 
 export function stopLocal(runId: string) {
@@ -366,7 +376,7 @@ async function runClaude(req: AgentRunRequest, bin: string, url: string, token: 
   fs.writeFileSync(config, JSON.stringify({ mcpServers: { lumen: { type: 'http', url, headers: { Authorization: `Bearer ${token}` } } } }), { mode: 0o600 })
   const instructions = writeInstructions(req)
   const key = `claude-code:${req.conversationId}`
-  const session = sessions.get(key)
+  const session = sessions().get(key)
   const args = [
     '-p',
     '--output-format',
@@ -487,7 +497,7 @@ async function runClaude(req: AgentRunRequest, bin: string, url: string, token: 
 // Codex: `codex exec --json`, read-only sandbox, Lumen wired in as an MCP server.
 async function runCodex(req: AgentRunRequest, bin: string, url: string, token: string, prompt: string, emit: Emit) {
   const key = `codex:${req.conversationId}`
-  const thread = sessions.get(key)
+  const thread = sessions().get(key)
   const workspace = ensureDir(path.join(agentDir(), 'workspace'))
   // exec runs with approval_policy "never": Lumen's own tools are pre-approved (code-running ones
   // still ask the user inside Lumen); anything else Codex wants still needs approval, so it's refused.

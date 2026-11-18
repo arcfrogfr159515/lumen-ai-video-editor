@@ -91,7 +91,7 @@ env.root = fs.mkdtempSync(path.join(os.tmpdir(), 'lumen-jobs-test-'))
 const dummy = path.join(env.root, process.platform === 'win32' ? 'blender.exe' : 'blender')
 fs.writeFileSync(dummy, '')
 process.env.LUMEN_BLENDER = dummy
-const { cancelJob, createJob, failJob, finishJob, getJob, isCancelled, updateJob } = await import('./jobs')
+const { cancelAllJobs, cancelJob, createJob, failJob, finishJob, getJob, isCancelled, updateJob } = await import('./jobs')
 const { renderBlender } = await import('./blender')
 const { renderMotion } = await import('./hyperframes')
 env.cancel = cancelJob
@@ -174,6 +174,22 @@ describe('a Blender render', () => {
     expect(getJob(job.id)).toMatchObject({ status: 'cancelled' })
     expect(fs.existsSync(media('blender', job.id))).toBe(false)
     expect(fs.existsSync(scratch('blender', job.id))).toBe(false)
+  })
+
+  it('is stopped when Lumen closes, and leaves nothing behind though nobody waits to hear Blender go', async () => {
+    const first = await renderBlender(request)
+    let killed = 0
+    env.child.kill = () => void killed++
+    frame(first.id, 1)
+    const done = createJob('blender', 'One that had already ended')
+    finishJob(done.id)
+    cancelAllJobs()
+    // Blender's own "close" never comes: Lumen has gone by then.
+    expect(killed).toBe(1)
+    expect(getJob(first.id)).toMatchObject({ status: 'cancelled' })
+    expect(getJob(done.id)).toMatchObject({ status: 'done' })
+    expect(fs.existsSync(media('blender', first.id))).toBe(false)
+    expect(fs.existsSync(scratch('blender', first.id))).toBe(false)
   })
 
   it('fails with why Blender couldn’t be started', async () => {

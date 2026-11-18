@@ -141,8 +141,8 @@ export async function renderBlender(req: BlenderRenderRequest): Promise<Job> {
   const work = workDir('blender', job.id)
   /** The script and its fonts are never needed again; the frames only when the render came through. */
   const tidy = (keepFrames: boolean) => {
-    fs.rmSync(work, { recursive: true, force: true })
-    if (!keepFrames) fs.rmSync(out, { recursive: true, force: true })
+    fs.rmSync(work, { recursive: true, force: true, maxRetries: 2, retryDelay: 50 })
+    if (!keepFrames) fs.rmSync(out, { recursive: true, force: true, maxRetries: 2, retryDelay: 50 })
   }
   const transparent = req.transparent ?? req.template !== 'shapes'
   const blender = info.path
@@ -178,7 +178,15 @@ export async function renderBlender(req: BlenderRenderRequest): Promise<Job> {
     tidy(false)
     throw err
   }
-  setCanceller(job.id, () => child.kill())
+  setCanceller(job.id, () => {
+    child.kill()
+    // When it is Lumen that is closing, nothing is left to hear Blender go: what it made is taken away now.
+    try {
+      tidy(false)
+    } catch {
+      // Blender still holds a file for a moment; its closing (below) takes the rest.
+    }
+  })
   updateJob(job.id, { message: 'Starting Blender…' })
 
   const log: string[] = []

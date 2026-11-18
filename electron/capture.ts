@@ -313,6 +313,7 @@ export function startAppAudio(key: string, target: { hwnd?: number; pid?: number
     if (!who) return reject(new Error(mt('Pick a window to record its sound.')))
     streams.get(key)?.stop()
     const child = stream(file, ['audio', ...who])
+    const entry: Stream = { stop: () => quit(child) }
     let header: Buffer | null = Buffer.alloc(0)
     let pending: Buffer[] = []
     let carry = Buffer.alloc(0)
@@ -352,6 +353,9 @@ export function startAppAudio(key: string, target: { hwnd?: number; pid?: number
     child.on('error', (err) => {
       if (!settled) reject(new Error(`The capture helper didn’t start (${err.message}).`))
       settled = true
+      // A helper that never started never exits either: what was set up for it is let go of here.
+      clearInterval(timer)
+      if (streams.get(key) === entry) streams.delete(key)
     })
     child.on('exit', () => {
       clearInterval(timer)
@@ -361,7 +365,7 @@ export function startAppAudio(key: string, target: { hwnd?: number; pid?: number
       settled = true
       endStream(key, said ?? (/process-exited/.test(errors) ? 'The app closed.' : 'ended'))
     })
-    streams.set(key, { stop: () => quit(child) })
+    streams.set(key, entry)
   })
 }
 
@@ -631,7 +635,12 @@ export function initCapture(win: BrowserWindow, isTrustedUrl: (url: string) => b
   })
 }
 
-/** Everything the recorder holds outside the editor's page is let go. */
+/**
+ * Everything the recorder holds outside the editor's page is let go: when Lumen closes, and when the page that
+ * was recording is gone — it crashed, or was loaded again. (Left as they were after a crash, the recording keys
+ * stayed taken from every other app, the display stayed awake, and Lumen's window stayed out of screen captures,
+ * until Lumen was closed.)
+ */
 export function stopCapture() {
   for (const s of [...streams.values()]) s.stop()
   for (const key of [...registered]) listen(key, false)
@@ -639,6 +648,10 @@ export function stopCapture() {
     powerSaveBlocker.stop(awake)
     awake = null
   }
-  // Half-written files stay where they are: they can be recovered next time.
+  holdTimers(false)
+  if (editor && !editor.isDestroyed()) editor.setContentProtection(false)
+  minimized = false
+  // Half-written files stay where they are: they can be recovered — by the page that comes back, or next time.
+  writing.clear()
   state = { armed: false, recording: false, hideLumen: false, minimize: false }
 }
