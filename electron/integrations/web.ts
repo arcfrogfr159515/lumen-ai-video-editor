@@ -174,6 +174,28 @@ async function get(raw: string, accept = 'text/html,application/xhtml+xml,*/*;q=
   throw new Error('Too many redirects.')
 }
 
+/**
+ * A page's bytes as text, in the encoding the page is written in: the one its address answers with (`Content-Type`),
+ * else the one the page names itself in a `<meta>` near its top; UTF-8 where neither names one, or names one that
+ * isn't known here. Every page was read as UTF-8: one written in GBK — as many Chinese sites are — or in Shift_JIS
+ * or Windows-1251 gave a title and a text of "����".
+ */
+export function pageText(bytes: Buffer, type: string): string {
+  let named = /charset\s*=\s*["']?\s*([\w.:-]+)/i.exec(type)?.[1]
+  if (!named && type.includes('html')) {
+    // The note is in plain letters whatever the rest is written in. One that could be read like this isn't in
+    // UTF-16, whatever it says.
+    named = /<meta\b[^>]*?\bcharset\s*=\s*["']?\s*([\w.:-]+)/i.exec(bytes.subarray(0, 4096).toString('latin1'))?.[1]
+    if (named && /^utf-?16/i.test(named)) named = undefined
+  }
+  if (!named || /^utf-?8$/i.test(named)) return bytes.toString('utf8')
+  try {
+    return new TextDecoder(named).decode(bytes)
+  } catch {
+    return bytes.toString('utf8')
+  }
+}
+
 // ─── HTML → text ─────────────────────────────────────────────────────────
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', mdash: '—', ndash: '–', hellip: '…', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', copy: '©' }
@@ -349,7 +371,7 @@ export async function readPage(raw: string, maxChars = 12000): Promise<WebPage> 
     const image = toJpeg(bytes)
     return { url: url.href, title: url.pathname.split('/').pop() || url.hostname, text: 'An image.', links: [], images: [url.href], ...(image ? { image } : {}) }
   }
-  const raw8 = bytes.toString('utf8')
+  const raw8 = pageText(bytes, type)
   if (!type.includes('html')) return { url: url.href, title: url.href, text: raw8.slice(0, limit), truncated: raw8.length > limit, links: [], images: [] }
   const html = raw8
   const title = meta(html, 'og:title') ?? strip(firstElement(html, 'title')?.inner ?? '') ?? url.hostname
@@ -397,7 +419,7 @@ export async function linkPreview(raw: string): Promise<WebPreview> {
   let value: WebPreview
   if (type.startsWith('image/')) value = { url: url.href, title: url.pathname.split('/').pop() || url.hostname, site: url.hostname, image: url.href }
   else {
-    const html = bytes.toString('utf8')
+    const html = pageText(bytes, type)
     const lead = meta(html, 'og:image') ?? meta(html, 'twitter:image')
     value = {
       url: url.href,
