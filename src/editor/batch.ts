@@ -6,7 +6,7 @@
  */
 import { formatTimecode } from '@/lib/time'
 import type { Clip, Project } from './types'
-import { tt } from '@/lib/i18n'
+import { counted, tt } from '@/lib/i18n'
 
 /** What a batch can change, as the batch command and its panel name them. */
 export type BatchField = 'speed' | 'volume' | 'fades' | 'opacity' | 'scale' | 'reverse' | 'blend' | 'effects' | 'label' | 'rename'
@@ -131,6 +131,6 @@ export function describeBatch(result: { changed: number; skipped: { name: string
   if (!result.skipped.length) return { title }
   const reasons = new Map<string, number>()
   for (const s of result.skipped) reasons.set(s.why, (reasons.get(s.why) ?? 0) + 1)
-  const parts = [...reasons].map(([why, count]) => `${count === 1 ? `“${result.skipped.find((s) => s.why === why)!.name}”` : `${count} clips`} (${why})`)
+  const parts = [...reasons].map(([why, count]) => `${count === 1 ? `“${result.skipped.find((s) => s.why === why)!.name}”` : counted(count, 'clip')} (${why})`)
   return { title, description: tt('Left alone: {0}.', parts.join(', ')) }
 }
