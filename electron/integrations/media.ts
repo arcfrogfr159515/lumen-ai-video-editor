@@ -32,7 +32,16 @@ const EXT: Record<string, string> = {
 const MIME_BY_EXT: Record<string, string> = Object.fromEntries(Object.entries(EXT).map(([mime, ext]) => [ext, mime]))
 Object.assign(MIME_BY_EXT, { '.jpeg': 'image/jpeg', '.m4v': 'video/mp4' })
 
-export const MEDIA_URL_RE = /https?:\/\/[^\s"'<>()]+?\.(?:png|jpe?g|webp|gif|avif|mp4|webm|mov|m4v|mp3|wav|ogg|m4a|aac|flac)(?:\?[^\s"'<>()]*)?(?=[\s"'<>(),]|$)/gi
+// A link to a media file, as it stands in a sentence or a list: up to the space, quote, bracket or comma after it —
+// or to the full stop (or ; : ! ?) that ends the sentence it is in.
+export const MEDIA_URL_RE = /https?:\/\/[^\s"'<>()]+?\.(?:png|jpe?g|webp|gif|avif|mp4|webm|mov|m4v|mp3|wav|ogg|m4a|aac|flac)(?:\?[^\s"'<>()]*)?(?=[\s"'<>(),]|[.;:!?]+(?:[\s"'<>()]|$)|$)/gi
+
+/**
+ * The media links in a piece of text. Tools answer in sentences — "Your video is ready: https://…/clip.mp4." — and a
+ * link with a full stop after it was not taken for one: the answer seemed to have nothing to bring in. What ends the
+ * sentence isn't part of the address either, when the address ends in what it asks for (`…?sig=abc.`).
+ */
+export const mediaUrlsIn = (text: string) => [...text.matchAll(MEDIA_URL_RE)].map((m) => m[0].replace(/[.,;:!?]+$/, ''))
 
 export function kindOf(mime: string): GeneratedAsset['kind'] | null {
   if (mime.startsWith('image/')) return 'image'

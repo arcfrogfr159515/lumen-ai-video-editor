@@ -1,5 +1,5 @@
 import type { GeneratedAsset, McpCallResult, McpLink, Provenance } from '../../../shared/integrations'
-import { kindOf, MEDIA_URL_RE, mimeFromName, saveBase64 } from '../media'
+import { kindOf, mediaUrlsIn, mimeFromName, saveBase64 } from '../media'
 
 /**
  * Turns an MCP tool result into things an editor can use: inline images and
@@ -46,7 +46,7 @@ export function convertResult(result: Record<string, unknown>, provenance: Prove
 
   const structured = result.structuredContent
   for (const block of [...text, structured === undefined ? '' : JSON.stringify(structured)]) {
-    for (const match of block.matchAll(MEDIA_URL_RE)) addLink(match[0])
+    for (const url of mediaUrlsIn(block)) addLink(url)
     // Many services return JSON; pick up URLs under media-ish keys too.
     const trimmed = block.trim()
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
