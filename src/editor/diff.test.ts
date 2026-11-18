@@ -101,6 +101,35 @@ describe('a branch', () => {
     expect(versions()).toEqual([])
   })
 
+  it('finds a move of the picture made with keyframes, on the frames where it differs', () => {
+    // Only the speed's keyframes were compared: a push in over a shot was no difference.
+    const b = named('B').id
+    run('keyframe.set', { clipId: b, prop: 'scale', frame: 20, value: 1, easing: 'linear' })
+    run('keyframe.set', { clipId: b, prop: 'scale', frame: 60, value: 1.4, easing: 'linear' })
+    // Up to its twentieth frame the shot is as large as it was; from there on it isn't.
+    expect(hunks()).toEqual([['changed', 121, 200, 121, 200]])
+  })
+
+  it('is not made different by keyframes that leave the picture where it was', () => {
+    const b = named('B').id
+    run('keyframe.set', { clipId: b, prop: 'scale', frame: 0, value: 1, easing: 'linear' })
+    run('keyframe.set', { clipId: b, prop: 'opacity', frame: 30, value: 1, easing: 'linear' })
+    expect(hunks()).toEqual([])
+  })
+
+  it('is not made different by a cut through a clip whose picture moves', () => {
+    const b = named('B').id
+    run('keyframe.set', { clipId: b, prop: 'scale', frame: 0, value: 1, easing: 'linear' })
+    run('keyframe.set', { clipId: b, prop: 'scale', frame: 80, value: 1.4, easing: 'linear' })
+    run('keyframe.set', { clipId: b, prop: 'volume', frame: 10, value: -12, easing: 'linear' })
+    run('sequence.branch', {})
+    const versions = () => diffTimelines(getProject().sequences![branch], openSequence(getProject())).hunks.map((h) => [h.kind, ...h.a, ...h.b])
+    expect(versions()).toEqual([])
+    // A cut gives each piece keyframes of its own, with one at the cut: the picture moves as it did.
+    run('clip.split', { frame: 150 })
+    expect(versions()).toEqual([])
+  })
+
   it('finds a cut that stops an animation short', () => {
     run('clip.update', { ids: [onTrack('Titles')[0].id], patch: { animation: { in: { preset: 'fade', duration: 8 } } } })
     run('sequence.branch', {})

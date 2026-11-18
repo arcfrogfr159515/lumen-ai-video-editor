@@ -10,6 +10,7 @@
 import { hashString } from '@/lib/math'
 import { uid } from '@/lib/id'
 import { createTrack } from './defaults'
+import { ANIMATABLE, baseValue, propAt } from './keyframes'
 import { clipEnd, cloneClip, followsRipple, isMagnetic, removeRange, rippleInsert, setClipEnd, setClipStart } from './ops'
 import { sourceFrameAt, speedAt } from './timing'
 import type { Clip, Frame, Marker, Project, Sequence, Track } from './types'
@@ -117,11 +118,26 @@ const actingAt = (c: Clip, local: number) => acting(c, local, true)
 const looks = new WeakMap<Clip, string>()
 const look = (c: Clip) => looks.get(c) ?? (looks.set(c, lookOf(c)), looks.get(c)!)
 
+/**
+ * What keyframes move: where the picture is, how large, how turned, how see-through, and how loud the sound. (The
+ * speed's keyframes change which footage shows when, and are compared as that.) Compared by what they come to at
+ * each frame — not keyframe by keyframe: a cut gives each piece keyframes of its own, with one at the cut, and
+ * keyframes that leave a value where it was change nothing.
+ */
+const MOVED = ANIMATABLE.filter((prop) => prop !== 'speed')
+const moves = (c: Clip) => MOVED.some((prop) => c.keyframes[prop]?.length)
+const rounded = (v: number) => Math.round(v * 1e4) / 1e4
+const stills = new WeakMap<Clip, string>()
+/** Those values as they are without keyframes. */
+const still = (c: Clip) => stills.get(c) ?? (stills.set(c, MOVED.map((prop) => rounded(baseValue(c, prop))).join(',')), stills.get(c)!)
+/** And at a frame of the clip's own. */
+const movedAt = (c: Clip, local: number) => (moves(c) ? MOVED.map((prop) => rounded(propAt(c, prop, local))).join(',') : still(c))
+
 /** What a clip plays, without where: its footage (or timeline, or words). */
 const mediaOf = (c: Clip) => c.assetId ?? (c.sequenceId ? `seq:${c.sequenceId}` : c.kind === 'text' ? `text:${hashString(c.text?.content ?? '')}` : c.kind)
 
-/** What a clip shows at a frame of its own: the footage, how far into it, how it is dressed, and what is acting on it there. */
-const showing = (c: Clip, local: number) => `${mediaOf(c)}@${Math.round(sourceFrameAt(c, local) * 10) / 10}x${Math.round(speedAt(c, local) * 1000) / 1000}~${look(c)}~${actingAt(c, local)}`
+/** What a clip shows at a frame of its own: the footage, how far into it, how it is dressed, what is acting on it there, and where its keyframes have it. */
+const showing = (c: Clip, local: number) => `${mediaOf(c)}@${Math.round(sourceFrameAt(c, local) * 10) / 10}x${Math.round(speedAt(c, local) * 1000) / 1000}~${look(c)}~${actingAt(c, local)}~${movedAt(c, local)}`
 
 interface Lane {
   /** What lines this track up with one in the other version. */
@@ -236,7 +252,38 @@ function slices(ls: Lane[]): Slice[] {
     if (carriesOn) prev.length += length
     else out.push({ start, length, token: contentAt(ls, start) })
   }
+  // A slice is known by what plays at its first frame, which says nothing of where keyframes take the picture
+  // after it: a slice in which they take it somewhere is known by that too.
+  const moving = ls.map((lane) => lane.clips.filter(moves))
+  if (moving.some((clips) => clips.length)) {
+    for (const slice of out) {
+      const motion = motionOver(moving, slice.start, slice.start + slice.length)
+      if (motion) slice.token += `#${motion}`
+    }
+  }
   return out
+}
+
+/**
+ * Where keyframes take the picture (and the sound) over a stretch, as one comparable string — '' when they leave
+ * everything where it is without them.
+ */
+function motionOver(moving: Clip[][], from: Frame, to: Frame): string {
+  let digest = 0
+  let any = false
+  moving.forEach((clips, lane) => {
+    for (const c of clips) {
+      const a = Math.max(from, c.start)
+      const b = Math.min(to, clipEnd(c))
+      for (let frame = a; frame < b; frame++) {
+        const at = movedAt(c, frame - c.start)
+        if (at === still(c)) continue
+        any = true
+        digest = hashString(`${digest}|${lane}:${frame - from}:${at}`)
+      }
+    }
+  })
+  return any ? String(digest) : ''
 }
 
 // ─── Lining two versions up ──────────────────────────────────────────────
