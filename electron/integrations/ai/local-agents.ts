@@ -267,6 +267,8 @@ let kept: Map<string, string> | null = null
 const sessions = () => (kept ??= loadSessions())
 const children = new Map<string, ChildProcess>()
 const stopped = new Set<string>()
+/** Turns being answered, from the moment they are asked for: the agent's own process comes seconds later. */
+const turns = new Set<string>()
 
 function remember(key: string, session: string) {
   if (sessions().get(key) === session) return
@@ -282,12 +284,16 @@ export const forgetLocalSession = (conversationId: string) => {
 
 /** Lumen is closing: no agent it started is left running behind it. */
 export function stopAllLocal() {
-  for (const runId of [...children.keys()]) stopLocal(runId)
+  for (const runId of new Set([...turns, ...children.keys()])) stopLocal(runId)
 }
 
 export function stopLocal(runId: string) {
   const child = children.get(runId)
-  if (!child?.pid) return false
+  if (!child?.pid) {
+    // Its agent isn't running yet (it is being found, and asked whether it is signed in): now it won't be started.
+    if (turns.has(runId)) stopped.add(runId)
+    return turns.has(runId)
+  }
   stopped.add(runId)
   // Take the whole tree down (agents spawn helpers).
   if (isWin) spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' })
@@ -320,11 +326,29 @@ const NOT_SIGNED_IN = /not logged in|please run \/login|invalid api key|oauth (t
 
 export async function runLocal(req: AgentRunRequest, emit: Emit): Promise<void> {
   if (req.target.kind !== 'local') return
-  const id = req.target.agent
+  // Known as a turn before its agent runs. Stopped in the seconds the agent takes to say it is there and signed
+  // in, the turn was started all the same — and worked on, unseen, behind a chat that said "Stopped."
+  turns.add(req.runId)
+  try {
+    await answer(req, req.target.agent, emit)
+  } finally {
+    turns.delete(req.runId)
+    stopped.delete(req.runId)
+  }
+}
+
+async function answer(req: AgentRunRequest, id: LocalAgentId, emit: Emit): Promise<void> {
+  const halted = () => {
+    if (!stopped.has(req.runId)) return false
+    emit({ runId: req.runId, type: 'error', code: 'cancelled', message: 'Stopped.' })
+    return true
+  }
   const state = await stateOf(id)
+  if (halted()) return
   if (!state.found || !state.path) return emit({ runId: req.runId, type: 'error', code: 'not-installed', message: `${id === 'claude-code' ? 'Claude Code' : 'Codex'} isn’t installed on this computer.` })
   if (!state.signedIn) return emit({ runId: req.runId, type: 'error', code: 'not-signed-in', message: `Sign in to ${id === 'claude-code' ? 'Claude Code' : 'Codex'} first — it uses your own account.` })
   const { url, token } = await bridgeEndpoint()
+  if (halted()) return
   const prompt = `${req.context ? `${req.context}${attachmentsNote(req)}\n\n` : attachmentsNote(req) ? `${attachmentsNote(req).trim()}\n\n` : ''}${req.prompt}`
   if (id === 'claude-code') await runClaude(req, state.path, url, token, prompt, emit)
   else await runCodex(req, state.path, url, token, prompt, emit)
