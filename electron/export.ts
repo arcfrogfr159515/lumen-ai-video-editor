@@ -256,7 +256,7 @@ export function finishExport(id: string): { path: string; size: number; warnings
   finished.add(path.resolve(target))
   const size = fs.statSync(target).size
   if (target === e.path) return { path: target, size }
-  return { path: target, size, warnings: [`“${path.basename(e.path)}” is open in another program and couldn’t be replaced. This was saved beside it as “${path.basename(target)}”.`] }
+  return { path: target, size, warnings: [mt('“{0}” is open in another program and couldn’t be replaced. This was saved beside it as “{1}”.', path.basename(e.path), path.basename(target))] }
 }
 
 export function abortExport(id: string) {

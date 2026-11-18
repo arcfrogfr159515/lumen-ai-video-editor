@@ -1,6 +1,7 @@
 import { app, type BrowserWindow } from 'electron'
 import electronUpdater, { type UpdateInfo } from 'electron-updater'
 import { APP_IPC, type UpdateState } from '../shared/app'
+import { mt } from './i18n'
 
 /**
  * Updates from the GitHub Releases page. electron-updater reads latest.yml
@@ -48,9 +49,9 @@ export function notesOf(info: Pick<UpdateInfo, 'releaseNotes'>) {
 
 export function friendly(err: unknown) {
   const message = err instanceof Error ? err.message : String(err)
-  if (/ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|ENOTFOUND|ECONNREFUSED|ETIMEDOUT|ERR_CONNECTION|ERR_NETWORK/i.test(message)) return 'Couldn’t reach GitHub — check your connection and try again.'
-  if (/latest\.yml|No published versions|HttpError: 404|status 404/i.test(message)) return 'The Releases page has no update for this version yet.'
-  if (/sha512 checksum mismatch/i.test(message)) return 'The download didn’t match the release’s checksum, so it was discarded. Try again later.'
+  if (/ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|ENOTFOUND|ECONNREFUSED|ETIMEDOUT|ERR_CONNECTION|ERR_NETWORK/i.test(message)) return mt('Couldn’t reach GitHub — check your connection and try again.')
+  if (/latest\.yml|No published versions|HttpError: 404|status 404/i.test(message)) return mt('The Releases page has no update for this version yet.')
+  if (/sha512 checksum mismatch/i.test(message)) return mt('The download didn’t match the release’s checksum, so it was discarded. Try again later.')
   return message.split('\n')[0].slice(0, 240)
 }
 
