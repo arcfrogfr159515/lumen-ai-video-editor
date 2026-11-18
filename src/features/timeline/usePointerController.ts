@@ -208,6 +208,14 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
             snapFrame = s.frame
           }
         }
+        // No clip of the group goes before the start of the timeline: it is held there, where a free move settles
+        // anyway. With Ctrl or Shift the group lands exactly where it is dropped, and dropped past the start the
+        // move was refused on release — with what the command says of a start below zero.
+        const earliest = Math.min(...ids.map((id) => originals[id].start))
+        if (delta < -earliest) {
+          delta = -earliest
+          snapFrame = null
+        }
         const hover = rowAt(p.y)
         let shift = hover >= 0 ? hover - originRow : 0
         const fits = (s: number) =>
