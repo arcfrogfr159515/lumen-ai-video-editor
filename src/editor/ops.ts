@@ -474,7 +474,9 @@ export function splitClip(p: Project, clip: Clip, frame: Frame): Clip | null {
     const atCut = propAt(clip, prop, leftDuration)
     const left = kfs.filter((k) => k.frame < leftDuration)
     const rightKfs = kfs.filter((k) => k.frame > leftDuration).map((k) => ({ ...k, frame: k.frame - leftDuration }))
-    const spanning = left[left.length - 1]?.easing ?? 'linear'
+    // The curve the right half sets out on is that of the keyframe it starts from: the one on the cut, when there
+    // is one. Given the curve of the one before it instead, a move that began at the cut went otherwise than it had.
+    const spanning = kfs.findLast((k) => k.frame <= leftDuration)?.easing ?? 'linear'
     clip.keyframes[prop] = [...left, { frame: leftDuration, value: atCut, easing: 'linear' }]
     right.keyframes[prop] = [{ frame: 0, value: atCut, easing: spanning }, ...rightKfs]
   }
