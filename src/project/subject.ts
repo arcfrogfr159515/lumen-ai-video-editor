@@ -64,7 +64,21 @@ export async function textBehindSubject(clipId: string, opts: SubjectOptions & {
       const id = placeTitle('headline', base.start, { content: opts.text?.trim() || tt('YOUR TEXT'), source })
       if (!id) throw new Error(tt('Couldn’t add the title.'))
       titleClipId = id
-      ok(dispatch('clip.trim', { id, edge: 'end', frame: base.start + base.duration }, { source }))
+      const end = base.start + base.duration
+      const fit = () => ok(dispatch('clip.trim', { id, edge: 'end', frame: end }, { source }))
+      const over = () => {
+        const t = getProject().clips[id]
+        return t.start === base.start && t.start + t.duration === end
+      }
+      if (getProject().clips[id].start === base.start) fit()
+      // The track titles go to may have something at this place already — another title, or the clip itself. The
+      // new title then slid off to the nearest free place, or stopped where the other one starts: past the end of
+      // the clip and a frame long, or over a part of it. It gets a track of its own over the footage instead.
+      if (!over()) {
+        const own = ok<string>(dispatch('track.add', { kind: 'video', name: tt('Titles'), index: index(base.trackId) }, { source }))
+        ok(dispatch('clip.move', { moves: [{ id, start: base.start, trackId: own }], mode: 'overwrite' }, { source }))
+        fit()
+      }
       // Behind the head: a little below the top of the subject, where it overlaps the letters.
       const box = getProject().assets[matte.assetId]?.matteOf?.box
       const H = getProject().settings.height
