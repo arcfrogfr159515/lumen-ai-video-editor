@@ -1,6 +1,7 @@
 import { dynamicTool, isStepCount, jsonSchema, streamText, type ModelMessage, type SystemModelMessage, type ToolSet } from 'ai'
 import { COPILOT_INSTRUCTIONS, type AgentErrorCode, type AgentEvent, type AgentEventBody, type AgentRunRequest, type AgentUsage } from '../../../shared/ai'
 import { IPC, type BridgeTool } from '../../../shared/integrations'
+import { onEditorGone } from '../editor-page'
 import { callEditorTool, editorTools, editorWindow } from '../editor-rpc'
 import { forgetAttachments, readAttachment } from './attachments'
 import { deleteHistory, readHistory, writeHistory } from './chats'
@@ -46,6 +47,11 @@ export function stopAllAgentRuns() {
   for (const controller of controllers.values()) controller.abort()
   stopAllLocal()
 }
+
+// The same when the editor's page goes away — reloaded after a crash, or its window closed. A reply runs in this
+// process, and went on here: asking the model, and calling its tools on whatever project the page that came next
+// had open, with nothing in that page to show the reply or to stop it.
+onEditorGone(stopAllAgentRuns)
 
 export function forgetConversation(conversationId: string) {
   histories.delete(conversationId)

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { BrowserWindow, ipcMain } from 'electron'
 import { IPC, type BridgeRequest, type BridgeResponse, type BridgeTool, type BridgeToolResult } from '../../shared/integrations'
+import { editorGone } from './editor-page'
 
 /**
  * Round-trips into the editor window. The editor owns the tool definitions
@@ -16,6 +17,7 @@ const pending = new Map<string, { resolve: (r: BridgeResponse) => void; timer: N
  * page that was going to answer is gone — closed, reloaded, crashed — and
  * what it was doing with it: without this the caller (an agent over MCP, the
  * Copilot's turn) waits out the whole time a tool may take, up to an hour.
+ * What was started for the page in this process is told, too (`onEditorGone`).
  */
 function drop(win: BrowserWindow, error: string) {
   for (const [id, p] of [...pending]) {
@@ -24,6 +26,7 @@ function drop(win: BrowserWindow, error: string) {
     clearTimeout(p.timer)
     p.resolve({ id, ok: false, error })
   }
+  editorGone()
 }
 
 export function initEditorRpc(win: BrowserWindow, isTrustedUrl: (url: string) => boolean) {
