@@ -115,9 +115,19 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
   const api = desktop
   const input = new Input({ source: new UrlSource(source.url), formats: ALL_FORMATS })
   setProgress(assetId, 0)
+  // Being made from here on — not only once its conversion exists. The row shows Stop at once, and until then (the
+  // file's header is read, an encoder looked for) there was nothing for it to stop: it did nothing, and the copy was
+  // made. Nor was a second asking told the first was under way: both wrote the same file.
+  let stopped = false
+  cancels.set(assetId, () => void (stopped = true))
+  /** What a conversion that was cancelled throws: said the same way for one stopped before it began. */
+  const halt = () => {
+    if (stopped) throw Object.assign(new Error('The copy was stopped.'), { name: 'ConversionCanceledError' })
+  }
   try {
     const track = await input.getPrimaryVideoTrack()
     if (!track) throw new Error(tt('It has no video.'))
+    halt()
     const handle = api ? await api.files.beginConform(`${assetId}-${source.mtime ?? 0}-${String(rate).replace('.', '_')}fps`) : null
     const memory = handle ? null : new BufferTarget()
     const target = handle
@@ -142,6 +152,7 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
       if ((await input.getPrimaryAudioTrack()) && !conversion.utilizedTracks.some((t) => t.isAudioTrack())) throw new Error(tt('Its sound can’t be carried over into the copy on this computer.'))
       conversion.onProgress = (p) => setProgress(assetId, p)
       cancels.set(assetId, () => void conversion.cancel())
+      halt()
       await conversion.execute()
 
       let next: { url: string; path?: string; fileName: string; size: number; mtime?: number }
