@@ -11,7 +11,7 @@ import { hashString } from '@/lib/math'
 import { uid } from '@/lib/id'
 import { createTrack } from './defaults'
 import { ANIMATABLE, baseValue, propAt } from './keyframes'
-import { clipEnd, cloneClip, followsRipple, isMagnetic, removeRange, rippleInsert, setClipEnd, setClipStart } from './ops'
+import { clipEnd, cloneClip, followsRipple, isMagnetic, removeRange, rippleInsert, setClipEnd, setClipStart, transitionLead } from './ops'
 import { sourceFrameAt, speedAt } from './timing'
 import type { Clip, Frame, Marker, Project, Sequence, Track } from './types'
 
@@ -80,11 +80,16 @@ interface Passing {
   frames: Frame
 }
 
+interface Edges {
+  head: Passing[]
+  tail: Passing[]
+}
+
 /**
- * What a clip comes in with and what it goes out with: the animation of its picture and the fade of its sound.
- * A cut leaves the first on the first piece and the second on the second.
+ * What a clip comes in with and what it goes out with, of its own: the animation of its picture and the fade of
+ * its sound. A cut leaves the first on the first piece and the second on the second.
  */
-function passing(c: Clip): { head: Passing[]; tail: Passing[] } {
+function passing(c: Clip): Edges {
   const within = (frames: number | undefined) => Math.min(c.duration, Math.max(0, frames ?? 0))
   const list = (animation: 'in' | 'out', fade: number | undefined) => {
     const spec = c.animation?.[animation]
@@ -98,25 +103,39 @@ function passing(c: Clip): { head: Passing[]; tail: Passing[] } {
   return { head: list('in', c.audio?.fadeIn), tail: list('out', c.audio?.fadeOut) }
 }
 
-const passings = new WeakMap<Clip, { head: Passing[]; tail: Passing[] }>()
+const passings = new WeakMap<Clip, Edges>()
 const passingOf = (c: Clip) => passings.get(c) ?? (passings.set(c, passing(c)), passings.get(c)!)
-
-/** Whether a clip comes in with anything, and whether it goes out with anything. */
-const comesIn = (c: Clip) => passingOf(c).head.length > 0
-const goesOut = (c: Clip) => passingOf(c).tail.length > 0
-
-/** What is acting at a frame of the clip's own ('' for nothing) — with `where`, also how far into it the frame is: counted from the clip's start for what it comes in with, from its end for what it goes out with. */
-function acting(c: Clip, local: number, where = false) {
-  const { head, tail } = passingOf(c)
-  let out = ''
-  for (const p of head) if (local < p.frames) out += where ? `${p.what}@${local};` : `${p.what};`
-  for (const p of tail) if (local >= c.duration - p.frames) out += where ? `${p.what}@${c.duration - local};` : `${p.what};`
-  return out
-}
-const actingAt = (c: Clip, local: number) => acting(c, local, true)
 
 const looks = new WeakMap<Clip, string>()
 const look = (c: Clip) => looks.get(c) ?? (looks.set(c, lookOf(c)), looks.get(c)!)
+
+/**
+ * What acts at the edges of each clip of a track: what the clip comes in and goes out with of its own, and the
+ * transition on the cut before it — which plays over its first frames, over the last frames of the clip it comes
+ * from when it is set to begin before the cut, and not at all when no clip touches it there (`transitionAt`).
+ * What it is on either clip names the clip on the other side of the cut too: a transition shows both.
+ */
+function edgesOf(clips: Clip[]): Map<Clip, Edges> {
+  const edges = new Map<Clip, Edges>()
+  clips.forEach((c, i) => {
+    const own = passingOf(c)
+    const prev = clips[i - 1]
+    const next = clips[i + 1]
+    const head = [...own.head]
+    const tail = [...own.tail]
+    const across = (tr: NonNullable<Clip['transitionIn']>, other: Clip, at: number) => `${tr.kind}/${tr.duration}/${tr.align ?? 'after'}:${mediaOf(other)}@${Math.round(sourceFrameAt(other, at) * 10) / 10}~${look(other)}`
+    if (c.transitionIn && prev && clipEnd(prev) === c.start) {
+      const frames = Math.min(c.duration, c.transitionIn.duration - transitionLead(c.transitionIn))
+      if (frames > 0) head.push({ what: `from ${across(c.transitionIn, prev, prev.duration)}`, frames })
+    }
+    if (next?.transitionIn && next.start === clipEnd(c)) {
+      const frames = Math.min(c.duration, transitionLead(next.transitionIn))
+      if (frames > 0) tail.push({ what: `into ${across(next.transitionIn, next, 0)}`, frames })
+    }
+    edges.set(c, head.length === own.head.length && tail.length === own.tail.length ? own : { head, tail })
+  })
+  return edges
+}
 
 /**
  * What keyframes move: where the picture is, how large, how turned, how see-through, and how loud the sound. (The
@@ -136,14 +155,30 @@ const movedAt = (c: Clip, local: number) => (moves(c) ? MOVED.map((prop) => roun
 /** What a clip plays, without where: its footage (or timeline, or words). */
 const mediaOf = (c: Clip) => c.assetId ?? (c.sequenceId ? `seq:${c.sequenceId}` : c.kind === 'text' ? `text:${hashString(c.text?.content ?? '')}` : c.kind)
 
-/** What a clip shows at a frame of its own: the footage, how far into it, how it is dressed, what is acting on it there, and where its keyframes have it. */
-const showing = (c: Clip, local: number) => `${mediaOf(c)}@${Math.round(sourceFrameAt(c, local) * 10) / 10}x${Math.round(speedAt(c, local) * 1000) / 1000}~${look(c)}~${actingAt(c, local)}~${movedAt(c, local)}`
-
 interface Lane {
   /** What lines this track up with one in the other version. */
   key: string
   clips: Clip[]
+  /** What acts at the edges of each of them. */
+  edges: Map<Clip, Edges>
 }
+
+/** Whether a clip comes in with anything, and whether it goes out with anything. */
+const comesIn = (lane: Lane, c: Clip) => lane.edges.get(c)!.head.length > 0
+const goesOut = (lane: Lane, c: Clip) => lane.edges.get(c)!.tail.length > 0
+
+/** What is acting at a frame of the clip's own ('' for nothing) — with `where`, also how far into it the frame is: counted from the clip's start for what it comes in with, from its end for what it goes out with. */
+function acting(lane: Lane, c: Clip, local: number, where = false) {
+  const { head, tail } = lane.edges.get(c)!
+  let out = ''
+  for (const p of head) if (local < p.frames) out += where ? `${p.what}@${local};` : `${p.what};`
+  for (const p of tail) if (local >= c.duration - p.frames) out += where ? `${p.what}@${c.duration - local};` : `${p.what};`
+  return out
+}
+
+/** What a clip shows at a frame of its own: the footage, how far into it, how it is dressed, what is acting on it there, and where its keyframes have it. */
+const showing = (lane: Lane, c: Clip, local: number) =>
+  `${mediaOf(c)}@${Math.round(sourceFrameAt(c, local) * 10) / 10}x${Math.round(speedAt(c, local) * 1000) / 1000}~${look(c)}~${acting(lane, c, local, true)}~${movedAt(c, local)}`
 
 /**
  * The tracks of two versions paired up: a branch's tracks with the tracks they
@@ -177,7 +212,10 @@ export function pairTracks(a: readonly Track[], b: readonly Track[]): [Track | u
 function lanes(v: Version, tracks: (Track | undefined)[]): Lane[] {
   const by = new Map<string, Clip[]>()
   for (const c of Object.values(v.clips)) by.set(c.trackId, [...(by.get(c.trackId) ?? []), c])
-  return tracks.map((t, i) => ({ key: String(i), clips: t ? (by.get(t.id) ?? []).sort((x, y) => x.start - y.start) : [] }))
+  return tracks.map((t, i) => {
+    const clips = t ? (by.get(t.id) ?? []).sort((x, y) => x.start - y.start) : []
+    return { key: String(i), clips, edges: edgesOf(clips) }
+  })
 }
 
 /** The clip on a track at a frame: the last one to start at or before it, if it runs that far. */
@@ -201,7 +239,7 @@ const contentAt = (ls: Lane[], frame: Frame) =>
   ls
     .map((lane) => {
       const c = clipAt(lane, frame)
-      return c ? showing(c, frame - c.start) : ''
+      return c ? showing(lane, c, frame - c.start) : ''
     })
     .join('|')
 
@@ -225,8 +263,8 @@ function slices(ls: Lane[]): Slice[] {
       edges.add(c.start)
       edges.add(clipEnd(c))
       // Where what it comes in with ends, and what it goes out with begins.
-      for (const p of passingOf(c).head) edges.add(c.start + p.frames)
-      for (const p of passingOf(c).tail) edges.add(clipEnd(c) - p.frames)
+      for (const p of lane.edges.get(c)!.head) edges.add(c.start + p.frames)
+      for (const p of lane.edges.get(c)!.tail) edges.add(clipEnd(c) - p.frames)
       end = Math.max(end, clipEnd(c))
     }
   const cuts = [...edges].filter((f) => f <= end).sort((x, y) => x - y)
@@ -243,9 +281,9 @@ function slices(ls: Lane[]): Slice[] {
         const after = clipAt(lane, start)
         if (!before || !after) return !before && !after
         // Within one clip, content is broken only where something stops or starts acting on it.
-        if (before === after) return acting(before, start - 1 - before.start) === acting(after, start - after.start)
+        if (before === after) return acting(lane, before, start - 1 - before.start) === acting(lane, after, start - after.start)
         // From one clip to the next: not when the first goes out with something, or the second comes in with something.
-        if (goesOut(before) || comesIn(after)) return false
+        if (goesOut(lane, before) || comesIn(lane, after)) return false
         if (mediaOf(before) !== mediaOf(after) || look(before) !== look(after) || before.keyframes.speed || after.keyframes.speed) return false
         return Math.abs(sourceFrameAt(before, start - before.start) - sourceFrameAt(after, 0)) < 0.51
       })

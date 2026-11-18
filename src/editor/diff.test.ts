@@ -130,6 +130,26 @@ describe('a branch', () => {
     expect(versions()).toEqual([])
   })
 
+  it('finds a transition into a clip, on the frames it plays over', () => {
+    // A transition wasn't among what was compared: with one, the two versions were said to play the same.
+    run('clip.setTransition', { id: named('C').id, transition: { kind: 'dissolve', duration: 12 } })
+    expect(hunks()).toEqual([['changed', 200, 212, 200, 212]])
+    // Set to straddle the cut, it plays over the end of the clip before as well.
+    run('clip.setTransition', { id: named('C').id, transition: { kind: 'dissolve', duration: 12, align: 'center' } })
+    expect(hunks()).toEqual([['changed', 194, 206, 194, 206]])
+  })
+
+  it('is not made different by a cut through either clip of a transition', () => {
+    run('clip.setTransition', { id: named('C').id, transition: { kind: 'dissolve', duration: 12, align: 'center' } })
+    run('sequence.branch', {})
+    const versions = () => diffTimelines(getProject().sequences![branch], openSequence(getProject())).hunks.map((h) => [h.kind, ...h.a, ...h.b])
+    expect(versions()).toEqual([])
+    // The transition stays on the first piece of the clip it leads into, and the clip before still touches it.
+    run('clip.split', { frame: 150 })
+    run('clip.split', { frame: 250 })
+    expect(versions()).toEqual([])
+  })
+
   it('finds a cut that stops an animation short', () => {
     run('clip.update', { ids: [onTrack('Titles')[0].id], patch: { animation: { in: { preset: 'fade', duration: 8 } } } })
     run('sequence.branch', {})
@@ -280,6 +300,15 @@ describe('taking a stretch from one version into the other', () => {  it('makes 
     // The later stretch first, so the earlier one is still where it was found.
     take(before[1])
     take(left()[0])
+    expect(left()).toEqual([])
+  })
+
+  it('brings a transition across, with both sides of its cut', () => {
+    run('clip.setTransition', { id: named('C').id, transition: { kind: 'dissolve', duration: 12, align: 'center' } })
+    run('sequence.open', { id: main })
+    const before = left()
+    expect(before.map((h) => [h.kind, ...h.a])).toEqual([['changed', 194, 206]])
+    take(before[0])
     expect(left()).toEqual([])
   })
 
