@@ -55,6 +55,10 @@ function checkTimeline(t: Record<string, unknown>, assets: Record<string, unknow
   const trackIds = new Set(tracks.map((track) => track.id))
 
   let dropped = 0
+  let whole = 0
+  // A cut-out is drawn through its matte, and none of it until the matte has loaded: with a matte that isn't in the
+  // project, that is never. It shows whole again, as it does when its matte is removed.
+  const lost = (matte: unknown) => matte !== undefined && !(isPlain(matte) && typeof matte.assetId === 'string' && matte.assetId in assets)
   const clips = (t.clips ?? {}) as Record<string, unknown>
   for (const [id, clip] of Object.entries(clips)) {
     const ok =
@@ -77,8 +81,13 @@ function checkTimeline(t: Record<string, unknown>, assets: Record<string, unknow
     const c = clip as Record<string, unknown>
     c.id = id
     if ((c.start as number) < 0) c.start = 0
+    // The clip's own matte, and the one a take put away would come back with.
+    const holders = [c, ...(Array.isArray(c.takes) ? c.takes.filter(isPlain) : [])].filter((h) => lost(h.matte))
+    for (const h of holders) delete h.matte
+    if (holders.length) whole++
   }
   if (dropped) repairs.push(tt('{0} in {1} couldn’t be read and {2} left out', count(dropped, 'clip'), inside, dropped === 1 ? tt('was') : tt('were')))
+  if (whole) repairs.push(tt('{0} in {1} had no matte left to be cut out with and {2} made whole again', count(whole, 'clip'), inside, whole === 1 ? tt('was') : tt('were')))
 
   if (Array.isArray(t.markers)) {
     const markers = t.markers.filter((m) => isPlain(m) && isFrame(m.frame))

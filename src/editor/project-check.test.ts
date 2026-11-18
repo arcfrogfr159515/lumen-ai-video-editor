@@ -93,6 +93,40 @@ describe('opening a project', () => {
     }
   })
 
+  it('shows a cut-out whole when the matte it was cut out with isn’t in the project', () => {
+    const p = saved()
+    const [a, b] = Object.keys(p.clips)
+    const matte = (id: string) => ({ ...p.assets.shot, id, name: id, matteOf: { assetId: 'shot', subject: 'person', from: 0, to: 60 } })
+    p.assets.matte = matte('matte')
+    // A cut-out as a paste from another project used to leave it: the matte stayed behind. Nothing of it is drawn —
+    // the compositor shows none of a cut-out until its matte has loaded.
+    p.clips[a].matte = { assetId: 'matte_elsewhere', from: 0 }
+    // One whose matte is in the project stays a cut-out.
+    p.clips[b].matte = { assetId: 'matte', from: 0 }
+    const { project, repairs } = checkProject(p)
+    expect(project.clips[a].matte).toBeUndefined()
+    expect(project.clips[b].matte).toEqual({ assetId: 'matte', from: 0 })
+    expect(repairs).toEqual(['1 clip in the timeline had no matte left to be cut out with and was made whole again'])
+    expect(open(p)).toMatchObject({ repairs: [], clips: 2, edit: true })
+  })
+
+  it('does so when the matte is media the file holds in a form that can’t be read, and for a take put away', () => {
+    const p = saved()
+    const [a, b] = Object.keys(p.clips)
+    // The matte is listed, with nothing to say where it is: it is left out of the media — and was left on the clip.
+    p.assets.matte = { id: 'matte', name: 'matte', kind: 'video' }
+    p.clips[a].matte = { assetId: 'matte', from: 0 }
+    // A take put away with its cut-out: shown again, it would come back with a matte that isn't there.
+    const take = (id: string, extra: object) => ({ id, name: id, kind: 'video', assetId: 'shot', inPoint: 0, speed: 1, reverse: false, ...extra })
+    p.clips[b].takes = [take('take_1', {}), take('take_2', { matte: { assetId: 'matte', from: 0 } })]
+    p.clips[b].takeId = 'take_1'
+    const { project, repairs } = checkProject(p)
+    expect(project.assets.matte).toBeUndefined()
+    expect(project.clips[a].matte).toBeUndefined()
+    expect(project.clips[b].takes!.map((t) => [t.id, t.matte])).toEqual([['take_1', undefined], ['take_2', undefined]])
+    expect(repairs).toEqual(['2 clips in the timeline had no matte left to be cut out with and were made whole again'])
+  })
+
   it('keeps a clip that nests the open timeline, inside a timeline that isn’t open', () => {
     const p = saved()
     const track = p.tracks[0].id

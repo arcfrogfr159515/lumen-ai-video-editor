@@ -167,6 +167,7 @@ const zhCN: Record<string, string> = {
   '{0} hue': '{0}色相',
   '{0} in · {1} out': '淡入 {0} · 淡出 {1}',
   '{0} in {1} couldn’t be read and {2} left out': '{1}中的 {0} 无法读取，已略过',
+  '{0} in {1} had no matte left to be cut out with and {2} made whole again': '{1}中的 {0} 抠出主体用的遮罩已不在项目里，已恢复为完整画面',
   '{0} is locked': '{0} 已锁定',
   '{0} is only encoded by graphics cards, so the graphics card did it.': '{0} 只能由显卡编码，所以由显卡完成。',
   '{0} is ripple-locked: its clips hold their place, so its gaps stay': '{0} 已波纹锁定：它的片段保持原位，所以间隙会保留',
