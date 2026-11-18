@@ -284,7 +284,8 @@ export interface AppAPI {
     recovery(): Promise<RecoveryInfo | null>
     discardRecovery(): Promise<void>
     /** Keeps the window title and close-confirmation in sync with the editor. */
-    setState(state: { name: string; path: string | null; dirty: boolean }): void
+    /** `busy`: what the editor is in the middle of that closing would cut short (an export, a recording), each in a few words. */
+    setState(state: { name: string; path: string | null; dirty: boolean; busy?: string[] }): void
     /** A project file Lumen was launched with (double-clicked .lumen file). */
     startupFile(): Promise<string | null>
     /** Native "Save changes?" prompt. */

@@ -110,6 +110,39 @@ describe('closing a window', () => {
     expect(third.closed).toBe(false)
   })
 
+  it('asks before cutting an export short, and closes only on “Close anyway”', async () => {
+    const win = open()
+    setProjectState(win as never, { name: 'Film', dirty: false, busy: ['An export is running', 7, ''] })
+    env.answer = 0 // Keep working
+    expect(win.close()).toBe(false)
+    await tick()
+    expect(env.asked).toEqual(['Lumen is still working'])
+    expect(win.closed).toBe(false)
+    env.answer = 1 // Close anyway
+    win.close()
+    await tick()
+    expect(win.closed).toBe(true)
+  })
+
+  it('asks about the export first, then about unsaved changes', async () => {
+    const win = open()
+    setProjectState(win as never, { name: 'Film', dirty: true, busy: ['The render queue is rendering'] })
+    // "Close anyway" to the first, and the same button is "Don't save" in the second.
+    env.answer = 1
+    win.close()
+    await tick()
+    expect(env.asked).toEqual(['Lumen is still working', 'Save changes to “Film”?'])
+    expect(win.closed).toBe(true)
+  })
+
+  it('closes without a word once the work is done', () => {
+    const win = open()
+    setProjectState(win as never, { name: 'Film', dirty: false, busy: ['An export is running'] })
+    setProjectState(win as never, { busy: [] })
+    expect(win.close()).toBe(true)
+    expect(env.asked).toEqual([])
+  })
+
   it('closes a window that was told to, and only that one', () => {
     const one = open()
     const two = open()

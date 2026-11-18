@@ -75,6 +75,21 @@ beforeEach(() => {
   useSession.setState({ path: FILE, savedVersion: useEditor.getState().version, home: false })
 })
 
+describe('opening another project over unsaved changes', () => {
+  it('doesn’t keep a recovery copy of the changes that were given up', async () => {
+    const other = 'C:/films/other.lumen'
+    disk.set(other, JSON.stringify(createEmptyProject('Other')))
+    mark('not kept')
+    expect(isDirty()).toBe(true)
+    // "Don't save" is what the prompt answers here.
+    expect(await openProject(other)).toBe(true)
+    expect(getProject().name).toBe('Other')
+    expect(isDirty()).toBe(false)
+    // The copy made of the first project while it was being edited is gone: the next start has nothing to offer back.
+    expect(calls.cleared).toBe(1)
+  })
+})
+
 describe('saving', () => {
   it('marks the project saved, and drops its recovery copy, when nothing changed meanwhile', async () => {
     mark('one')

@@ -22,6 +22,7 @@ import { projectDuration } from '@/editor/ops'
 import { playback } from '@/editor/playback'
 import { cuesInRange, formatCues, withoutCaptions, type SubtitleFormat } from '@/editor/subtitles'
 import type { Project } from '@/editor/types'
+import { setBusy } from '@/lib/busy'
 import { desktop } from '@/lib/platform'
 import { prepareAudio, renderMix, type MixOptions } from './audio-engine'
 import { renderFrame } from './compositor'
@@ -219,12 +220,14 @@ export async function runExport(project: Project, settings: ExportSettings, hand
     throw new Error(tt('Another export is already running — wait for it to finish.'))
   }
   running = true
+  setBusy('export', tt('An export is running'))
   // What is drawn is this copy of the project: its fonts stay, even if the open project gives them up meanwhile.
   const releaseFonts = holdFonts()
   try {
     return await exportOnce(project, settings, handle, onProgress, signal)
   } finally {
     running = false
+    setBusy('export', null)
     releaseFonts()
   }
 }
@@ -264,7 +267,7 @@ async function renderTo(source: Project, settings: ExportSettings, handle: Expor
   }
 
   try {
-    onProgress({ phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: settings.format === 'png' ? 'Preparing…' : tt('Preparing audio…') })
+    onProgress({ phase: 'preparing', done: 0, total: 1, speed: 0, eta: 0, message: settings.format === 'png' ? tt('Preparing…') : tt('Preparing audio…') })
     await document.fonts.ready
     if (settings.format === 'png') return await exportFrames(project, settings, range, handle, onProgress, check)
     await prepareAudio(project, (done, total) => onProgress({ phase: 'preparing', done, total, speed: 0, eta: 0, message: tt('Preparing audio ({0}/{1})…', done, total) }))

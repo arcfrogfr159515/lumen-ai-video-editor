@@ -35,6 +35,7 @@ import type { Asset, AssetCue } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { probeMedia } from '@/engine/decode'
 import { uid } from '@/lib/id'
+import { setBusy } from '@/lib/busy'
 import { desktop } from '@/lib/platform'
 import { analyzeAssets } from '@/project/media-import'
 import type { CaptureFromWorker, CaptureToWorker, RecordJob, SegmentInfo, VideoReady, WorkerStats } from './capture.worker'
@@ -268,6 +269,7 @@ export function updateSettings(patch: Partial<CaptureSettings>) {
 function tellMain() {
   const { open, phase, settings } = get()
   const recording = phase === 'recording' || phase === 'paused' || phase === 'countdown'
+  setBusy('recording', recording ? tt('A recording is in progress') : null)
   const source = sourceById(settings.sourceId)
   // Hiding Lumen is for screens; a recording OF Lumen has to show it.
   desktop?.capture.session({ armed: open, recording, hideLumen: settings.hideLumen && source?.kind === 'screen', minimize: settings.minimize && !source?.own })

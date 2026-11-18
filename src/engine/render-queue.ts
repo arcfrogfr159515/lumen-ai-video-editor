@@ -6,6 +6,7 @@
 import { create } from 'zustand'
 import type { ExportTarget } from '@shared/app'
 import type { Project } from '@/editor/types'
+import { setBusy } from '@/lib/busy'
 import { uid } from '@/lib/id'
 import { desktop } from '@/lib/platform'
 import { ExportCancelled, exportRunning, runExport, type ExportResult, type ExportSettings } from './export'
@@ -39,6 +40,9 @@ interface QueueState {
 }
 
 export const useRenderQueue = create<QueueState>(() => ({ jobs: [], active: false }))
+
+// The queue lives in this window: closing Lumen ends what is rendering and forgets what is waiting, so it asks first.
+useRenderQueue.subscribe((s) => setBusy('queue', s.active ? tt('The render queue is rendering') : s.jobs.some((j) => j.status === 'queued') ? tt('Exports are waiting in the render queue') : null))
 
 const update = (id: string, patch: Partial<QueueJob>) => useRenderQueue.setState((s) => ({ jobs: s.jobs.map((j) => (j.id === id ? { ...j, ...patch } : j)) }))
 

@@ -13,6 +13,7 @@ import type { Project, ProjectSettings } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { desktop } from '@/lib/platform'
 import { tt } from '@/lib/i18n'
+import { busyWith, onBusyChange } from '@/lib/busy'
 
 interface SessionState {
   /** The .lumen file this project was opened from / saved to (null = never saved). */
@@ -120,6 +121,9 @@ export async function openProject(path?: string) {
     const opened = await desktop.project.open(path)
     if (!opened) return false
     load(JSON.parse(opened.text) as Project, opened.path)
+    // The recovery copy still on disk is of the project that was open before, whose changes were just saved or
+    // given up: left there, the next start offered back what the user had chosen not to keep.
+    dropRecovery()
     void refreshRecent()
     if (opened.missing.length) {
       toast.warning(tt('{0} media file{1} missing', opened.missing.length, opened.missing.length > 1 ? tt('s are') : (' ' + tt('is'))), {
@@ -283,7 +287,7 @@ export function showHome(show = true) {
 let lastState = ''
 function syncWindow() {
   if (!desktop) return
-  const state = { name: getProject().name, path: useSession.getState().path, dirty: isDirty() }
+  const state = { name: getProject().name, path: useSession.getState().path, dirty: isDirty(), busy: busyWith() }
   const key = JSON.stringify(state)
   if (key === lastState) return
   lastState = key
@@ -355,6 +359,8 @@ export async function startSession() {
   useSession.subscribe((s, prev) => {
     if (s.savedVersion !== prev.savedVersion || s.path !== prev.path) syncWindow()
   })
+  // An export, a render or a recording starting or ending: the window asks before it is closed on one.
+  onBusyChange(syncWindow)
   if (!desktop) {
     useSession.setState({ home: false, hasProject: true })
     return

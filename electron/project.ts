@@ -346,14 +346,16 @@ export function readRecovery(): RecoveryInfo | null {
 
 // ─── Window state & closing ──────────────────────────────────────────────
 
-const state = { name: 'Untitled', path: null as string | null, dirty: false }
+const state = { name: 'Untitled', path: null as string | null, dirty: false, busy: [] as string[] }
 /** Windows told to close as they are: everything is saved, or the user chose not to. */
 const closing = new WeakSet<BrowserWindow>()
 
-export function setProjectState(win: BrowserWindow, next: { name?: unknown; path?: unknown; dirty?: unknown }) {
+export function setProjectState(win: BrowserWindow, next: { name?: unknown; path?: unknown; dirty?: unknown; busy?: unknown }) {
   if (typeof next.name === 'string') state.name = next.name
   if (typeof next.path === 'string' || next.path === null) state.path = next.path as string | null
   if (typeof next.dirty === 'boolean') state.dirty = next.dirty
+  // What the editor is in the middle of (an export, a recording), in its own words: closing would cut it short.
+  if (Array.isArray(next.busy)) state.busy = next.busy.filter((b): b is string => typeof b === 'string' && b !== '').slice(0, 6).map((b) => b.slice(0, 120))
   if (!win.isDestroyed()) {
     win.setTitle(`${state.dirty ? '• ' : ''}${state.name} — Lumen`)
     win.setDocumentEdited(state.dirty)
@@ -376,19 +378,39 @@ export async function confirmDiscard(win: BrowserWindow | null, name: string): P
   return response === 0 ? 'save' : response === 1 ? 'discard' : 'cancel'
 }
 
-/** Asks before closing a window with unsaved changes. */
+/** Asks whether to close while the editor is in the middle of something. True to close. */
+export async function confirmStop(win: BrowserWindow | null, busy: readonly string[]): Promise<boolean> {
+  const opts: Electron.MessageBoxOptions = {
+    type: 'warning',
+    buttons: [mt('Keep working'), mt('Close anyway')],
+    defaultId: 0,
+    cancelId: 0,
+    noLink: true,
+    title: 'Lumen',
+    message: mt('Lumen is still working'),
+    detail: mt('{0}\n\nClosing now stops it. An export or a render that isn’t finished is lost; a recording is kept as far as it got.', busy.join('\n')),
+  }
+  const { response } = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts)
+  return response === 1
+}
+
+/** Asks before closing a window with unsaved changes, or one that is in the middle of an export, a render or a recording. */
 export function guardClose(win: BrowserWindow) {
   // A window starts with nothing unsaved, whatever the one before it was closed with (on macOS the app outlives its window).
-  Object.assign(state, { name: 'Untitled', path: null, dirty: false })
+  Object.assign(state, { name: 'Untitled', path: null, dirty: false, busy: [] })
   win.on('close', (e) => {
-    if (closing.has(win) || !state.dirty) return
+    if (closing.has(win) || (!state.dirty && !state.busy.length)) return
     e.preventDefault()
-    void confirmDiscard(win, state.name).then((choice) => {
+    void (async () => {
+      // First what would be cut short — a click on the corner used to end an hour's export without a word.
+      if (state.busy.length && !(await confirmStop(win, state.busy))) return
+      if (!state.dirty) return closeNow(win)
+      const choice = await confirmDiscard(win, state.name)
       if (choice === 'discard') {
         writeRecovery(null)
         closeNow(win)
       } else if (choice === 'save') win.webContents.send(APP_IPC.saveBeforeClose)
-    })
+    })()
   })
 }
 
