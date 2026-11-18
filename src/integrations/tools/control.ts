@@ -261,8 +261,11 @@ export const CONTROL_TOOLS: AgentTool[] = [
       const format = (text(a, 'format') ?? 'mp4') as ExportFormat
       const info = FORMAT_INFO[format]
       if (!info) throw new Error(`Unknown format ${format}.`)
-      const fromF = Math.min(end, toFrame(number(a, 'from_seconds') ?? 0))
-      const toF = Math.min(end, toFrame(number(a, 'to_seconds') ?? end / p.settings.fps))
+      // In frames of the timeline being rendered: with timeline_id it isn't the open one, and may run at another rate.
+      const rate = p.settings.fps
+      const frameOf = (sec: number) => Math.round(sec * rate)
+      const fromF = Math.min(end, frameOf(number(a, 'from_seconds') ?? 0))
+      const toF = Math.min(end, frameOf(number(a, 'to_seconds') ?? end / rate))
       if (toF <= fromF) throw new Error('That stretch is empty.')
       const fps = number(a, 'fps') ?? p.settings.fps
       const short = number(a, 'resolution')
@@ -336,7 +339,7 @@ export const CONTROL_TOOLS: AgentTool[] = [
           ...(info.video ? { size: `${width}x${height}`, fps, codec: res.encoder?.codec ?? codec } : {}),
           ...(res.encoder ? { encoded_on: res.encoder.hardware ? 'graphics card' : 'processor', ...(res.encoder.note ? { note: res.encoder.note } : {}) } : {}),
           ...(res.warnings?.length ? { warnings: res.warnings } : {}),
-          seconds_of_video: seconds(toF - fromF),
+          seconds_of_video: Math.round(((toF - fromF) / rate) * 1000) / 1000,
           render_seconds: Math.round((performance.now() - t0) / 100) / 10,
         }
       } catch (err) {
