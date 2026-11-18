@@ -78,7 +78,7 @@ export async function textBehindSubject(clipId: string, opts: SubjectOptions & {
     // The title has to sit above the footage (lower index = higher up).
     let title = getProject().clips[titleClipId]
     if (index(title.trackId) > index(base.trackId)) {
-      const above = ok<string>(dispatch('track.add', { kind: 'video', name: 'Titles', index: index(base.trackId) }, { source }))
+      const above = ok<string>(dispatch('track.add', { kind: 'video', name: tt('Titles'), index: index(base.trackId) }, { source }))
       ok(dispatch('clip.move', { moves: [{ id: titleClipId, start: title.start, trackId: above }], mode: 'overwrite' }, { source }))
       title = getProject().clips[titleClipId]
     }
