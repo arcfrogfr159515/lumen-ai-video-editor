@@ -78,6 +78,25 @@ describe('a clip whose picture moves, made shorter by a take that is shorter', (
   })
 })
 
+describe('a move pasted from a longer clip onto a shorter one', () => {
+  it('goes as far as the shorter clip lasts, as it does on the longer', () => {
+    // A push in from the long clip's 20th frame towards its 80th, and its sound brought down over the same frames.
+    key(20, 1)
+    key(80, 1.6)
+    run('keyframe.set', { clipId: id, prop: 'volume', frame: 20, value: 0, easing: 'linear' })
+    run('keyframe.set', { clipId: id, prop: 'volume', frame: 80, value: -12, easing: 'linear' })
+    const short = add('Overlay', 300, 50, { assetId: 'shot' })
+    const of = (clipId: string, prop: 'scale' | 'volume') => Array.from({ length: 50 }, (_, local) => Math.round(propAt(clip(clipId), prop, local) * 1e4) / 1e4)
+    const [size, loudness] = [of(id, 'scale'), of(id, 'volume')]
+    expect([size.at(-1), loudness.at(-1)]).toEqual([1.29, -5.8])
+    // Only the keyframes within the shorter clip's fifty frames were pasted: the one at 20, and not the one at 80
+    // that the move is heading for. The picture stood still on it, and its sound stayed up.
+    run('clip.copyAttributes', { fromId: id, ids: [short], include: ['transform', 'audio'] })
+    expect(of(short, 'scale')).toEqual(size)
+    expect(of(short, 'volume')).toEqual(loudness)
+  })
+})
+
 describe('a clip that changes speed, trimmed at its head', () => {
   /** Which frame of its footage the clip shows at each frame of the timeline from `from` to `to`, and how fast it is playing there. */
   const playing = (from: number, to: number) => Array.from({ length: to - from }, (_, i) => ({ footage: sourceFrameAt(clip(id), from + i - clip(id).start), speed: speedAt(clip(id), from + i - clip(id).start) }))

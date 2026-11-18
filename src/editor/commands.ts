@@ -31,6 +31,7 @@ import {
   groupClips,
   insertGap,
   isMagneticTrack,
+  keyframesWithin,
   liftRange,
   moveRange,
   moveTrack,
@@ -620,7 +621,9 @@ function copyAttributes(p: Project, from: Pick<Clip, 'kind'> & Partial<Clip>, to
   const keys = (props: AnimatableProp[]) => {
     for (const prop of props) {
       const kfs = from.keyframes?.[prop]
-      if (kfs?.length) to.keyframes[prop] = kfs.filter((k) => k.frame <= to.duration).map((k) => ({ ...k }))
+      // On a shorter clip a move goes as far as the clip lasts: a keyframe past its end is what the frames before
+      // it are moving towards, so one is left at the end where the curve is cut (`keyframesWithin`).
+      if (kfs?.length) to.keyframes[prop] = keyframesWithin(kfs, to.duration).map((k) => ({ ...k }))
       else delete to.keyframes[prop]
     }
   }
