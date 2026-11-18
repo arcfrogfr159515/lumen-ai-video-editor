@@ -14,7 +14,7 @@ import { CODEC_NAME, encoderSupport, videoBitrate, type CodecAvailability, type 
 import { cn } from '@/lib/cn'
 import { desktop } from '@/lib/platform'
 import { CAPTURE_FPS, CAPTURE_HOTKEYS, CAPTURE_RESOLUTIONS, captureFrame, fitRegion, type CaptureCodec, type CaptureFolderState, type CaptureResolution, type CaptureSource, type Rect } from '@shared/capture'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 const fmtBytes = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(0, Math.round(n / 1e3))} KB`)
@@ -382,7 +382,8 @@ export function RecordDialog() {
               options={CAPTURE_RESOLUTIONS.map((r) => {
                 const f = captureFrame(srcWidth, srcHeight, settings.region, r.value)
                 const bigger = r.value !== 'native' && f.width > frame.crop.width
-                return { value: String(r.value), label: `${r.label} · ${f.width}×${f.height}${bigger ? ` ${tt('(scaled up)')}` : ''}` }
+                // The list is shared with the main process and written in English: a size's name is looked up here.
+                return { value: String(r.value), label: `${ttc('resolution', r.label)} · ${f.width}×${f.height}${bigger ? ` ${tt('(scaled up)')}` : ''}` }
               })}
             />
           </Row>

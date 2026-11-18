@@ -1770,6 +1770,7 @@ const zhCN: Record<string, string> = {
   'Muted': '已静音',
   'Name': '姓名',
   'Names and titles with a glass panel, accent bar and clean exits.': '带玻璃面板、强调色条和干净出场的姓名和头衔。',
+  'Native ⟦resolution⟧': '原始',
   'Natural': '自然',
   'navigate': '导航',
   'Needs the desktop app.': '需要桌面版。',
