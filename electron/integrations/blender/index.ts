@@ -262,6 +262,9 @@ export function runLive(code: string, timeoutMs = 60_000): Promise<BlenderLiveRe
     }
     socket.setTimeout(timeoutMs, () => finish({ ok: false, error: 'Blender didn’t answer in time.' }))
     socket.once('error', () => finish({ ok: false, error: 'Blender isn’t listening. Open Blender and start the BlenderMCP add-on server (port 9876).' }))
+    // Blender was closed, or the code brought it down: a connection that has ended is no longer timed, so without
+    // this nothing would ever come back.
+    socket.once('close', () => finish({ ok: false, error: 'Blender closed the connection before it answered.' }))
     socket.once('connect', () => socket.write(JSON.stringify({ type: 'execute_code', params: { code } })))
     socket.on('data', (chunk) => {
       buffer += chunk.toString('utf8')
