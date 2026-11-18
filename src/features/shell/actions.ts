@@ -7,6 +7,7 @@ import { copyAttributesOf, copyClips, pasteClips } from '@/editor/clipboard'
 import type { EditMode } from '@/editor/commands'
 import { clipCues, cueText, cueTone } from '@/editor/cues'
 import { isAnimated } from '@/editor/keyframes'
+import { stillOpen, whichTimeline } from '@/editor/open-timeline'
 import { adjacentBefore, clipEnd, clipsAt, editPoints, projectDuration, withGroups } from '@/editor/ops'
 import { playback, usePlayback } from '@/editor/playback'
 import { dispatch, getProject, useEditor } from '@/editor/store'
@@ -508,8 +509,12 @@ export const actions = {
 
   /** Captions all the speech on the timeline in a style, transcribing what needs it first. Replaces earlier captions. */
   async captionSpeech(style: CaptionStyle = 'clean') {
+    const where = whichTimeline()
     const pending = untranscribed(getProject())
     if (pending.length && !(await ensureTranscripts(pending))) return
+    // Transcribing takes minutes. The captions went onto whatever timeline was open by the end of it — another
+    // timeline's own captions were replaced, and the one they were asked for had none.
+    if (!stillOpen(where)) return void toast(tt('No captions were added'), { description: tt('Another timeline was opened while the speech was being transcribed. It is transcribed now: add the captions again on the timeline they are for.') })
     try {
       const r = addCaptions({ style, source: 'user' })
       if (!r.added) toast(tt('No speech to caption'), { description: tt('Put a clip of someone talking on the timeline first.') })

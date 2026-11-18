@@ -7,6 +7,7 @@
 import type { BridgeToolResult, Job, McpServerState } from '@shared/integrations'
 import { commands, toolDefinitions, type CommandName } from '@/editor/commands'
 import { isUneven } from '@/editor/frame-rate'
+import { stillOpen, whichTimeline, type TimelineRef } from '@/editor/open-timeline'
 import { clipEnd, projectDuration } from '@/editor/ops'
 import { placeAsset } from '@/editor/placement'
 import { allSequences, openSequenceId, openSequenceName } from '@/editor/sequences'
@@ -95,21 +96,13 @@ function jobReport(job: Job | undefined, placedClip?: string | null) {
 }
 
 /**
- * The timeline a render was asked onto: the one open when it was asked for. A render takes minutes, and the clip
- * was put on whatever timeline was open when it landed — another timeline of the project, or another project's —
- * at a frame that was counted on the first.
+ * Starts a render, optionally waits for it, and places the result — on the timeline that was open when it was asked
+ * for. A render takes minutes, and the clip was put on whatever timeline was open when it landed: another timeline
+ * of the project, or another project's, at a frame that was counted on the first.
  */
-function openTimeline() {
-  const p = getProject()
-  return { project: p.id, timeline: openSequenceId(p) }
-}
-type Timeline = ReturnType<typeof openTimeline>
-const stillOpen = (where: Timeline) => getProject().id === where.project && openSequenceId(getProject()) === where.timeline
-
-/** Starts a render, optionally waits for it, and places the result. */
 async function runJob(start: () => Promise<Job>, args: Record<string, unknown>, ctx?: ToolContext) {
   const at = typeof args.at_seconds === 'number' ? Math.round(args.at_seconds * getProject().settings.fps) : usePlayback.getState().frame
-  const where = openTimeline()
+  const where = whichTimeline()
   const job = await start()
   const finished = await waitForJob(job.id, waitSeconds(args, ctx, 90), ctx)
   let clip: string | null = null
@@ -126,14 +119,14 @@ async function runJob(start: () => Promise<Job>, args: Record<string, unknown>, 
 
 /** Starts a render and drops the result on the timeline at `at` once it lands (Copilot uses this). */
 export async function startAndPlace(start: () => Promise<Job>, at: number) {
-  const where = openTimeline()
+  const where = whichTimeline()
   const job = await start()
   placeWhenDone(job.id, at, where)
   return job
 }
 
 /** For renders still going when the tool returned: drop the clip in once it lands, if its timeline is still the open one. */
-function placeWhenDone(jobId: string, at: number, where: Timeline) {
+function placeWhenDone(jobId: string, at: number, where: TimelineRef) {
   void waitForJob(jobId, 30 * 60).then((job) => {
     const [assetId] = useIntegrations.getState().imported[jobId] ?? []
     if (job?.status === 'done' && assetId && stillOpen(where)) placeAsset(assetId, at, { source: 'ai' })
@@ -543,8 +536,12 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       uppercase: bool('ALL CAPS captions'),
     }),
     run: async (a) => {
+      const where = whichTimeline()
       const pending = untranscribed(getProject())
       if (pending.length && !(await ensureTranscripts(pending))) throw new Error('Transcription failed, so there’s nothing to caption yet.')
+      // Transcribing takes minutes. The captions went onto whatever timeline was open by the end of it — another
+      // timeline's own captions were replaced, and the one that was asked for had none.
+      if (!stillOpen(where)) throw new Error('The speech is transcribed now, but another timeline is open than the one the captions were asked for, so none were added. Call add_captions again to caption the timeline that is open.')
       const style = (['clean', 'bold', 'word', 'boxed'] as const).find((s) => s === a.style)
       const accent = typeof a.accent === 'string' && /^#[0-9a-f]{3,8}$/i.test(a.accent) ? a.accent : undefined
       const r = addCaptions({ style, accent, maxWords: typeof a.max_words === 'number' ? a.max_words : undefined, size: typeof a.size === 'number' ? a.size : undefined, uppercase: a.uppercase === undefined ? undefined : Boolean(a.uppercase) })
