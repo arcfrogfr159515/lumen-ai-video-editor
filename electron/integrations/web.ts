@@ -260,7 +260,16 @@ async function picture(url: string) {
 function resultUrl(href: string) {
   const h = decodeEntities(href)
   const wrapped = /[?&]uddg=([^&]+)/.exec(h)
-  const url = wrapped ? decodeURIComponent(wrapped[1]) : h.startsWith('//') ? `https:${h}` : h
+  let url: string
+  if (wrapped) {
+    // A "%" that isn't an escape: the link can't be read. That is one result less — read unguarded it threw, and
+    // the whole search failed for it.
+    try {
+      url = decodeURIComponent(wrapped[1])
+    } catch {
+      return null
+    }
+  } else url = h.startsWith('//') ? `https:${h}` : h
   return /^https?:\/\//.test(url) && !/duckduckgo\.com\/y\.js/.test(url) ? url : null
 }
 

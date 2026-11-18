@@ -31,7 +31,7 @@ vi.mock('node:dns/promises', () => ({
   },
 }))
 
-const { blockedHost, blockedIp, browsing, checkUrl, leadsInside } = await import('./web')
+const { blockedHost, blockedIp, browsing, checkUrl, leadsInside, parseSearch } = await import('./web')
 
 beforeEach(() => {
   env.resolves = [{ address: '93.184.216.34', family: 4 }]
@@ -100,6 +100,27 @@ describe('addresses on this computer or the local network', () => {
     ]
     for (const url of local) expect(blockedHost(host(url)), url).toBe(true)
     for (const url of ['https://example.com/', 'https://example.com./', 'https://8.8.8.8/', 'https://[2606:4700:4700::1111]/', 'https://local.example.com/']) expect(blockedHost(host(url)), url).toBe(false)
+  })
+})
+
+describe('search results', () => {
+  /** A result as the search page writes one: the link wrapped in the engine's redirect. */
+  const result = (to: string, title: string) =>
+    `<div class="result results_links web-result"><h2 class="result__title"><a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=${to}&amp;rut=abc">${title}</a></h2><a class="result__snippet" href="//duckduckgo.com/l/?uddg=${to}">About <b>${title}</b>.</a></div>`
+
+  it('are read: where each leads, what it is called, what it says', () => {
+    const html = `<html><body>${result('https%3A%2F%2Fone.example%2Fguide%3Fq%3D1', 'One')}${result('https%3A%2F%2Ftwo.example%2F', 'Two')}</body></html>`
+    expect(parseSearch(html, 8)).toEqual([
+      { title: 'One', url: 'https://one.example/guide?q=1', snippet: 'About One.' },
+      { title: 'Two', url: 'https://two.example/', snippet: 'About Two.' },
+    ])
+    expect(parseSearch(html, 1)).toHaveLength(1)
+  })
+
+  it('leave out a result whose link can’t be read, and keep the rest', () => {
+    // "%ZZ" is not an escape. Read as one it threw, and the whole search failed for one result.
+    const html = result('https%3A%2F%2Fone.example%2Fa', 'One') + result('https%3A%2F%2Fbad.example%2F100%ZZ', 'Bad') + result('https%3A%2F%2Ftwo.example%2Fb', 'Two')
+    expect(parseSearch(html, 8).map((r) => r.url)).toEqual(['https://one.example/a', 'https://two.example/b'])
   })
 })
 
