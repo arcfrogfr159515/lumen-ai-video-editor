@@ -3215,6 +3215,7 @@ const zhCN: Record<string, string> = {
   'Your browser opens to sign in; tokens are encrypted on this computer.': '会打开浏览器进行登录；令牌在这台电脑上加密保存。',
   'Your caption here.': '在这里输入字幕。',
   'Your footage, photos & audio': '你的视频、照片和音频',
+  'Your chats couldn’t be saved': '无法保存你的对话',
   'Your macros couldn’t be saved': '无法保存你的宏',
   'Your Name': '你的名字',
   'Your project is saved first.': '会先保存你的项目。',

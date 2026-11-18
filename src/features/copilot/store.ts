@@ -220,6 +220,8 @@ let saveTimer: ReturnType<typeof setTimeout> | undefined
 let pendingFor: string | null = null
 /** Projects with chats on disk (the others get no file until they have a chat). */
 const kept = new Set<string>()
+/** The last try to write the chats failed. */
+let unsaved = false
 
 function saveNow() {
   clearTimeout(saveTimer)
@@ -229,7 +231,17 @@ function saveNow() {
   const chats = allChats()
   if (!chats.length && !kept.has(projectId)) return
   if (chats.length) kept.add(projectId)
-  void api.ai.saveChats(projectId, chats.map(forDisk)).catch(() => {})
+  void api.ai.saveChats(projectId, chats.map(forDisk)).then(
+    () => void (unsaved = false),
+    (err: unknown) => {
+      // Said once for a run of failures, not at every change. (It wasn't said at all: chats past the size the main
+      // process keeps — it has a sentence for that — or a full disk, and from then on nothing was kept and nothing
+      // said so, until Lumen was opened again without them.)
+      if (unsaved) return
+      unsaved = true
+      toast.error(tt('Your chats couldn’t be saved'), { description: (err instanceof Error ? err.message : String(err)).replace(/^Error invoking remote method '[^']+': (?:\w*Error: )?/, ''), duration: 12000 })
+    },
+  )
 }
 
 useCopilot.subscribe((s, prev) => {
