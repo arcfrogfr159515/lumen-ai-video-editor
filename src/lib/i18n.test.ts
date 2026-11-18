@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import zhCN from '@/locales/zh-CN'
-import { counted, fill, language, languageAmong, languageFor, systemTags, tm, translation, tt, ttc } from './i18n'
+import { counted, fill, language, languageAmong, languageFor, locale, localeFor, systemTags, tm, translation, tt, ttc } from './i18n'
 
 const places = (s: string) => new Set([...s.matchAll(/\{(\d+)\}/g)].map((m) => m[1]))
 
@@ -57,6 +57,22 @@ describe('what the interface says', () => {
     // A browser tab has only the browser's list; so has a desktop build from before the list was handed over.
     expect(systemTags(undefined, browser)).toBe(browser)
     expect(systemTags([], browser)).toBe(browser)
+  })
+
+  it('writes dates in the window’s language, in the form the computer asks for it in', () => {
+    expect(locale).toBe('en-US')
+    // The window's language, whatever the computer's first one is.
+    expect(localeFor('zh-CN', ['en-US'])).toBe('zh-CN')
+    expect(localeFor('en', ['zh-Hans-CN'])).toBe('en-US')
+    expect(localeFor('en', [])).toBe('en-US')
+    // In its regional form where the computer names one: the day before the month in Britain.
+    expect(localeFor('en', ['zh-Hans-CN', 'en-GB', 'en-US'])).toBe('en-GB')
+    expect(localeFor('zh-CN', ['zh-Hant-TW', 'zh-Hans-CN', 'en-US'])).toBe('zh-Hans-CN')
+    // What isn't a language tag is passed over, not handed to the calendar (which would throw).
+    expect(localeFor('zh-CN', ['zh_CN', ''])).toBe('zh-CN')
+    const day = new Date(2020, 0, 5, 12)
+    expect(day.toLocaleDateString(localeFor('en', ['en-GB']), { day: 'numeric', month: 'short', year: 'numeric' })).toBe('5 Jan 2020')
+    expect(day.toLocaleDateString(localeFor('zh-CN', ['en-US']), { day: 'numeric', month: 'short', year: 'numeric' })).toBe('2020年1月5日')
   })
 })
 

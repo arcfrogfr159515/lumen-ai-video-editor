@@ -6,7 +6,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { useUI } from '@/editor/ui-store'
 import { APP_VERSION, desktop, platform } from '@/lib/platform'
 import { checkForUpdates, installUpdate, RELEASES_URL, releaseUrl, useUpdates } from '@/lib/updates'
-import { tt } from '@/lib/i18n'
+import { locale, tt } from '@/lib/i18n'
 
 export function AboutDialog() {
   const open = useUI((s) => s.aboutOpen)
@@ -58,7 +58,7 @@ export function AboutDialog() {
 
 const ago = (t: number) => {
   const s = Math.round((Date.now() - t) / 1000)
-  return s < 60 ? tt('just now') : s < 3600 ? tt('{0} min ago', Math.round(s / 60)) : tt('at {0}', new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
+  return s < 60 ? tt('just now') : s < 3600 ? tt('{0} min ago', Math.round(s / 60)) : tt('at {0}', new Date(t).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }))
 }
 
 /** Where updates stand, with the one action that fits. */

@@ -84,6 +84,30 @@ function settle(): Language {
 /** The language this window speaks, for as long as it is open. */
 export const language: Language = settle()
 
+/** Whether dates can be written in `tag` (a computer's list of languages can hold what isn't a language tag). */
+function writable(tag: string) {
+  try {
+    return Intl.DateTimeFormat.supportedLocalesOf(tag).length > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * The form of a language that dates, times and numbers are written in: the first of the computer's own (`tags`)
+ * that is that language — British English keeps its day before its month — or the language's usual one.
+ */
+export function localeFor(lang: Language, tags: readonly string[]): string {
+  return tags.find((tag) => tag && languageFor(tag) === lang && writable(tag)) ?? (lang === 'en' ? 'en-US' : lang)
+}
+
+/**
+ * What this window writes dates, times and numbers in: its own language. Left to the default they come out in
+ * Chromium's language, which is another one when the user picked theirs — “2020年1月5日” under “3 days ago” — and
+ * on a computer whose language Chromium has no pack for.
+ */
+export const locale: string = localeFor(language, typeof window === 'undefined' || typeof navigator === 'undefined' ? [] : systemTags(window.lumen?.languages, navigator.languages?.length ? navigator.languages : [navigator.language]))
+
 /** Remembers the choice. Answers whether Lumen has to be started again for it to show. */
 export function chooseLanguage(choice: LanguageChoice): boolean {
   try {

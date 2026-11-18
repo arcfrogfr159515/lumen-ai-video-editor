@@ -13,7 +13,7 @@ import { dnd } from '@/features/dnd'
 import { api, cancelJob, importLink, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
 import { formatSeconds } from '@/lib/time'
-import { tt } from '@/lib/i18n'
+import { locale, tt } from '@/lib/i18n'
 
 export function StatusDot({ status, className }: { status: McpStatus | 'ready' | 'missing'; className?: string }) {
   const color = {
@@ -242,7 +242,7 @@ export function JobOutcome({ job }: { job: Job }) {
 
 const ago = (t: number) => {
   const s = Math.round((Date.now() - t) / 1000)
-  return s < 60 ? tt('just now') : s < 3600 ? tt('{0} min ago', Math.round(s / 60)) : new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  return s < 60 ? tt('just now') : s < 3600 ? tt('{0} min ago', Math.round(s / 60)) : new Date(t).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
 }
 
 /** A render/generation in the Generate panel: live progress, then the result. */

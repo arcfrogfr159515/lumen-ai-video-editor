@@ -12,7 +12,7 @@ import { getProject, migrateProject, useEditor } from '@/editor/store'
 import type { Project, ProjectSettings } from '@/editor/types'
 import { useUI } from '@/editor/ui-store'
 import { desktop } from '@/lib/platform'
-import { tt } from '@/lib/i18n'
+import { locale, tt } from '@/lib/i18n'
 import { busyWith, onBusyChange } from '@/lib/busy'
 
 interface SessionState {
@@ -231,7 +231,7 @@ export async function restoreVersion(version: ProjectVersion, asCopy = false) {
     if (asCopy) {
       if (!(await settleChanges())) return false
       project.id = crypto.randomUUID()
-      project.name = `${project.name} (${new Date(version.savedAt).toLocaleDateString()})`
+      project.name = `${project.name} (${new Date(version.savedAt).toLocaleDateString(locale)})`
       load(project, null)
       useSession.setState({ savedVersion: -1 })
     } else {

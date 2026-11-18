@@ -17,4 +17,8 @@ describe('how long ago a project was opened, on the home screen', () => {
     for (const ago of [5_000, 5 * 60_000, 3 * HOUR, 30 * HOUR, 3 * 24 * HOUR, 6.5 * 24 * HOUR]) expect(timeAgo(now - ago), `${ago / HOUR} h ago`).not.toMatch(/[a-z]/i)
     expect(timeAgo(now - 3 * 24 * HOUR)).toBe('3 天前')
   })
+
+  it('is a date in Chinese once it is more than a week ago, whatever language the computer speaks', () => {
+    expect(timeAgo(new Date(2020, 0, 5, 12).getTime())).toBe('2020年1月5日')
+  })
 })

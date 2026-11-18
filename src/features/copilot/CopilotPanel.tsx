@@ -73,7 +73,7 @@ import {
 import { STARTERS } from './suggestions'
 import { duration, replyText, stepTime, transcriptText, usageLine } from './transcript'
 import { useVoiceInput } from './voice'
-import { tt } from '@/lib/i18n'
+import { locale, tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 /** How close to the end counts as "at the bottom" (px). */
@@ -218,7 +218,7 @@ function ago(ms: number) {
   if (s < 3600) return tt('{0} min ago', Math.floor(s / 60))
   if (s < 86400) return tt('{0} h ago', Math.floor(s / 3600))
   if (s < 86400 * 7) return tt('{0} d ago', Math.floor(s / 86400))
-  return new Date(ms).toLocaleDateString()
+  return new Date(ms).toLocaleDateString(locale)
 }
 
 /** This project's chats: open one, rename it, delete it. */

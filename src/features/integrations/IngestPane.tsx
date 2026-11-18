@@ -11,7 +11,7 @@ import { useIntegrations } from '@/integrations/store'
 import { desktop } from '@/lib/platform'
 import { pickIngestFolder, regenerateIngestToken, setIngestEnabled, setIngestOptions, useIngest } from '@/project/ingest'
 import { Card, CopyField, IconTile, PaneHeader, StatusDot } from './parts'
-import { tt } from '@/lib/i18n'
+import { locale, tt } from '@/lib/i18n'
 
 const megabytes = (bytes: number) => (bytes >= 1e9 ? `${(bytes / 1e9).toFixed(2)} GB` : `${Math.max(0.1, bytes / 1e6).toFixed(1)} MB`)
 
@@ -125,7 +125,7 @@ function ClipRow({ clip }: { clip: IngestClip }) {
             {tt('In media')}
           </button>
         )}
-        <span className="shrink-0 font-mono text-2xs text-fg-4">{new Date(clip.createdAt).toLocaleTimeString()}</span>
+        <span className="shrink-0 font-mono text-2xs text-fg-4">{new Date(clip.createdAt).toLocaleTimeString(locale)}</span>
       </div>
       {active && total > 0 && (
         <div className="mt-1.5 ml-[18px] h-1 overflow-hidden rounded-full bg-ink/[0.06]">

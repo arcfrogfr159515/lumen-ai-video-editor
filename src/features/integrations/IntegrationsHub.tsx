@@ -22,7 +22,7 @@ import { useIngest } from '@/project/ingest'
 import { IngestPane } from './IngestPane'
 import { Card, CopyField, IconTile, PaneHeader, STATUS_LABEL, StatusDot } from './parts'
 import { ToolList, ToolRunner } from './ToolRunner'
-import { tt } from '@/lib/i18n'
+import { locale, tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 type Selection = 'ai-models' | 'local-agents' | 'skills' | 'blender' | 'hyperframes' | 'elevenlabs' | 'agents' | 'ingest' | 'add' | `server:${string}` | `catalog:${string}`
@@ -719,7 +719,7 @@ function AgentsPane() {
                     <StatusDot status={entry.ok ? 'ready' : 'error'} />
                     <span className="font-mono text-fg-2">{entry.tool}</span>
                     <span className="truncate text-fg-4">{entry.detail}</span>
-                    <span className="ml-auto shrink-0 font-mono text-2xs text-fg-4">{new Date(entry.at).toLocaleTimeString()}</span>
+                    <span className="ml-auto shrink-0 font-mono text-2xs text-fg-4">{new Date(entry.at).toLocaleTimeString(locale)}</span>
                   </div>
                 ))}
               </div>

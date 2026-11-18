@@ -7,7 +7,7 @@ import { useUI } from '@/editor/ui-store'
 import { cn } from '@/lib/cn'
 import { desktop } from '@/lib/platform'
 import { projectVersions, restoreVersion } from '@/project/session'
-import { tt } from '@/lib/i18n'
+import { locale, tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 const KIND: Record<ProjectVersion['kind'], { label: string; className: string }> = {
@@ -16,14 +16,14 @@ const KIND: Record<ProjectVersion['kind'], { label: string; className: string }>
   restore: { label: tt('Before restore'), className: 'bg-warn/15 text-warn' },
 }
 
-const time = (t: number) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+const time = (t: number) => new Date(t).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
 const day = (t: number) => {
   const d = new Date(t)
   const today = new Date()
   const yesterday = new Date(Date.now() - 86_400_000)
   if (d.toDateString() === today.toDateString()) return tt('Today')
   if (d.toDateString() === yesterday.toDateString()) return tt('Yesterday')
-  return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })
+  return d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
 }
 const length = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 

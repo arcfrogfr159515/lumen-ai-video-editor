@@ -12,7 +12,7 @@ import { cn } from '@/lib/cn'
 import { APP_VERSION, desktop } from '@/lib/platform'
 import { importDropped } from '@/project/media-import'
 import { discardRecovery, forgetRecent, newProject, openProject, recover, showHome, useSession } from '@/project/session'
-import { tt } from '@/lib/i18n'
+import { locale, tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 export function timeAgo(ms: number) {
@@ -22,7 +22,7 @@ export function timeAgo(ms: number) {
   if (s < 86400) return tt('{0} h ago', Math.floor(s / 3600))
   const d = Math.floor(s / 86400)
   if (d < 7) return d === 1 ? tt('yesterday') : tt('{0} days ago', d)
-  return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(ms).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 const folderOf = (p: string) => p.replace(/[\\/][^\\/]*$/, '')

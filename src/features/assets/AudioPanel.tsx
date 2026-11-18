@@ -16,7 +16,7 @@ import { formatSeconds } from '@/lib/time'
 import { auditionSfx, cancelRecording, finishRecording, inputLevel, sfxAsset, startRecording, stopAudition, type Recording } from '@/project/audio-library'
 import { useGenerate } from './generate-store'
 import { PanelHeader, scrollArea, SectionLabel } from './shared'
-import { tm, tt } from '@/lib/i18n'
+import { locale, tm, tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
 
 const CATEGORIES: SfxDef['category'][] = [tm('Transitions'), tm('Impacts'), tm('UI & accents'), tm('Atmosphere')]
@@ -204,7 +204,7 @@ function RecordCard() {
     if (!rec) return
     playback.pause()
     setSaving(true)
-    const stamp = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    const stamp = new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
     try {
       const asset = await finishRecording(rec, tt('Voiceover {0}', stamp))
       if (asset) {
