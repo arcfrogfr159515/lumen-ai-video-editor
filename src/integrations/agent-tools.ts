@@ -248,6 +248,7 @@ async function pickGenerator(kind: 'image' | 'video', provider: unknown, model: 
 // ─── Tools ───────────────────────────────────────────────────────────────
 
 const MATERIALS = ['chrome', 'gold', 'glass', 'plastic', 'neon', 'clay', 'matte']
+const MOTION_TEMPLATES = ['lower-third', 'title-card', 'kinetic', 'counter', 'quote', 'chapter'] as const
 
 const INTEGRATION_TOOLS: AgentTool[] = [
   {
@@ -409,7 +410,7 @@ const INTEGRATION_TOOLS: AgentTool[] = [
     ].join('\n'),
     inputSchema: obj(
       {
-        template: str('Template', { enum: ['lower-third', 'title-card', 'kinetic', 'counter', 'quote', 'chapter'] }),
+        template: str('Template', { enum: [...MOTION_TEMPLATES] }),
         params: { type: 'object', description: 'Template parameters (see description)', additionalProperties: true },
         duration_seconds: num('Clip length (default: long enough to read it)', { minimum: 1, maximum: 30 }),
         place: PLACE,
@@ -418,18 +419,15 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       },
       ['template', 'params'],
     ),
-    run: (a, ctx) =>
-      runJob(
-        () =>
-          renderMotion({
-            template: a.template as 'lower-third',
-            params: (a.params as Record<string, unknown>) ?? {},
-            duration: typeof a.duration_seconds === 'number' ? a.duration_seconds : undefined,
-            prompt: JSON.stringify(a.params),
-          }),
-        a,
-        ctx,
-      ),
+    run: async (a, ctx) => {
+      // A template that isn't one of these was sent on, and the render failed in the main process on whatever the
+      // code tripped over there; with no parameters, the template's sample words were rendered and placed.
+      const template = MOTION_TEMPLATES.find((t) => t === a.template)
+      if (!template) throw new Error(`Give template: one of ${MOTION_TEMPLATES.join(', ')}.`)
+      const params = a.params && typeof a.params === 'object' && !Array.isArray(a.params) ? (a.params as Record<string, unknown>) : null
+      if (!params) throw new Error(`Give params: an object with what the ${template} template shows (the tool’s description lists each template’s parameters).`)
+      return runJob(() => renderMotion({ template, params, duration: typeof a.duration_seconds === 'number' ? a.duration_seconds : undefined, prompt: JSON.stringify(params) }), a, ctx)
+    },
   },
   {
     name: 'render_hyperframes_html',

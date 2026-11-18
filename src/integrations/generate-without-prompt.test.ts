@@ -102,3 +102,32 @@ describe('a tool that makes something from words, called without them', () => {
     })
   }
 })
+
+describe('render_motion_graphic, called without a template it has', () => {
+  // The render was started all the same, and failed in the main process on whatever the code tripped over there:
+  // it has no template by that name to build, and no length for it.
+  it('starts no render, and says which templates there are', async () => {
+    for (const template of [undefined, null, '', 'lower third', 'title', 7]) {
+      const res = await call('render_motion_graphic', { template, params: { title: 'Chapter one' } })
+      expect(asked.calls).toEqual([])
+      expect(res.refused).toBe(true)
+      expect(res.said).toMatch(/template.*lower-third.*title-card.*kinetic.*counter.*quote.*chapter/)
+    }
+  })
+
+  it('starts no render without the template’s parameters', async () => {
+    // With none, the template’s own sample words were rendered and put on the timeline.
+    for (const params of [undefined, null, 'Chapter one', ['Chapter one']]) {
+      const res = await call('render_motion_graphic', { template: 'chapter', params })
+      expect(asked.calls).toEqual([])
+      expect(res.refused).toBe(true)
+      expect(res.said).toContain('params')
+    }
+  })
+
+  it('renders a template it has, with its parameters', async () => {
+    const res = await call('render_motion_graphic', { template: 'chapter', params: { number: 1, title: 'Chapter one' } })
+    expect(res.refused).toBe(false)
+    expect(asked.calls).toEqual([{ of: 'motion graphic', request: { template: 'chapter', params: { number: 1, title: 'Chapter one' }, duration: undefined, prompt: '{"number":1,"title":"Chapter one"}' } }])
+  })
+})
