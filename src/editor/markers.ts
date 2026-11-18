@@ -78,7 +78,7 @@ export interface Chapter {
  * plays before the first chapter is a section of its own (`opening`), so the
  * sections always cover the whole timeline. Empty when there are no chapters.
  */
-export function chapters(project: Pick<Project, 'markers' | 'clips'>, opening = 'Opening'): Chapter[] {
+export function chapters(project: Pick<Project, 'markers' | 'clips'>, opening = tt('Opening')): Chapter[] {
   const marks = project.markers.filter((m) => m.kind === 'chapter').sort((a, b) => a.frame - b.frame)
   if (!marks.length) return []
   const end = Math.max(projectDuration(project), marks[marks.length - 1].frame + 1)
@@ -145,7 +145,9 @@ export function exportMarkers(project: Pick<Project, 'markers' | 'clips' | 'sett
   const fps = project.settings.fps
   const warnings: string[] = []
   if (format === 'youtube') {
-    const list = chapters(project, 'Intro')
+    // The name of a section that has no marker to take one from is read by the user, and by whoever watches the
+    // video: in the window's language, like the chapters' own names.
+    const list = chapters(project, tt('Intro'))
     if (!list.length) return { text: '', count: 0, warnings: [tt('There are no chapter markers yet.')] }
     const long = list[list.length - 1].start >= 3600 * fps
     if (list.length < 3) warnings.push(tt('YouTube needs at least three chapters.'))
