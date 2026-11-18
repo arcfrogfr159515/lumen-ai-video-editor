@@ -1078,9 +1078,11 @@ export function reattachAudio(p: Project, clip: Clip) {
   if (sound) {
     const { volume, enhance, denoise, fadeIn, fadeOut } = sound.audio
     Object.assign(clip.audio, { volume, enhance, denoise, fadeIn, fadeOut })
+    // The sound's keyframes, counted from the picture's first frame: over the frames the picture has, the sound
+    // goes on rising and falling as it did (`keyframesWithin`).
     const offset = sound.start - clip.start
-    const kfs = sound.keyframes.volume?.map((k) => ({ ...k, frame: k.frame + offset })).filter((k) => k.frame >= 0 && k.frame <= clip.duration)
-    if (kfs?.length) clip.keyframes.volume = kfs
+    const kfs = keyframesWithin(sound.keyframes.volume?.map((k) => ({ ...k, frame: k.frame + offset })) ?? [], clip.duration)
+    if (kfs.length) clip.keyframes.volume = kfs
     else delete clip.keyframes.volume
   }
   for (const c of linked) delete p.clips[c.id]

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { propAt } from './keyframes'
+import { getProject } from './store'
 import { add, addAsset, clip, freshProject, run } from './test-helpers'
 import { sourceFrameAt, speedAt } from './timing'
 
@@ -94,6 +95,25 @@ describe('a move pasted from a longer clip onto a shorter one', () => {
     run('clip.copyAttributes', { fromId: id, ids: [short], include: ['transform', 'audio'] })
     expect(of(short, 'scale')).toEqual(size)
     expect(of(short, 'volume')).toEqual(loudness)
+  })
+})
+
+describe('sound put back into its picture, after the picture was trimmed', () => {
+  it('goes on rising and falling as it did over the frames the picture has', () => {
+    run('clip.detachAudio', { ids: [id] })
+    const sound = Object.values(getProject().clips).find((c) => c.kind === 'audio' && c.groupId === clip(id).groupId)!
+    // The sound is brought down from its 20th frame to its 80th.
+    run('keyframe.set', { clipId: sound.id, prop: 'volume', frame: 20, value: 0, easing: 'linear' })
+    run('keyframe.set', { clipId: sound.id, prop: 'volume', frame: 80, value: -12, easing: 'linear' })
+    // The picture comes in thirty frames later than its sound (an L-cut the other way round: a J-cut).
+    run('clip.trim', { id, edge: 'start', frame: 130 })
+    const heard = Array.from({ length: 70 }, (_, i) => Math.round(propAt(getProject().clips[sound.id], 'volume', 30 + i) * 1e4) / 1e4)
+    expect(heard.slice(0, 2)).toEqual([-2, -2.2])
+    // Put back, the sound's keyframes are counted from the picture's first frame: the one at 20 is before it, and
+    // went with nothing left where the fall was cut — the sound was down at −12 from the picture's first frame.
+    run('clip.reattachAudio', { ids: [id] })
+    expect(clip(id)).toMatchObject({ start: 130, duration: 70 })
+    expect(Array.from({ length: 70 }, (_, local) => Math.round(propAt(clip(id), 'volume', local) * 1e4) / 1e4)).toEqual(heard)
   })
 })
 
