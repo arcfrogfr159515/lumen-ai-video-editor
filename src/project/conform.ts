@@ -169,7 +169,9 @@ export async function conformAsset(assetId: string, fps?: number): Promise<boole
       // What the copy actually is, read back from it rather than assumed.
       const read = await readFrameTiming(next.url).catch(() => ({ timing: null, fps: undefined, duration: undefined }))
       const still = getProject().assets[assetId]
-      if (!still) {
+      // Gone — or it plays another file by now (relinked while this was made, or an undo gave it back the one it
+      // had): the copy is of the file it played when this began, and would take the place of the one it has since.
+      if (!still || still.source.type !== 'file' || still.source.url !== source.url) {
         if (!handle) URL.revokeObjectURL(next.url)
         return false
       }

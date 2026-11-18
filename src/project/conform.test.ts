@@ -67,7 +67,7 @@ vi.mock('@/lib/platform', () => ({
   },
 }))
 
-const { addAsset, freshProject } = await import('@/editor/test-helpers')
+const { addAsset, freshProject, run } = await import('@/editor/test-helpers')
 const { getProject, useEditor } = await import('@/editor/store')
 const { cancelConform, conformAsset, useConformJobs } = await import('./conform')
 
@@ -134,5 +134,37 @@ describe('a constant-frame-rate copy', () => {
     headerRead()
     expect(await first).toBe(true)
     expect(lab).toMatchObject({ inits: 1, executed: 1, begun: [`${id}-0-30fps`], finished: [`${id}-0-30fps`] })
+  })
+})
+
+describe('a constant-frame-rate copy still being made when its media is given another file', () => {
+  const other = { type: 'file' as const, url: 'lumen-media://file/D:/shoot/retake.mp4', path: 'D:/shoot/retake.mp4', mime: 'video/mp4', fileName: 'retake.mp4', size: 777, mtime: 9 }
+
+  it('is not given to the media: it plays the file it was relinked to', async () => {
+    // Re-encoding takes minutes. Relinked meanwhile, the media was handed the copy all the same when it was done —
+    // a copy of the file it had before, in the place of the one just picked, which was then nowhere in the project.
+    lab.hold = true
+    const made = conformAsset(id)
+    await reading()
+    run('asset.update', { id, patch: { source: other } })
+    headerRead()
+    expect(await made).toBe(false)
+    const asset = getProject().assets[id]
+    expect(asset.source).toEqual(other)
+    expect(asset.conformedFrom).toBeUndefined()
+    expect(useConformJobs.getState().jobs).toEqual({})
+  })
+
+  it('leaves the relink the one thing to undo', async () => {
+    const original = getProject().assets[id].source
+    lab.hold = true
+    const made = conformAsset(id)
+    await reading()
+    run('asset.update', { id, patch: { source: other } })
+    headerRead()
+    await made
+    useEditor.getState().undo()
+    expect(getProject().assets[id].source).toEqual(original)
+    expect(getProject().assets[id].conformedFrom).toBeUndefined()
   })
 })
