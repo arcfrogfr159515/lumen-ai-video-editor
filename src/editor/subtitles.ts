@@ -18,6 +18,8 @@ export interface Cue {
 // 00:00:01,000 (SRT) · 00:00:01.000 / 00:01.000 (VTT) · 1:02:03.5 (lenient)
 const TIME = /(?:(\d+):)?(\d{1,2}):(\d{1,2})[,.](\d{1,3})/
 const ARROW = /-->/
+/** A line that is the times of a cue and nothing else (but for where WebVTT puts it on the screen). */
+const TIMING = new RegExp(`^\\s*${TIME.source}\\s*-->\\s*${TIME.source}(?:\\s.*)?$`)
 
 function seconds(s: string): number | null {
   const m = TIME.exec(s)
@@ -75,12 +77,22 @@ export function parseSubtitles(text: string): Cue[] {
     const lines = block.split('\n')
     const at = lines.findIndex((l) => ARROW.test(l))
     if (at < 0) continue // header, NOTE, STYLE, REGION
-    const [a, b] = lines[at].split(ARROW)
-    const start = seconds(a)
-    const end = seconds(b)
-    if (start === null || end === null || end <= start) continue
-    const body = clean(lines.slice(at + 1).join('\n'))
-    if (body) cues.push({ start, end, text: body })
+    // One cue to a block, in a file as it should be. In one where the line between two cues holds a space or a tab,
+    // or isn't there, the block goes on into the next cue: read as one, the first cue's text went on with the
+    // second's number and its times, as words on the screen. A line that is nothing but times starts a cue.
+    const starts = [at]
+    for (let i = at + 1; i < lines.length; i++) if (TIMING.test(lines[i])) starts.push(i)
+    starts.forEach((from, n) => {
+      let to = starts[n + 1] ?? lines.length
+      // The number SRT gives the next cue stands on the line before its times: it isn't this cue's last word.
+      if (n + 1 < starts.length && to - 1 > from && /^\s*\d+\s*$/.test(lines[to - 1])) to--
+      const [a, b] = lines[from].split(ARROW)
+      const start = seconds(a)
+      const end = seconds(b)
+      if (start === null || end === null || end <= start) return
+      const body = clean(lines.slice(from + 1, to).join('\n'))
+      if (body) cues.push({ start, end, text: body })
+    })
   }
   return cues.sort((x, y) => x.start - y.start)
 }
