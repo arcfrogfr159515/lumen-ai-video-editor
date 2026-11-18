@@ -8,7 +8,24 @@ vi.mock('@/project/media-import', () => ({ analyzeAssets: async () => {} }))
 vi.mock('@/lib/platform', () => ({ platform: { isMac: false }, desktop: undefined }))
 
 const { language } = await import('@/lib/i18n')
-const { recordedClipName, recordedSummary } = await import('./recorder')
+const { formatSeconds, recordedClipName, recordedSummary } = await import('./recorder')
+
+describe('how long the recorder says a recording was', () => {
+  it('is tenths of a second under a minute, minutes and seconds under an hour, hours and minutes past it', () => {
+    expect(formatSeconds(12.34)).toBe('12.3 s')
+    expect(formatSeconds(75)).toBe('1 分 15 秒')
+    expect(formatSeconds(3725)).toBe('1 小时 2 分钟')
+  })
+
+  it('turns the minute over when the seconds round up to it', () => {
+    // 119.6 s is two minutes to the nearest second: it used to read “1 分 60 秒”.
+    expect(formatSeconds(119.6)).toBe('2 分 0 秒')
+    expect(formatSeconds(3599.7)).toBe('1 小时 0 分钟')
+    // Just under a minute it still says tenths, as it did.
+    expect(formatSeconds(59.6)).toBe('59.6 s')
+    expect(formatSeconds(59.97)).toBe('1 分 0 秒')
+  })
+})
 
 describe('what a recording’s clips are called in the media library, in a window in Chinese', () => {
   it('says which is the camera’s and which the microphone’s in Chinese', () => {

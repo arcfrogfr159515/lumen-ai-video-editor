@@ -827,7 +827,15 @@ export function recordedSummary(name: string, where: 'timeline' | 'library' | 'f
   return `${name} · ${went}${notes ? ` · ${notes === 1 ? ttc('recording', '{0} note', notes) : ttc('recording', '{0} notes', notes)}` : ''}`
 }
 
-const formatSeconds = (s: number) => (s >= 3600 ? tt('{0} h {1} min', Math.floor(s / 3600), Math.floor((s % 3600) / 60)) : s >= 60 ? tt('{0} min {1} s', Math.floor(s / 60), Math.round(s % 60)) : `${Math.round(s * 10) / 10} s`)
+/** How long a recording was, as its message says it. */
+export function formatSeconds(s: number) {
+  const tenths = Math.round(s * 10) / 10
+  if (tenths < 60) return `${tenths} s`
+  // To the second before it is split, so that 119.6 s is two minutes and not one and sixty seconds.
+  const whole = Math.round(s)
+  if (whole >= 3600) return tt('{0} h {1} min', Math.floor(whole / 3600), Math.floor((whole % 3600) / 60))
+  return tt('{0} min {1} s', Math.floor(whole / 60), whole % 60)
+}
 
 /** Where the recorded picture was on the desktop through the recording: a screen stays put, a window may have been moved. */
 function areaOver(s: Session, segment: SegmentInfo): (t: number) => Rect | null {
