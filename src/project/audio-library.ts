@@ -60,6 +60,13 @@ async function sfxFile(id: string): Promise<MediaFileInfo> {
   return info
 }
 
+/**
+ * Effects on their way into the project. One asked for again before it is there — a model that puts one whoosh on
+ * two cuts in a single step asks twice at the same moment — is the one already on its way: neither asking found it
+ * in the project yet, so each wrote the file and added the effect, and it stood in the media library twice.
+ */
+const arriving = new Map<string, Promise<string>>()
+
 /** The project asset for a built-in effect (created on first use). */
 export async function sfxAsset(id: string): Promise<string> {
   const def = SFX.find((s) => s.id === id)
@@ -67,6 +74,16 @@ export async function sfxAsset(id: string): Promise<string> {
   const tag = `sfx:${id}`
   const existing = Object.values(getProject().assets).find((a) => a.tags?.includes(tag) && !(a.source.type === 'file' && a.source.missing))
   if (existing) return existing.id
+  let task = arriving.get(id)
+  if (!task) {
+    task = bringIn(def, tag).finally(() => arriving.delete(id))
+    arriving.set(id, task)
+  }
+  return task
+}
+
+async function bringIn(def: (typeof SFX)[number], tag: string): Promise<string> {
+  const id = def.id
   const file = await sfxFile(id)
   const buffer = await sfxBuffer(id)
   const asset: Asset = {
