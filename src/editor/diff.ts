@@ -492,6 +492,10 @@ export const hunkAt = (diff: TimelineDiff, frame: Frame, side: 'a' | 'b' = 'a') 
 export function takeHunk(p: Project, from: Version, hunk: Hunk): string[] {
   const [a0, a1] = hunk.a
   const [b0, b1] = hunk.b
+  // What the other version plays in its stretch. In an empty one — a stretch only this version has, which simply
+  // comes out — it plays nothing: but a clip that runs *through* that point there was taken for one in it, and a
+  // frame of it was copied in where the stretch had been, over whatever had just closed up.
+  const inStretch = (c: Clip) => b1 > b0 && c.start < b1 && clipEnd(c) > b0
   const pairs = pairTracks(p.tracks, from.tracks)
   // Tracks that only the other version has come along, placed as they are there: video above, audio below.
   const target = new Map<string, Track>()
@@ -501,7 +505,7 @@ export function takeHunk(p: Project, from: Version, hunk: Hunk): string[] {
       target.set(theirs.id, mine)
       continue
     }
-    if (!Object.values(from.clips).some((c) => c.trackId === theirs.id && c.start < b1 && clipEnd(c) > b0)) continue
+    if (!Object.values(from.clips).some((c) => c.trackId === theirs.id && inStretch(c))) continue
     const track = createTrack(theirs.kind, { name: theirs.name, height: theirs.height, origin: theirs.origin ?? theirs.id, ...(theirs.role && theirs.role !== 'main' ? { role: theirs.role } : {}) })
     if (theirs.kind === 'video') p.tracks.unshift(track)
     else p.tracks.push(track)
@@ -514,7 +518,7 @@ export function takeHunk(p: Project, from: Version, hunk: Hunk): string[] {
   const groups = new Map<string, string>()
   const added: string[] = []
   const incoming = Object.values(from.clips)
-    .filter((c) => c.start < b1 && clipEnd(c) > b0 && target.has(c.trackId) && followsRipple(target.get(c.trackId)!))
+    .filter((c) => inStretch(c) && target.has(c.trackId) && followsRipple(target.get(c.trackId)!))
     .sort((x, y) => x.start - y.start)
   // On the main track the copies go in just ahead of whatever now starts at the join, in their order.
   const onMain = incoming.filter((c) => isMagnetic(target.get(c.trackId)!))
