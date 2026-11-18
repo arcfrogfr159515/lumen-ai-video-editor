@@ -41,6 +41,7 @@ import { clamp } from '@/lib/math'
 import { formatDuration, formatTimecode } from '@/lib/time'
 import type { TimelineLayout } from './layout'
 import { HEADER_W, SNAP_PX, resetDrag, useDrag, type ClipPreview, type DropGhost } from './model'
+import { dropReadout, fadeReadout, trimReadout } from './readouts'
 import { tt } from '@/lib/i18n'
 
 interface Env {
@@ -261,7 +262,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
               for (const c of clipsOnTrack(project, trackId, exclude)) if (c.start >= a) preview(c, c.start + len)
             }
           }
-          text = `${mode === 'insert' ? 'Insert' : 'Overwrite'} at ${formatTimecode(previews[clip.id].start, L().fps)}`
+          text = dropReadout(mode, formatTimecode(previews[clip.id].start, L().fps))
         } else {
           const fix = resolveMoveDelta(project, moving, 0)
           if (fix) snapFrame = null
@@ -345,7 +346,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
           dragIds: [clip.id],
           previews,
           snapFrame,
-          readout: { x: p.x, y: p.y, text: `${formatDuration(after.duration, L().fps)}  ·  ${ripple ? 'ripple' : `${formatTimecode(target, L().fps)}  ·  Ctrl ripple`}` },
+          readout: { x: p.x, y: p.y, text: trimReadout(formatDuration(after.duration, L().fps), ripple, formatTimecode(target, L().fps)) },
         })
       },
       () => {
@@ -505,7 +506,7 @@ export function usePointerController({ scrollRef, contentRef, layoutRef }: Env) 
         const df = Math.round(((p.x - start) / L().pps) * L().fps)
         const value = clamp(origin + (which === 'fadeIn' ? df : -df), 0, max)
         dispatch('clip.update', { ids: [clip.id], patch: { audio: { [which]: value } } }, { coalesce: `fade:${clip.id}:${which}`, label: which === 'fadeIn' ? tt('Fade in') : tt('Fade out') })
-        useDrag.setState({ mode: 'fade', readout: { x: p.x, y: p.y, text: `${which === 'fadeIn' ? 'Fade in' : 'Fade out'}  ${formatDuration(value, L().fps)}` } })
+        useDrag.setState({ mode: 'fade', readout: { x: p.x, y: p.y, text: fadeReadout(which, formatDuration(value, L().fps)) } })
       },
       () => resetDrag(),
       false,
