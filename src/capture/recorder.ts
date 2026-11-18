@@ -39,7 +39,7 @@ import { setBusy } from '@/lib/busy'
 import { desktop } from '@/lib/platform'
 import { analyzeAssets } from '@/project/media-import'
 import type { CaptureFromWorker, CaptureToWorker, RecordJob, SegmentInfo, VideoReady, WorkerStats } from './capture.worker'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
 
 const message = (err: unknown) => (err instanceof Error ? err.message : String(err))
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
@@ -789,10 +789,9 @@ async function finish(s: Session, opts: StopOptions): Promise<RecordingResult | 
     const { assets, clips, clicks } = await addToProject(s, made, opts)
     const seconds = Math.max(0, recordingSeconds(s.clock, at))
     const result: RecordingResult = { name: s.name, seconds, files: made.map((m) => m.file), assets, clips, markers: get().markers, clicks, notes: get().notes }
-    const where = clips.length ? tt('on the timeline') : assets.length ? tt('in the media library') : 'saved'
     toast.success(tt('Recorded {0}', formatSeconds(seconds)), {
       id: busy,
-      description: `${s.name} · ${where}${get().notes.length ? ` · ${get().notes.length} note${get().notes.length > 1 ? 's' : ''}` : ''}`,
+      description: recordedSummary(s.name, clips.length ? 'timeline' : assets.length ? 'library' : 'files', get().notes.length),
       duration: 7000,
       action: assets.length ? { label: tt('Show'), onClick: () => useUI.getState().setLeftTab('media') } : { label: tt('Open folder'), onClick: () => void desktop!.files.reveal(made[0].file.path) },
     })
@@ -813,6 +812,12 @@ async function finish(s: Session, opts: StopOptions): Promise<RecordingResult | 
       show(null)
     }
   }
+}
+
+/** What became of a recording, under “Recorded 12 s”: its name, where its clips went, and how many things there were to know. */
+export function recordedSummary(name: string, where: 'timeline' | 'library' | 'files', notes: number) {
+  const went = where === 'timeline' ? tt('on the timeline') : where === 'library' ? tt('in the media library') : tt('saved')
+  return `${name} · ${went}${notes ? ` · ${notes === 1 ? ttc('recording', '{0} note', notes) : ttc('recording', '{0} notes', notes)}` : ''}`
 }
 
 const formatSeconds = (s: number) => (s >= 3600 ? tt('{0} h {1} min', Math.floor(s / 3600), Math.floor((s % 3600) / 60)) : s >= 60 ? tt('{0} min {1} s', Math.floor(s / 60), Math.round(s % 60)) : `${Math.round(s * 10) / 10} s`)
