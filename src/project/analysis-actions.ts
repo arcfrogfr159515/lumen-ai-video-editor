@@ -324,22 +324,32 @@ export async function trackMotion(req: TrackRequest, onProgress?: (p: number) =>
   samples = samples.filter((x, i) => i === 0 || x.t - samples[i - 1].t > 1e-6)
   if (samples.length < 2) throw new Error(tt('Couldn’t follow that — try a box over something with more detail.'))
 
-  // Positions on the target's frames, in the space that follows.
+  // Positions on the target's frames, in the space that follows. Reading the footage took a while, and the clips
+  // are read again as they are now: moved along the timeline, trimmed or slipped meanwhile, the frames they share
+  // and the moment of the footage each shows are no longer the ones this began with. (Laid out by the frames they
+  // had covered, and counted from where the target starts now, the path began as many frames off as it had moved.)
   const now = getProject()
   const tgt = now.clips[req.targetId]
   const s = now.clips[src.id]
   if (!tgt || !s) throw new Error(tt('The clip was removed while tracking.'))
+  const rate = now.settings.fps
   const points: number[] = []
   let first = -1
   let ref = 0
-  for (let f = start; f < end; f++) {
-    const at = sampleAt(samples, tAt(f))
+  let nearest = Infinity
+  for (let f = Math.max(s.start, tgt.start); f < Math.min(clipEnd(s), clipEnd(tgt)); f++) {
+    const t = sourceFrameAt(s, f - s.start) / rate
+    const at = sampleAt(samples, t)
     if (!at) {
       if (first >= 0) break
       continue
     }
     if (first < 0) first = f
-    if (f === frame) ref = (f - first) | 0
+    // The frame the box was put on: the one that shows that moment of the footage.
+    if (Math.abs(t - t0) < nearest) {
+      nearest = Math.abs(t - t0)
+      ref = f - first
+    }
     const [px, py] = mediaToProject(now, s, asset, f - s.start, at[0], at[1])
     if (req.maskId) {
       const [mx, my] = projectToLayer(now, tgt, f - tgt.start, px, py)
@@ -347,7 +357,6 @@ export async function trackMotion(req: TrackRequest, onProgress?: (p: number) =>
     } else points.push(Math.round(px * 100) / 100, Math.round(py * 100) / 100)
   }
   if (first < 0 || points.length < 4) throw new Error(tt('Couldn’t follow that — try a box over something with more detail.'))
-  if (frame < first) ref = 0
   const path: TrackPath = { start: first - tgt.start, ref: Math.min(ref, points.length / 2 - 1), points }
   const how = { source: req.source ?? ('user' as const), label: tt('Track motion') }
   const tracked = { frames: points.length / 2, from: first, to: first + points.length / 2, lost: samples.length > 1 && samples[samples.length - 1].score < 0.6 }
