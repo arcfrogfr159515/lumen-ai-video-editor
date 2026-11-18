@@ -5,7 +5,7 @@
 import { formatTimecode } from '@/lib/time'
 import { projectDuration } from './ops'
 import type { Frame, Marker, MarkerColor, MarkerKind, Project } from './types'
-import { tt } from '@/lib/i18n'
+import { tt, ttc } from '@/lib/i18n'
 
 /** A marker's kind as the filter and the lists name it: plain markers have none. */
 export type MarkerFilter = MarkerKind | 'plain'
@@ -107,6 +107,12 @@ export const MARKER_EXPORTS: Record<MarkerExportFormat, { label: string; extensi
   csv: { label: 'CSV', extension: 'csv', hint: tt('One row per marker, for a spreadsheet'), mime: 'text/csv' },
   json: { label: tt('JSON'), extension: 'json', hint: tt('Everything, for another tool to read'), mime: 'application/json' },
 }
+
+/**
+ * The name offered for a file of exported markers: the project's, and what the file holds — in the window's language,
+ * as the clip notes' file is. ("{0} markers" by itself is a count, "3 markers": this is the same words as a name.)
+ */
+export const markerFileName = (project: string, format: MarkerExportFormat) => (format === 'youtube' ? ttc('file name', '{0} chapters', project) : ttc('file name', '{0} markers', project))
 
 /** 0:00, 12:05 or 1:02:03 — how video sites write chapter times. */
 export function clockTime(frame: Frame, fps: number, hours = false) {

@@ -10,7 +10,7 @@ import { SearchInput } from '@/components/ui/input'
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu'
 import { Segmented } from '@/components/ui/segmented'
 import { Switch } from '@/components/ui/switch'
-import { exportMarkers, filterMarkers, MARKER_EXPORTS, MARKER_KINDS, markerCounts, markerKindOf, type MarkerExportFormat, type MarkerFilter } from '@/editor/markers'
+import { exportMarkers, filterMarkers, MARKER_EXPORTS, MARKER_KINDS, markerCounts, markerFileName, markerKindOf, type MarkerExportFormat, type MarkerFilter } from '@/editor/markers'
 import { clipNotes, notesMarkdown, taskCounts, toggleTask } from '@/editor/notes'
 import { playback, usePlayback } from '@/editor/playback'
 import { dispatch, getProject, useEditor } from '@/editor/store'
@@ -281,7 +281,7 @@ function ExportMenu() {
     const info = MARKER_EXPORTS[format]
     try {
       await saveTextFile(
-        { name: `${getProject().name} ${format === 'youtube' ? 'chapters' : 'markers'}`, extension: info.extension, filterName: info.label, mime: info.mime, text: out.text },
+        { name: markerFileName(getProject().name, format), extension: info.extension, filterName: info.label, mime: info.mime, text: out.text },
         tt('Saved {0} {1}{2}', out.count, format === 'youtube' ? tt('chapter') : tt('marker'), out.count === 1 ? '' : 's'),
       )
       if (out.warnings.length) toast(out.warnings.join(' '))
