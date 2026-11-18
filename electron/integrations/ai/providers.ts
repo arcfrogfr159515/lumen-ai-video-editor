@@ -6,6 +6,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import type { LanguageModel } from 'ai'
 import { app } from 'electron'
 import { PROVIDERS, type ModelInfo, type ProviderId, type ProviderSpec, type ProviderState } from '../../../shared/ai'
+import { mt } from '../../i18n'
 import { readJson, writeJson } from '../paths'
 import { getSecret, secretHint, setSecret } from '../secrets'
 import { loadCatalog, openCodeApi } from './catalog'
@@ -60,7 +61,7 @@ export function setProvider(id: ProviderId, patch: { key?: string | null; baseUR
   const next: ProviderSettings = { ...all[id] }
   if (patch.baseURL !== undefined) {
     const url = patch.baseURL?.trim()
-    if (url && !/^https?:\/\//.test(url)) throw new Error('The base URL should start with http:// or https://')
+    if (url && !/^https?:\/\//.test(url)) throw new Error(mt('The base URL should start with http:// or https://'))
     next.baseURL = url || undefined
   }
   if (patch.key !== undefined) next.via = patch.key ? (patch.via ?? 'key') : undefined
@@ -75,8 +76,8 @@ const modelCache = new Map<ProviderId, { at: number; models: ModelInfo[] }>()
 
 async function getJson(url: string, headers: Record<string, string>, timeoutMs = 12_000) {
   const res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) })
-  if (res.status === 401 || res.status === 403) throw new Error('The key was rejected — check it and try again.')
-  if (!res.ok) throw new Error(`${new URL(url).host} answered ${res.status}`)
+  if (res.status === 401 || res.status === 403) throw new Error(mt('The key was rejected — check it and try again.'))
+  if (!res.ok) throw new Error(mt('{0} answered {1}', new URL(url).host, res.status))
   return (await res.json()) as Record<string, unknown>
 }
 
@@ -131,7 +132,7 @@ async function fetchModels(id: ProviderId): Promise<ModelInfo[]> {
     default: {
       // OpenAI-compatible: Ollama, LM Studio, custom.
       const url = baseURL(id)
-      if (!url) throw new Error('Set the server’s base URL first.')
+      if (!url) throw new Error(mt('Set the server’s base URL first.'))
       const json = await getJson(`${url}/models`, key ? { Authorization: `Bearer ${key}` } : {}, spec(id).local ? 3_000 : 12_000)
       return ((json.data ?? []) as { id: string }[]).map((m) => withEfforts({ id: m.id, name: m.id }, compatibleEfforts(m.id, undefined))).sort(byName)
     }

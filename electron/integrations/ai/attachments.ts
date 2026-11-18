@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
 import { ATTACHMENT_LIMITS, type AttachmentContent, type AttachmentInput, type AttachmentKind, type ChatAttachment } from '../../../shared/ai'
+import { mt } from '../../i18n'
 import { ensureDir, userDir } from '../paths'
 
 /**
@@ -86,7 +87,7 @@ const XML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot:
 /** The text of a Word document: paragraphs, line breaks and tabs, without the formatting. */
 export function docxText(file: Buffer): string {
   const xml = unzipEntry(file, 'word/document.xml')?.toString('utf8')
-  if (!xml) throw new Error('That Word document couldn’t be read. Save it as PDF or text and attach that.')
+  if (!xml) throw new Error(mt('That Word document couldn’t be read. Save it as PDF or text and attach that.'))
   return xml
     .replace(/<w:p[ >][\s\S]*?<\/w:p>/g, (para) => {
       const text = para
@@ -110,23 +111,23 @@ export function docxText(file: Buffer): string {
 
 /** Keeps a file for a conversation. Throws, in words for the user, when it's a kind or size a message can't take. */
 export function saveAttachment(conversationId: string, input: AttachmentInput): ChatAttachment {
-  if (!safe(conversationId)) throw new Error('No chat to attach to.')
+  if (!safe(conversationId)) throw new Error(mt('No chat to attach to.'))
   const name = path.basename(String(input.name)).slice(0, 120) || 'file'
   const what = attachmentKind(name, input.mime)
-  if (!what) throw new Error(`“${name}” isn’t something a message can carry. Attach pictures, PDFs, Word documents or text files; add video and audio through Media.`)
+  if (!what) throw new Error(mt('“{0}” isn’t something a message can carry. Attach pictures, PDFs, Word documents or text files; add video and audio through Media.', name))
   const size = input.data.byteLength
   const kind = what === 'docx' ? 'text' : what.kind
   // A Word file is mostly packaging: its limit is on the document, its text is checked below.
   const limit = what === 'docx' ? ATTACHMENT_LIMITS.pdf : ATTACHMENT_LIMITS[kind]
-  if (size > limit) throw new Error(`“${name}” is ${MB(size)}: more than the ${MB(limit)} a message takes for this kind of file.`)
+  if (size > limit) throw new Error(mt('“{0}” is {1}: more than the {2} a message takes for this kind of file.', name, MB(size), MB(limit)))
   let bytes = Buffer.from(input.data.buffer, input.data.byteOffset, input.data.byteLength)
   let chars: number | undefined
   if (kind === 'text') {
     const text = what === 'docx' ? docxText(bytes) : bytes.toString('utf8').replace(/^﻿/, '')
-    if (text.includes('\u0000')) throw new Error(`“${name}” isn’t a text file.`)
+    if (text.includes('\u0000')) throw new Error(mt('“{0}” isn’t a text file.', name))
     bytes = Buffer.from(text, 'utf8')
     // Never cut a document short without saying so: it's taken whole or not at all.
-    if (bytes.length > ATTACHMENT_LIMITS.text) throw new Error(`“${name}” holds ${MB(bytes.length)} of text: more than the ${MB(ATTACHMENT_LIMITS.text)} a message takes. Attach the part you need.`)
+    if (bytes.length > ATTACHMENT_LIMITS.text) throw new Error(mt('“{0}” holds {1} of text: more than the {2} a message takes. Attach the part you need.', name, MB(bytes.length), MB(ATTACHMENT_LIMITS.text)))
     chars = text.length
   }
   const id = `att_${randomUUID().replace(/-/g, '').slice(0, 12)}`

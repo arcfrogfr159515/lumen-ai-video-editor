@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { ModelMessage } from 'ai'
+import { mt } from '../../i18n'
 import { ensureDir, userDir } from '../paths'
 
 /**
@@ -42,7 +43,7 @@ export function loadChats(projectId: string): unknown[] {
 export function saveChats(projectId: string, chats: unknown) {
   if (!safe(projectId) || !Array.isArray(chats)) return
   const text = JSON.stringify({ chats })
-  if (text.length > MAX_CHATS_BYTES) throw new Error('These chats are too large to keep — delete some old ones.')
+  if (text.length > MAX_CHATS_BYTES) throw new Error(mt('These chats are too large to keep — delete some old ones.'))
   ensureDir(path.join(root(), 'chats'))
   const file = chatsFile(projectId)
   const partial = `${file}.${process.pid}.part`
