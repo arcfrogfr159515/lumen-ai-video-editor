@@ -95,7 +95,8 @@ try {
   report.editorAppearedMs = Date.now() - started
   const ws = await connect(page.webSocketDebuggerUrl)
   let drawn = false
-  for (let i = 0; i < 150 && !drawn; i++) {
+  // Under the same load the page itself has taken 25 s to draw.
+  for (let i = 0; i < 600 && !drawn; i++) {
     drawn = (await inEditor(ws, 'document.readyState === "complete" && (document.getElementById("root")?.childElementCount ?? 0) > 0')) === true
     if (!drawn) await sleep(100)
   }
