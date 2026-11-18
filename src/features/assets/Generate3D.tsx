@@ -15,6 +15,7 @@ import { ColorSwatches } from '@/features/inspector/controls'
 import { IconTile, RenderCard } from '@/features/integrations/parts'
 import { openIntegrations, renderBlender, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
+import { optionName } from './option-names'
 import { Chip, SectionLabel } from './shared'
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
@@ -223,7 +224,7 @@ export function Generate3D() {
                         <span key={c} style={{ background: c }} />
                       ))}
                     </span>
-                    <span className={cn('text-2xs/[inherit] capitalize', palette === p.id ? 'text-fg' : 'text-fg-4')}>{p.id}</span>
+                    <span className={cn('text-2xs/[inherit] capitalize', palette === p.id ? 'text-fg' : 'text-fg-4')}>{optionName('palette', p.id)}</span>
                   </button>
                 ))}
               </div>
@@ -232,7 +233,7 @@ export function Generate3D() {
               <div className="flex flex-wrap gap-1">
                 {['mix', 'blobs', 'rings', 'cubes'].map((s) => (
                   <Chip key={s} active={style === s} onClick={() => setStyle(s)}>
-                    <span className="capitalize">{s}</span>
+                    <span className="capitalize">{optionName('form', s)}</span>
                   </Chip>
                 ))}
               </div>

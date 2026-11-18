@@ -5,6 +5,16 @@ vi.stubGlobal('localStorage', { getItem: (key: string) => (key === 'lumen.langua
 const { language } = await import('@/lib/i18n')
 const { optionName } = await import('./option-names')
 
+describe('the options of a 3D background, in a window in Chinese', () => {
+  it('names each set of colours in Chinese', () => {
+    expect(['aurora', 'sunset', 'candy', 'ocean', 'mono'].map((palette) => optionName('palette', palette))).toEqual(['极光', '日落', '糖果', '海洋', '单色'])
+  })
+
+  it('names each kind of form in Chinese', () => {
+    expect(['mix', 'blobs', 'rings', 'cubes'].map((form) => optionName('form', form))).toEqual(['混合', '团块', '圆环', '立方体'])
+  })
+})
+
 describe('the options of a motion graphic, in a window in Chinese', () => {
   it('names the side it is aligned to in Chinese', () => {
     expect(language).toBe('zh-CN')
