@@ -280,6 +280,7 @@ export const actions = {
     try {
       const r = await removePauses({ clipIds: clips.map((c) => c.id) })
       if (r.removed) toast.success(tt('Removed {0} pauses ({1}s)', r.removed, r.seconds.toFixed(1)), { id })
+      else if (r.held) toast(tt('No pauses were removed'), { id, description: tt('The speech is on a track that is locked or doesn’t follow ripple edits, so nothing can be cut out of it.') })
       else toast(tt('No long pauses to remove'), { id, description: tt('Pauses shorter than 0.6 s are left as they are.') })
     } catch (err) {
       toast.error(tt('Couldn’t remove the pauses'), { id, description: err instanceof Error ? err.message : String(err) })

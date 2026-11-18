@@ -130,6 +130,55 @@ describe('removePauses', () => {
     expect(getProject().clips[music.id].duration).toBe(300)
   })
 
+  it('takes nothing out around speech that can’t be cut: its track locked, or holding its place through ripples', async () => {
+    for (const hold of [{ locked: true }, { syncLock: false }, { rippleLock: true }]) {
+      const { p, add, withAsset, load, on, track } = setup()
+      const voice = add('Voice', 'audio', 0, 210, { assetId: withAsset(asset(7, [[0, 2], [3.5, 5], [5.3, 7]])) })
+      add('Titles', 'text', 0, 60, { name: 'one' })
+      add('Titles', 'text', 105, 45, { name: 'two' })
+      Object.assign(p.tracks.find((t) => t.id === track('Voice'))!, hold)
+      load()
+      const before = useEditor.getState().past.length
+      // The pause can't come out of the speech — a stretch is taken out of the tracks that follow ripples, and
+      // this isn't one. It came out of everything else: the second title moved up under a voice that hadn't, and
+      // “Removed 1 pause” was said.
+      const said = JSON.stringify(hold)
+      expect(await removePauses(), said).toMatchObject({ removed: 0, seconds: 0, held: 1 })
+      expect(on('Voice'), said).toEqual([[0, 210]])
+      expect(on('Titles'), said).toEqual([[0, 60], [105, 150]])
+      expect(useEditor.getState().past.length, said).toBe(before)
+      // Asked for by name, the same.
+      expect(await removePauses({ clipIds: [voice.id] }), said).toMatchObject({ removed: 0, held: 1 })
+      expect(on('Titles'), said).toEqual([[0, 60], [105, 150]])
+    }
+  })
+
+  it('isn’t offered for speech that can’t be cut', async () => {
+    const { p, add, withAsset, load, track } = setup()
+    add('Voice', 'audio', 0, 240, { assetId: withAsset(asset(8, [[0, 2], [3.5, 5], [6.5, 8]])) })
+    load()
+    expect((await suggestFor(getProject()))?.id).toMatch(/^pauses-2-/)
+    p.tracks.find((t) => t.id === track('Voice'))!.rippleLock = true
+    load()
+    expect(await suggestFor(getProject())).toBeNull()
+  })
+
+  it('still cuts the pauses of the speech it can, beside speech it can’t', async () => {
+    const { p, add, withAsset, load, on, track } = setup()
+    p.tracks.push(createTrack('audio', { name: 'Interview B', rippleLock: true }))
+    add('Voice', 'audio', 0, 210, { assetId: withAsset(asset(7, [[0, 2], [3.5, 5], [5.3, 7]])) })
+    // A second speaker, later on, whose track holds its place: a pause of theirs is nobody's to cut.
+    add('Interview B', 'audio', 300, 210, { assetId: withAsset(asset(7, [[0, 2], [3.5, 7]])) })
+    add('Titles', 'text', 400, 30, { name: 'late' })
+    load()
+    expect(track('Interview B')).toBeTruthy()
+    expect(await removePauses()).toMatchObject({ removed: 1, held: 1 })
+    expect(on('Voice')).toEqual([[0, 64], [64, 173]])
+    // Moved up by the one pause that was cut (37 frames), and not by the other speaker's.
+    expect(on('Titles')).toEqual([[363, 393]])
+    expect(on('Interview B')).toEqual([[300, 510]])
+  })
+
   it('does nothing when there are no pauses', async () => {
     const { add, withAsset, load } = setup()
     add('Voice', 'audio', 0, 90, { assetId: withAsset(asset(3, [[0, 3]])) })

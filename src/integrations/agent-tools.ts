@@ -13,7 +13,7 @@ import { allSequences, openSequenceId, openSequenceName } from '@/editor/sequenc
 import { playback, usePlayback } from '@/editor/playback'
 import { dispatch, getProject } from '@/editor/store'
 import { useUI } from '@/editor/ui-store'
-import { addCaptions, duckMusic, findPauses, reframe, removePauses, silentCuts, untranscribed } from '@/editor/smart'
+import { addCaptions, cuttablePauses, duckMusic, findPauses, reframe, removePauses, silentCuts, untranscribed } from '@/editor/smart'
 import { SFX } from '@/engine/sfx'
 import { tt } from '@/lib/i18n'
 import { desktop } from '@/lib/platform'
@@ -42,6 +42,8 @@ import { WEB_TOOLS } from './tools/web'
 const PLACE = bool('Put the finished clip on the timeline at the playhead (default true).')
 const WAIT = num('Seconds to wait for the render before returning (default 90, max 600; through Lumen’s MCP server at most 15). If it is still running, poll get_job.', { minimum: 0, maximum: 600 })
 const AT = num('Where to place it, in seconds from the start of the timeline (default: the playhead).', { minimum: 0 })
+/** Why the pauses of some speech are left in: said to the model, with the clips it is about. */
+const HELD_SPEECH = 'its track is locked or does not follow ripple edits (sync lock off, or ripple lock on), so nothing can be cut out of it'
 
 // ─── Jobs ────────────────────────────────────────────────────────────────
 
@@ -489,13 +491,17 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       const p = getProject()
       const fps = p.settings.fps
       const opts = { clipIds: Array.isArray(a.clip_ids) ? a.clip_ids.map(String) : undefined, minGap: typeof a.min_gap_seconds === 'number' ? a.min_gap_seconds : undefined }
-      const reports = await findPauses(p, opts)
+      const found = await findPauses(p, opts)
+      // What remove_pauses would cut: not the pauses of speech on a track that can't be cut.
+      const reports = cuttablePauses(p, found)
+      const held = found.filter((r) => !reports.includes(r))
       const cuts = await silentCuts(p, reports, opts)
       const sec = (f: number) => Math.round((f / fps) * 100) / 100
       return {
         pauses: cuts.map(([s, e]) => [sec(s), sec(e)]),
         seconds: Math.round((cuts.reduce((t, [s, e]) => t + e - s, 0) / fps) * 10) / 10,
         clips: reports.map((r) => ({ clip_id: r.clip.id, clip: r.clip.name, measured_from: r.from })),
+        ...(held.length ? { not_cut: held.map((r) => ({ clip_id: r.clip.id, clip: r.clip.name, why: HELD_SPEECH })) } : {}),
       }
     },
   },
@@ -506,7 +512,7 @@ const INTEGRATION_TOOLS: AgentTool[] = [
     run: async (a) => {
       const r = await removePauses({ clipIds: Array.isArray(a.clip_ids) ? a.clip_ids.map(String) : undefined, minGap: typeof a.min_gap_seconds === 'number' ? a.min_gap_seconds : undefined })
       useUI.getState().markAiTouched(r.clips)
-      return { pauses_removed: r.removed, seconds_saved: Math.round(r.seconds * 10) / 10 }
+      return { pauses_removed: r.removed, seconds_saved: Math.round(r.seconds * 10) / 10, ...(r.held ? { speech_clips_not_cut: r.held, why: HELD_SPEECH } : {}) }
     },
   },
   {

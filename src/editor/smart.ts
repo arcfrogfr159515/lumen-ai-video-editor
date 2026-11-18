@@ -5,7 +5,7 @@
  */
 import { activeRegions, activeRegionsStreamed, isAudible, isLongAudio, loadAudio } from '@/engine/audio-engine'
 import { speechScript } from '@/engine/audio'
-import { clipEnd } from './ops'
+import { clipEnd, followsRipple } from './ops'
 import { dispatch, getProject, useEditor } from './store'
 import { captionStyle, layCaptions, type CaptionStyle } from './subtitles'
 import { cutRanges, timelineScript } from './text-edit'
@@ -181,6 +181,18 @@ export async function findPauses(project: Project, opts: { clipIds?: string[]; m
   return out
 }
 
+/**
+ * The pauses that can be cut: those of speech on a track that follows ripples. A stretch comes out of those tracks
+ * and of no other — so a pause found in speech whose track is locked, or holds its place (sync lock off, ripple
+ * lock on), came out of everything but the speech: the titles and the B-roll moved up under a voice that hadn't.
+ */
+export function cuttablePauses(project: Project, reports: PauseReport[]): PauseReport[] {
+  return reports.filter((r) => {
+    const track = project.tracks.find((t) => t.id === r.clip.trackId)
+    return Boolean(track && followsRipple(track))
+  })
+}
+
 /** Where a speech clip has speech, in timeline frames (padded). Unknown speech counts as all of it. */
 async function speechSpans(project: Project, clip: Clip, pad: number): Promise<[number, number][]> {
   const speech = clip.reverse ? null : await speechRegions(project, clip)
@@ -272,7 +284,9 @@ export function cutSpokenWords(indexes: readonly number[], opts: { label?: strin
 export async function removePauses(opts: { clipIds?: string[]; minGap?: number } = {}) {
   const project = getProject()
   const fps = project.settings.fps
-  const cuts = await silentCuts(project, await findPauses(project, opts), opts)
+  const found = await findPauses(project, opts)
+  const reports = cuttablePauses(project, found)
+  const cuts = await silentCuts(project, reports, opts)
   const keepWhole = bedClips(project)
   const joins: number[] = []
   let removed = 0
@@ -299,7 +313,8 @@ export async function removePauses(opts: { clipIds?: string[]; minGap?: number }
   const touched = voiceClips(after)
     .filter((c) => landed.some((f) => c.start === f || clipEnd(c) === f))
     .map((c) => c.id)
-  return { removed, seconds, clips: touched }
+  // `held`: the speech clips whose pauses were left because their track can't be cut.
+  return { removed, seconds, clips: touched, held: found.length - reports.length }
 }
 
 // ─── Captions ────────────────────────────────────────────────────────────
@@ -474,7 +489,7 @@ export async function suggestFor(project: Project): Promise<Suggestion | null> {
   const voices = voiceClips(project)
   if (!voices.length) return null
   // Exactly what Tighten will cut — only where every speaker is quiet.
-  const cuts = await silentCuts(project, await findPauses(project))
+  const cuts = await silentCuts(project, cuttablePauses(project, await findPauses(project)))
   const count = cuts.length
   if (count >= 2) {
     const secs = cuts.reduce((s, [a, b]) => s + b - a, 0) / project.settings.fps
