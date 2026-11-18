@@ -134,6 +134,19 @@ describe('what a page says of itself', () => {
     expect(meta(`<meta name='description' content='She said "cut" twice'>`, 'description')).toBe('She said "cut" twice')
   })
 
+  it('is read when the tag is written without quotes, as pages made small for sending write it', () => {
+    // The tag was found only when it named itself between quotes: <meta name=description …> said nothing — no
+    // title, description or picture for a page being read, a link's card, or a video brought in by its link.
+    expect(meta('<meta property=og:title content="A page">', 'og:title')).toBe('A page')
+    expect(meta('<meta name=description content=Short>', 'description')).toBe('Short')
+    expect(meta("<meta content='https://example.com/p.png' name=twitter:image>", 'twitter:image')).toBe('https://example.com/p.png')
+    expect(meta('<head><meta charset=utf-8><meta name=viewport content=width=device-width,initial-scale=1></head>', 'viewport')).toBe('width=device-width,initial-scale=1')
+    // Not a tag whose name only begins the same.
+    expect(meta('<meta name=descriptions content="Not this">', 'description')).toBeUndefined()
+    expect(meta('<meta property=og:title:alt content="Not this">', 'og:title')).toBeUndefined()
+    expect(meta('<meta property="og:title:alt" content="Not this">', 'og:title')).toBeUndefined()
+  })
+
   it('is read as before where there is no such quote', () => {
     expect(meta('<meta name="description" content="Plain &amp; simple, isn&#39;t it">', 'description')).toBe("Plain & simple, isn't it")
     expect(meta("<meta property='og:site_name' content='Example'>", 'og:site_name')).toBe('Example')

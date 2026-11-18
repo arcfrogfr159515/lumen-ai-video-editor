@@ -189,12 +189,13 @@ export function decodeEntities(s: string) {
 }
 
 export const meta = (html: string, name: string) => {
-  const re = new RegExp(`<meta[^>]+(?:name|property)=["']${name}["'][^>]*>`, 'i')
+  // The tag that names itself `name`: between quotes of either kind, or with none — as pages made small for sending
+  // write it. (Found only between quotes, `<meta name=description …>` said nothing of its page.)
+  const re = new RegExp(`<meta\\b[^>]*?\\s(?:name|property)\\s*=\\s*(?:"${name}"|'${name}'|${name}(?=[\\s/>]))[^>]*>`, 'i')
   // On the tidied page, where a "<" can't run on past its own tag (see html.ts).
   const tag = re.exec(tidy(html))?.[0]
   // The value ends at the quote that opened it. Read to the first quote of either kind, "It's a Wonderful Life" was "It".
-  const value = tag ? /content=(?:"([^"]*)"|'([^']*)')/i.exec(tag) : null
-  const content = value ? (value[1] ?? value[2]) : undefined
+  const content = tag ? attribute(tag, 'content') : undefined
   return content ? decodeEntities(content).trim() : undefined
 }
 
