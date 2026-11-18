@@ -102,7 +102,7 @@ export function checkProject(data: unknown): { project: Project; repairs: string
     data.id = uid('project')
     repairs.push(tt('the project had no id: it has a new one, so its version history starts afresh'))
   }
-  if (typeof data.name !== 'string' || !data.name) data.name = 'Untitled'
+  if (typeof data.name !== 'string' || !data.name) data.name = tt('Untitled')
   const assets = (data.assets ?? {}) as Record<string, unknown>
   for (const [id, asset] of Object.entries(assets)) {
     if (!isPlain(asset) || !isPlain(asset.source) || typeof asset.kind !== 'string') delete assets[id]

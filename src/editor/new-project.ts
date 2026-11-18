@@ -34,8 +34,8 @@ export function defaultTracks() {
   ]
 }
 
-/** A blank project with the standard track layout. */
-export function createEmptyProject(name = 'Untitled', settings: Partial<ProjectSettings> = {}): Project {
+/** A blank project with the standard track layout. Given no name, it is called "untitled" in the window's language, as its tracks are named in it. */
+export function createEmptyProject(name = tt('Untitled'), settings: Partial<ProjectSettings> = {}): Project {
   const tracks = defaultTracks()
   return {
     id: uid('proj'),

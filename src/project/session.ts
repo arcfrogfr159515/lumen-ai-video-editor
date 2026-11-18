@@ -106,7 +106,7 @@ async function settleChanges(): Promise<boolean> {
   return true
 }
 
-export async function newProject(settings: Partial<ProjectSettings>, name = 'Untitled') {
+export async function newProject(settings: Partial<ProjectSettings>, name = tt('Untitled')) {
   if (!(await settleChanges())) return false
   load(createEmptyProject(name, settings), null)
   dropRecovery()
