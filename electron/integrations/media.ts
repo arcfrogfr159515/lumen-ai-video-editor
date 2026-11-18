@@ -190,7 +190,21 @@ export async function importUrl(url: string, name: string | undefined, provenanc
   } finally {
     settle()
   }
-  return fileAsset(abs, mime, name ?? decodeURIComponent(path.basename(parsed.pathname)), provenance)
+  return fileAsset(abs, mime, name ?? nameInAddress(parsed.pathname), provenance)
+}
+
+/**
+ * The file's name as an address has it. A "%" in an address is not always an escape ("100%_final.png"), and reading
+ * it as one throws — which it did here, after the file had been downloaded and put in the library: the import
+ * failed with "URI malformed" and left the file behind. Such a name is taken as it is written.
+ */
+function nameInAddress(pathname: string) {
+  const base = path.basename(pathname)
+  try {
+    return decodeURIComponent(base)
+  } catch {
+    return base
+  }
 }
 
 export function reveal(url: string) {

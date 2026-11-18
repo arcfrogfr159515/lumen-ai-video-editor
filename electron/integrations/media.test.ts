@@ -81,6 +81,17 @@ function body(pieces: number, after: 'stall' | 'break' | 'end' = 'end') {
 }
 
 describe('importing media by link', () => {
+  it('names a file whose address isn’t properly escaped, instead of failing once it is downloaded', async () => {
+    env.answer = () => png(2000)
+    // "%_" and "%ZZ" are not escapes. Read as ones, naming the file threw — after it was already in the library.
+    const asset = await importUrl('https://cdn.example.com/renders/100%_final%ZZ.png', undefined, BY_AGENT)
+    expect(asset).toMatchObject({ kind: 'image', name: '100% final%ZZ', source: { size: 2000 } })
+    expect(stored()).toHaveLength(1)
+    // A name that is escaped is still read.
+    env.answer = () => png(2000)
+    expect((await importUrl('https://cdn.example.com/renders/caf%C3%A9%20shot.png', undefined, BY_AGENT)).name).toBe('café shot')
+  })
+
   it('saves the file and says what it is', async () => {
     env.answer = () => png(2000)
     const asset = await importUrl('https://cdn.example.com/renders/sunset_final.png?sig=abc', undefined, BY_AGENT)
