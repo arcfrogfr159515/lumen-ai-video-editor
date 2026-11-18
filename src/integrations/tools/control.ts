@@ -64,7 +64,8 @@ export const CONTROL_TOOLS: AgentTool[] = [
       if (unknown.length) throw new Error(`Unknown command ${unknown.join(', ')}. Use the command tool names, e.g. clip_update, clip_move, effect_add.`)
       const results: { index: number; command: string; ok: boolean; result?: unknown; error?: string }[] = []
       let failure: { index: number; error: string } | null = null
-      useEditor.getState().transaction(text(a, 'label') ?? `AI edit (${items.length} steps)`, 'ai', () => {
+      // The step's name is read by the user, in the History: the one the Copilot gives it, or one in their language.
+      useEditor.getState().transaction(text(a, 'label') ?? tt('AI edit ({0} steps)', items.length), 'ai', () => {
         const mark = savepoint()
         for (const [index, item] of items.entries()) {
           const name = commandName(String(item.command))!

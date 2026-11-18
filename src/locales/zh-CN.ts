@@ -432,6 +432,7 @@ const zhCN: Record<string, string> = {
   'Agents can now inspect and change the scene you have open in Blender (port 9876). Every script asks for your approval first.': '代理现在可以查看和修改你在 Blender 中打开的场景（端口 9876）。每个脚本都会先征求你的同意。',
   'Agents write Blender Python; Lumen renders it after you approve, and it lands on your timeline.': '代理编写 Blender Python；你批准后 Lumen 进行渲染，结果会出现在你的时间线上。',
   'AI agents can also hand Lumen a complete HyperFrames composition — anything HTML, CSS and GSAP can draw — and get back a transparent clip.': 'AI 代理还可以交给 Lumen 一个完整的 HyperFrames 合成——凡是 HTML、CSS 和 GSAP 能画出来的——并得到一个透明片段。',
+  'AI edit ({0} steps)': 'AI 编辑（{0} 步）',
   'AI generate': 'AI 生成',
   'AI images, video, voice & music': 'AI 图片、视频、配音和音乐',
   'AI models': 'AI 模型',

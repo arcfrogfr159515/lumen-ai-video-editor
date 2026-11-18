@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R22 | In a Chinese window a change in the mixer was “Volume · 人声”, “Edit EQ · 人声”, “Edit compressor · master” in the History and in Undo's name | The title of `mix.update` was put together from English words as written, the master's name among them. Each is a sentence given to `tt` now, and the master is called what the mixer's own strip calls it | `src/editor/history-labels.test.ts` › “says a change in the mixer in Chinese…” | this round |
+| R23 | In a Chinese window a batch of edits by the Copilot was “AI edit (2 steps)” in the History when the Copilot gave it no name of its own | `batch_edit` wrote the name as it is. It is read by the user, in the History, and is looked up now; a name the Copilot gives is kept as given | `src/integrations/tools/batch-edit.test.ts` (new; also the first tests that a batch is one step, and that a refused batch changes nothing) | this round |
+| R22 | In a Chinese window a change in the mixer was “Volume · 人声”, “Edit EQ · 人声”, “Edit compressor · master” in the History and in Undo's name | The title of `mix.update` was put together from English words as written, the master's name among them. Each is a sentence given to `tt` now, and the master is called what the mixer's own strip calls it | `src/editor/history-labels.test.ts` › “says a change in the mixer in Chinese…” | `c16bd32` |
 | R21 | In a Chinese window a trim was “Trim start”, “Trim end”, “Ripple trim end” in the History and in Undo's name | The title of `clip.trim` was put together from English words as written (and from the command's own `start` / `end`). It is one of four sentences given to `tt` now | `src/editor/history-labels.test.ts` › “says a trim in Chinese…” | `ef2a0e0` |
 | R20 | In a Chinese window, deleting clips was “Delete 片段” / “Ripple delete 2 个片段” in the History and in Undo's name: half English, half Chinese | The title of `clip.delete` put the verb in as written and looked up only what was deleted. The whole name is a sentence given to `tt` now, as the names of a move or a duplicate already were | `src/editor/history-labels.test.ts` (new; runs with the window's language set to Chinese) | `7362e0c` |
 | R19 | In a Chinese window a title added by the Copilot left English behind for the user to read: a track called “Titles” in the timeline (when it had to make one) and a step called “Title “…”” in the History | `add_title` wrote both as they are. What a tool answers the model stays English on purpose; these two are read by the user, and are looked up now | `src/integrations/tools/add-title.test.ts` (new; runs with the window's language set to Chinese) | `6394933` |
@@ -38,7 +39,6 @@ Words the interface shows without looking them up, as R14's was — found by rea
 
 | Seen | Where |
 |---|---|
-| The Copilot's batch of edits is “AI edit (3 steps)” in the History when it gives no name of its own | `src/integrations/tools/control.ts` line 68 |
 | Words cut by the Copilot are “Cut 3 spoken words” in the History | `src/integrations/tools/craft.ts` line 176 |
 
 Scanned for after R14, and found clean: words between tags, `title` / `aria-label` / `placeholder` attributes, either-or words in the interface's code, and the names in the tables of presets, effects and sounds.
