@@ -91,6 +91,8 @@ export function docxText(file: Buffer): string {
   return xml
     .replace(/<w:p[ >][\s\S]*?<\/w:p>/g, (para) => {
       const text = para
+        // What a field is told to do (HYPERLINK "…", PAGE, TOC \o "1-3") sits beside what it shows, and isn't text.
+        .replace(/<w:instrText\b[^>]*>[\s\S]*?<\/w:instrText>/g, '')
         .replace(/<w:tab\b[^>]*\/>/g, '\t')
         .replace(/<w:(?:br|cr)\b[^>]*\/>/g, '\n')
         .replace(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>|<[^>]+>/g, (_tag, run: string | undefined) => run ?? '')

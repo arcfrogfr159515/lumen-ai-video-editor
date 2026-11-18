@@ -71,6 +71,17 @@ describe('Word documents', () => {
     expect(docxText(docx(xml, false))).toBe('Scene one\nCut\tto\nblack.\nTom & Ann <3')
   })
 
+  it('give what a field shows, not what the field is told to do', () => {
+    // A link, a page number, a table of contents: each is a field, and its instructions sit in the document beside what it shows.
+    const field = (code: string, shown: string) =>
+      `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve">${code}</w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>${shown}</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>`
+    const xml = document(
+      `<w:p><w:r><w:t xml:space="preserve">See </w:t></w:r>${field(' HYPERLINK "https://lumen.app/guide" ', 'the guide')}<w:r><w:t xml:space="preserve">, page </w:t></w:r>${field(' PAGE \\* MERGEFORMAT ', '4')}<w:r><w:t>.</w:t></w:r></w:p>`,
+      para('The end.'),
+    )
+    expect(docxText(docx(xml))).toBe('See the guide, page 4.\nThe end.')
+  })
+
   it('read numbered characters, and leave a number that isn’t one as it is', () => {
     expect(docxText(docx(document(para('caf&#233; &#x1F3AC; &#xe9;'))))).toBe('café 🎬 é')
     // &#1114112; is past the last character there is: it used to end the read with "Invalid code point".
