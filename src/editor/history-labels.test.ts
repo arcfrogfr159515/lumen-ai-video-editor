@@ -50,6 +50,14 @@ describe('what the History calls an edit, in a Chinese window', () => {
     expect(lastStep()).toBe('波纹修剪开头')
   })
 
+  it('says which kind of track was added in Chinese', () => {
+    // "添加 video 轨道": the kind went into the sentence as the code writes it.
+    run('track.add', { kind: 'video' })
+    expect(lastStep()).toBe('添加视频轨道')
+    run('track.add', { kind: 'audio' })
+    expect(lastStep()).toBe('添加音频轨道')
+  })
+
   it('says a change in the mixer in Chinese, and whose it is', () => {
     // "Volume · master", "Edit EQ · 人声": what was changed was English words as written, and so was the master's name.
     const voice = getProject().tracks.find((t) => t.kind === 'audio')!

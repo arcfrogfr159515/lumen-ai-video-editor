@@ -358,7 +358,6 @@ const zhCN: Record<string, string> = {
   'Add {0} clips': '添加 {0} 个片段',
   'Add {0} title': '添加{0}标题',
   'Add {0} to {1} clips': '为 {1} 个片段添加{0}',
-  'Add {0} track': '添加 {0} 轨道',
   'Add & connect': '添加并连接',
   'Add a crossfade': '添加交叉淡化',
   'Add a mask': '添加蒙版',

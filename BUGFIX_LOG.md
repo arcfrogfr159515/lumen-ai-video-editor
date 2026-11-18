@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R52 | In a Chinese window, a track added with the “+” (or by the Copilot) was named “Video 4” or “Audio 4”, among 标题, 叠加, 主视频, 人声 | `track.add` wrote the name from “Video” / “Audio” as they are; an audio track made by detaching sound, a few lines of `ops.ts` away, already looked its name up. Both kinds do now | `src/editor/track-names.test.ts` (new) | this round |
+| R53 | In a Chinese window, the History (and Undo) called adding a track “添加 video 轨道” | The title of `track.add` put the kind into a looked-up sentence as the code writes it. It asks for the two sentences the menus already use (添加视频轨道, 添加音频轨道); the dictionary's entry for the sentence with a gap, which nothing asks for any more, is gone | `src/editor/history-labels.test.ts` (one test added) | this round |
+| R52 | In a Chinese window, a track added with the “+” (or by the Copilot) was named “Video 4” or “Audio 4”, among 标题, 叠加, 主视频, 人声 | `track.add` wrote the name from “Video” / “Audio” as they are; an audio track made by detaching sound, a few lines of `ops.ts` away, already looked its name up. Both kinds do now | `src/editor/track-names.test.ts` (new) | `7c0697e` |
 | R51 | In a Chinese window, the message after a batch change said “未更改：3 clips (没有画面)。” | `describeBatch` counted the clips it left alone with “clips” written into the text. The count is looked up now, as the rest of the sentence is | `src/editor/batch-words.test.ts` (new) | `dd435fa` |
 | R50 | In a Chinese window, the source monitor said what an edit would do as “三点编辑: 5 s at 00:00:08:10 · 从出点倒推”, and called an edit of one or two points “2-point” | `describeEdit` put the sentence together around an “at” and a “-point” written into it. The sentence and the name are looked up now (`{0}: {1} at {2}`, `{0}-point`) | `src/editor/edit-words.test.ts` (new) | `aec767d` |
 | R49 | A screen recording that had been sped up (or reversed) told the Copilot its clicks at the wrong times: at twice the speed, `get_clip` put the click seen 2.5 s into the timeline at 4 s, and left out the ones in the second half of what the clip shows. The Inspector's count of the clip's clicks was short in the same way | Clicks were placed by their time in the recording less the trim, as if every clip played at normal speed — in two copies of the same sum (`clipClicks`, and `clicksOf` in the tool). The cues beside them already went through the clip's timing. Clicks do now, and the tool uses the one function | `src/integrations/tools/capture.test.ts` (one test added) | 65eaa88 |
@@ -64,7 +65,11 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 ## Next — seen while reading, not yet reproduced
 
-- The History calls adding a track “添加 video 轨道” in a Chinese window: the kind is put into the looked-up sentence as it is written (`commands.ts`, the title of `track.add`). Seen while fixing R52; to be shown by a test first.
+What the History calls an edit, where a value goes into the looked-up sentence as the code writes it — seen in a Chinese window with a throwaway test while fixing R53, each still to be shown by a test that stays:
+
+- Keyframes: “关键帧：scale”, “移除 scale 关键帧”, “清除 x 动画” (`keyframe.set`, `keyframe.remove`, `keyframe.clear`).
+- Pasting one attribute: “粘贴 transform”, “粘贴 color” (`clip.copyAttributes`).
+- Adding an effect (`effect.add`) puts the effect's name in the same way; not looked at yet.
 
 A recording's files on disk are named in English whatever the window's language (“Recording 2026-10-13 21.45.10 camera part 2.mp4”), and a recording nobody named takes its file's name into the media library (“Recording 2026-…”). Left as it is: a file's name is not the interface, and R47–R48 settled the words the interface adds.
 

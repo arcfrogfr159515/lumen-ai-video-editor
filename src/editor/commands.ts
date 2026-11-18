@@ -1303,7 +1303,7 @@ export const commands = {
       index: z.number().int().min(0).optional(),
       role: z.enum(['main', 'titles', 'captions']).optional(),
     }),
-    title: (i) => tt('Add {0} track', i.kind),
+    title: (i) => (i.kind === 'video' ? tt('Add video track') : tt('Add audio track')),
     run(p, i) {
       const count = p.tracks.filter((t) => t.kind === i.kind).length
       const track = createTrack(i.kind, {
