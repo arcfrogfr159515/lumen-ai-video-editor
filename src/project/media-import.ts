@@ -74,8 +74,14 @@ export async function importMediaFiles(files: MediaFileInfo[], failures: ImportF
       .map((a) => [(a.source as { path: string }).path.toLowerCase(), a]),
   )
   const existing: Asset[] = []
+  // A file named twice is one file. A folder and a file in it, both given, name it twice — what is in a folder is
+  // listed without looking at what else was given — and it stood in the media library twice.
+  const named = new Set<string>()
   const fresh = files.filter((f) => {
-    const hit = byPath.get(f.path.toLowerCase())
+    const key = f.path.toLowerCase()
+    if (named.has(key)) return false
+    named.add(key)
+    const hit = byPath.get(key)
     if (hit) existing.push(hit)
     return !hit
   })
