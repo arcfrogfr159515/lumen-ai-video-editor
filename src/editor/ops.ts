@@ -7,6 +7,7 @@ import { clamp } from '@/lib/math'
 import { uid } from '@/lib/id'
 import { createClip, createTrack, TRACK_HEIGHTS } from './defaults'
 import { ANIMATABLE, evalKeyframes, propAt } from './keyframes'
+import { followOffset } from './motion'
 import { consumed, consumedAt, localForConsumed, sourceFrameAt, speedAt, splitInPoints } from './timing'
 import type { AnimatableProp, Clip, ClipKind, Frame, Keyframe, Project, Track, Transition } from './types'
 import { tt } from '@/lib/i18n'
@@ -964,6 +965,21 @@ export function freezeFrame(p: Project, clip: Clip, frame: Frame, duration: Fram
   for (const prop of ANIMATABLE) {
     if (prop === 'speed' || !clip.keyframes[prop]?.length) continue
     setBase(hold, prop, propAt(clip, prop, local))
+  }
+  // And stays where the point it follows had carried it by then — it, and each of its masks. Given the path to
+  // follow from its own first frame, the hold stood where the clip began and then moved off as the clip had.
+  if (hold.follow) {
+    const [dx, dy] = followOffset(hold.follow, local)
+    hold.transform.x += dx
+    hold.transform.y += dy
+    delete hold.follow
+  }
+  for (const mask of hold.masks ?? []) {
+    if (!mask.follow) continue
+    const [dx, dy] = followOffset(mask.follow, local)
+    mask.x += dx
+    mask.y += dy
+    delete mask.follow
   }
   const partners = clip.groupId ? Object.values(p.clips).filter((c) => c.groupId === clip.groupId && c.trackId !== clip.trackId && !isMagneticTrack(p, c.trackId)) : []
   const right = splitClip(p, clip, at)
