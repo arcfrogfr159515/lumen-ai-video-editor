@@ -363,8 +363,13 @@ function withPictures(messages: ModelMessage[], pictures: Map<string, Picture[]>
 /** Keeps the conversation bounded, cutting only at a user turn so tool calls stay paired. */
 export function trim(history: ModelMessage[]) {
   if (history.length <= MAX_HISTORY) return history
-  let start = history.length - KEEP_HISTORY
+  const from = history.length - KEEP_HISTORY
+  let start = from
   while (start < history.length && history[start].role !== 'user') start++
+  // No turn starts that late: the last one alone is longer than what is kept (twenty tool calls are forty messages,
+  // and a turn may make forty). It stays whole. Cut the same way it left nothing at all — the turn itself forgotten
+  // as it ended, and “continue” said to a model that had never been asked anything.
+  if (start === history.length) for (start = from; start > 0 && history[start].role !== 'user'; ) start--
   return history.slice(start)
 }
 
