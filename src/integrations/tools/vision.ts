@@ -15,8 +15,10 @@ import { assetById, clampNum, frameArg, int, list, num, number, obj, rangeArg, s
 
 /** "0:12.5" — tenths, so cells a second apart still read differently. */
 export function label(sec: number) {
-  const m = Math.floor(sec / 60)
-  return `${m}:${(sec - m * 60).toFixed(1).padStart(4, '0')}`
+  // Rounded before it is split: 59.96 s is "1:00.0", not sixty seconds into minute nought.
+  const tenths = Math.round(sec * 10)
+  const m = Math.floor(tenths / 600)
+  return `${m}:${((tenths - m * 600) / 10).toFixed(1).padStart(4, '0')}`
 }
 
 const WIDTH = num('Image width in pixels (256–1920, default 1024). Wider shows more detail but costs more tokens.', { minimum: 256, maximum: 1920 })
