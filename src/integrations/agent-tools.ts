@@ -94,33 +94,49 @@ function jobReport(job: Job | undefined, placedClip?: string | null) {
   }
 }
 
+/**
+ * The timeline a render was asked onto: the one open when it was asked for. A render takes minutes, and the clip
+ * was put on whatever timeline was open when it landed — another timeline of the project, or another project's —
+ * at a frame that was counted on the first.
+ */
+function openTimeline() {
+  const p = getProject()
+  return { project: p.id, timeline: openSequenceId(p) }
+}
+type Timeline = ReturnType<typeof openTimeline>
+const stillOpen = (where: Timeline) => getProject().id === where.project && openSequenceId(getProject()) === where.timeline
+
 /** Starts a render, optionally waits for it, and places the result. */
 async function runJob(start: () => Promise<Job>, args: Record<string, unknown>, ctx?: ToolContext) {
   const at = typeof args.at_seconds === 'number' ? Math.round(args.at_seconds * getProject().settings.fps) : usePlayback.getState().frame
+  const where = openTimeline()
   const job = await start()
   const finished = await waitForJob(job.id, waitSeconds(args, ctx, 90), ctx)
   let clip: string | null = null
+  let elsewhere = false
   if (finished?.status === 'done' && args.place !== false) {
     const [assetId] = useIntegrations.getState().imported[job.id] ?? []
-    if (assetId) clip = placeAsset(assetId, at, { source: 'ai' })
+    if (assetId && stillOpen(where)) clip = placeAsset(assetId, at, { source: 'ai' })
+    else if (assetId) elsewhere = true
   } else if (finished?.status === 'running' && args.place !== false) {
-    placeWhenDone(job.id, at)
+    placeWhenDone(job.id, at, where)
   }
-  return jobReport(finished, clip)
+  return { ...jobReport(finished, clip), ...(elsewhere ? { note: 'Not placed: the timeline it was asked onto was no longer the open one when it finished. It is in the media library — place_asset puts it on a timeline.' } : {}) }
 }
 
 /** Starts a render and drops the result on the timeline at `at` once it lands (Copilot uses this). */
 export async function startAndPlace(start: () => Promise<Job>, at: number) {
+  const where = openTimeline()
   const job = await start()
-  placeWhenDone(job.id, at)
+  placeWhenDone(job.id, at, where)
   return job
 }
 
-/** For renders still going when the tool returned: drop the clip in once it lands. */
-function placeWhenDone(jobId: string, at: number) {
+/** For renders still going when the tool returned: drop the clip in once it lands, if its timeline is still the open one. */
+function placeWhenDone(jobId: string, at: number, where: Timeline) {
   void waitForJob(jobId, 30 * 60).then((job) => {
     const [assetId] = useIntegrations.getState().imported[jobId] ?? []
-    if (job?.status === 'done' && assetId) placeAsset(assetId, at, { source: 'ai' })
+    if (job?.status === 'done' && assetId && stillOpen(where)) placeAsset(assetId, at, { source: 'ai' })
   })
 }
 
