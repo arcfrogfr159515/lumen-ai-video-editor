@@ -1658,7 +1658,16 @@ export const commands = {
       for (const a of Object.values(p.assets)) if (a.matteOf && ids.has(a.matteOf.assetId)) ids.add(a.id)
       for (const c of Object.values(p.clips)) if (c.assetId && ids.has(c.assetId)) delete p.clips[c.id]
       // …and from the timelines that aren't open.
-      for (const seq of Object.values(p.sequences ?? {})) for (const c of Object.values(seq.clips)) if (c.assetId && ids.has(c.assetId)) delete seq.clips[c.id]
+      for (const seq of Object.values(p.sequences ?? {})) {
+        const gone = Object.values(seq.clips).filter((c) => c.assetId && ids.has(c.assetId))
+        if (!gone.length) continue
+        const was = isDraft(seq) ? current(seq) : structuredClone(seq)
+        for (const c of gone) delete seq.clips[c.id]
+        // The open timeline's main track closes up after every command, and what is linked to its clips follows
+        // them. One that isn't open gets no such tidying: it was left with a hole where the clips had been, on a
+        // track that has none — to close by itself at the next edit made there, whatever that edit was.
+        normalizeProject({ ...p, tracks: seq.tracks, clips: seq.clips } as Project, { ...p, tracks: was.tracks, clips: was.clips } as Project)
+      }
       // Clips cut out with a removed matte show whole again.
       for (const c of Object.values(p.clips)) if (c.matte && ids.has(c.matte.assetId)) delete c.matte
       for (const seq of Object.values(p.sequences ?? {})) for (const c of Object.values(seq.clips)) if (c.matte && ids.has(c.matte.assetId)) delete c.matte
