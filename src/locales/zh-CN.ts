@@ -2288,6 +2288,7 @@ const zhCN: Record<string, string> = {
   'Rich black & white': '层次丰富的黑白',
   'Right': '右',
   'Ripple delete': '波纹删除',
+  'Ripple delete {0}': '波纹删除 {0}',
   'Ripple lock off': '关闭波纹锁定',
   'Ripple lock on': '开启波纹锁定',
   'Ripple lock: clips on this track hold their place in time': '波纹锁定：这条轨道上的片段保持在原来的时间位置',

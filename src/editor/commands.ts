@@ -843,7 +843,7 @@ export const commands = {
   'clip.delete': command({
     description: 'Delete clips. With ripple, later clips on the same track shift left to close the gap.',
     input: z.object({ ids: z.array(id).min(1), ripple: z.boolean().default(false) }),
-    title: (i) => `${i.ripple ? 'Ripple delete' : 'Delete'} ${plural(i.ids.length, 'clip')}`,
+    title: (i) => (i.ripple ? tt('Ripple delete {0}', plural(i.ids.length, 'clip')) : tt('Delete {0}', plural(i.ids.length, 'clip'))),
     run(p, i) {
       i.ids.forEach((clipId) => assertEditable(p, getClip(p, clipId)))
       deleteClips(p, i.ids, i.ripple)
