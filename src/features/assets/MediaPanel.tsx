@@ -8,10 +8,11 @@ import { Select } from '@/components/ui/select'
 import { ContextContent, ContextItem, ContextRoot, ContextSeparator, ContextTrigger } from '@/components/ui/menu'
 import { describeTiming, isUneven } from '@/editor/frame-rate'
 import { placeAsset } from '@/editor/placement'
-import { monitorLevel, onMonitorChange, usePlayback } from '@/editor/playback'
+import { usePlayback } from '@/editor/playback'
 import { dispatch, useEditor } from '@/editor/store'
 import type { Asset } from '@/editor/types'
 import { useUI, type MediaShelf } from '@/editor/ui-store'
+import { onPreviewChange, previewing, togglePreview } from './audio-preview'
 import { mediaCounts, visibleMedia, type MediaKindFilter } from './library'
 import { dnd } from '@/features/dnd'
 import { useTimelineView } from '@/editor/timeline-view'
@@ -598,34 +599,11 @@ function MediaCard({ asset, used, order }: { asset: Asset; used: boolean; order:
   )
 }
 
-/** One audio preview at a time, straight from the file, at the preview volume. */
-let previewEl: HTMLAudioElement | null = null
-const previewListeners = new Set<() => void>()
-onMonitorChange((gain) => {
-  if (previewEl) previewEl.volume = gain
-})
+/** Whether this file is the one being previewed, and the button that plays or pauses it. */
 function usePreviewing(url: string | undefined) {
   const [, setTick] = useState(0)
-  useEffect(() => {
-    const fn = () => setTick((t) => t + 1)
-    previewListeners.add(fn)
-    return () => void previewListeners.delete(fn)
-  }, [])
-  const playing = Boolean(url && previewEl && !previewEl.paused && previewEl.dataset.url === url)
-  const toggle = () => {
-    if (!url) return
-    if (playing) previewEl!.pause()
-    else {
-      previewEl?.pause()
-      previewEl = new Audio(url)
-      previewEl.dataset.url = url
-      previewEl.crossOrigin = 'anonymous'
-      previewEl.volume = monitorLevel()
-      previewEl.onpause = previewEl.onended = previewEl.onplay = () => previewListeners.forEach((f) => f())
-      void previewEl.play()
-    }
-  }
-  return { playing, toggle }
+  useEffect(() => onPreviewChange(() => setTick((t) => t + 1)), [])
+  return { playing: previewing(url), toggle: () => void (url && togglePreview(url)) }
 }
 
 function AudioRow({ asset, used, order }: { asset: Asset; used: boolean; order: string[] }) {
