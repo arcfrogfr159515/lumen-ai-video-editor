@@ -4,6 +4,19 @@ import type { AnimatableProp, Clip, Keyframe } from './types'
 
 export const ANIMATABLE: AnimatableProp[] = ['x', 'y', 'scale', 'rotation', 'opacity', 'volume', 'rotateX', 'rotateY', 'z', 'speed']
 
+/**
+ * The values a property can have, where it has bounds: the ones a clip's own value of it is held to (`transform`
+ * and `audioMix` in commands.ts). Where a clip sits and how far it is turned have none; its speed has its own
+ * (timing.ts).
+ */
+export const PROP_RANGE = { scale: [0, 20], opacity: [0, 1], rotateX: [-360, 360], rotateY: [-360, 360], z: [-20000, 5000], volume: [-60, 12] } as const satisfies Partial<Record<AnimatableProp, readonly [number, number]>>
+
+/** A value brought within what its property can be. */
+export function inRange(prop: AnimatableProp, value: number): number {
+  const range = (PROP_RANGE as Partial<Record<AnimatableProp, readonly [number, number]>>)[prop]
+  return range ? clamp(value, range[0], range[1]) : value
+}
+
 /** The static (un-animated) value of a property. */
 export function baseValue(clip: Clip, prop: AnimatableProp): number {
   if (prop === 'volume') return clip.audio.volume

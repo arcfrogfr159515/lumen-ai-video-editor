@@ -13,7 +13,7 @@ import { EASING_NAMES, type Easing } from './easing'
 import { batchNames, batchSkip, type BatchField } from './batch'
 import { takeHunk } from './diff'
 import { closeGaps, FLASH_FRAMES } from './gaps'
-import { ANIMATABLE, evalKeyframes } from './keyframes'
+import { ANIMATABLE, evalKeyframes, inRange } from './keyframes'
 import { defaultMarkerLabel, markerKindInfo, markerKindOf } from './markers'
 import { retimePath } from './motion'
 import { MOTION_PRESETS, mergeKeyframes, presetKeyframes, PRESET_IDS } from './motion-presets'
@@ -601,10 +601,15 @@ function applyPatch(p: Project, clip: Clip, patch: ClipPatch) {
   }
 }
 
+/**
+ * A keyframe's value becomes the clip's own (its animation is cleared, its last keyframe goes) — within what the
+ * property can be. A keyframe that held more (an opacity of 5) left the clip with a value no clip may have:
+ * copied, it couldn't be pasted.
+ */
 function setBase(clip: Clip, prop: AnimatableProp, value: number) {
-  if (prop === 'volume') clip.audio.volume = value
+  if (prop === 'volume') clip.audio.volume = inRange(prop, value)
   else if (prop === 'speed') clip.speed = Math.min(MAX_SPEED, Math.max(MIN_SPEED, value))
-  else clip.transform[prop] = value
+  else clip.transform[prop] = inRange(prop, value)
 }
 
 /**
@@ -1230,7 +1235,8 @@ export const commands = {
       assertEditable(p, clip)
       const speed = i.prop === 'speed'
       if (speed && clip.kind !== 'video' && clip.kind !== 'audio') throw new CommandError(tt('Only video and audio clips have a speed'))
-      const value = speed ? Math.min(MAX_SPEED, Math.max(MIN_SPEED, i.value)) : i.value
+      // Held to what the property can be, as a clip's own value is: opacity runs from 0 to 1, and “150” is full.
+      const value = speed ? Math.min(MAX_SPEED, Math.max(MIN_SPEED, i.value)) : inRange(i.prop, i.value)
       const kfs = (clip.keyframes[i.prop] ??= [])
       const existing = kfs.find((k) => k.frame === i.frame)
       if (existing) {

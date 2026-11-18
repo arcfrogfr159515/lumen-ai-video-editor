@@ -6,7 +6,7 @@ import { current, isDraft } from 'immer'
 import { clamp } from '@/lib/math'
 import { uid } from '@/lib/id'
 import { createClip, createTrack, TRACK_HEIGHTS } from './defaults'
-import { ANIMATABLE, evalKeyframes, propAt } from './keyframes'
+import { ANIMATABLE, evalKeyframes, inRange, propAt } from './keyframes'
 import { followOffset } from './motion'
 import { consumed, consumedAt, localForConsumed, sourceFrameAt, speedAt, splitInPoints } from './timing'
 import type { AnimatableProp, Clip, ClipKind, Frame, Keyframe, Project, Track, Transition } from './types'
@@ -1007,9 +1007,9 @@ export function freezeFrame(p: Project, clip: Clip, frame: Frame, duration: Fram
 }
 
 function setBase(clip: Clip, prop: AnimatableProp, value: number) {
-  if (prop === 'volume') clip.audio.volume = value
+  if (prop === 'volume') clip.audio.volume = inRange(prop, value)
   else if (prop === 'speed') clip.speed = value
-  else clip.transform[prop] = value
+  else clip.transform[prop] = inRange(prop, value)
 }
 
 // ─── Groups & linked sound ───────────────────────────────────────────────
