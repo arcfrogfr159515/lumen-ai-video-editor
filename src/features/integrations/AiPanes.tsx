@@ -87,7 +87,8 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-fg">{spec.name}</span>
+            {/* Looked up where they are shown: the list of providers is shared with the main process, in English. A brand's name has no other. */}
+            <span className="text-sm font-medium text-fg">{tt(spec.name)}</span>
             {connected && !spec.local && !spec.needsBaseURL && <StatusDot status="ready" />}
           </div>
           <div className="truncate text-2xs text-fg-4">
@@ -95,7 +96,7 @@ function ProviderCard({ spec }: { spec: ProviderSpec }) {
               ? spec.local || spec.needsBaseURL
                 ? (state?.baseURL ?? '')
                 : `${state?.via === 'oauth' ? tt('Signed in') : tt('Key')} ${state?.keyHint ?? ''}${models?.models.length ? ` · ${tt('{0} models', models.models.length)}` : ''}`
-              : spec.tagline}
+              : tt(spec.tagline)}
           </div>
           {models?.error && connected && <div className="mt-0.5 truncate text-2xs text-danger/80">{models.error}</div>}
         </div>
