@@ -5,6 +5,7 @@
  */
 import { activeRegions, activeRegionsStreamed, isAudible, isLongAudio, loadAudio } from '@/engine/audio-engine'
 import { speechScript } from '@/engine/audio'
+import { stillOpen, whichTimeline } from './open-timeline'
 import { clipEnd, followsRipple } from './ops'
 import { dispatch, getProject, useEditor } from './store'
 import { captionStyle, layCaptions, type CaptionStyle } from './subtitles'
@@ -298,11 +299,27 @@ export function cutSpokenWords(indexes: readonly number[], opts: { label?: strin
  * other sound beds play on through the joins instead of being chopped up.
  */
 export async function removePauses(opts: { clipIds?: string[]; minGap?: number } = {}) {
-  const project = getProject()
+  const where = whichTimeline()
+  let project = getProject()
+  let found = await findPauses(project, opts)
+  let reports = cuttablePauses(project, found)
+  let cuts = await silentCuts(project, reports, opts)
+  // The pauses are frames of the timeline as it was when the listening began, and listening to a recording the first
+  // time takes seconds. With a clip moved, trimmed or deleted meanwhile, those frames were taken out all the same —
+  // of whatever stood there by then, the words of a line as readily as a pause; with another timeline opened, out
+  // of that one. They are found again on the timeline as it is (what was heard is kept, so that is at once), and on
+  // no timeline but the one they were asked for.
+  for (let again = 0; ; again++) {
+    if (!stillOpen(where)) throw new Error(tt('Another timeline was opened while the pauses were being listened for, so nothing was removed.'))
+    const now = getProject()
+    if (now.clips === project.clips && now.tracks === project.tracks) break
+    if (again >= 3) throw new Error(tt('The timeline kept changing while the pauses were being listened for, so nothing was removed. Try again.'))
+    project = now
+    found = await findPauses(project, opts)
+    reports = cuttablePauses(project, found)
+    cuts = await silentCuts(project, reports, opts)
+  }
   const fps = project.settings.fps
-  const found = await findPauses(project, opts)
-  const reports = cuttablePauses(project, found)
-  const cuts = await silentCuts(project, reports, opts)
   const keepWhole = bedClips(project)
   const joins: number[] = []
   let removed = 0
