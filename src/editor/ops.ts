@@ -1088,10 +1088,15 @@ export function detachAudio(p: Project, clip: Clip): Clip {
   return sound
 }
 
+/** The sound clips a video's sound was detached onto: those linked to it that play its media. */
+export function detachedSound(p: Project, clip: Clip): Clip[] {
+  return clip.groupId ? Object.values(p.clips).filter((c) => c.groupId === clip.groupId && c.kind === 'audio' && c.assetId === clip.assetId) : []
+}
+
 /** Undoes detachAudio: the linked sound clip goes and the video plays its own sound again, with the sound clip's mix. */
 export function reattachAudio(p: Project, clip: Clip) {
   if (!clip.audio.detached) return
-  const linked = clip.groupId ? Object.values(p.clips).filter((c) => c.groupId === clip.groupId && c.kind === 'audio' && c.assetId === clip.assetId) : []
+  const linked = detachedSound(p, clip)
   const sound = linked[0]
   if (sound) {
     const { volume, enhance, denoise, fadeIn, fadeOut } = sound.audio

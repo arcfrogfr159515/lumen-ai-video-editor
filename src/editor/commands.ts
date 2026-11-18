@@ -24,6 +24,7 @@ import {
   cloneClip,
   deleteClips,
   detachAudio,
+  detachedSound,
   dropLoneGroups,
   findFreeStart,
   fitToMedia,
@@ -1033,6 +1034,8 @@ export const commands = {
         const clip = getClip(p, clipId)
         assertEditable(p, clip)
         if (!clip.audio.detached) throw new CommandError(tt('“{0}” still has its own sound', clip.name))
+        // The sound clip is taken off its track: not off a locked one, any more than it could be deleted there.
+        for (const sound of detachedSound(p, clip)) assertEditable(p, sound)
         reattachAudio(p, clip)
       }
     },

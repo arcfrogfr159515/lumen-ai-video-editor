@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CommandInput, CommandName } from './commands'
 import { dispatch, getProject } from './store'
-import { add, addAsset, clip, freshProject, run, trackId } from './test-helpers'
+import { add, addAsset, clip, freshProject, refusal, run, trackId } from './test-helpers'
 
 /** A clip with an effect, a mask and a move, on a track that is then locked. */
 function lockedClip() {
@@ -60,5 +60,27 @@ describe('a clip on a locked track', () => {
     run('keyframe.clear', { clipId: id, prop: 'scale' })
     expect(clip(id)).toMatchObject({ effects: [], keyframes: {} })
     expect(clip(id).masks).toBeUndefined()
+  })
+})
+
+describe('detached sound on a locked track', () => {
+  it('stays there: putting it back into its picture is refused, as deleting it is', () => {
+    freshProject('Locked')
+    addAsset('shot', 20)
+    const id = add('Overlay', 0, 60, { assetId: 'shot' })
+    const [sound] = run('clip.detachAudio', { ids: [id] }) as string[]
+    const track = clip(sound).trackId
+    run('track.update', { id: track, patch: { locked: true } })
+    const before = getProject()
+    expect(refusal('clip.delete', { ids: [sound] })).toMatch(/is on a locked track/)
+    // The picture's own track isn't locked, and that was all that was asked: the sound clip was taken off the
+    // locked track.
+    expect(refusal('clip.reattachAudio', { ids: [id] })).toMatch(/is on a locked track/)
+    expect(getProject()).toBe(before)
+    // Unlocked, the sound goes back into the picture.
+    run('track.update', { id: track, patch: { locked: false } })
+    run('clip.reattachAudio', { ids: [id] })
+    expect(clip(sound)).toBeUndefined()
+    expect(clip(id).audio.detached).toBeUndefined()
   })
 })
