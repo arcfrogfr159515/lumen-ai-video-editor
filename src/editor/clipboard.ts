@@ -24,6 +24,13 @@ export const useClipboard = create<{
   attributes: Clip | null
 }>(() => ({ data: null, attributes: null }))
 
+/**
+ * The media a clip uses: what it plays, the matte it is cut out with, and the same for every take it holds. Only
+ * what it plays used to go with a copy — pasted into another project, a cut-out waited for a matte that wasn't
+ * there and drew nothing, and the other takes were “Missing media”.
+ */
+const mediaOf = (c: Clip) => [c.assetId, c.matte?.assetId, ...(c.takes ?? []).flatMap((t) => [t.assetId, t.matte?.assetId])].filter((id): id is string => Boolean(id))
+
 /** Copies clips (sorted by time). Returns how many were copied. */
 export function copyClips(project: Project, ids: string[]): number {
   const clips = ids
@@ -31,7 +38,7 @@ export function copyClips(project: Project, ids: string[]): number {
     .filter(Boolean)
     .sort((a, b) => a.start - b.start)
   if (!clips.length) return 0
-  const assetIds = new Set(clips.map((c) => c.assetId).filter((id): id is string => Boolean(id)))
+  const assetIds = new Set(clips.flatMap(mediaOf))
   useClipboard.setState({
     data: {
       clips: structuredClone(clips),
