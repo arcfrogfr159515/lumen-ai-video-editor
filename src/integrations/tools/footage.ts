@@ -8,7 +8,7 @@
 import { usePlayback } from '@/editor/playback'
 import { allSequences, clipsLength, openSequenceId } from '@/editor/sequences'
 import { getProject } from '@/editor/store'
-import { formatCues, importSubtitles, timelineCues } from '@/editor/subtitles'
+import { formatCues, importSubtitles, subtitleText, timelineCues } from '@/editor/subtitles'
 import { useUI } from '@/editor/ui-store'
 import { clearFinished, queueCounts, startQueue, useRenderQueue } from '@/engine/render-queue'
 import { desktop } from '@/lib/platform'
@@ -74,7 +74,7 @@ export const FOOTAGE_TOOLS: AgentTool[] = [
         if (!info) throw new Error(`Can’t read ${path} — check the path.`)
         if (!SUBTITLE_FILE.test(info.name)) throw new Error('Only .srt and .vtt files are read from a path.')
         if (info.size > SUBTITLE_BYTES) throw new Error(`${info.name} is ${Math.round(info.size / 1048576)} MB — too large to be subtitles.`)
-        body = await (await fetch(info.url)).text()
+        body = subtitleText(await (await fetch(info.url)).arrayBuffer())
         name = info.name.replace(/\.[^.]+$/, '')
       }
       const r = importSubtitles(body, { name, offset: number(a, 'offset_seconds'), replace: a.replace === true, source: 'ai' })

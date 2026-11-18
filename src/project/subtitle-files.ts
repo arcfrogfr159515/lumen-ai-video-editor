@@ -4,7 +4,7 @@
  */
 import { toast } from 'sonner'
 import { getProject } from '@/editor/store'
-import { formatCues, importSubtitles, timelineCues, type SubtitleFormat } from '@/editor/subtitles'
+import { formatCues, importSubtitles, subtitleText, timelineCues, type SubtitleFormat } from '@/editor/subtitles'
 import { desktop } from '@/lib/platform'
 import { tt } from '@/lib/i18n'
 
@@ -27,7 +27,7 @@ export function pickSubtitles() {
 
 export async function loadSubtitleFile(file: File) {
   try {
-    const res = importSubtitles(await file.text(), { name: file.name.replace(/\.[^.]+$/, '') })
+    const res = importSubtitles(subtitleText(await file.arrayBuffer()), { name: file.name.replace(/\.[^.]+$/, '') })
     toast.success(tt('{0} caption{1} from {2}', res.added, res.added === 1 ? '' : 's', file.name))
     return res
   } catch (err) {

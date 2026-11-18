@@ -56,6 +56,17 @@ function clean(text: string) {
     .join('\n')
 }
 
+/**
+ * A subtitle file's bytes as text: UTF-8, as nearly all are — or UTF-16 where the file opens with the mark that says
+ * so (what Notepad saves as “Unicode”, and several subtitle editors write). Read as UTF-8 all the same, nothing in
+ * such a file looked like subtitles any more, and it was refused as not being a subtitle file.
+ */
+export function subtitleText(bytes: ArrayBuffer): string {
+  const b = new Uint8Array(bytes)
+  const encoding = b[0] === 0xff && b[1] === 0xfe ? 'utf-16le' : b[0] === 0xfe && b[1] === 0xff ? 'utf-16be' : 'utf-8'
+  return new TextDecoder(encoding).decode(b)
+}
+
 /** Reads SRT or WebVTT text into cues (sorted, empty ones dropped). */
 export function parseSubtitles(text: string): Cue[] {
   const blocks = text.replace(/^﻿/, '').replace(/\r\n?/g, '\n').split(/\n{2,}/)
