@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import type { MotionTemplate } from '../../../shared/integrations'
+import { UNSPACED, wordSpans, wordsOf } from '../../../shared/words'
 import { packageFile } from '../paths'
 
 /**
@@ -71,16 +72,52 @@ interface Frame {
   duration: number
 }
 
+// Words are what stands between spaces — and, in a script written without spaces (Chinese, Japanese), the words of
+// such a stretch (`wordsOf`). Taken for what stands between spaces alone, a Chinese line was one word: kinetic type
+// set all of it on one line that doesn't break, nothing wiped on word by word, and forty characters were given the
+// time it takes to read one word.
+
 /** Seconds a reader needs for some text once it has landed: 0.3 s a word plus a second, at least 1.5 s. */
-export const readingTime = (text: string) => Math.max(1.5, 1 + 0.3 * text.split(/\s+/).filter(Boolean).length)
+export const readingTime = (text: string) => Math.max(1.5, 1 + 0.3 * wordsOf(text).length)
+
+interface Word {
+  text: string
+  /** Set apart by *stars*. */
+  hot: boolean
+  /** The writer put a space before it. */
+  gap: boolean
+}
+
+/** Words one after another, each as `html` writes it — with a space between two of them where the writer put one, and none where there was none. */
+const inARow = (words: Word[], html: (word: Word) => string) => words.map((w, i) => (i && w.gap ? ' ' : '') + html(w)).join('')
+
+/** The words of a text, as they are written in it. */
+function spaced(text: string): Word[] {
+  const spans = wordSpans(text)
+  return spans.map(([a, b], i) => ({ text: text.slice(a, b), hot: false, gap: i > 0 && a > spans[i - 1][1] }))
+}
+
+/**
+ * The words of a line, with the ones set apart by *stars*. Between spaces a starred word is a word in stars; in a
+ * script written without spaces the stars stand in the middle of the sentence, around the word they mark.
+ */
+function starred(text: string): Word[] {
+  const out: Word[] = []
+  for (const run of text.split(/\s+/).filter(Boolean)) {
+    const first = out.length
+    if (!UNSPACED.test(run)) out.push({ text: run.replace(/\*/g, ''), hot: /^\*.+\*$/.test(run), gap: false })
+    else
+      for (const piece of run.split(/(\*[^*]+\*)/).filter(Boolean)) {
+        if (/^\*[^*]+\*$/.test(piece)) out.push({ text: piece.slice(1, -1), hot: true, gap: false })
+        else for (const word of wordsOf(piece.replace(/\*/g, ''))) out.push({ text: word, hot: false, gap: false })
+      }
+    if (first > 0 && out[first]) out[first].gap = true
+  }
+  return out
+}
 
 /** Words in masks: each word slides inside its own clip, so type wipes on instead of fading. */
-const maskedWords = (text: string, cls = 'w') =>
-  text
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => `<span class="mask"><span class="${cls}">${esc(w)}</span></span>`)
-    .join(' ')
+const maskedWords = (text: string, cls = 'w') => inARow(spaced(text), (w) => `<span class="mask"><span class="${cls}">${esc(w.text)}</span></span>`)
 
 function page(f: Frame, css: string, body: string, script: string, params: Record<string, unknown>) {
   // Templates are authored at 1080p; --s scales them to the output's short side.
@@ -203,15 +240,7 @@ function titleCard(p: Record<string, unknown>, f: Frame) {
     .sub { margin-top: calc(22px * var(--s)); font-family: ${FONT_STACKS.sans}; font-size: calc(26px * var(--s)); font-weight: 420; color: rgba(255,255,255,0.8); letter-spacing: 0.005em; ${SHADOW} }`
   // *word* sets a word in italics and the accent colour (editorial).
   const rich = (line: string) =>
-    line
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((w) => {
-        const hot = /^\*.+\*$/.test(w)
-        const word = esc(w.replace(/\*/g, ''))
-        return `<span class="mask"><span class="w">${hot && !poster ? `<em>${word}</em>` : word}</span></span>`
-      })
-      .join(' ')
+    inARow(starred(line), (w) => `<span class="mask"><span class="w">${w.hot && !poster ? `<em>${esc(w.text)}</em>` : esc(w.text)}</span></span>`)
   const body = `
     <div class="card">
       ${p.eyebrow ? `<div class="eyebrow"><span class="mask"><span>${esc(p.eyebrow)}</span></span></div>` : ''}
@@ -257,13 +286,10 @@ function kinetic(p: Record<string, unknown>, f: Frame) {
   const fg = color(p.color, '#ffffff')
   const style = p.style === 'stack' || p.style === 'stretch' ? p.style : 'punch'
   const font = style === 'stretch' ? FONT_STACKS.wide : stack(p.font, 'display')
-  const words = String(p.text ?? 'Make every frame count')
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 24)
+  const words = starred(String(p.text ?? 'Make every frame count')).slice(0, 24)
   // Emphasise any word in *stars* — or the last one when none is marked.
-  const marked = words.some((w) => /^\*.+\*$/.test(w))
-  const items = words.map((w, i) => ({ text: w.replace(/\*/g, ''), hot: marked ? /^\*.+\*$/.test(w) : i === words.length - 1 }))
+  const marked = words.some((w) => w.hot)
+  const items = words.map((w, i) => ({ ...w, hot: marked ? w.hot : i === words.length - 1 }))
   const css =
     style === 'stack'
       ? `
@@ -278,7 +304,7 @@ function kinetic(p: Record<string, unknown>, f: Frame) {
   const body =
     style === 'stack'
       ? `<div class="wrap">${chunk(items, 2)
-          .map((row) => `<div class="row">${row.map((w) => `<span class="mask"><span class="w${w.hot ? ' hot' : ''}">${esc(w.text)}</span></span>`).join(' ')}</div>`)
+          .map((row) => `<div class="row">${inARow(row, (w) => `<span class="mask"><span class="w${w.hot ? ' hot' : ''}">${esc(w.text)}</span></span>`)}</div>`)
           .join('')}</div>`
       : `<div class="wrap">${items.map((w) => `<span class="w${w.hot ? ' hot' : ''}">${esc(w.text)}</span>`).join('')}</div>`
   const timing = `
@@ -378,7 +404,7 @@ function quote(p: Record<string, unknown>, f: Frame) {
   const accent = color(p.accent, '#d6ee00')
   const fontKey = p.font ?? 'editorial'
   const text = String(p.text ?? 'Simplicity is the ultimate sophistication.')
-  const words = text.split(/\s+/).filter(Boolean).length
+  const words = wordsOf(text).length
   const css = `
     .q { position: absolute; left: 12%; right: 12%; top: 50%; transform: translateY(-50%); color: #fff; }
     .mark { font-family: ${FONT_STACKS.editorial}; font-size: calc(170px * var(--s)); line-height: 0.6; color: ${accent}; height: calc(70px * var(--s)); ${SHADOW} }
