@@ -30,6 +30,8 @@ export function formatSeconds(sec: number) {
 
 /** Parses "SS", "MM:SS", "HH:MM:SS" or "HH:MM:SS:FF" into frames. */
 export function parseTimecode(input: string, fps: number): number | null {
+  // Nothing typed is not a time. (As a number, an empty piece is 0: an emptied field was read as the very start.)
+  if (!/\d/.test(input)) return null
   const parts = input.trim().split(/[:;.]/).map((p) => Number(p))
   if (!parts.length || parts.some((p) => !Number.isFinite(p) || p < 0)) return null
   let h = 0, m = 0, s = 0, f = 0

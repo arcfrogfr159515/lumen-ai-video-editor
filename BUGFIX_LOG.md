@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R12 | A sound effect played after it had been stopped — Play, then Stop before the first sound (a double click on the button) — with the button saying nothing was playing; and two effects asked for one right after the other played one over the other, the first with nothing that could stop it. Stopped is stopped, and only the last one asked for plays | `auditionSfx` stops what is sounding, then waits for the effect to be rendered (a moment, the first time) and starts it — without asking whether a Stop or another effect came in that moment | `src/project/audition.test.ts` (new) | this round |
+| R13 | Clearing the timecode in the ruler's corner and pressing Enter, or clicking away, sent the playhead to the start of the timeline; nothing typed should move nothing | `parseTimecode` turns each piece of what was typed into a number, and as a number an empty piece is 0 — so an empty field was the time 0, not “not a time” | `src/lib/time.test.ts` (new; the first tests of `parseTimecode`) | this round |
+| R12 | A sound effect played after it had been stopped — Play, then Stop before the first sound (a double click on the button) — with the button saying nothing was playing; and two effects asked for one right after the other played one over the other, the first with nothing that could stop it. Stopped is stopped, and only the last one asked for plays | `auditionSfx` stops what is sounding, then waits for the effect to be rendered (a moment, the first time) and starts it — without asking whether a Stop or another effect came in that moment | `src/project/audition.test.ts` (new) | `f6b539b` |
 | R11 | A page's title or description with an apostrophe in it was cut there — “It's a Wonderful Life” was “It” — in what the Copilot reads of a page, in the cards under its replies, and in the name a video imported by link is given | `meta` read a `<meta>` tag's `content` up to the first quote of either kind, not to the quote that opened it | `electron/integrations/web.test.ts` › “what a page says of itself” | `7afdf69` |
 | R10 | Importing a skill folder that sits under `node_modules` (a skill shipped in a package), or whose own name begins with a dot, failed with “Cannot destructure property 'body' of 'info(...)' as it is null” and left nothing imported; it should be imported like any other | `importSkill` decided what a copy leaves out — hidden files, installed packages — by each file's whole path, the path of the folder being imported included, so for such a folder everything was left out. It is now decided by where a file is inside the skill | `electron/integrations/skills.test.ts` (new; the first tests of importing a skill) | `f74d463` |
 | R9 | A subtitle file's escapes were misread when it was brought in: the text `&lt;` (written `&amp;lt;`) became `<`, and `&#39;`, `&quot;`, `&#8212;`, `&lrm;` stayed in the caption as they were written | `clean` read the escapes one kind after another, `&amp;` first, so what that left was read again; and it knew four of them, none by number. They are now read in one pass | `src/editor/subtitles.test.ts` › “reads each escape in a subtitle file once…” | `5bdca31` |
@@ -24,11 +25,9 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 ## Next — seen while reading, not yet reproduced
 
-| Seen | Where | What to check |
-|---|---|---|
-| A sound effect whose first render failed stays failed until Lumen is restarted: the failed promise is the one kept | `src/project/audio-library.ts` `sfxBuffer` | Whether a render can fail at all in practice; if so, that a second try renders again |
+Nothing waiting.
 
-Read and found sound (round 10–11): `src/lib/keybindings.ts`, `src/lib/persisted.ts`, `src/editor/frame-rate.ts`, `electron/log.ts`, `electron/render-cache.ts`, `src/project/subtitle-files.ts`. `formatDuration` says “60s” for 59.6 s and “10.0s” for 9.96 s: a matter of style, left alone. A link preview for a page with no title gets no card (the window leaves out cards without a title): taken as meant.
+Read and found sound (rounds 10–13): `src/lib/keybindings.ts`, `src/lib/persisted.ts`, `src/editor/frame-rate.ts`, `src/editor/placement.ts`, `src/editor/playback.ts`, `src/editor/lut.ts`, `electron/log.ts`, `electron/render-cache.ts`, `electron/app-ipc.ts`, `electron/integrations/html.ts`, `electron/integrations/ai/media-gen.ts`, `src/project/subtitle-files.ts`, `src/project/media-import.ts`, `src/integrations/tools/footage.ts`, `src/integrations/tools/kit.ts`. `formatDuration` says “60s” for 59.6 s and “10.0s” for 9.96 s: a matter of style, left alone. A link preview for a page with no title gets no card (the window leaves out cards without a title): taken as meant.
 
 Every `decodeURIComponent` in `electron/`, `src/` and `shared/` has been read: R1–R4 were the unguarded ones a person's or a tool's input reaches; `video-link.ts` was already inside a `try`; `files.ts:89` (the model cache) reads addresses only the editor itself makes.
 
@@ -41,6 +40,7 @@ Read and found sound: WebVTT cues timed without hours (`00:01.000 --> 00:02.500`
 | Playback of a timeline with video and sound hitches when the timeline turns its page to follow the playhead (PERF-07) | Seen in CPU samples of the built app; not reproduced by a test. A performance matter, outside this task |
 | A covered window draws one frame a second while sound plays on | Seen once in an automated background run; not reproduced on purpose |
 | A cold start that takes 18–30 s | Seen three times right after a build was written; never when idle. Probably a scanner reading the unsigned executable — not confirmed |
+| A sound effect whose first render failed would stay failed until Lumen is restarted (`sfxBuffer` keeps the promise, failed or not) | By reading only. Nothing was found that makes a render fail: it needs no device and no file |
 
 ## To confirm — needs a decision before any code changes
 
@@ -52,6 +52,8 @@ Read and found sound: WebVTT cues timed without hours (`00:01.000 --> 00:02.500`
 | BUG-05: a GIF export keeps the whole file in memory, with no limit on length | Warn, refuse past a length, or write in pieces — a product choice |
 | UX-10: Collect project can't be cancelled and leaves half a folder when it fails | Removing a partly written folder the user chose the place of is a choice, and cancel needs a new control |
 | About 30 sentences the main process says in English (BUG-16) | Several are also read by a model, and the project keeps what a model reads in English: which ones are for people is a judgement |
+| Captions and transcripts take words to be what spaces separate, and sentences to end in `.` `!` `?`. Chinese or Japanese has neither: a voiceover's transcript is one phrase for the whole recording (`elevenlabs.ts` `wordsFromAlignment` / `phrases`), a caption is the whole phrase whatever the words-per-caption setting (`smart.ts` `captionChunks`), and a generated picture is named with its whole prompt (`media-gen.ts` `nameFrom`) | How such text should be cut — by punctuation, by a number of characters, by the system's word segmenter (`Intl.Segmenter`, no new dependency) — is a choice about how captions look, in four modules |
+| A number field given something with no digit in it (“abc”) sets its value to 0, and “1,5” is read as 15 (`scrub-input.tsx` `commitDraft`) | Whether a comma is a decimal point or a thousands separator is a choice; and the suite has no DOM to type into a field with — a test needs either a new dev dependency or the reading moved out of the component |
 
 ## Ruled out
 
