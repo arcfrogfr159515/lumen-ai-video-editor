@@ -284,12 +284,23 @@ export function cutRanges(project: Pick<Project, 'clips' | 'assets' | 'settings'
   return joined
 }
 
+/** A word written in a script that puts no spaces between its words: a single character of it, here. */
+const UNSPACED = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+
+/**
+ * The words of a line as they are written: a space between two words that are spelled out, none beside a
+ * character of a script written without them. (Decided once for the whole line, by its first word, a line
+ * that began "OK" and went on in Chinese had a space between every character, and one that began in Chinese
+ * had its spelled words run together.)
+ */
+const written = (words: readonly ScriptWord[]) => words.map((w, i) => (i && !UNSPACED.test(words[i - 1].text) && !UNSPACED.test(w.text) ? ' ' : '') + w.text).join('')
+
 /** The script as plain text, a line per phrase, with who says it when that is known. */
 export function scriptText(lines: readonly ScriptLine[]): string {
   let who: string | undefined
   return lines
     .map((line) => {
-      const text = line.words.map((w) => w.text).join(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(line.words[0]?.text ?? '') ? '' : ' ')
+      const text = written(line.words)
       const head = line.speaker && line.speaker !== who ? `${line.speaker}: ` : ''
       who = line.speaker
       return head + text

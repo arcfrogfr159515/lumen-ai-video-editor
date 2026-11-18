@@ -68,6 +68,17 @@ describe('words', () => {
     run('clip.update', { ids: [id], patch: { speaker: 'Anna' } })
     expect(scriptText(script())).toBe('Anna: So um the plan\nthe plan is simple.')
   })
+
+  it('are written out with a space between two spelled words, and none beside a character', () => {
+    // A line was spaced, or not, by its first word alone. One that begins with a spelled word and goes on in
+    // Chinese was copied with a space between every character ("OK， 我 们 开 始 吧"); one that begins in
+    // Chinese had its spelled words run together ("我们用FinalCut剪辑").
+    addAsset('mixed', 20, 'video', {
+      transcript: transcript([1, 2, 'OK，我们开始吧'], [3, 4, '3D 打印很有趣'], [5, 6, '我们用 Final Cut 剪辑'], [7, 8, '今天是2024年'], [9, 10, 'こんにちは world'], [11, 12, 'Back to English now.']),
+    })
+    add('Main', 0, 600, { assetId: 'mixed' })
+    expect(scriptText(script()).split('\n')).toEqual(['OK，我们开始吧', '3D打印很有趣', '我们用Final Cut剪辑', '今天是2024年', 'こんにちはworld', 'Back to English now.'])
+  })
 })
 
 describe('finding words', () => {
