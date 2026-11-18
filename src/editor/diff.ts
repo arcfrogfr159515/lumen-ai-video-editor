@@ -45,6 +45,8 @@ function lookOf(c: Clip): string {
         kind: c.kind,
         transform,
         color,
+        // The look it wears: kept beside the grade, not in it.
+        look: c.look ?? null,
         blend,
         crop,
         text,

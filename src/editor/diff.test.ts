@@ -90,6 +90,15 @@ describe('where two versions differ', () => {
     ])
   })
 
+  it('a look put on a clip counts', () => {
+    // The look a clip wears wasn't among what was compared: the two versions were said to play the same.
+    run('clip.update', { ids: [named('B').id], patch: { look: 'cinematic' } })
+    expect(hunks()).toEqual([['changed', 100, 200, 100, 200]])
+    // And a cut through the clip that wears it still changes nothing.
+    run('clip.split', { frame: 150 })
+    expect(hunks()).toEqual([['changed', 100, 200, 100, 200]])
+  })
+
   it('finds each difference where it is, in order, however the lengths shifted between', () => {
     // Early on, 30 frames come out of everything; later a new shot goes in on every track in sync.
     run('timeline.removeRange', { start: 40, end: 70 })
