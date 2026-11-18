@@ -100,11 +100,18 @@ function auditionOutput() {
   return { ctx, out }
 }
 
+/** Counts what was asked of the audition — play this, stop — so an effect still being rendered knows it was overtaken. */
+let asked = 0
+
 /** Plays an effect (a second call stops it). */
 export async function auditionSfx(id: string, onEnd?: () => void) {
+  const mine = ++asked
   previewNode?.stop()
   const { ctx, out } = auditionOutput()
   const buffer = await sfxBuffer(id)
+  // Rendering an effect the first time takes a moment. Stopped in that moment, or another effect asked for, this one
+  // isn't wanted any more: started all the same, it played after Stop, or over the effect asked for after it.
+  if (mine !== asked) return
   const node = ctx.createBufferSource()
   node.buffer = buffer
   node.connect(out)
@@ -117,6 +124,7 @@ export async function auditionSfx(id: string, onEnd?: () => void) {
 }
 
 export function stopAudition() {
+  asked++
   previewNode?.stop()
   previewNode = null
 }
