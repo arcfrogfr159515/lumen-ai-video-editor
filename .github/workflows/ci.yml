@@ -51,3 +51,9 @@ jobs:
       - run: npm test
       # Typecheck, build, fetch the Electron binary (npm ci doesn't) and package the app.
       - run: npm run pack
+      # The packaged app is started and used: it comes up, speaks the runner's language, edits, undoes. What only a
+      # built Lumen shows (an installed one once came up in English on a Chinese computer) is checked nowhere else.
+      # Said, not enforced, until it has run here for a while: a runner without a desktop to draw on would fail it.
+      - name: Smoke-test the packaged app
+        run: npm run smoke
+        continue-on-error: true

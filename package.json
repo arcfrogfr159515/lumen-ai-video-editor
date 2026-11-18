@@ -57,6 +57,7 @@
     "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
+    "smoke": "node scripts/smoke.mjs",
     "preview:web": "vite preview --mode web",
     "build:helper": "node scripts/build-capture-helper.mjs",
     "pack": "npm run build && npm run build:helper && install-electron && electron-builder --dir --publish never",
