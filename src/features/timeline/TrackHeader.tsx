@@ -4,6 +4,7 @@ import { IconButton } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/menu'
 import { dispatch } from '@/editor/store'
+import { ROLE_TRACK } from '@/editor/track-roles'
 import type { Track } from '@/editor/types'
 import { cn } from '@/lib/cn'
 import { useLayout } from './layout'
@@ -16,7 +17,7 @@ const trackColor = (t: Track) =>
 function TrackIcon({ track }: { track: Track }) {
   if (track.role === 'titles') return <Type />
   if (track.kind === 'video') return track.role === 'main' ? <Film /> : <Layers />
-  return /music|score/i.test(track.name) ? <Music /> : <AudioLines />
+  return ROLE_TRACK.music.test(track.name) ? <Music /> : <AudioLines />
 }
 
 export function TrackHeader({ track }: { track: Track }) {

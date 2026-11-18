@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch'
 import { placeAsset } from '@/editor/placement'
 import { playback, usePlayback } from '@/editor/playback'
 import { getProject } from '@/editor/store'
+import { ROLE_TRACK } from '@/editor/track-roles'
 import { useUI } from '@/editor/ui-store'
 import { SFX, type SfxDef } from '@/engine/sfx'
 import { dnd } from '@/features/dnd'
@@ -166,7 +167,7 @@ function GenerateCards() {
 function voiceTrack() {
   const p = getProject()
   const audio = p.tracks.filter((t) => t.kind === 'audio' && !t.locked)
-  return (audio.find((t) => /voice|vo\b|narrat/i.test(t.name)) ?? audio[0])?.id
+  return (audio.find((t) => ROLE_TRACK.voice.test(t.name)) ?? audio[0])?.id
 }
 
 function RecordCard() {

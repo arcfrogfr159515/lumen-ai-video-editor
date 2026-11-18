@@ -9,6 +9,7 @@ import { createClip, createTrack, TRACK_HEIGHTS } from './defaults'
 import { ANIMATABLE, evalKeyframes, inRange, propAt } from './keyframes'
 import { followOffset } from './motion'
 import { consumed, consumedAt, localForConsumed, sourceFrameAt, speedAt, splitInPoints } from './timing'
+import { ROLE_TRACK } from './track-roles'
 import type { AnimatableProp, Clip, ClipKind, Frame, Keyframe, Project, Track, Transition } from './types'
 import { tt } from '@/lib/i18n'
 
@@ -1045,7 +1046,7 @@ export function groupedIds(p: Project): Set<string> {
 /** An audio track free over [a, b) — preferring one named for voices — or a new one at the bottom. */
 function audioTrackFor(p: Project, a: Frame, b: Frame): Track {
   const free = p.tracks.filter((t) => t.kind === 'audio' && !t.locked && clipsOnTrack(p, t.id).every((c) => clipEnd(c) <= a || c.start >= b))
-  const pick = free.find((t) => /voice|dialog|narrat|audio/i.test(t.name)) ?? free[0]
+  const pick = free.find((t) => ROLE_TRACK.voice.test(t.name) || /audio|音频/i.test(t.name)) ?? free[0]
   if (pick) return pick
   const count = p.tracks.filter((t) => t.kind === 'audio').length
   const track = createTrack('audio', { id: uid('track'), name: tt('Audio {0}', count + 1), height: TRACK_HEIGHTS.audio })

@@ -7,6 +7,7 @@ import { LOOKS, TITLE_PRESETS } from './presets'
 import { adjacentAfter, adjacentBefore, clipEnd, clipsOnTrack, sourceFrames, trackAccepts } from './ops'
 import { dispatch, getProject, useEditor } from './store'
 import type { ActionSource } from './store'
+import { ROLE_TRACK, type AudioRole } from './track-roles'
 import type { Asset, Clip, ClipKind, EffectKind, Project, Track, TransitionAlign, TransitionKind } from './types'
 import { tt } from '@/lib/i18n'
 
@@ -20,14 +21,9 @@ function isFreeAt(project: Project, track: Track, start: number, duration: numbe
   return clipsOnTrack(project, track.id).every((c) => clipEnd(c) <= start || c.start >= start + duration)
 }
 
-export type AudioRole = 'voice' | 'music' | 'sfx'
+export type { AudioRole }
 
-// By what a track is called — in English or in Chinese, whichever language the project was made in.
-const ROLE_TRACK: Record<AudioRole, RegExp> = {
-  voice: /voice|\bvo\b|narrat|dialog|interview|speech|人声|配音|旁白|语音|对白/i,
-  music: /music|score|song|soundtrack|\bbed\b|音乐|配乐|歌曲/i,
-  sfx: /sfx|sound|effect|foley|音效|效果音/i,
-}
+// By what a track is called — in English or in Chinese, whichever language the project was made in (`ROLE_TRACK`).
 const ROLE_NAME: Record<AudioRole, string> = { voice: tt('Voice'), music: tt('Music'), sfx: tt('Sound effects') }
 
 /** What kind of sound an audio asset is — from its tags, where it came from, its transcript or its name. Null when it can't tell. */

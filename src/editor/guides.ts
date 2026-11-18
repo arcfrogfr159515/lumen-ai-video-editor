@@ -6,6 +6,7 @@
  */
 import { PEAKS_PER_SECOND } from './defaults'
 import { consumed, localForSource } from './timing'
+import { ROLE_TRACK } from './track-roles'
 import type { Asset, Clip, Frame, Project, SpeechSegment } from './types'
 
 /** speech: talking starts here · pause: talking stops here · cut: a new shot starts here. */
@@ -71,8 +72,6 @@ export function assetPauses(asset: Asset): [number, number][] {
   return pauses
 }
 
-const VOICE_TRACK = /voice|vo\b|dialog|narrat|interview|speech/i
-
 /**
  * Whether a clip's sound is worth reading for pauses: something transcribed, or
  * sound on the main track or a track named for voices. Music has silences too,
@@ -85,7 +84,7 @@ export function carriesSpeech(project: Pick<Project, 'assets' | 'tracks'>, clip:
   if (!asset || asset.hasAudio === false) return false
   if (asset.transcript?.length) return true
   const track = project.tracks.find((t) => t.id === clip.trackId)
-  return Boolean(track && (track.role === 'main' || VOICE_TRACK.test(track.name)))
+  return Boolean(track && (track.role === 'main' || ROLE_TRACK.voice.test(track.name)))
 }
 
 // ─── Shot cuts ───────────────────────────────────────────────────────────

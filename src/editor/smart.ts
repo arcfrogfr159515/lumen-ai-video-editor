@@ -10,6 +10,7 @@ import { dispatch, getProject, useEditor } from './store'
 import { captionStyle, layCaptions, type CaptionStyle } from './subtitles'
 import { cutRanges, scriptWords, timelineScript } from './text-edit'
 import { consumed, localForSource } from './timing'
+import { ROLE_TRACK } from './track-roles'
 import type { Clip, Project } from './types'
 import { tt } from '@/lib/i18n'
 
@@ -58,12 +59,14 @@ function toTimeline(project: Project, clip: Clip, sourceSec: number) {
   return clip.start + (before !== clip.reverse ? 0 : clip.duration)
 }
 
-const VOICE_TRACK = /voice|vo\b|dialog|narrat|interview|speech/i
-
-/** Where speech is expected first: the main track and voice-ish tracks. */
+/**
+ * Where speech is expected first: the main track and voice-ish tracks. (Told from the track's name, which was
+ * looked for in English only: on a project made in a Chinese window — 人声, 音乐, 音效 — a voiceover was a music
+ * bed, and long ambience on the effects track the music.)
+ */
 const speechTrack = (project: Project, clip: Clip) => {
   const track = project.tracks.find((t) => t.id === clip.trackId)
-  return Boolean(track && (track.role === 'main' || VOICE_TRACK.test(track.name)))
+  return Boolean(track && (track.role === 'main' || ROLE_TRACK.voice.test(track.name)))
 }
 
 /**
@@ -134,9 +137,9 @@ export function musicClips(project: Project): Clip[] {
   return Object.values(project.clips).filter((c) => {
     if (c.kind !== 'audio' || voices.has(c.id) || !isAudible(project, c)) return false
     const track = project.tracks.find((t) => t.id === c.trackId)
-    if (track && /music|score|song|soundtrack|bed/i.test(track.name)) return true
+    if (track && ROLE_TRACK.music.test(track.name)) return true
     const asset = project.assets[c.assetId!]
-    return (asset?.duration ?? 0) >= 20 && !/sfx|effect|sound/i.test(track?.name ?? '')
+    return (asset?.duration ?? 0) >= 20 && !ROLE_TRACK.sfx.test(track?.name ?? '')
   })
 }
 
