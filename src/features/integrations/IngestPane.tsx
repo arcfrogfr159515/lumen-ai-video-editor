@@ -61,8 +61,9 @@ export function IngestPane() {
         <Card>
           <div className="text-sm font-medium text-fg-2">{tt('Master quality')}</div>
           <p className="mt-0.5 mb-3 text-xs leading-relaxed text-fg-4">{tt('Used when the sender doesn’t ask for one. All three keep full colour resolution.')}</p>
-          <Segmented stretch value={state.quality} onChange={(q) => void setIngestOptions({ quality: q })} options={INGEST_QUALITIES.map((q) => ({ value: q.id, label: q.name }))} />
-          <p className="mt-2.5 text-xs text-fg-3">{quality.hint}</p>
+          {/* The list is shared with the main process and written in English: a choice's name and line are looked up here. */}
+          <Segmented stretch value={state.quality} onChange={(q) => void setIngestOptions({ quality: q })} options={INGEST_QUALITIES.map((q) => ({ value: q.id, label: tt(q.name) }))} />
+          <p className="mt-2.5 text-xs text-fg-3">{tt(quality.hint)}</p>
         </Card>
 
         <Card>
