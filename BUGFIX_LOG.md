@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R6 | A skill saved with a name or description between two quotes (`"Fast" cuts and "slow"`) came back without them (`Fast" cuts and "slow`), and a description that began with `>` or `\|` came back without that; what is saved should be what is listed | `writeSkill` wrote the value as it was, and `parseSkill` took its first character for a sign: quotes around the whole value, or the mark of a folded block. Such a value now goes between double quotes, and the reader leaves a quoted `>` alone | `shared/skills.test.ts` › “reads back the name and description it wrote…”, “reads a skill written by hand as it did” | this round |
+| R7 | A subtitle file (SRT or WebVTT) written from a caption with an empty line in it — a title with a gap between its lines — held only the lines above the gap as a cue; the rest lay outside any cue and was lost to whatever read the file. The whole caption should be in its cue | `formatSrt` / `formatVtt` wrote a cue's text as it was, and an empty line is what ends a cue in both formats. The lines of a cue are now written without the empty ones, as the reader already reads them | `src/editor/subtitles.test.ts` › “writes a caption that has an empty line in it as one cue” | this round |
+| R6 | A skill saved with a name or description between two quotes (`"Fast" cuts and "slow"`) came back without them (`Fast" cuts and "slow`), and a description that began with `>` or `\|` came back without that; what is saved should be what is listed | `writeSkill` wrote the value as it was, and `parseSkill` took its first character for a sign: quotes around the whole value, or the mark of a folded block. Such a value now goes between double quotes, and the reader leaves a quoted `>` alone | `shared/skills.test.ts` › “reads back the name and description it wrote…”, “reads a skill written by hand as it did” | `280bc6f` |
 | R5 | An update's release notes showed `<video>` where the notes said `&lt;video&gt;`, and showed `&nbsp;`, `&#8212;`, `&#x27;` as they were written | `notesOf` read the escapes one kind after another, `&amp;` first, so what that left was read again; and it knew five escapes, none by number | `electron/updater.test.ts` › “reads each escape in the notes once…” | `71d13f4` |
 | R4 | A link in a tool's result took the whole Integrations dialog down while it was drawn, when its file name had a `%` that isn't an escape (“URI malformed”) or when it wasn't an address at all (“Invalid URL”); the row should be drawn with what it can show | `LinkRow` built `new URL(link.url)` and `decodeURIComponent(...)` in its body, unguarded: an exception while a component draws unmounts everything inside its error boundary | `src/features/integrations/parts.test.ts` (draws the row) | `39c9cb5` |
 | R3 | A web search failed outright (“URI malformed”) when one of its results had a link with a `%` that isn't an escape; that result should be left out and the others returned | `resultUrl` unwrapped the search engine's redirect with `decodeURIComponent`, unguarded, inside the loop over results | `electron/integrations/web.test.ts` › “search results” (also the first tests of `parseSearch` at all) | `c3d67b8` |
@@ -18,7 +19,12 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 ## Next — seen while reading, not yet reproduced
 
-Nothing waiting. Every `decodeURIComponent` in `electron/`, `src/` and `shared/` has been read: R1–R4 were the unguarded ones a person's or a tool's input reaches; `video-link.ts` was already inside a `try`; `files.ts:89` (the model cache) reads addresses only the editor itself makes.
+| Seen | Where | What to check |
+|---|---|---|
+| A WebVTT file is written with `&` and `<` in a caption as they are; the format takes them for an escape and a tag | `src/editor/subtitles.ts` `formatVtt` | That “if a<b then b>a” written and read back is still that (by reading: it comes back “if aa”) |
+| Reading a subtitle file turns `&amp;lt;` into `<`: the escapes are read one kind after another, as in R5 | `src/editor/subtitles.ts` `clean` | That the text `&lt;` (written `&amp;lt;`) reads as `&lt;` |
+
+Every `decodeURIComponent` in `electron/`, `src/` and `shared/` has been read: R1–R4 were the unguarded ones a person's or a tool's input reaches; `video-link.ts` was already inside a `try`; `files.ts:89` (the model cache) reads addresses only the editor itself makes.
 
 Read and found sound: WebVTT cues timed without hours (`00:01.000 --> 00:02.500`) are parsed, and a test already says so.
 

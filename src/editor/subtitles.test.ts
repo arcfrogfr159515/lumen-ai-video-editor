@@ -68,6 +68,26 @@ describe('subtitle files', () => {
     expect(parseSubtitles(vtt)).toEqual(cues)
   })
 
+  it('writes a caption that has an empty line in it as one cue', () => {
+    // An empty line ends a cue in both formats: what came after it was left outside any cue, and lost to whoever read the file.
+    const cues = [
+      { start: 1, end: 3, text: 'Chapter one\n\nThe beginning\n \t\nof it' },
+      { start: 4, end: 5, text: 'Next' },
+    ]
+    const whole = [
+      { start: 1, end: 3, text: 'Chapter one\nThe beginning\nof it' },
+      { start: 4, end: 5, text: 'Next' },
+    ]
+    const srt = formatSrt(cues)
+    expect(parseSubtitles(srt)).toEqual(whole)
+    expect(parseSubtitles(formatVtt(cues))).toEqual(whole)
+    expect(srt).toBe('1\n00:00:01,000 --> 00:00:03,000\nChapter one\nThe beginning\nof it\n\n2\n00:00:04,000 --> 00:00:05,000\nNext\n')
+    // A title with a gap between its lines is such a caption: with no Captions track, every text clip is one.
+    const track = dispatch('track.add', { kind: 'video', name: 'Titles', index: 0 }, { source: 'user' })
+    dispatch('clip.add', { trackId: track.ok ? (track.result as string) : '', kind: 'text', start: 0, duration: 60, patch: { text: { content: 'Chapter one\n\nThe beginning' } } }, { source: 'user' })
+    expect(parseSubtitles(formatSrt(timelineCues(getProject()))).map((c) => c.text)).toEqual(['Chapter one\nThe beginning'])
+  })
+
   it('lays cues on a Captions track, and a second file on a track of its own', () => {
     const fps = getProject().settings.fps
     const first = importSubtitles(SRT, { name: 'English' })

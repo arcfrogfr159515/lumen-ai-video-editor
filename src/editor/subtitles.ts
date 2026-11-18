@@ -68,12 +68,18 @@ function stamp(s: number, sep: ',' | '.') {
   return `${pad(Math.floor(ms / 3_600_000))}:${pad(Math.floor(ms / 60_000) % 60)}:${pad(Math.floor(ms / 1000) % 60)}${sep}${pad(ms % 1000, 3)}`
 }
 
+/**
+ * A cue's text as a file can hold it. An empty line ends a cue in both formats: written as it was, a caption with
+ * a gap between its lines stopped at the gap, and the rest lay outside any cue.
+ */
+const held = (text: string) => text.split(/\r\n?|\n/).filter((l) => l.trim()).join('\n')
+
 export function formatSrt(cues: Cue[]) {
-  return cues.map((c, i) => `${i + 1}\n${stamp(c.start, ',')} --> ${stamp(c.end, ',')}\n${c.text}\n`).join('\n')
+  return cues.map((c, i) => `${i + 1}\n${stamp(c.start, ',')} --> ${stamp(c.end, ',')}\n${held(c.text)}\n`).join('\n')
 }
 
 export function formatVtt(cues: Cue[]) {
-  return `WEBVTT\n\n${cues.map((c) => `${stamp(c.start, '.')} --> ${stamp(c.end, '.')}\n${c.text}\n`).join('\n')}`
+  return `WEBVTT\n\n${cues.map((c) => `${stamp(c.start, '.')} --> ${stamp(c.end, '.')}\n${held(c.text)}\n`).join('\n')}`
 }
 
 export type SubtitleFormat = 'srt' | 'vtt'
