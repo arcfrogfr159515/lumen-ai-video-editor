@@ -19,13 +19,15 @@ npm run dev        # the desktop app with hot reload
 | `npm run dev:web` | The UI in a browser tab (no desktop features) — quick for layout work |
 | `npm run typecheck` | TypeScript for the renderer and the main process |
 | `npm test` | Unit tests (Vitest, plain Node) |
+| `npm run coverage` | The unit tests, with how much of the source they run (every file counted, tested or not) |
 | `npm run build` | Typecheck + production build |
 | `npm run pack` | Unpacked app in `release/win-unpacked` |
+| `npm run smoke` | Starts the packed app on a profile of its own and uses it: language, a project, edits, undo |
 | `npm run dist` | Windows installer in `release/` |
 
 ## How Lumen is put together
 
-The [architecture section of the README](README.md#architecture) has the map. Three rules keep it coherent:
+[How Lumen works](docs/ARCHITECTURE.md) has the map. Three rules keep it coherent:
 
 1. **Every change to a project is a command.** Commands live in [`src/editor/commands.ts`](src/editor/commands.ts): a Zod schema, a description and a `run()` on an Immer draft. Anything dispatched through `dispatch()` is undoable, shows up in History — and becomes a tool the AI can call, automatically. Timeline rules that don't need React live in [`src/editor/ops.ts`](src/editor/ops.ts) and [`src/editor/smart.ts`](src/editor/smart.ts), and have unit tests.
 2. **The AI uses the same tools as everyone.** Every brain (API models, local Claude Code / Codex, external MCP clients) gets the registry in [`src/integrations/agent-tools.ts`](src/integrations/agent-tools.ts). Purpose-built tools live in [`src/integrations/tools/`](src/integrations/tools): `vision.ts` (seeing), `inspect.ts` (reading and hearing), `control.ts` (acting).
