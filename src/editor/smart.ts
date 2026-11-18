@@ -8,7 +8,7 @@ import { speechScript } from '@/engine/audio'
 import { clipEnd, followsRipple } from './ops'
 import { dispatch, getProject, useEditor } from './store'
 import { captionStyle, layCaptions, type CaptionStyle } from './subtitles'
-import { cutRanges, timelineScript } from './text-edit'
+import { cutRanges, scriptWords, timelineScript } from './text-edit'
 import { consumed, localForSource } from './timing'
 import type { Clip, Project } from './types'
 import { tt } from '@/lib/i18n'
@@ -253,13 +253,26 @@ export async function silentCuts(project: Project, reports: PauseReport[], opts:
 /**
  * Takes words out of the film (their places in `timelineScript`): the frames
  * they are said in come out of the whole timeline, music beds staying whole.
- * One undo step. Says how many frames went, in how many cuts, and what stopped
- * a cut that couldn't be made.
+ * One undo step. Says how many frames went, in how many cuts, what stopped
+ * a cut that couldn't be made, and which of the words were left (`held`).
  */
-export function cutSpokenWords(indexes: readonly number[], opts: { label?: string; source?: 'user' | 'ai' } = {}): { frames: number; cuts: number; error?: string } {
+export function cutSpokenWords(indexes: readonly number[], opts: { label?: string; source?: 'user' | 'ai' } = {}): { frames: number; cuts: number; error?: string; held: number[] } {
   const project = getProject()
-  const ranges = cutRanges(project, timelineScript(project), indexes)
-  const out: { frames: number; cuts: number; error?: string } = { frames: 0, cuts: 0 }
+  const script = timelineScript(project)
+  const out: { frames: number; cuts: number; error?: string; held: number[] } = { frames: 0, cuts: 0, held: [] }
+  // Only the words of speech that can be cut. The frames of a word come out of the tracks that follow ripples and
+  // of no other: a word of speech whose track is locked, or holds its place, stayed where it was said — while its
+  // frames came out of everything else.
+  const words = scriptWords(script)
+  const held = (index: number) => {
+    const clip = words[index] ? project.clips[words[index].clipId] : undefined
+    const track = clip ? project.tracks.find((t) => t.id === clip.trackId) : undefined
+    return Boolean(track && !followsRipple(track))
+  }
+  const free = indexes.filter((i) => !held(i))
+  out.held = indexes.filter(held)
+  if (out.held.length) out.error = tt('The speech is on a track that is locked or doesn’t follow ripple edits, so nothing can be cut out of it.')
+  const ranges = cutRanges(project, script, free)
   if (!ranges.length) return out
   const keepWhole = bedClips(project)
   const source = opts.source ?? 'user'

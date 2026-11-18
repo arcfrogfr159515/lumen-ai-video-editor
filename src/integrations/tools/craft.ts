@@ -177,7 +177,9 @@ export const CRAFT_TOOLS: AgentTool[] = [
       // The step's name is read by the user, in the History: in their language. What goes back to the model stays English.
       const r = cutSpokenWords(indexes, { label: tt('Cut {0} spoken word{1}', indexes.length, indexes.length === 1 ? '' : 's'), source: 'ai' })
       if (!r.cuts && r.error) throw new Error(r.error)
-      return { words_cut: indexes.length, cuts: r.cuts, seconds_saved: seconds(r.frames), text_cut: indexes.slice(0, 60).map((i) => words[i].text).join(' '), ...(r.error ? { warning: r.error } : {}) }
+      // Words of speech that can't be cut are left: they aren't among the words that went.
+      const gone = indexes.filter((i) => !r.held.includes(i))
+      return { words_cut: gone.length, cuts: r.cuts, seconds_saved: seconds(r.frames), text_cut: gone.slice(0, 60).map((i) => words[i].text).join(' '), ...(r.error ? { warning: r.error } : {}) }
     },
   },
   {
