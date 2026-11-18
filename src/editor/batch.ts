@@ -72,13 +72,19 @@ export function batchNames(project: Pick<Project, 'clips' | 'tracks' | 'assets' 
   clips.forEach((clip, i) => {
     const asset = clip.assetId ? project.assets[clip.assetId] : undefined
     const source = clip.sequenceId ? (project.sequences?.[clip.sequenceId]?.name ?? clip.name) : (asset?.name ?? clip.name)
+    const words: Record<string, string> = {
+      nn: String(i + 1).padStart(width, '0'),
+      n: String(i + 1),
+      name: clip.name,
+      source,
+      track: project.tracks.find((t) => t.id === clip.trackId)?.name ?? '',
+      tc: formatTimecode(clip.start, project.settings.fps),
+    }
+    // Every token in one pass, each word put in as it is. One token after another, with the word as what `replace`
+    // puts in, a name's "$$" came out "$" and its "$&" the token itself — and a brace in the name was read as a
+    // token by the passes after.
     const name = pattern
-      .replace(/\{nn\}/g, String(i + 1).padStart(width, '0'))
-      .replace(/\{n\}/g, String(i + 1))
-      .replace(/\{name\}/g, clip.name)
-      .replace(/\{source\}/g, source)
-      .replace(/\{track\}/g, project.tracks.find((t) => t.id === clip.trackId)?.name ?? '')
-      .replace(/\{tc\}/g, formatTimecode(clip.start, project.settings.fps))
+      .replace(/\{(nn|n|name|source|track|tc)\}/g, (_token, key: string) => words[key])
       .replace(/\s+/g, ' ')
       .trim()
     if (name) out.set(clip.id, name.slice(0, 120))
