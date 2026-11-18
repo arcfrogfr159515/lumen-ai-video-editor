@@ -1648,7 +1648,7 @@ export const commands = {
     title: (i) => tt('New timeline{0}', i.name ? ` “${i.name}”` : ''),
     run(p, i) {
       if (i.id && getSequence(p, i.id)) throw new CommandError(tt('A timeline with id {0} already exists', i.id))
-      const seq = blankSequence(i.name ?? freshName(p, 'Timeline'), { ...p.settings, ...i.settings }, i.id)
+      const seq = blankSequence(i.name ?? freshName(p, tt('Timeline')), { ...p.settings, ...i.settings }, i.id)
       p.sequences ??= {}
       p.sequences[seq.id] = seq
       if (i.open) swapIn(p, seq.id)
@@ -1803,7 +1803,7 @@ export const commands = {
           clips[clip.id] = clip
         }
       })
-      const seq: Sequence = { id: uid('seq'), name: i.name ?? freshName(p, 'Multicam'), settings: { ...p.settings }, tracks: [...tracks, ...soundTracks], clips, markers: [], multicam: true, createdAt: Date.now() }
+      const seq: Sequence = { id: uid('seq'), name: i.name ?? freshName(p, tt('Multicam')), settings: { ...p.settings }, tracks: [...tracks, ...soundTracks], clips, markers: [], multicam: true, createdAt: Date.now() }
       p.sequences ??= {}
       p.sequences[seq.id] = seq
       if (!i.place) return { sequenceId: seq.id, clipId: null }

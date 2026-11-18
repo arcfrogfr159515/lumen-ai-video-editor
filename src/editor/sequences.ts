@@ -263,7 +263,7 @@ export function nestClips(p: Project, ids: string[], name?: string): { clipId: s
   const trackMap = new Map(used.map((t) => [t.id, createTrack(t.kind, { name: t.name, height: t.height, ...(t.role === 'titles' || t.role === 'captions' ? { role: t.role } : {}) })]))
   const seq: Sequence = {
     id: uid('seq'),
-    name: name?.trim() || freshName(p, 'Nested'),
+    name: name?.trim() || freshName(p, tt('Nested')),
     settings: { ...plain(p.settings) },
     tracks: [...trackMap.values()],
     clips: {},

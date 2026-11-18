@@ -1834,6 +1834,7 @@ const zhCN: Record<string, string> = {
   'Nest into a timeline': '新建复合片段（嵌套时间线）',
   'Nest selection into a timeline': '将所选内容嵌套为时间线',
   'nested': '嵌套',
+  'Nested': '嵌套',
   'Nested into a new timeline': '已嵌套为新的时间线',
   'Nested timeline': '嵌套时间线',
   'Neural noise suppression for fans, traffic, hiss and wind': '神经网络降噪，可抑制风扇、车流、嘶嘶声和风声',

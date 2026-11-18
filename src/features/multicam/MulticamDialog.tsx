@@ -34,7 +34,7 @@ export function MulticamDialog() {
   useEffect(() => {
     if (!request) return
     setChosen(request.assetIds)
-    setName(freshName(getProject(), 'Multicam'))
+    setName(freshName(getProject(), tt('Multicam')))
     setSync('sound')
     setAudio('auto')
     setBusy(null)
