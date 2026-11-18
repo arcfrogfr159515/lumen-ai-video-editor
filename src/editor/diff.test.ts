@@ -146,6 +146,38 @@ describe('a branch', () => {
     expect(versions()).toEqual([['changed', 100, 150, 100, 150]])
   })
 
+  it('finds a clip made to follow something, from where it begins to move', () => {
+    // The path a clip follows wasn't among what was compared.
+    // From its tenth frame the point it follows moves, by (10, 5) a frame for three frames, and stops.
+    run('clip.update', { ids: [named('B').id], patch: { follow: { start: 10, ref: 0, points: [0, 0, 10, 5, 20, 10, 30, 15] } } })
+    expect(hunks()).toEqual([['changed', 111, 200, 111, 200]])
+  })
+
+  it('is not made different by a cut through a clip that follows something, or whose mask does', () => {
+    const b = named('B').id
+    const path = { start: 10, ref: 0, points: [0, 0, 10, 5, 20, 10, 30, 15] }
+    run('clip.update', { ids: [b], patch: { follow: path } })
+    run('mask.add', { clipId: b, mask: { shape: 'ellipse', follow: { start: 20, ref: 0, points: [0.5, 0.5, 0.52, 0.5, 0.56, 0.48] } } })
+    run('sequence.branch', {})
+    const versions = () => diffTimelines(getProject().sequences![branch], openSequence(getProject())).hunks.map((h) => [h.kind, ...h.a, ...h.b])
+    expect(versions()).toEqual([])
+    // A cut moves the start of each path on the second piece, where it is counted from that piece's first frame:
+    // a mask's path was compared as it is written, clip by clip, and the cut was a change.
+    run('clip.split', { frame: 150 })
+    expect(versions()).toEqual([])
+  })
+
+  it('finds a mask made to follow something, from where it begins to move', () => {
+    const b = named('B').id
+    const maskId = run('mask.add', { clipId: b, mask: { shape: 'ellipse' } }) as string
+    run('sequence.branch', {})
+    const versions = () => diffTimelines(getProject().sequences![branch], openSequence(getProject())).hunks.map((h) => [h.kind, ...h.a, ...h.b])
+    const now = onTrack('Main').find((c) => c.start === 100)!
+    run('mask.update', { clipId: now.id, maskId: now.masks![0].id, patch: { follow: { start: 20, ref: 0, points: [0.5, 0.5, 0.52, 0.5, 0.56, 0.48] } } })
+    expect(maskId).toBeTruthy()
+    expect(versions()).toEqual([['changed', 121, 200, 121, 200]])
+  })
+
   it('finds a transition into a clip, on the frames it plays over', () => {
     // A transition wasn't among what was compared: with one, the two versions were said to play the same.
     run('clip.setTransition', { id: named('C').id, transition: { kind: 'dissolve', duration: 12 } })
@@ -316,6 +348,15 @@ describe('taking a stretch from one version into the other', () => {  it('makes 
     // The later stretch first, so the earlier one is still where it was found.
     take(before[1])
     take(left()[0])
+    expect(left()).toEqual([])
+  })
+
+  it('brings what a clip follows across, from where it begins to move', () => {
+    run('clip.update', { ids: [named('B').id], patch: { follow: { start: 10, ref: 0, points: [0, 0, 10, 5, 20, 10, 30, 15] } } })
+    run('sequence.open', { id: main })
+    const before = left()
+    expect(before.map((h) => [h.kind, ...h.a])).toEqual([['changed', 111, 200]])
+    take(before[0])
     expect(left()).toEqual([])
   })
 

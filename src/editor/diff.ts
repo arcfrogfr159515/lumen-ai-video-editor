@@ -11,6 +11,7 @@ import { hashString } from '@/lib/math'
 import { uid } from '@/lib/id'
 import { createTrack } from './defaults'
 import { ANIMATABLE, baseValue, propAt } from './keyframes'
+import { followOffset } from './motion'
 import { clipEnd, cloneClip, followsRipple, isMagnetic, removeRange, rippleInsert, setClipEnd, setClipStart, transitionLead } from './ops'
 import { sourceFrameAt, speedAt } from './timing'
 import type { Clip, Frame, Marker, Project, Sequence, Track } from './types'
@@ -60,9 +61,10 @@ function lookOf(c: Clip): string {
         reverse,
         freeze,
         angle,
-        // Ids are new on every copy: effects and masks are compared by what they are.
+        // Ids are new on every copy: effects and masks are compared by what they are. (The path a mask follows is
+        // counted in the clip's frames, which a cut starts again on its second piece: that is `movedAt`'s.)
         effects: c.effects.map(({ id: _id, ...e }) => e),
-        masks: c.masks?.map(({ id: _id, ...m }) => m),
+        masks: c.masks?.map(({ id: _id, follow: _follow, ...m }) => m),
         volume: c.audio.volume,
         enhance: c.audio.enhance,
         denoise: c.audio.denoise,
@@ -141,18 +143,21 @@ function edgesOf(clips: Clip[]): Map<Clip, Edges> {
 
 /**
  * What keyframes move: where the picture is, how large, how turned, how see-through, and how loud the sound. (The
- * speed's keyframes change which footage shows when, and are compared as that.) Compared by what they come to at
- * each frame — not keyframe by keyframe: a cut gives each piece keyframes of its own, with one at the cut, and
- * keyframes that leave a value where it was change nothing.
+ * speed's keyframes change which footage shows when, and are compared as that.) And what a tracked point moves:
+ * the clip that follows it, or a mask of the clip. Compared by what they come to at each frame — not keyframe by
+ * keyframe, or path by path: a cut gives each piece keyframes of its own, with one at the cut, and starts each
+ * path again from the second piece's first frame; and keyframes that leave a value where it was change nothing.
  */
 const MOVED = ANIMATABLE.filter((prop) => prop !== 'speed')
-const moves = (c: Clip) => MOVED.some((prop) => c.keyframes[prop]?.length)
+const moves = (c: Clip) => MOVED.some((prop) => c.keyframes[prop]?.length) || Boolean(c.follow) || Boolean(c.masks?.some((m) => m.follow))
 const rounded = (v: number) => Math.round(v * 1e4) / 1e4
+/** How far the clip, then each of its masks, has been carried by the point it follows: nowhere, without one. */
+const carried = (c: Clip, local: number | null) => [c.follow, ...(c.masks ?? []).map((m) => m.follow)].flatMap((path) => (path && local !== null ? followOffset(path, local) : [0, 0])).map(rounded)
 const stills = new WeakMap<Clip, string>()
-/** Those values as they are without keyframes. */
-const still = (c: Clip) => stills.get(c) ?? (stills.set(c, MOVED.map((prop) => rounded(baseValue(c, prop))).join(',')), stills.get(c)!)
+/** Those values as they are without keyframes or anything to follow. */
+const still = (c: Clip) => stills.get(c) ?? (stills.set(c, [...MOVED.map((prop) => rounded(baseValue(c, prop))), ...carried(c, null)].join(',')), stills.get(c)!)
 /** And at a frame of the clip's own. */
-const movedAt = (c: Clip, local: number) => (moves(c) ? MOVED.map((prop) => rounded(propAt(c, prop, local))).join(',') : still(c))
+const movedAt = (c: Clip, local: number) => (moves(c) ? [...MOVED.map((prop) => rounded(propAt(c, prop, local))), ...carried(c, local)].join(',') : still(c))
 
 /** What a clip plays, without where: its footage (or timeline, or words). */
 const mediaOf = (c: Clip) => c.assetId ?? (c.sequenceId ? `seq:${c.sequenceId}` : c.kind === 'text' ? `text:${hashString(c.text?.content ?? '')}` : c.kind)
