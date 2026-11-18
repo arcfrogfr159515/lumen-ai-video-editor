@@ -51,7 +51,9 @@ export function sourceFrames(p: Project, clip: Pick<Clip, 'assetId' | 'sequenceI
     if (!seq) return Infinity
     let end = 0
     for (const c of Object.values(seq.clips)) end = Math.max(end, clipEnd(c))
-    return Math.max(1, Math.floor((end / seq.settings.fps) * p.settings.fps))
+    // Multiplied before it is divided: both are whole numbers, and so is their product. Divided first, 123 frames
+    // at 30 a second were 4.1 s — which times 60 is 245.99999999999997, a frame short of the 246 they are.
+    return Math.max(1, Math.floor((end * p.settings.fps) / seq.settings.fps))
   }
   if (!clip.assetId) return Infinity
   const asset = p.assets[clip.assetId]
