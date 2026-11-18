@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { BrowserWindow, dialog } from 'electron'
 import { APP_IPC, type CollectResult } from '../shared/app'
+import { isMedia } from './files'
 import { mediaPath } from './integrations/paths'
 import { mt } from './i18n'
 
@@ -74,11 +75,12 @@ export async function collectProject(win: BrowserWindow | null, projectText: str
     // A constant-rate copy goes with the file it was made from, or "Use the original" has nothing to go back to on
     // another computer. An original that is already gone isn't missing media: the asset plays its copy.
     const original = asset.conformedFrom?.path ?? (asset.conformedFrom?.url ? mediaPath(asset.conformedFrom.url) : null)
-    if (original && fs.existsSync(original)) jobs.push({ asset, from: original, kind: 'original' })
+    // What is copied is named by the page, as a project's media is when it is opened: media, and nothing else.
+    if (original && isMedia(original) && fs.existsSync(original)) jobs.push({ asset, from: original, kind: 'original' })
     const src = asset.source
     if (!src) continue
     const from = src.type === 'file' ? (src.path ?? (src.url ? mediaPath(src.url) : null)) : src.type === 'sequence' ? (src.dir ?? null) : null
-    if (!from || !fs.existsSync(from)) {
+    if (!from || !fs.existsSync(from) || (src.type === 'file' && !isMedia(from))) {
       missing.push(asset.name ?? path.basename(from ?? 'media'))
       continue
     }
@@ -96,7 +98,8 @@ export async function collectProject(win: BrowserWindow | null, projectText: str
     if (!to) {
       to = freePath(path.join(mediaDir, path.basename(job.from)))
       report(path.basename(job.from))
-      if (job.kind === 'dir') await fs.promises.cp(job.from, to, { recursive: true })
+      // A folder of frames gives its frames (and what holds them), not whatever else is kept in it.
+      if (job.kind === 'dir') await fs.promises.cp(job.from, to, { recursive: true, filter: (item) => item === job.from || isMedia(item) })
       else await fs.promises.copyFile(job.from, to)
       copied.set(key, to)
       done += sizeOf(job.from)

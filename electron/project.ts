@@ -242,13 +242,28 @@ export async function openProject(win: BrowserWindow | null, file?: string): Pro
   const abs = path.resolve(target)
   if (!fs.existsSync(abs)) throw new Error(mt('“{0}” can’t be found. It may have been moved or deleted.', path.basename(abs)))
   const env = parseEnvelope(fs.readFileSync(abs, 'utf8'))
+  // A project it is, whatever it is called: it may be saved back where it was opened from.
+  opened.add(pathKey(abs))
   const { project, missing } = fromStored(env.project, abs)
   touchRecent(abs, typeof project.name === 'string' ? project.name : path.basename(abs, `.${PROJECT_EXT}`))
   return { path: abs, text: JSON.stringify(project), missing }
 }
 
+/** Project files opened in this run of Lumen, however they are named. */
+const opened = new Set<string>()
+const pathKey = (file: string) => (process.platform === 'win32' ? path.resolve(file).toLowerCase() : path.resolve(file))
+
+/**
+ * Whether a project may be written to `file`. The path comes from the page, and what is written there replaces
+ * what was there: left to any path, a page that has been got at could overwrite a document, a script or a
+ * settings file with a project. A project is a `.lumen` file — or the file it was opened from, if that was named
+ * otherwise.
+ */
+const isProjectPath = (abs: string) => abs.toLowerCase().endsWith(`.${PROJECT_EXT}`) || opened.has(pathKey(abs))
+
 export function saveProject(file: string, projectText: string) {
   const abs = path.resolve(file)
+  if (!file || !isProjectPath(abs)) throw new Error(mt('A project is saved as a .lumen file — use Save As to choose where.'))
   const text = envelope(projectText, abs)
   atomicWrite(abs, text)
   const { name, id } = JSON.parse(projectText) as StoredProject

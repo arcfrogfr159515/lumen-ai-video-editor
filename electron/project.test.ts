@@ -54,6 +54,31 @@ type Stored = { format: string; version: number; project: { assets: Record<strin
 
 beforeEach(() => fs.rmSync(path.join(env.root, 'userData', 'recent-projects.json'), { force: true }))
 
+describe('where a project may be saved', () => {
+  it('is a .lumen file — not whatever path the page names', () => {
+    const s = scene()
+    for (const name of ['thesis.docx', 'settings.json', 'run.bat', 'no extension', 'Show.lumen.exe']) {
+      const target = path.join(s.dir, name)
+      fs.writeFileSync(target, 'as it was')
+      expect(() => saveProject(target, s.text), name).toThrow(/\.lumen/)
+      expect(fs.readFileSync(target, 'utf8'), name).toBe('as it was')
+    }
+    expect(() => saveProject('', s.text)).toThrow(/\.lumen/)
+    expect(saveProject(path.join(s.dir, 'Copy.LUMEN'), s.text)).toEqual({ path: path.join(s.dir, 'Copy.LUMEN') })
+  })
+
+  it('or the file it was opened from, whatever that is called', async () => {
+    const s = scene()
+    saveProject(s.file, s.text)
+    // A project kept under another name (a backup someone renamed): it opens, and saving goes back to it.
+    const renamed = path.join(s.dir, 'Show.backup')
+    fs.copyFileSync(s.file, renamed)
+    expect(() => saveProject(renamed, s.text)).toThrow(/\.lumen/)
+    const opened = await openProject(null, renamed)
+    expect(saveProject(renamed, opened!.text)).toEqual({ path: renamed })
+  })
+})
+
 describe('saving', () => {
   it('stores media by absolute and project-relative path, without runtime URLs', () => {
     const s = scene()

@@ -35,6 +35,7 @@ const zhCN: Record<string, string> = {
   'Reopen the editor': '重新打开编辑器',
   'Save': '保存',
   'Save changes to “{0}”?': '要保存对“{0}”的更改吗？',
+  'A project is saved as a .lumen file — use Save As to choose where.': '项目需保存为 .lumen 文件——请用“另存为”选择保存位置。',
   'Save clips here': '把片段保存到这里',
   'Save project': '保存项目',
   'Save recordings here': '把录制内容保存到这里',
