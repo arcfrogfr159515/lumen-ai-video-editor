@@ -6,6 +6,7 @@
  */
 import { uid } from '@/lib/id'
 import { clipEnd, clipsOnTrack, fitToMedia, framesIn, isMagneticTrack, keyframesWithin, sourceFrames, trackAccepts } from './ops'
+import { openSequenceId, wouldLoop } from './sequences'
 import { MAX_SPEED, MIN_SPEED } from './timing'
 import type { Asset, Clip, ClipTake, Frame, Project } from './types'
 import { tt } from '@/lib/i18n'
@@ -122,6 +123,9 @@ export function switchTake(p: Project, clip: Clip, takeId: string): SwitchResult
   if (target.id === clip.takeId) return { takeId, shortenedBy: 0, slidBack: 0 }
   if (target.assetId && !p.assets[target.assetId]) throw new TakeError(tt('The media of take “{0}” isn’t in this project any more', target.name))
   if (target.sequenceId && !p.sequences?.[target.sequenceId]) throw new TakeError(tt('The timeline of take “{0}” isn’t in this project any more', target.name))
+  // While a take is put away, nothing here plays its timeline — which is then free to be given a clip that plays
+  // this one. Shown again after that, this timeline played one that plays it: what adding or pasting a clip refuses.
+  if (target.sequenceId && wouldLoop(p, openSequenceId(p), target.sequenceId)) throw new TakeError(tt('The timeline of take “{0}” contains this timeline now — showing it here would make a loop', target.name))
 
   // What is showing may have been slipped or re-timed: put it away as it is now.
   const showing = takes.findIndex((t) => t.id === clip.takeId)

@@ -2997,6 +2997,7 @@ const zhCN: Record<string, string> = {
   'The timeline is empty — add some clips first.': '时间线是空的——请先添加一些片段。',
   'The timeline is empty.': '时间线是空的。',
   'The timeline kept changing while the pauses were being listened for, so nothing was removed. Try again.': '查找停顿期间时间线一直在变化，所以没有移除任何内容。请再试一次。',
+  'The timeline of take “{0}” contains this timeline now — showing it here would make a loop': '镜次“{0}”的时间线现在已经包含这条时间线——在这里显示它会形成循环',
   'The timeline of take “{0}” isn’t in this project any more': '镜次“{0}”的时间线已不在这个项目里',
   'The timeline out point is ignored': '忽略时间线的出点',
   'The timeline you’re editing': '你正在编辑的时间线',
