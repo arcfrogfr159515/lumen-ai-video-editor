@@ -11,6 +11,7 @@ import { RenderCard } from '@/features/integrations/parts'
 import { renderMotion, useIntegrations } from '@/integrations/store'
 import { cn } from '@/lib/cn'
 import { Unavailable } from './Generate3D'
+import { optionName } from './option-names'
 import { Chip, SectionLabel } from './shared'
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
@@ -194,7 +195,7 @@ export function GenerateMotion() {
             <div className="flex gap-1">
               {(['left', 'right'] as const).map((a) => (
                 <Chip key={a} active={(v.align ?? 'left') === a} onClick={() => set('align', a)}>
-                  <span className="capitalize">{a}</span>
+                  <span className="capitalize">{optionName('side', a)}</span>
                 </Chip>
               ))}
             </div>
@@ -244,7 +245,7 @@ export function GenerateMotion() {
             <div className="flex flex-wrap gap-1">
               {styles.map((s) => (
                 <Chip key={s} active={(v.style ?? styles[0]) === s} onClick={() => set('style', s)}>
-                  <span className="capitalize">{s}</span>
+                  <span className="capitalize">{optionName('style', s)}</span>
                 </Chip>
               ))}
             </div>
