@@ -144,7 +144,8 @@ describe('a Blender render', () => {
   const request = { template: 'title3d' as const, params: { text: 'Hello' }, width: 320, height: 180, fps: 30, duration: 1 }
   const frame = (id: string, n: number) => fs.writeFileSync(path.join(media('blender', id), `frame_${String(n).padStart(4, '0')}.png`), 'png')
 
-  it('keeps its frames and clears its scratch folder when it comes through', async () => {
+  // Writes and removes folders: on a busy disk (a build just written) this has taken over five seconds.
+  it('keeps its frames and clears its scratch folder when it comes through', { timeout: 30_000 }, async () => {
     const job = await renderBlender(request)
     expect(fs.existsSync(path.join(scratch('blender', job.id), 'spec.json'))).toBe(true)
     frame(job.id, 1)
@@ -213,7 +214,8 @@ describe('a Blender render', () => {
 describe('a motion render', () => {
   const request = { template: 'lower-third' as const, params: { title: 'Hello' }, width: 320, height: 180, fps: 30, duration: 0.1 }
 
-  it('keeps its frames and clears its scratch folder when it comes through', async () => {
+  // Writes and removes folders: on a busy disk (a build just written) this has taken over five seconds.
+  it('keeps its frames and clears its scratch folder when it comes through', { timeout: 30_000 }, async () => {
     const job = await settled((await renderMotion(request)).id)
     expect(job).toMatchObject({ status: 'done', message: '3 frames' })
     expect(fs.readdirSync(media('hyperframes', job.id))).toEqual(['frame_0001.png', 'frame_0002.png', 'frame_0003.png'])

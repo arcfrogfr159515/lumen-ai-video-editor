@@ -91,7 +91,8 @@ describe('the Chinese dictionary', () => {
       return [[full, fs.readFileSync(full, 'utf8')]]
     })
 
-  it('covers what the source says', () => {
+  // These two read every source file of the interface: on a busy disk (a build just written) that has taken twenty seconds.
+  it('covers what the source says', { timeout: 60_000 }, () => {
     const said = new Set<string>()
     for (const [, text] of sources()) {
       for (const m of text.matchAll(/\b(?:ttx?|tm)\(\s*'((?:[^'\\]|\\.)*)'/g)) said.add(JSON.parse(`"${m[1].replace(/\\'/g, "'").replace(/"/g, '\\"')}"`) as string)
@@ -103,7 +104,7 @@ describe('the Chinese dictionary', () => {
     expect(waiting).toEqual([])
   })
 
-  it('is asked for everything a toast says', () => {
+  it('is asked for everything a toast says', { timeout: 60_000 }, () => {
     // The check above sees only what is given to tt(). A sentence handed to a toast as it is written — its title,
     // its description, its button — is shown in English whatever the language, and nothing notices.
     const word = /[A-Za-z]{2,}/

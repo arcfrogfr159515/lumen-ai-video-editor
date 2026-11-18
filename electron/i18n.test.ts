@@ -28,7 +28,8 @@ describe('what the main process says', () => {
     expect(languageAmong(['fr-FR', ''])).toBe('en')
   })
 
-  it('has a Chinese sentence for every one the code says, asking only for the values given', async () => {
+  // Reads every source file of the main process: on a busy disk (a build just written) that has taken over five seconds.
+  it('has a Chinese sentence for every one the code says, asking only for the values given', { timeout: 30_000 }, async () => {
     const { default: zhCN } = await import('./locales/zh-CN')
     const said = new Set<string>()
     const walk = (dir: string) => {
