@@ -22,7 +22,7 @@ npm run dev        # the desktop app with hot reload
 | `npm run coverage` | The unit tests, with how much of the source they run (every file counted, tested or not) |
 | `npm run build` | Typecheck + production build |
 | `npm run pack` | Unpacked app in `release/win-unpacked` |
-| `npm run smoke` | Starts the packed app on a profile of its own and uses it: language, a project, edits, undo |
+| `npm run smoke` | Starts the packed app on a profile of its own and uses it: language, a project, edits, undo, save, reopen, a WAV and an MP4 export |
 | `npm run dist` | Windows installer in `release/` |
 
 ## How Lumen is put together

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Starts a built Lumen and checks that it is one: the editor comes up, speaks the computer's language, makes a
-// project, edits it, undoes and redoes.
+// project, edits it, undoes and redoes, saves it, reopens it, and exports it as WAV and as MP4.
 //
 //   npm run pack && npm run smoke                      the build in release/win-unpacked
 //   node scripts/smoke.mjs path/to/Lumen.exe           another build
@@ -35,9 +35,10 @@ const freePort = () =>
   })
 
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'lumen-smoke-'))
+const exportsDir = path.join(profile, 'exports')
 const port = await freePort()
 const started = Date.now()
-const child = spawn(exe, [`--remote-debugging-port=${port}`], { env: { ...process.env, LUMEN_USER_DATA: profile, LUMEN_TEST_EXPORT_DIR: path.join(profile, 'exports') }, stdio: 'ignore' })
+const child = spawn(exe, [`--remote-debugging-port=${port}`], { env: { ...process.env, LUMEN_USER_DATA: profile, LUMEN_TEST_EXPORT_DIR: exportsDir }, stdio: 'ignore' })
 let exited = false
 child.once('exit', () => (exited = true))
 
@@ -154,6 +155,53 @@ try {
   check('an edit is made, undone and redone', near(edited.changed, 0.89) && edited.undone === 1 && near(edited.redone, 0.89), `opacity ${edited.changed} → ${edited.undone} → ${edited.redone}`)
   // Generous on purpose: a regression to "every edit costs as much as the project is large" is ten times this.
   check(`a step of a slider at 400 clips stays quick (${edited.stepMs} ms)`, edited.stepMs < 25)
+
+  // The project saved, reopened and exported — through the main process, into a folder made for this run
+  // (LUMEN_TEST_EXPORT_DIR stands in for the Save dialog, as it does for the app's other automated runs).
+  const folder = JSON.stringify(exportsDir)
+  const flows = await inEditor(
+    ws,
+    `(async () => {
+      const L = window.__lumen, api = window.lumen.app
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+      const project = () => L.editor.getState().project
+      const file = ${folder} + (window.lumen.platform === 'win32' ? '\\\\' : '/') + 'Smoke.lumen'
+      L.session.useSession.setState({ path: file })
+      const saved = await L.session.saveProject()
+      const unsavedAfter = L.session.isDirty()
+      let refused = null
+      try { await api.project.save(file.replace(/\\.lumen$/, '.txt'), JSON.stringify(project())) } catch (e) { refused = String(e.message ?? e) }
+      const id = project().id
+      await L.session.newProject({})
+      await wait(300)
+      const blank = Object.keys(project().clips).length
+      const opened = await L.session.openProject(file)
+      await wait(300)
+      const reopened = { opened, same: project().id === id, clips: Object.keys(project().clips).length, unsaved: L.session.isDirty() }
+      const render = async (extension, settings) => {
+        try {
+          const handle = await api.export.begin({ defaultName: 'smoke', extension, filterName: extension.toUpperCase() })
+          let last = ''
+          const res = await L.exporter.runExport(project(), { codec: 'avc', width: 640, height: 360, fps: 30, quality: 50, hardware: true, ...settings }, handle, (s) => { if (s.phase === 'rendering') last = s.done + '/' + s.total }, new AbortController().signal)
+          return { path: res.path, size: res.size, last, encoder: res.encoder ?? null }
+        } catch (e) { return { error: String(e.message ?? e).slice(0, 300) } }
+      }
+      // Twenty seconds of sound: more than one of the stretches a WAV is written in.
+      const wav = await render('wav', { format: 'wav', range: [0, 600] })
+      const mp4 = await render('mp4', { format: 'mp4', range: [0, 30] })
+      return { saved, unsavedAfter, refused, blank, reopened, wav, mp4 }
+    })()`,
+  )
+  report.flows = flows
+  check('the project is saved, and is then no longer unsaved', flows.saved === true && flows.unsavedAfter === false)
+  check('a project can’t be written over a file that isn’t one', typeof flows.refused === 'string' && !fs.existsSync(path.join(exportsDir, 'Smoke.txt')), `saving to Smoke.txt answered ${JSON.stringify(flows.refused)}`)
+  check('the saved project reopens as it was', flows.blank === 0 && flows.reopened.opened === true && flows.reopened.same && flows.reopened.clips === 400 && flows.reopened.unsaved === false, JSON.stringify(flows.reopened))
+  // The WAV as it is on disk: its header says how long it is, and it is as long as it says.
+  const wavFile = flows.wav.path && fs.existsSync(flows.wav.path) ? fs.readFileSync(flows.wav.path) : null
+  const wavData = wavFile ? wavFile.readUInt32LE(40) : -1
+  check('a WAV is exported in stretches and says how long it is', Boolean(wavFile) && flows.wav.last === '2/2' && wavData === 20 * 48000 * 4 && wavData === wavFile.length - 44 && wavFile.readUInt32LE(4) === wavFile.length - 8, flows.wav.error ?? `${wavFile?.length} bytes, header says ${wavData}, blocks ${flows.wav.last}`)
+  const mp4File = flows.mp4.path && fs.existsSync(flows.mp4.path) ? fs.readFileSync(flows.mp4.path) : null
+  check('an MP4 is exported with every frame', Boolean(mp4File) && flows.mp4.last === '30/30' && mp4File.includes(Buffer.from('moov')), flows.mp4.error ?? `${mp4File?.length} bytes, frames ${flows.mp4.last}`)
   ws.close()
 } catch (err) {
   check('the run got to its end', false, err instanceof Error ? err.message : String(err))
@@ -172,4 +220,4 @@ if (failures.length) {
   console.error(`smoke: ${failures.length} check${failures.length === 1 ? '' : 's'} failed`)
   process.exit(1)
 }
-console.log('smoke: the build starts, speaks the computer’s language and edits')
+console.log('smoke: the build starts, speaks the computer’s language, edits, saves, reopens and exports')
