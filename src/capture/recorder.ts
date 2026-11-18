@@ -438,6 +438,8 @@ interface Session {
 }
 
 let session: Session | null = null
+/** A recording has been asked for and is still finding what to record: its phase doesn't say “preparing” yet. */
+let starting = false
 let stopping: Promise<RecordingResult | null> | null = null
 let listening = false
 
@@ -500,17 +502,28 @@ function captureColor(settings: CaptureSettings): NonNullable<NonNullable<Record
 /** Starts a recording with the current settings (or these). Resolves once it is rolling. */
 export async function startRecording(opts: StartOptions = {}): Promise<{ name: string; ready: VideoReady | null; notes: string[] }> {
   if (!desktop) throw new Error(tt('Recording needs the desktop app.'))
-  if (get().phase !== 'idle') throw new Error(tt('A recording is already running. Stop it first.'))
-  listen()
-  if (opts.settings) updateSettings(opts.settings)
-  const settings = get().settings
-  let source = sourceById(settings.sourceId)
-  if (!source) {
-    await refreshSources(false)
-    source = sourceById(settings.sourceId)
+  if (get().phase !== 'idle' || starting) throw new Error(tt('A recording is already running. Stop it first.'))
+  // Known as on its way from here: finding what to record can take a moment (the sources are listed first when the
+  // record window isn't open), and a second start in that moment went ahead beside the first.
+  starting = true
+  let settings: CaptureSettings
+  let source: CaptureSource
+  let helper: CaptureHelperState
+  try {
+    listen()
+    if (opts.settings) updateSettings(opts.settings)
+    settings = get().settings
+    let found = sourceById(settings.sourceId)
+    if (!found) {
+      await refreshSources(false)
+      found = sourceById(settings.sourceId)
+    }
+    if (!found) throw new Error(tt('Pick a screen or a window to record first.'))
+    source = found
+    helper = get().helper ?? (await desktop.capture.helper())
+  } finally {
+    starting = false
   }
-  if (!source) throw new Error(tt('Pick a screen or a window to record first.'))
-  const helper = get().helper ?? (await desktop.capture.helper())
   const { audio, note: audioNote } = effectiveAudio(settings, source, helper)
   const name = cleanRecordingName(opts.name ?? '') || recordingName(new Date())
   set({ phase: 'preparing', error: null, notes: audioNote ? [audioNote] : [], markers: [], stats: ZERO_STATS, ready: null, name, by: opts.by ?? 'user', helper })
