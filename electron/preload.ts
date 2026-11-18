@@ -238,6 +238,9 @@ const appApi: AppAPI = {
 contextBridge.exposeInMainWorld('lumen', {
   isElectron: true,
   testMode: process.argv.includes('--lumen-test'),
+  // The computer's languages as the system has them (the main process asked it): `navigator.languages` puts
+  // Chromium's own language first, which is English wherever only the English pack was shipped.
+  languages: (process.argv.find((arg) => arg.startsWith('--lumen-languages='))?.slice('--lumen-languages='.length) ?? '').split(',').filter(Boolean),
   platform: process.platform,
   versions: {
     electron: process.versions.electron,

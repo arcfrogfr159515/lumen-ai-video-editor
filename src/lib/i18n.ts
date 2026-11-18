@@ -49,16 +49,31 @@ export function languageChoice(): LanguageChoice {
   }
 }
 
+/** The first of `tags` that is a language Lumen speaks, or English. */
+export function languageAmong(tags: readonly string[]): Language {
+  for (const tag of tags) {
+    const found = tag ? languageFor(tag) : null
+    if (found) return found
+  }
+  return 'en'
+}
+
+/**
+ * The computer's languages, the most wanted first. In the desktop app they are the system's own, handed over by the
+ * main process: the browser's list starts with Chromium's language, and an installed Lumen that ships only the
+ * English language pack has "en-US" there on a Chinese computer — it came up in English. A browser tab has only
+ * the browser's list.
+ */
+export function systemTags(fromSystem: readonly string[] | undefined, fromBrowser: readonly string[]): readonly string[] {
+  return fromSystem?.length ? fromSystem : fromBrowser
+}
+
 /** The language the computer asks for, among those Lumen speaks. */
 export function systemLanguage(): Language {
   // Only in a window. Node has a `navigator` too, with the language of whoever runs the tests — and the tests are
   // written in English, wherever they run and whatever they stand in for a window.
   if (typeof window === 'undefined' || typeof navigator === 'undefined' || import.meta.env?.MODE === 'test') return 'en'
-  for (const tag of navigator.languages?.length ? navigator.languages : [navigator.language]) {
-    const found = tag ? languageFor(tag) : null
-    if (found) return found
-  }
-  return 'en'
+  return languageAmong(systemTags(window.lumen?.languages, navigator.languages?.length ? navigator.languages : [navigator.language]))
 }
 
 function settle(): Language {

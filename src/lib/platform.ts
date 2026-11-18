@@ -9,6 +9,8 @@ interface LumenBridge {
   isElectron: true
   /** Launched by the automated test harness (exposes the debug handle). */
   testMode?: boolean
+  /** The computer's languages, the most wanted first, as the system has them. */
+  languages?: string[]
   platform: string
   versions: { electron: string; chrome: string }
   /** Blender, HyperFrames and MCP — desktop app only. */

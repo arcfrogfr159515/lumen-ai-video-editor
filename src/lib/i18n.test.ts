@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import zhCN from '@/locales/zh-CN'
-import { counted, fill, language, languageFor, tm, translation, tt, ttc } from './i18n'
+import { counted, fill, language, languageAmong, languageFor, systemTags, tm, translation, tt, ttc } from './i18n'
 
 const places = (s: string) => new Set([...s.matchAll(/\{(\d+)\}/g)].map((m) => m[1]))
 
@@ -39,6 +39,24 @@ describe('what the interface says', () => {
     // Traditional characters are another translation, which there isn't yet.
     expect(['zh-TW', 'zh-Hant', 'zh-HK', 'zh-Hant-MO'].map(languageFor)).toEqual([null, null, null, null])
     expect(['fr', 'ja-JP', ''].map(languageFor)).toEqual([null, null, null])
+  })
+
+  it('takes the first of the computer’s languages it speaks', () => {
+    // A Chinese computer whose user also reads traditional characters, as Windows lists it.
+    expect(languageAmong(['zh-Hant-TW', 'zh-Hans-CN', 'en-US', 'en-GB'])).toBe('zh-CN')
+    expect(languageAmong(['en-US', 'zh-CN'])).toBe('en')
+    expect(languageAmong(['fr-FR', 'ja', ''])).toBe('en')
+    expect(languageAmong([])).toBe('en')
+  })
+
+  it('goes by the system’s languages in the desktop app, not by the browser’s', () => {
+    // What an installed Lumen with only the English language pack has on that computer: Chromium's "en-US" in front.
+    const browser = ['en-US', 'zh-Hant-TW', 'zh-Hans-CN', 'en-GB']
+    expect(languageAmong(browser)).toBe('en')
+    expect(languageAmong(systemTags(['zh-Hant-TW', 'zh-Hans-CN', 'en-US', 'en-GB'], browser))).toBe('zh-CN')
+    // A browser tab has only the browser's list; so has a desktop build from before the list was handed over.
+    expect(systemTags(undefined, browser)).toBe(browser)
+    expect(systemTags([], browser)).toBe(browser)
   })
 })
 

@@ -8,6 +8,7 @@ import { initCapture, stopCapture } from './capture'
 import { abortAllExports } from './export'
 import { registerMediaProtocol } from './files'
 import { applyGraphicsSettings } from './gpu'
+import { systemLanguages } from './i18n'
 import { initIngest, stopIngest } from './ingest'
 import { registerIntegrationIpc } from './integrations/ipc'
 import { registerJobListener } from './integrations/jobs'
@@ -79,8 +80,9 @@ function createWindow() {
       backgroundThrottling: false,
       // Sound plays the moment you press play (no gesture gate for the audio engine).
       autoplayPolicy: 'no-user-gesture-required',
-      // Automated test runs get the editor's debug handle in production builds too.
-      additionalArguments: process.env.LUMEN_USER_DATA ? ['--lumen-test'] : [],
+      // The computer's languages, for the page to pick its own from (its `navigator.language` is Chromium's, see
+      // systemLanguages). Automated test runs get the editor's debug handle in production builds too.
+      additionalArguments: [`--lumen-languages=${systemLanguages().join(',')}`, ...(process.env.LUMEN_USER_DATA ? ['--lumen-test'] : [])],
     },
   })
   mainWindow = win

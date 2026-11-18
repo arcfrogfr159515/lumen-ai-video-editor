@@ -14,6 +14,20 @@ describe('what the main process says', () => {
     expect(mt('A sentence with no translation')).toBe('A sentence with no translation')
   })
 
+  it('goes by the languages the system lists, and by Chromium’s only where the system can’t say', async () => {
+    const { languageAmong, systemLanguages } = await import('./i18n')
+    const { app } = (await import('electron')) as unknown as { app: { getPreferredSystemLanguages?: () => string[] } }
+    // This platform can't say (the call isn't there): Chromium's answer stands in.
+    expect(systemLanguages()).toEqual(['zh-CN'])
+    // A Chinese computer, an install with only the English language pack: Chromium says English, the system doesn't.
+    app.getPreferredSystemLanguages = () => ['zh-Hant-TW', 'zh-Hans-CN', 'en-US']
+    expect(systemLanguages()).toEqual(['zh-Hant-TW', 'zh-Hans-CN', 'en-US'])
+    expect(languageAmong(systemLanguages())).toBe('zh-CN')
+    app.getPreferredSystemLanguages = () => []
+    expect(systemLanguages()).toEqual(['zh-CN'])
+    expect(languageAmong(['fr-FR', ''])).toBe('en')
+  })
+
   it('has a Chinese sentence for every one the code says, asking only for the values given', async () => {
     const { default: zhCN } = await import('./locales/zh-CN')
     const said = new Set<string>()

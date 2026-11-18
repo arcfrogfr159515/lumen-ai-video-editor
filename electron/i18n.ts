@@ -22,6 +22,31 @@ function languageFor(tag: string): Language | null {
   return null
 }
 
+/**
+ * The languages the computer's user asked for, the most wanted first — as the system has them, not as Chromium does.
+ * Chromium's own answer (`app.getLocale()`, and with it the page's `navigator.language`) is the language of a pack
+ * it was shipped with: an installed Lumen that ships only the English pack answered "en-US" on a Chinese computer,
+ * and came up in English there.
+ */
+export function systemLanguages(): string[] {
+  try {
+    const wanted = app.getPreferredSystemLanguages()
+    if (wanted.length) return wanted
+  } catch {
+    // Not every platform can say; Chromium's answer is the next best.
+  }
+  return [app.getLocale()]
+}
+
+/** The first of `tags` that is a language Lumen speaks, or English. */
+export function languageAmong(tags: readonly string[]): Language {
+  for (const tag of tags) {
+    const found = tag ? languageFor(tag) : null
+    if (found) return found
+  }
+  return 'en'
+}
+
 let current: Language | null = null
 
 /** The language dialogs are shown in. */
@@ -33,7 +58,7 @@ export function language(): Language {
     const stored = readJson<{ language?: string }>(FILE, {}).language
     if (stored === 'en' || stored === 'zh-CN') return (current = stored)
     // Before the app is ready the computer's language isn't known yet: answer for now, and ask again next time.
-    return app.isReady() ? (current = languageFor(app.getLocale()) ?? 'en') : (languageFor(app.getLocale()) ?? 'en')
+    return app.isReady() ? (current = languageAmong(systemLanguages())) : languageAmong(systemLanguages())
   } catch {
     return 'en'
   }

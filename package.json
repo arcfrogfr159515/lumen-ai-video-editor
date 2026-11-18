@@ -164,7 +164,8 @@
     ],
     "electronDist": "node_modules/electron/dist",
     "electronLanguages": [
-      "en-US"
+      "en-US",
+      "zh-CN"
     ],
     "fileAssociations": [
       {
