@@ -43,7 +43,7 @@ import { BrainPicker } from './BrainPicker'
 import { EffortPicker } from './EffortPicker'
 import type { WebPreview } from '@shared/integrations'
 import { api } from '@/integrations/store'
-import { CopyButton, linksIn, Markdown } from './Markdown'
+import { CopyButton, givenLinks, linksIn, Markdown } from './Markdown'
 import {
   attach,
   attachFiles,
@@ -673,7 +673,7 @@ function AssistantMessage({ message: m }: { message: Message }) {
 
         {m.error && <AgentError error={m.error} />}
 
-        {!working && <LinkPreviews text={text} />}
+        {!working && <LinkPreviews text={text} parts={parts} />}
 
         {!working && parts.length > 0 && (
           <div className="mt-1 -ml-1 flex h-6 items-center gap-1 opacity-0 transition-opacity group-hover/reply:opacity-100 focus-within:opacity-100">
@@ -713,9 +713,16 @@ function previewOf(url: string) {
   return p
 }
 
-/** Cards for the pages a reply links to: title, site, a line of description and the page's picture. */
-function LinkPreviews({ text }: { text: string }) {
-  const urls = useMemo(() => linksIn(text).slice(0, 3), [text])
+/**
+ * Cards for the pages a reply links to: title, site, a line of description and the page's picture.
+ *
+ * A card is made by fetching the page, unasked and with nothing in the chat to show for it. So it is made only for
+ * an address the reply was given — by one of its tools (a search result, a page it read) or by the user — and not
+ * for one the model wrote itself: what a model has read can tell it to put what it knows of the project into an
+ * address, and fetching that address would hand it over. Such a link is still a link; clicking it is the user's call.
+ */
+function LinkPreviews({ text, parts }: { text: string; parts: Part[] }) {
+  const urls = useMemo(() => givenLinks(linksIn(text), [...parts.flatMap((p) => (p.kind === 'tool' && p.output ? [p.output] : [])), ...useCopilot.getState().messages.flatMap((m) => (m.role === 'user' ? [m.text] : []))]).slice(0, 3), [text, parts])
   const [cards, setCards] = useState<WebPreview[]>([])
   useEffect(() => {
     let alive = true

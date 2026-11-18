@@ -1,4 +1,4 @@
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, ImageIcon } from 'lucide-react'
 import { Fragment, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import { tt } from '@/lib/i18n'
@@ -230,6 +230,44 @@ function Link({ href, children }: { href: string; children: ReactNode }) {
   )
 }
 
+/** The host an address names, or nothing when it can't be read. */
+export function hostOf(url: string) {
+  try {
+    return new URL(url).hostname
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * A picture from the web, shown once it is asked for. Drawn straight away, a picture is a request to whatever
+ * address the reply names, made without a word — and a reply can be written by what the model has read: a page or
+ * a transcript that tells it to put what it knows of the project into a picture's address. Nothing in the chat
+ * would show that it had been sent. So the picture is named, and fetched on a click.
+ */
+function RemoteImage({ src, alt }: { src: string; alt: string }) {
+  const [shown, setShown] = useState(false)
+  const host = hostOf(src)
+  if (shown)
+    return (
+      <a href={src} target="_blank" rel="noreferrer noopener" className="my-1 block w-fit">
+        <img src={src} alt={alt} loading="lazy" className="max-h-56 max-w-full rounded-lg ring-1 ring-ink/10" />
+      </a>
+    )
+  return (
+    <button
+      type="button"
+      onClick={() => setShown(true)}
+      title={tt('A picture from {0}. It is fetched when you ask for it.', host)}
+      className="my-1 inline-flex max-w-full items-center gap-1.5 rounded-md bg-ink/[0.06] px-2 py-1 align-middle text-xs text-fg-3 transition-colors hover:bg-ink/[0.1] hover:text-fg"
+    >
+      <ImageIcon className="size-3.5 shrink-0" />
+      <span className="truncate">{alt || host}</span>
+      <span className="shrink-0 text-fg-4">{tt('· Show picture')}</span>
+    </button>
+  )
+}
+
 export function inline(text: string): ReactNode[] {
   const out: ReactNode[] = []
   let last = 0
@@ -242,15 +280,7 @@ export function inline(text: string): ReactNode[] {
     else if (image) {
       const [, alt, src] = /!\[([^\]]*)\]\(([^)\s]+)\)/.exec(image)!
       const href = safeUrl(src)
-      out.push(
-        href ? (
-          <a key={k++} href={href} target="_blank" rel="noreferrer noopener" className="my-1 block w-fit">
-            <img src={href} alt={alt} loading="lazy" className="max-h-56 max-w-full rounded-lg ring-1 ring-ink/10" />
-          </a>
-        ) : (
-          alt
-        ),
-      )
+      out.push(href ? <RemoteImage key={k++} src={href} alt={alt} /> : alt)
     } else if (link) {
       const [, label, href] = /\[([^\]]+)\]\(([^)\s]+)\)/.exec(link)!
       const safe = safeUrl(href)
@@ -264,6 +294,11 @@ export function inline(text: string): ReactNode[] {
   }
   if (last < text.length) out.push(text.slice(last))
   return out
+}
+
+/** Those of `urls` that appear, as they are, in something the reply was given (a tool's result, the user's words). */
+export function givenLinks(urls: readonly string[], given: readonly string[]): string[] {
+  return urls.filter((url) => given.some((text) => text.includes(url)))
 }
 
 /** The web addresses a reply mentions (for link previews), in order, without repeats. */
