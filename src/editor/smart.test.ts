@@ -14,7 +14,7 @@ vi.mock('@/engine/audio-engine', () => ({
   activeRegionsStreamed: async (asset: Asset) => activity.get(asset.id) ?? [],
 }))
 
-const { addCaptions, duckMusic, findPauses, removePauses, silentCuts, timelineTranscript } = await import('./smart')
+const { addCaptions, duckMusic, findPauses, removePauses, silentCuts, suggestFor, timelineTranscript } = await import('./smart')
 const { useEditor, getProject } = await import('./store')
 const { createClip, createTrack } = await import('./defaults')
 const { createEmptyProject } = await import('./new-project')
@@ -253,5 +253,44 @@ describe('duckMusic', () => {
     expect(propAt(m, 'volume', 150)).toBeCloseTo(0) // the gap between phrases (5s)
     expect(propAt(m, 'volume', 210)).toBeCloseTo(-10) // under speech (7s)
     expect(propAt(m, 'volume', 290)).toBeCloseTo(0) // after the speech
+  })
+
+  it('leaves music on a locked track as it is, and doesn’t say it was ducked', async () => {
+    const { p, add, withAsset, load, track } = setup()
+    add('Voice', 'audio', 0, 300, { assetId: withAsset(asset(10, [[1, 3], [6, 8]])) })
+    // Music that already rises at its start, on a track that is locked.
+    const held = add('Music', 'audio', 0, 300, { assetId: withAsset(asset(60, [[0, 60]])), keyframes: { volume: [{ frame: 0, value: -20, easing: 'linear' }, { frame: 30, value: 0, easing: 'linear' }] } })
+    p.tracks.find((t) => t.id === track('Music'))!.locked = true
+    load()
+    const before = getProject()
+    // Nothing on a locked track may be changed, and nothing was — but it was counted, and “Ducked 1 music clip” said.
+    expect(await duckMusic({ depth: 10 })).toMatchObject({ ducked: 0, locked: 1 })
+    expect(getProject().clips[held.id]).toBe(before.clips[held.id])
+    expect(useEditor.getState().past).toHaveLength(0)
+    // Asked for by name, the same.
+    expect(await duckMusic({ depth: 10, musicClipIds: [held.id] })).toMatchObject({ ducked: 0, locked: 1 })
+  })
+
+  it('is offered for music that plays at full level under speech — unless its track is locked', async () => {
+    const { p, add, withAsset, load, track } = setup()
+    add('Voice', 'audio', 0, 300, { assetId: withAsset(asset(10, [[0, 10]])) })
+    add('Music', 'audio', 0, 300, { assetId: withAsset(asset(60, [[0, 60]])) })
+    load()
+    expect((await suggestFor(getProject()))?.id).toBe('duck')
+    p.tracks.find((t) => t.id === track('Music'))!.locked = true
+    load()
+    expect(await suggestFor(getProject())).toBeNull()
+  })
+
+  it('ducks the music it can, and counts only that', async () => {
+    const { p, add, withAsset, load, track } = setup()
+    add('Voice', 'audio', 0, 300, { assetId: withAsset(asset(10, [[1, 3], [6, 8]])) })
+    const held = add('Music', 'audio', 0, 300, { assetId: withAsset(asset(60, [[0, 60]])) })
+    const free = add('Sound effects', 'audio', 0, 300, { assetId: withAsset(asset(60, [[0, 60]])) })
+    p.tracks.find((t) => t.id === track('Music'))!.locked = true
+    load()
+    expect(await duckMusic({ depth: 10, musicClipIds: [held.id, free.id] })).toMatchObject({ ducked: 1, locked: 1 })
+    expect(getProject().clips[held.id].keyframes.volume).toBeUndefined()
+    expect(getProject().clips[free.id].keyframes.volume?.length).toBeGreaterThan(0)
   })
 })

@@ -126,6 +126,8 @@ export function bedClips(project: Project): string[] {
     .map((c) => c.id)
 }
 
+const onLockedTrack = (project: Project, clip: Clip) => Boolean(project.tracks.find((t) => t.id === clip.trackId)?.locked)
+
 /** Music beds: audible audio clips on music-ish tracks, or long audio without speech elsewhere. */
 export function musicClips(project: Project): Clip[] {
   const voices = new Set(voiceClips(project).map((c) => c.id))
@@ -365,9 +367,13 @@ export async function duckMusic(opts: { depth?: number; musicClipIds?: string[];
   const project = getProject()
   const fps = project.settings.fps
   const depth = opts.depth ?? 10
-  const music = opts.musicClipIds?.length ? opts.musicClipIds.map((id) => project.clips[id]).filter(Boolean) : musicClips(project)
+  const found = opts.musicClipIds?.length ? opts.musicClipIds.map((id) => project.clips[id]).filter(Boolean) : musicClips(project)
+  // Music on a locked track stays as it is — and isn't counted: its keyframes are refused one by one, and it was
+  // said to have been ducked all the same.
+  const music = found.filter((m) => !onLockedTrack(project, m))
+  const locked = found.length - music.length
   const voices = opts.voiceClipIds?.length ? opts.voiceClipIds.map((id) => project.clips[id]).filter(Boolean) : voiceClips(project)
-  if (!music.length || !voices.length) return { ducked: 0, regions: 0 }
+  if (!music.length || !voices.length) return { ducked: 0, regions: 0, locked }
   // Speech on the timeline, in frames.
   let regions: [number, number][] = []
   for (const v of voices) {
@@ -411,7 +417,7 @@ export async function duckMusic(opts: { depth?: number; musicClipIds?: string[];
       ducked++
     }
   })
-  return { ducked, regions: regions.length }
+  return { ducked, regions: regions.length, locked }
 }
 
 // ─── Canvas ──────────────────────────────────────────────────────────────
@@ -482,7 +488,8 @@ export async function suggestFor(project: Project): Promise<Suggestion | null> {
       },
     }
   }
-  const music = musicClips(project)
+  // (Music on a locked track can't be ducked: there is nothing to offer for it.)
+  const music = musicClips(project).filter((m) => !onLockedTrack(project, m))
   if (music.length && !music.some((m) => m.keyframes.volume?.length)) {
     return {
       id: 'duck',

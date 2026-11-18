@@ -544,7 +544,7 @@ const INTEGRATION_TOOLS: AgentTool[] = [
         musicClipIds: Array.isArray(a.music_clip_ids) ? a.music_clip_ids.map(String) : undefined,
         voiceClipIds: Array.isArray(a.voice_clip_ids) ? a.voice_clip_ids.map(String) : undefined,
       })
-      if (!r.ducked) throw new Error('Didn’t find both music and speech on the timeline.')
+      if (!r.ducked) throw new Error(r.locked ? 'The music is on a locked track: nothing on it can be changed until the track is unlocked.' : 'Didn’t find both music and speech on the timeline.')
       return { music_clips_ducked: r.ducked, speech_regions: r.regions }
     },
   },
