@@ -63,7 +63,7 @@ export function cueText(cue: AssetCue) {
     case 'cut':
       return tt('Cut: {0}', cue.label)
     case 'walk':
-      return `${cue.who ? `${cue.who} walks` : 'Footsteps'}${cue.label !== cue.who && cue.label !== 'walk' ? ` (${cue.label})` : ''}`
+      return `${cue.who ? tt('{0} walks', cue.who) : tt('Footsteps')}${cue.label !== cue.who && cue.label !== 'walk' ? ` (${cue.label})` : ''}`
     case 'marker':
       return cue.label
     default: {
