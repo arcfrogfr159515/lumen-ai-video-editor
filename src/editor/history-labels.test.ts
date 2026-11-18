@@ -6,7 +6,7 @@ vi.stubGlobal('localStorage', { getItem: (key: string) => (key === 'lumen.langua
 const { language } = await import('@/lib/i18n')
 const { addAsset, freshProject, run } = await import('./test-helpers')
 const { getProject, useEditor } = await import('./store')
-const { propName } = await import('./commands')
+const { ATTRIBUTES, attributeName, propName } = await import('./commands')
 const { ANIMATABLE } = await import('./keyframes')
 
 /** What the History — and Undo, in the title bar — calls the last edit. */
@@ -75,6 +75,20 @@ describe('what the History calls an edit, in a Chinese window', () => {
     expect(lastStep()).toBe('清除水平位置动画')
     // Every property that can be animated has a word: none is left as the code writes it (the Inspector's list of keyframes names them the same way).
     expect(ANIMATABLE.map(propName)).toEqual(['水平位置', '垂直位置', '缩放', '旋转', '不透明度', '音量', 'X 轴倾斜', 'Y 轴转动', '深度', '速度'])
+  })
+
+  it('names what was pasted from one clip onto another in Chinese', () => {
+    // "粘贴 transform", "粘贴 color": what was pasted went in as the code writes it.
+    const [a, b, c] = [clip(0), clip(30), clip(60)]
+    run('clip.update', { ids: [a], patch: { transform: { x: 40 }, color: { exposure: 20 } } })
+    run('clip.copyAttributes', { fromId: a, ids: [b], include: ['transform'] })
+    expect(lastStep()).toBe('粘贴 变换')
+    run('clip.copyAttributes', { fromId: a, ids: [b], include: ['color'] })
+    expect(lastStep()).toBe('粘贴 颜色')
+    run('clip.copyAttributes', { fromId: a, ids: [c], include: ['transform', 'color'] })
+    expect(lastStep()).toBe('粘贴 属性')
+    // Each has a word — the ones the Paste attributes window lists them by.
+    expect(ATTRIBUTES.map(attributeName)).toEqual(['变换', '裁剪', '颜色', '效果', '音频', '速度', '动画', '文字样式', '混合模式'])
   })
 
   it('says a change in the mixer in Chinese, and whose it is', () => {

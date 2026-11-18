@@ -607,6 +607,9 @@ function setBase(clip: Clip, prop: AnimatableProp, value: number) {
  */
 export const propName = (prop: AnimatableProp) => ttc('property', prop)
 
+/** A group of a clip's attributes where pasting it is named, in the same way: “transform” in English, the Paste attributes window's word for it elsewhere. */
+export const attributeName = (group: Attribute) => ttc('attribute', group)
+
 /** Copies attribute groups from one clip onto another, where they make sense for its kind. */
 function copyAttributes(p: Project, from: Pick<Clip, 'kind'> & Partial<Clip>, to: Clip, include: readonly Attribute[]) {
   const visual = (c: Pick<Clip, 'kind'>) => c.kind !== 'audio'
@@ -980,7 +983,7 @@ export const commands = {
     input: z
       .object({ fromId: id.optional(), from: clipSnapshot.optional(), ids: z.array(id).min(1), include: z.array(attribute).min(1) })
       .refine((i) => i.fromId || i.from, tt('Give fromId or from')),
-    title: (i) => tt('Paste {0}', i.include.length === 1 ? i.include[0] : tt('attributes')),
+    title: (i) => tt('Paste {0}', i.include.length === 1 ? attributeName(i.include[0]) : tt('attributes')),
     run(p, i) {
       // A copy, so pasting onto the source clip's own group can't feed back into it.
       const source = cloneClip(i.fromId ? getClip(p, i.fromId) : (i.from as Clip))
