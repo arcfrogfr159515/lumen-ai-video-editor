@@ -41,6 +41,8 @@ export interface ScriptLine {
 // into its syllables — but Korean puts spaces between its words, and they are its words like any spelled ones.)
 const CJK = '\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}'
 const TOKEN = new RegExp(`[${CJK}]|[^\\s${CJK}]+`, 'gu')
+/** A word of such a script: a single character of it, here. */
+const UNSPACED = new RegExp(`^[${CJK}]`, 'u')
 const SPOKEN = /[\p{L}\p{N}]/u
 
 /**
@@ -176,6 +178,9 @@ export function repeatedWords(words: readonly ScriptWord[], maxGap = 30): number
       const same = first.every((w, k) => plain(w.text).length > 0 && plain(w.text) === plain(second[k].text))
       // One word twice is often meant (“very very”, “no no”): those are left; longer runs never are.
       if (!same || (run === 1 && EMPHATIC.has(plain(first[0].text)))) continue
+      // Where a word is a character, the character twice is very often just how a word is written — 谢谢, 妈妈, 看看,
+      // ここ. Taken for a stumble, half of the word was cut. (Two characters and the same two again still count.)
+      if (run === 1 && UNSPACED.test(first[0].text)) continue
       first.forEach((w) => out.add(w.index))
       i += run - 1
       break
@@ -285,9 +290,6 @@ export function cutRanges(project: Pick<Project, 'clips' | 'assets' | 'settings'
   }
   return joined
 }
-
-/** A word written in a script that puts no spaces between its words: a single character of it, here. */
-const UNSPACED = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
 
 /**
  * The words of a line as they are written: a space between two words that are spelled out, none beside a
