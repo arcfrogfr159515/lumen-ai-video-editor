@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R20 | In a Chinese window, deleting clips was “Delete 片段” / “Ripple delete 2 个片段” in the History and in Undo's name: half English, half Chinese | The title of `clip.delete` put the verb in as written and looked up only what was deleted. The whole name is a sentence given to `tt` now, as the names of a move or a duplicate already were | `src/editor/history-labels.test.ts` (new; runs with the window's language set to Chinese) | this round |
+| R21 | In a Chinese window a trim was “Trim start”, “Trim end”, “Ripple trim end” in the History and in Undo's name | The title of `clip.trim` was put together from English words as written (and from the command's own `start` / `end`). It is one of four sentences given to `tt` now | `src/editor/history-labels.test.ts` › “says a trim in Chinese…” | this round |
+| R20 | In a Chinese window, deleting clips was “Delete 片段” / “Ripple delete 2 个片段” in the History and in Undo's name: half English, half Chinese | The title of `clip.delete` put the verb in as written and looked up only what was deleted. The whole name is a sentence given to `tt` now, as the names of a move or a duplicate already were | `src/editor/history-labels.test.ts` (new; runs with the window's language set to Chinese) | `7362e0c` |
 | R19 | In a Chinese window a title added by the Copilot left English behind for the user to read: a track called “Titles” in the timeline (when it had to make one) and a step called “Title “…”” in the History | `add_title` wrote both as they are. What a tool answers the model stays English on purpose; these two are read by the user, and are looked up now | `src/integrations/tools/add-title.test.ts` (new; runs with the window's language set to Chinese) | `6394933` |
 | R18 | In a Chinese window, “Text behind subject” named the track it makes for the title “Titles”, in English, right under the track it names “主体” | `textBehindSubject` gave the first of its two new tracks its name as written, and the second through `tt` | `src/project/subject.test.ts` (new; the first test of text behind the subject — the stack it builds and its one undo step, too) | `fc88888` |
 | R17 | In a Chinese window the file name offered for exported markers ended in English — “旅行短片 chapters”, “旅行短片 markers” — where the clip notes beside them are offered as “旅行短片 片段备注” | The name was put together with the English word as it is written. It is `markerFileName` in `markers.ts` now, looked up as a name (`{0} markers` by itself is a count in the dictionary), and the dictionary has both | `src/editor/marker-file-name.test.ts` (new; runs with the window's language set to Chinese) | `8e455cc` |
@@ -36,7 +37,6 @@ Words the interface shows without looking them up, as R14's was — found by rea
 
 | Seen | Where |
 |---|---|
-| Trimming is “Trim start”, “Ripple trim end” in the History | `src/editor/commands.ts` `clip.trim` title (line 785) |
 | A mixer change is “Volume · master”, “Pan · …”, “Edit EQ · …”, “Mix · …” in the History | `src/editor/commands.ts` `mix.update` title (line 1393) |
 | The Copilot's batch of edits is “AI edit (3 steps)” in the History when it gives no name of its own | `src/integrations/tools/control.ts` line 68 |
 | Words cut by the Copilot are “Cut 3 spoken words” in the History | `src/integrations/tools/craft.ts` line 176 |

@@ -782,7 +782,7 @@ export const commands = {
     description:
       'Trim a clip by moving its start or end edge to an absolute timeline frame. Respects the source media length and neighbouring clips. With ripple, the clips after it on its track move by the same amount, so no gap opens (trimming the start with ripple keeps the clip in place and takes frames off its head).',
     input: z.object({ id, edge: z.enum(['start', 'end']), frame, ripple: z.boolean().default(false) }),
-    title: (i) => `${i.ripple ? 'Ripple trim' : 'Trim'} ${i.edge}`,
+    title: (i) => (i.edge === 'start' ? (i.ripple ? tt('Ripple trim start') : tt('Trim start')) : i.ripple ? tt('Ripple trim end') : tt('Trim end')),
     run(p, i) {
       const clip = getClip(p, i.id)
       assertEditable(p, clip)

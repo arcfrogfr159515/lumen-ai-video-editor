@@ -35,4 +35,18 @@ describe('what the History calls an edit, in a Chinese window', () => {
     run('clip.delete', { ids: [b, c], ripple: true })
     expect(lastStep()).toBe('波纹删除 2 个片段')
   })
+
+  it('says a trim in Chinese, whichever edge and whichever way', () => {
+    // "Trim start", "Ripple trim end": the name was put together from English words as they are written.
+    const overlay = getProject().tracks.find((t) => t.kind === 'video' && !t.role)!.id
+    const id = run('clip.add', { trackId: overlay, kind: 'video', start: 30, duration: 60, assetId: 'footage', inPoint: 30 }) as string
+    run('clip.trim', { id, edge: 'end', frame: 80 })
+    expect(lastStep()).toBe('修剪结尾')
+    run('clip.trim', { id, edge: 'start', frame: 40 })
+    expect(lastStep()).toBe('修剪开头')
+    run('clip.trim', { id, edge: 'end', frame: 70, ripple: true })
+    expect(lastStep()).toBe('波纹修剪结尾')
+    run('clip.trim', { id, edge: 'start', frame: 50, ripple: true })
+    expect(lastStep()).toBe('波纹修剪开头')
+  })
 })
