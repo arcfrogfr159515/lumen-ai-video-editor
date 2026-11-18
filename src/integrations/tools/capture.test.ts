@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CaptureSource } from '@shared/capture'
-import type { Asset } from '@/editor/types'
+import type { Asset, Clip } from '@/editor/types'
 
 // Pictures need a real canvas; the tools' plumbing doesn't.
 vi.mock('@/engine/stills', () => ({
@@ -118,6 +118,23 @@ describe('clicks on a clip', () => {
     const res = await call('get_clip', { clip_ids: [clipId] })
     const clip = res.json.clips[0]
     expect(clip.clicks.map((c: Json) => [c.at_seconds, c.x, c.y, c.button])).toEqual([[4, 0.25, 0.5, 'left'], [5, 0.75, 0.5, 'left'], [8, 0.5, 0.5, 'right'], [13, 0.5, 0.25, 'left']])
+  })
+
+  it('are where the clip shows them when it has been sped up, not where they were in the recording', async () => {
+    const p = getProject()
+    const fast = (patch: Partial<Clip>) => useEditor.getState().loadProject({ ...p, clips: { ...p.clips, [clipId]: { ...p.clips[clipId], ...patch } } })
+    // Twice as fast, from two seconds into the recording: the click five seconds in is seen a second and a half
+    // into the clip — 2.5 s on the timeline, where the clip starts at 1 s.
+    fast({ speed: 2 })
+    const res = await call('get_clip', { clip_ids: [clipId] })
+    expect(res.json.clips[0].clicks.map((c: Json) => [c.at_seconds, c.button])).toEqual([[2.5, 'left'], [3, 'left'], [4.5, 'right'], [7, 'left']])
+    expect(clipClicks(getProject().clips[clipId]).map((c) => [c.click.t, c.frame])).toEqual([[5, 45], [6, 60], [9, 105], [14, 180]])
+    // Five seconds of clip at that speed show ten of the recording: the click nine seconds in is inside it.
+    fast({ speed: 2, duration: 150 })
+    expect(clipClicks(getProject().clips[clipId]).map((c) => c.click.t)).toEqual([5, 6, 9])
+    // Played backwards, the last click comes first.
+    fast({ reverse: true })
+    expect(clipClicks(getProject().clips[clipId]).map((c) => [c.click.t, c.frame])).toEqual([[14, 90], [9, 240], [6, 330], [5, 360]])
   })
 
   it('zoom_on_clicks pushes in on each group of clicks, as keyframes that can be undone', async () => {

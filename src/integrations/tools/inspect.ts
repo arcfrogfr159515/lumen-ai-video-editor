@@ -3,6 +3,7 @@
  * search (including inside transcripts), timed transcripts, loudness and
  * silence analysis, the undo history and the catalog of valid ids.
  */
+import { clipClicks } from '@/capture/click-actions'
 import { BLEND_MODES, EASINGS } from '@/editor/commands'
 import { clipCues, cueText } from '@/editor/cues'
 import { MOTION_PRESETS } from '@/editor/motion-presets'
@@ -166,10 +167,8 @@ function slice(buffer: AudioBuffer, from: number, to: number) {
 /** A screen recording's clicks inside a clip, at timeline seconds, with where on the picture each landed. */
 function clicksOf(c: Clip, asset: Asset, fps: number) {
   if (!asset.cursor?.clicks.length) return {}
-  const clicks = asset.cursor.clicks
-    .map((k) => ({ k, frame: Math.round(k.t * fps) - c.inPoint }))
-    .filter(({ frame }) => frame >= 0 && frame < c.duration)
-    .map(({ k, frame }) => ({ at_seconds: round((c.start + frame) / fps, 3), x: k.x, y: k.y, button: k.button, ...(k.held && k.held > 0.3 ? { held_seconds: k.held } : {}) }))
+  // When the clip shows each click — its trim, speed and direction applied — not when it was made in the recording.
+  const clicks = clipClicks(c).map(({ click: k, frame }) => ({ at_seconds: round((c.start + frame) / fps, 3), x: k.x, y: k.y, button: k.button, ...(k.held && k.held > 0.3 ? { held_seconds: k.held } : {}) }))
   if (!clicks.length) return {}
   return { clicks: clicks.slice(0, 300), ...(clicks.length > 300 ? { clicks_more: clicks.length - 300 } : {}), clicks_note: 'x and y are fractions of the picture from its top left. zoom_on_clicks and highlight_clicks use them.' }
 }

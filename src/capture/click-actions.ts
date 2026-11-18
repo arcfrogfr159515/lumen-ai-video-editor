@@ -7,11 +7,12 @@ import type { CursorClick } from '@shared/capture'
 import { DEFAULT_TEXT, DEFAULT_TRANSFORM } from '@/editor/defaults'
 import { propAt } from '@/editor/keyframes'
 import { dispatch, getProject, useEditor, type ActionSource } from '@/editor/store'
+import { localForSource } from '@/editor/timing'
 import type { Clip } from '@/editor/types'
 import { zoomKeys, type ZoomOptions } from './autozoom'
 import { tt } from '@/lib/i18n'
 
-/** A clip's clicks that fall inside it, with the timeline frame each lands on. */
+/** A clip's clicks that fall inside it, with the frame of the clip each is seen on (its trim, speed and direction applied), first seen first. */
 export function clipClicks(clip: Clip): { click: CursorClick; frame: number }[] {
   const project = getProject()
   const asset = clip.assetId ? project.assets[clip.assetId] : undefined
@@ -19,10 +20,12 @@ export function clipClicks(clip: Clip): { click: CursorClick; frame: number }[] 
   const fps = project.settings.fps
   const out: { click: CursorClick; frame: number }[] = []
   for (const click of asset.cursor.clicks) {
-    const local = Math.round(click.t * fps) - clip.inPoint
-    if (local >= 0 && local < clip.duration) out.push({ click, frame: local })
+    const local = localForSource(clip, Math.round(click.t * fps))
+    if (local === null || !Number.isFinite(local)) continue
+    const frame = Math.round(local)
+    if (frame < clip.duration) out.push({ click, frame })
   }
-  return out
+  return out.sort((a, b) => a.frame - b.frame)
 }
 
 function recordingClip(clipId: string) {
