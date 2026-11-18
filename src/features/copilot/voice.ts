@@ -11,17 +11,25 @@ import { tt } from '@/lib/i18n'
 type VoiceState = 'idle' | 'recording' | 'transcribing'
 
 let recorder: MediaRecorder | null = null
+/** The microphone has been asked for and hasn't answered yet: the button still reads “idle” meanwhile. */
+let asking = false
 
 export function useVoiceInput(onText: (text: string) => void) {
   const [state, setState] = useState<VoiceState>('idle')
 
   const start = async () => {
+    // One press, one recording. Pressed again before the microphone had answered, a second recording started beside
+    // the first, and stopping stopped only the second: the first kept the microphone open until Lumen closed.
+    if (asking || recorder) return
+    asking = true
     let stream: MediaStream
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
     } catch {
       toast.error(tt('Microphone unavailable'), { description: tt('Allow Lumen to use the microphone in your system settings, then try again.') })
       return
+    } finally {
+      asking = false
     }
     const chunks: Blob[] = []
     const rec = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '' })
