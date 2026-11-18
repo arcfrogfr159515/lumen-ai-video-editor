@@ -17,6 +17,13 @@ type Content =
 /** JSON keys that usually hold a result's media URL, even when it has no file extension. */
 const MEDIA_KEY = /(^|_)(url|uri|href|src|image|video|audio|media|output|result|file|download)s?(_url)?$/i
 
+/**
+ * A key as its words, written with underscores: `videoUrl` and `imageURL` read as `video_url` and `image_url` do.
+ * Only keys written with underscores were known: a service that names its fields the other way answered with an
+ * address under `videoUrl`, and there was nothing to bring in.
+ */
+const inWords = (key: string) => key.replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+
 export function convertResult(result: Record<string, unknown>, provenance: Provenance): McpCallResult {
   const text: string[] = []
   const media: GeneratedAsset[] = []
@@ -52,7 +59,7 @@ export function convertResult(result: Record<string, unknown>, provenance: Prove
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       try {
         walk(JSON.parse(trimmed), (key, value) => {
-          if (MEDIA_KEY.test(key) && /^https?:\/\//.test(value)) addLink(value)
+          if (MEDIA_KEY.test(inWords(key)) && /^https?:\/\//.test(value)) addLink(value)
         })
       } catch {
         /* not JSON */
