@@ -136,16 +136,32 @@ function stage3D(W: number, H: number, project: Project) {
 
 // ─── Frame ───────────────────────────────────────────────────────────────
 
-/** Source time (seconds) a clip shows at a frame relative to its start — speed ramps, reverse and freeze frames included. */
-export function clipSourceTime(clip: Clip, local: number, fps: number) {
+/** The frame of its source a clip shows at a frame relative to its start, counted at the rate of the timeline the clip is on. */
+function clipSourceFrame(clip: Clip, local: number) {
   // Before its first frame (a transition that starts ahead of the cut) a clip shows the footage
   // just ahead of its in-point, as far as there is any.
   if (local < 0 && !clip.freeze) {
     const step = speedAt(clip, 0) * local
-    return Math.max(0, sourceFrameAt(clip, 0) + (clip.reverse ? -step : step)) / fps
+    return Math.max(0, sourceFrameAt(clip, 0) + (clip.reverse ? -step : step))
   }
-  return sourceFrameAt(clip, local) / fps
+  return sourceFrameAt(clip, local)
 }
+
+/** Source time (seconds) a clip shows at a frame relative to its start — speed ramps, reverse and freeze frames included. */
+export function clipSourceTime(clip: Clip, local: number, fps: number) {
+  return clipSourceFrame(clip, local) / fps
+}
+
+/**
+ * The frame of its own timeline a nested clip shows, on a timeline at `fps`, when its own runs at `nestedFps`.
+ *
+ * Multiplied before it is divided: frames and rates are whole numbers, and so is their product. As seconds first
+ * (`clipSourceTime(…) * nestedFps`), frame 29 at 25 a second was 28.999999999999996 — a hair before the cut at 29
+ * inside the nested timeline, where the clip that ends there is still the one drawn: once more, with a frame from
+ * past where it was trimmed, and the clip after it a frame late. One frame in twenty at 25 and 50 a second, one in
+ * sixty at 30 and 60 — in the preview, in rendered previews and in an export.
+ */
+const nestedFrameAt = (clip: Clip, local: number, fps: number, nestedFps: number) => (clipSourceFrame(clip, local) * nestedFps) / fps
 
 /** The rate a playing video element should run at for a clip, or 0 when it must be stepped frame by frame. */
 const playRate = (clip: Clip, local: number) => (clip.freeze || clip.reverse ? 0 : speedAt(clip, local))
@@ -226,7 +242,7 @@ function nestedPicture(project: Project, clip: Clip, local: number, W: number, H
   const r = Math.min(W / NW, H / NH)
   const w = Math.max(2, Math.round(NW * r))
   const h = Math.max(2, Math.round(NH * r))
-  const frame = clipSourceTime(clip, local, project.settings.fps) * NF
+  const frame = nestedFrameAt(clip, local, project.settings.fps, NF)
   const multicam = Boolean(view.sequence?.multicam)
   const angle = multicam ? angleTrackOf(view, clip) : undefined
   const prefix = keyPrefix
@@ -1053,7 +1069,7 @@ export function mediaDrawnAt(project: Project, frame: number, prefix = '', level
       if (c.sequenceId) {
         const view = sequenceView(project, c.sequenceId)
         if (!view || view === project || level >= MAX_DEPTH) continue
-        const nf = clipSourceTime(c, l, project.settings.fps) * view.settings.fps
+        const nf = nestedFrameAt(c, l, project.settings.fps, view.settings.fps)
         const angle = view.sequence?.multicam ? angleTrackOf(view, c) : undefined
         out.push(...mediaDrawnAt(view, nf, `${prefix}${c.id}>`, level + 1, angle))
       } else {
