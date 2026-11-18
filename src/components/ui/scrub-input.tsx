@@ -1,6 +1,7 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { cn } from '@/lib/cn'
 import { clamp } from '@/lib/math'
+import { typedNumber } from '@/lib/typed'
 
 interface ScrubInputProps {
   value: number
@@ -73,8 +74,8 @@ export function ScrubInput({
   }
 
   const commitDraft = () => {
-    const n = Number(draft.replace(/[^\d.+-]/g, ''))
-    if (draft.trim() && Number.isFinite(n)) set(n)
+    const n = typedNumber(draft)
+    if (n !== null) set(n)
     setEditing(false)
     onCommit?.()
   }

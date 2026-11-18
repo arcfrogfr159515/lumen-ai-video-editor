@@ -1,3 +1,5 @@
+import { halfWidth } from './typed'
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** HH:MM:SS:FF — broadcast-style timecode. */
@@ -29,7 +31,9 @@ export function formatSeconds(sec: number) {
 }
 
 /** Parses "SS", "MM:SS", "HH:MM:SS" or "HH:MM:SS:FF" into frames. */
-export function parseTimecode(input: string, fps: number): number | null {
+export function parseTimecode(typed: string, fps: number): number | null {
+  // As it would be typed in English: an input method types ： and 。 for the colon and the full stop (see `typed.ts`).
+  const input = halfWidth(typed)
   // Nothing typed is not a time. (As a number, an empty piece is 0: an emptied field was read as the very start.)
   if (!/\d/.test(input)) return null
   const parts = input.trim().split(/[:;.]/).map((p) => Number(p))
