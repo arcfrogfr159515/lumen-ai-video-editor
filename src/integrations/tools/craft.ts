@@ -19,6 +19,7 @@ import { getProject } from '@/editor/store'
 import { reorderable, storyboard, storyTrack } from '@/editor/storyboard'
 import { fillerWords, findPhrase, repeatedWords, scriptWords, timelineScript } from '@/editor/text-edit'
 import { useUI } from '@/editor/ui-store'
+import { tt } from '@/lib/i18n'
 import { angleMotion, applyAutoDirect, multicamTargets, planAutoDirect } from '@/project/auto-director'
 import { canConform, checkFrameTiming, conformAsset } from '@/project/conform'
 import { assetById, bool, clampNum, fps, int, list, num, number, obj, oneOf, rangeArg, seconds, str, strings, text, timecode, trackName, type AgentTool } from './kit'
@@ -173,7 +174,8 @@ export const CRAFT_TOOLS: AgentTool[] = [
       if (a.repeats === true) for (const i of repeatedWords(words, p.settings.fps)) cut.add(i)
       if (!cut.size) return { words_cut: 0, seconds_saved: 0, note: 'Nothing to cut: give phrases, word_indexes, fillers or repeats.' }
       const indexes = [...cut].sort((x, y) => x - y)
-      const r = cutSpokenWords(indexes, { label: `Cut ${indexes.length} spoken word${indexes.length === 1 ? '' : 's'}`, source: 'ai' })
+      // The step's name is read by the user, in the History: in their language. What goes back to the model stays English.
+      const r = cutSpokenWords(indexes, { label: tt('Cut {0} spoken word{1}', indexes.length, indexes.length === 1 ? '' : 's'), source: 'ai' })
       if (!r.cuts && r.error) throw new Error(r.error)
       return { words_cut: indexes.length, cuts: r.cuts, seconds_saved: seconds(r.frames), text_cut: indexes.slice(0, 60).map((i) => words[i].text).join(' '), ...(r.error ? { warning: r.error } : {}) }
     },

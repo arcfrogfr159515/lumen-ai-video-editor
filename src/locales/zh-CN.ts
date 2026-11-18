@@ -879,6 +879,7 @@ const zhCN: Record<string, string> = {
   'Cut {0} clips to the beat': '按节拍剪辑 {0} 个片段',
   'Cut {0} clips to the beat ({1} BPM)': '已按节拍剪辑 {0} 个片段（{1} BPM）',
   'Cut {0} match{1}': '剪掉 {0} 处匹配',
+  'Cut {0} spoken word{1}': '剪掉 {0} 个说出的词',
   'Cut a beat ahead of the speaker': '提前一拍切到说话的人',
   'Cut every place this is said': '剪掉所有说到这个词的地方',
   'Cut long pauses and dead air': '剪掉长停顿和空白',

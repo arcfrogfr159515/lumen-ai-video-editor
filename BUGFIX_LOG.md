@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R23 | In a Chinese window a batch of edits by the Copilot was “AI edit (2 steps)” in the History when the Copilot gave it no name of its own | `batch_edit` wrote the name as it is. It is read by the user, in the History, and is looked up now; a name the Copilot gives is kept as given | `src/integrations/tools/batch-edit.test.ts` (new; also the first tests that a batch is one step, and that a refused batch changes nothing) | this round |
+| R24 | In a Chinese window, words the Copilot cut out of what is said were “Cut 4 spoken words” in the History | `cut_spoken_text` gave the step a name written as it is, where the same cut made by hand is named through `tt`. It is looked up now | `src/integrations/tools/cut-spoken-text.test.ts` (new; runs with the window's language set to Chinese) | this round |
+| R23 | In a Chinese window a batch of edits by the Copilot was “AI edit (2 steps)” in the History when the Copilot gave it no name of its own | `batch_edit` wrote the name as it is. It is read by the user, in the History, and is looked up now; a name the Copilot gives is kept as given | `src/integrations/tools/batch-edit.test.ts` (new; also the first tests that a batch is one step, and that a refused batch changes nothing) | `7d85c60` |
 | R22 | In a Chinese window a change in the mixer was “Volume · 人声”, “Edit EQ · 人声”, “Edit compressor · master” in the History and in Undo's name | The title of `mix.update` was put together from English words as written, the master's name among them. Each is a sentence given to `tt` now, and the master is called what the mixer's own strip calls it | `src/editor/history-labels.test.ts` › “says a change in the mixer in Chinese…” | `c16bd32` |
 | R21 | In a Chinese window a trim was “Trim start”, “Trim end”, “Ripple trim end” in the History and in Undo's name | The title of `clip.trim` was put together from English words as written (and from the command's own `start` / `end`). It is one of four sentences given to `tt` now | `src/editor/history-labels.test.ts` › “says a trim in Chinese…” | `ef2a0e0` |
 | R20 | In a Chinese window, deleting clips was “Delete 片段” / “Ripple delete 2 个片段” in the History and in Undo's name: half English, half Chinese | The title of `clip.delete` put the verb in as written and looked up only what was deleted. The whole name is a sentence given to `tt` now, as the names of a move or a duplicate already were | `src/editor/history-labels.test.ts` (new; runs with the window's language set to Chinese) | `7362e0c` |
@@ -35,13 +36,9 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 ## Next — seen while reading, not yet reproduced
 
-Words the interface shows without looking them up, as R14's was — found by reading, each still to be shown by a test:
+Nothing waiting.
 
-| Seen | Where |
-|---|---|
-| Words cut by the Copilot are “Cut 3 spoken words” in the History | `src/integrations/tools/craft.ts` line 176 |
-
-Scanned for after R14, and found clean: words between tags, `title` / `aria-label` / `placeholder` attributes, either-or words in the interface's code, and the names in the tables of presets, effects and sounds.
+Words the interface shows without looking them up (R14–R24): every one found is fixed. Scanned for, and now clean: words between tags; `title` / `aria-label` / `placeholder` attributes; either-or words in the interface's code; the names in the tables of presets, effects and sounds; the titles of commands; names given to History steps and to tracks. The scans match the ways of writing they were made for — a word shown some other way would not have been seen.
 
 Read and found sound (rounds 10–13): `src/lib/keybindings.ts`, `src/lib/persisted.ts`, `src/editor/frame-rate.ts`, `src/editor/placement.ts`, `src/editor/playback.ts`, `src/editor/lut.ts`, `electron/log.ts`, `electron/render-cache.ts`, `electron/app-ipc.ts`, `electron/integrations/html.ts`, `electron/integrations/ai/media-gen.ts`, `src/project/subtitle-files.ts`, `src/project/media-import.ts`, `src/integrations/tools/footage.ts`, `src/integrations/tools/kit.ts`. `formatDuration` says “60s” for 59.6 s and “10.0s” for 9.96 s: a matter of style, left alone. A link preview for a page with no title gets no card (the window leaves out cards without a title): taken as meant.
 
