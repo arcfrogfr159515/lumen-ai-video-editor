@@ -6,6 +6,8 @@ vi.stubGlobal('localStorage', { getItem: (key: string) => (key === 'lumen.langua
 const { language } = await import('@/lib/i18n')
 const { addAsset, freshProject, run } = await import('./test-helpers')
 const { getProject, useEditor } = await import('./store')
+const { propName } = await import('./commands')
+const { ANIMATABLE } = await import('./keyframes')
 
 /** What the History — and Undo, in the title bar — calls the last edit. */
 const lastStep = () => useEditor.getState().past.at(-1)?.label
@@ -56,6 +58,23 @@ describe('what the History calls an edit, in a Chinese window', () => {
     expect(lastStep()).toBe('添加视频轨道')
     run('track.add', { kind: 'audio' })
     expect(lastStep()).toBe('添加音频轨道')
+  })
+
+  it('names the property a keyframe is on in Chinese', () => {
+    // "关键帧：scale", "移除 scale 关键帧", "清除 x 动画": the property went in as the code writes it.
+    const id = clip(0, 60)
+    run('keyframe.set', { clipId: id, prop: 'scale', frame: 0, value: 1 })
+    expect(lastStep()).toBe('关键帧：缩放')
+    run('keyframe.set', { clipId: id, prop: 'x', frame: 0, value: 10 })
+    expect(lastStep()).toBe('关键帧：水平位置')
+    run('keyframe.set', { clipId: id, prop: 'rotateY', frame: 0, value: 10 })
+    expect(lastStep()).toBe('关键帧：Y 轴转动')
+    run('keyframe.remove', { clipId: id, prop: 'scale', frame: 0 })
+    expect(lastStep()).toBe('移除缩放关键帧')
+    run('keyframe.clear', { clipId: id, prop: 'x' })
+    expect(lastStep()).toBe('清除水平位置动画')
+    // Every property that can be animated has a word: none is left as the code writes it (the Inspector's list of keyframes names them the same way).
+    expect(ANIMATABLE.map(propName)).toEqual(['水平位置', '垂直位置', '缩放', '旋转', '不透明度', '音量', 'X 轴倾斜', 'Y 轴转动', '深度', '速度'])
   })
 
   it('says a change in the mixer in Chinese, and whose it is', () => {

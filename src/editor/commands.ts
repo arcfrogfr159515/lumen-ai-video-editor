@@ -72,7 +72,7 @@ import { addTake, clearTakes, neighbourTake, removeTake, switchTake, TakeError }
 import { resolveEdit } from './three-point'
 import { averageSpeed, consumed, isRamped, MAX_SPEED, MIN_SPEED } from './timing'
 import type { AnimatableProp, BusMix, Clip, Marker, Project, Sequence, Track } from './types'
-import { counted, tt } from '@/lib/i18n'
+import { counted, tt, ttc } from '@/lib/i18n'
 
 export class CommandError extends Error {}
 
@@ -601,6 +601,11 @@ function setBase(clip: Clip, prop: AnimatableProp, value: number) {
   else clip.transform[prop] = value
 }
 
+/**
+ * An animatable property as people are told of it — in the History, in the Inspector's list of keyframes: the
+ * code's own word for it in English, the window's word in another language.
+ */
+export const propName = (prop: AnimatableProp) => ttc('property', prop)
 
 /** Copies attribute groups from one clip onto another, where they make sense for its kind. */
 function copyAttributes(p: Project, from: Pick<Clip, 'kind'> & Partial<Clip>, to: Clip, include: readonly Attribute[]) {
@@ -1195,7 +1200,7 @@ export const commands = {
     description:
       'Set a keyframe on an animatable property (x, y, scale, rotation, opacity, volume, rotateX, rotateY, z — or speed, for a speed ramp) at a frame relative to the clip start.',
     input: z.object({ clipId: id, prop: animatable, frame, value: z.number(), easing: easing.optional() }),
-    title: (i) => tt('Keyframe {0}', i.prop),
+    title: (i) => tt('Keyframe {0}', propName(i.prop)),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       assertEditable(p, clip)
@@ -1218,7 +1223,7 @@ export const commands = {
   'keyframe.remove': command({
     description: 'Remove the keyframe at a clip-relative frame.',
     input: z.object({ clipId: id, prop: animatable, frame }),
-    title: (i) => tt('Remove {0} keyframe', i.prop),
+    title: (i) => tt('Remove {0} keyframe', propName(i.prop)),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       const kfs = clip.keyframes[i.prop]
@@ -1237,7 +1242,7 @@ export const commands = {
   'keyframe.clear': command({
     description: 'Remove all keyframes from a property, keeping its first value.',
     input: z.object({ clipId: id, prop: animatable }),
-    title: (i) => tt('Clear {0} animation', i.prop),
+    title: (i) => tt('Clear {0} animation', propName(i.prop)),
     run(p, i) {
       const clip = getClip(p, i.clipId)
       const first = clip.keyframes[i.prop]?.[0]

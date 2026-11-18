@@ -7,7 +7,8 @@ Findings and their numbers (BUG-, SEC-, PERF-, UX-) are from [`docs/audit/2026-1
 
 | # | Bug | Root cause | Test that reproduces it | Commit |
 |---|---|---|---|---|
-| R53 | In a Chinese window, the History (and Undo) called adding a track “添加 video 轨道” | The title of `track.add` put the kind into a looked-up sentence as the code writes it. It asks for the two sentences the menus already use (添加视频轨道, 添加音频轨道); the dictionary's entry for the sentence with a gap, which nothing asks for any more, is gone | `src/editor/history-labels.test.ts` (one test added) | this round |
+| R54 | In a Chinese window, a keyframe's property was named as the code writes it: the History said “关键帧：scale”, “移除 scale 关键帧”, “清除 x 动画”, and the Inspector's list of keyframes read “Scale”, “X”, “RotateY”, each with a button “清除 x 动画” | The property's code name went straight into looked-up sentences (three command titles, and the Inspector's list). `propName` gives the window's word for each of the ten properties — the code's own in English, so English reads as before — and all five places use it | `src/editor/history-labels.test.ts` (one test added: the three History names, and that every property has a word). The Inspector's list has no test: the suite has no DOM | this round |
+| R53 | In a Chinese window, the History (and Undo) called adding a track “添加 video 轨道” | The title of `track.add` put the kind into a looked-up sentence as the code writes it. It asks for the two sentences the menus already use (添加视频轨道, 添加音频轨道); the dictionary's entry for the sentence with a gap, which nothing asks for any more, is gone | `src/editor/history-labels.test.ts` (one test added) | `6cd7de8` |
 | R52 | In a Chinese window, a track added with the “+” (or by the Copilot) was named “Video 4” or “Audio 4”, among 标题, 叠加, 主视频, 人声 | `track.add` wrote the name from “Video” / “Audio” as they are; an audio track made by detaching sound, a few lines of `ops.ts` away, already looked its name up. Both kinds do now | `src/editor/track-names.test.ts` (new) | `7c0697e` |
 | R51 | In a Chinese window, the message after a batch change said “未更改：3 clips (没有画面)。” | `describeBatch` counted the clips it left alone with “clips” written into the text. The count is looked up now, as the rest of the sentence is | `src/editor/batch-words.test.ts` (new) | `dd435fa` |
 | R50 | In a Chinese window, the source monitor said what an edit would do as “三点编辑: 5 s at 00:00:08:10 · 从出点倒推”, and called an edit of one or two points “2-point” | `describeEdit` put the sentence together around an “at” and a “-point” written into it. The sentence and the name are looked up now (`{0}: {1} at {2}`, `{0}-point`) | `src/editor/edit-words.test.ts` (new) | `aec767d` |
@@ -67,9 +68,9 @@ Fixed earlier in the same audit round, each with its commit (see the audit repor
 
 What the History calls an edit, where a value goes into the looked-up sentence as the code writes it — seen in a Chinese window with a throwaway test while fixing R53, each still to be shown by a test that stays:
 
-- Keyframes: “关键帧：scale”, “移除 scale 关键帧”, “清除 x 动画” (`keyframe.set`, `keyframe.remove`, `keyframe.clear`).
 - Pasting one attribute: “粘贴 transform”, “粘贴 color” (`clip.copyAttributes`).
 - Adding an effect (`effect.add`) puts the effect's name in the same way; not looked at yet.
+- Three more lists show what the code calls a thing, with a capital put on by the style sheet, as the Inspector's keyframes did before R54: the palettes and styles of a 3D title (`Generate3D.tsx`) and two lists of a motion graphic (`GenerateMotion.tsx`). Not looked at yet.
 
 A recording's files on disk are named in English whatever the window's language (“Recording 2026-10-13 21.45.10 camera part 2.mp4”), and a recording nobody named takes its file's name into the media library (“Recording 2026-…”). Left as it is: a file's name is not the interface, and R47–R48 settled the words the interface adds.
 

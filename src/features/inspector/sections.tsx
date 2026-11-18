@@ -33,7 +33,7 @@ import { Select } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
-import type { ClipPatch } from '@/editor/commands'
+import { propName, type ClipPatch } from '@/editor/commands'
 import { DEFAULT_COLOR } from '@/editor/defaults'
 import { setAnimatable } from '@/editor/edit'
 import { ANIMATABLE } from '@/editor/keyframes'
@@ -449,9 +449,9 @@ export function AnimateSection({ clip, fps }: { clip: Clip; fps: number }) {
               <div key={p}>
                 <div className="flex h-7 items-center gap-2 px-1 text-sm">
                   <Diamond className="size-3 fill-accent-2 text-accent-2" />
-                  <span className="flex-1 text-fg-2 capitalize">{p}</span>
+                  <span className="flex-1 text-fg-2 capitalize">{propName(p)}</span>
                   <span className="text-xs text-fg-4 tabular">{ttx('{0} keys', clip.keyframes[p]!.length)}</span>
-                  <IconButton size="xs" label={tt('Clear {0} animation', p)} onClick={() => dispatch('keyframe.clear', { clipId: clip.id, prop: p })}>
+                  <IconButton size="xs" label={tt('Clear {0} animation', propName(p))} onClick={() => dispatch('keyframe.clear', { clipId: clip.id, prop: p })}>
                     <X />
                   </IconButton>
                 </div>
