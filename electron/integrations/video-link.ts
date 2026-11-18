@@ -9,7 +9,7 @@ import { app, net } from 'electron'
 import type { TranscriptSegment, WebVideo, WebVideoOptions, WebVideoPicture } from '../../shared/integrations'
 import { elements, firstElement, tidy as tidyPage, tidyTags } from './html'
 import { allowPath, fileUrl, workDir } from './paths'
-import { absolute, checkUrl, decodeEntities, isCancelledRedirect, meta, redirectTarget, strip, UA } from './web'
+import { absolute, attribute, checkUrl, decodeEntities, isCancelledRedirect, meta, redirectTarget, strip, UA } from './web'
 
 /**
  * Watching a linked video for the Copilot without bringing it into the project:
@@ -770,6 +770,14 @@ interface LdVideo {
   author?: { name?: string } | string
 }
 
+/**
+ * What kind of thing a tag says it holds or leads to (`type`), however the page writes it. The tags a video is
+ * looked for in — its JSON-LD, its players, its files, its oEmbed link — were each found only with their attributes
+ * between quotes: a page made small for sending, which leaves out the quotes it can, had no video on it as far as
+ * Lumen could tell.
+ */
+const kindOf = (tag: string) => (attribute(tag, 'type') ?? '').split(';')[0].trim().toLowerCase()
+
 /** Every schema.org VideoObject in a page's JSON-LD, however deeply it sits. */
 function ldVideos(html: string): LdVideo[] {
   const out: LdVideo[] = []
@@ -781,7 +789,7 @@ function ldVideos(html: string): LdVideo[] {
     for (const value of Object.values(node)) visit(value, depth + 1)
   }
   for (const script of elements(html, 'script')) {
-    if (!/\stype=["']application\/ld\+json["']/i.test(script.tag)) continue
+    if (kindOf(script.tag) !== 'application/ld+json') continue
     try {
       visit(JSON.parse(script.inner), 0)
     } catch {
@@ -805,13 +813,16 @@ export function parseVideoPage(html: string, base: URL): PageVideo {
   const og = [meta(html, 'og:video:secure_url'), meta(html, 'og:video:url'), meta(html, 'og:video')]
   // The tag patterns below run on the tidied page, where a "<" can't run on past its own tag (see html.ts).
   const tagged = tidyPage(html)
-  const tags = [...tagged.matchAll(/<(?:video|source)\b[^>]*\ssrc=["']([^"']+)["'][^>]*>/gi)].filter((m) => /^<video/i.test(m[0]) || /type=["']video\//i.test(m[0]) || VIDEO_FILE.test(m[1].split('?')[0])).map((m) => m[1])
+  const tags = [...tagged.matchAll(/<(?:video|source)\b[^>]*>/gi)]
+    .map((m) => ({ tag: m[0], src: attribute(m[0], 'src') }))
+    .filter((t): t is { tag: string; src: string } => Boolean(t.src) && (/^<video/i.test(t.tag) || kindOf(t.tag).startsWith('video/') || VIDEO_FILE.test(t.src!.split('?')[0])))
+    .map((t) => t.src)
   const media = [ld?.contentUrl, meta(html, 'twitter:player:stream'), ...og.filter((u) => u && (declared.startsWith('video/') || VIDEO_FILE.test(u.split('?')[0]))), ...tags]
-  const frames = [...tagged.matchAll(/<iframe\b[^>]*\ssrc=["']([^"']+)["']/gi)].map((m) => m[1])
+  const frames = [...tagged.matchAll(/<iframe\b[^>]*>/gi)].map((m) => attribute(m[0], 'src'))
   const embeds = [ld?.embedUrl, ...og, meta(html, 'twitter:player'), ...frames]
   const unique = (list: unknown[]) => [...new Set(list.map(link).filter((u): u is string => Boolean(u)))]
-  const oembed = /<link\b[^>]*type=["']application\/json\+oembed["'][^>]*>/i.exec(tagged)?.[0]
-  const oembedHref = oembed && link(/href=["']([^"']+)["']/i.exec(oembed)?.[1])
+  const oembed = [...tagged.matchAll(/<link\b[^>]*>/gi)].map((m) => m[0]).find((tag) => kindOf(tag) === 'application/json+oembed')
+  const oembedHref = oembed && link(attribute(oembed, 'href'))
   const author = typeof ld?.author === 'string' ? ld.author : ld?.author?.name
 
   const page: PageVideo = {

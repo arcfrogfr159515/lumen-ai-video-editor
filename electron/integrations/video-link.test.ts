@@ -504,6 +504,22 @@ describe('pages with a video on them', () => {
     expect(page.embeds.map((e) => youtubeId(new URL(e))).filter(Boolean)).toEqual(['iG9CE55wbtY'])
   })
 
+  it('reads the same from a page written without quotes', () => {
+    // The page above, as a page made small for sending writes it: no quotes round what needs none. Every one of
+    // these was looked for between quotes only — the JSON-LD, the players, the files, the oEmbed link — and such a
+    // page had no video on it as far as Lumen could tell: only its <title>.
+    const page = parseVideoPage(
+      `<html><head><title>Talk</title>
+      <script type=application/ld+json>{"@context":"https://schema.org","@type":"VideoObject","name":"Do schools kill creativity?","duration":"PT19M11S","thumbnailUrl":"https://pi.tedcdn.com/a.jpg","contentUrl":"https://cdn.example.org/talk.mp4"}</script>
+      <link rel=alternate type=application/json+oembed href=https://www.ted.com/services/v1/oembed.json?url=a_talk>
+      </head><body><iframe width=560 src=https://www.youtube.com/embed/iG9CE55wbtY?feature=oembed></iframe><video controls src=/media/whole.mp4></video><video controls><source src=/media/clip.webm type=video/webm><source src='/media/clip.mov'></video></body></html>`,
+      new URL('https://www.ted.com/talks/a_talk'),
+    )
+    expect(page).toMatchObject({ title: 'Do schools kill creativity?', duration: 1151, thumbnail: 'https://pi.tedcdn.com/a.jpg', oembed: 'https://www.ted.com/services/v1/oembed.json?url=a_talk', video: true })
+    expect(page.media).toEqual(['https://cdn.example.org/talk.mp4', 'https://www.ted.com/media/whole.mp4', 'https://www.ted.com/media/clip.webm', 'https://www.ted.com/media/clip.mov'])
+    expect(page.embeds).toEqual(['https://www.youtube.com/embed/iG9CE55wbtY?feature=oembed'])
+  })
+
   it('knows a page with no video from one that hides it', () => {
     expect(parseVideoPage('<html><head><title>Example Domain</title></head><body><p>Hi</p></body></html>', new URL('https://example.com/'))).toEqual({ title: 'Example Domain', media: [], embeds: [], video: false })
     expect(parseVideoPage('<html><head><meta property="og:type" content="video.other"><title>Clip</title></head></html>', new URL('https://clips.example.tv/x')).video).toBe(true)
