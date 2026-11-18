@@ -814,6 +814,13 @@ async function finish(s: Session, opts: StopOptions): Promise<RecordingResult | 
   }
 }
 
+/** What a recording's clip is called in the media library: the recording's name, what it is of, and which part when it came in several. */
+export function recordedClipName(name: string, role: Role, part?: number) {
+  // The files on disk say "camera" and "microphone" whatever the language; what the library shows is in the window's.
+  const label = role === 'webcam' ? ` ${ttc('recording', 'camera')}` : role === 'mic' ? ` ${ttc('recording', 'microphone')}` : ''
+  return `${name}${label}${part ? ' ' + tt('part {0}', part) : ''}`
+}
+
 /** What became of a recording, under “Recorded 12 s”: its name, where its clips went, and how many things there were to know. */
 export function recordedSummary(name: string, where: 'timeline' | 'library' | 'files', notes: number) {
   const went = where === 'timeline' ? tt('on the timeline') : where === 'library' ? tt('in the media library') : tt('saved')
@@ -892,11 +899,9 @@ async function addToProject(s: Session, made: { role: Role; file: RecordedFile; 
         clicks += track.clicks.length
       }
     }
-    const label = m.role === 'webcam' ? ' camera' : m.role === 'mic' ? ' microphone' : ''
-    const part = made.filter((x) => x.role === m.role).length > 1 ? (' ' + tt('part {0}', segment.file + 1)) : ''
     const asset: Asset = {
       id: uid('asset'),
-      name: `${s.name}${label}${part}`,
+      name: recordedClipName(s.name, m.role, made.filter((x) => x.role === m.role).length > 1 ? segment.file + 1 : undefined),
       kind: m.role === 'mic' ? 'audio' : 'video',
       duration: seconds,
       ...(m.role !== 'mic' ? { width: segment.width ?? probed?.width, height: segment.height ?? probed?.height, fps: segment.fps ?? probed?.fps } : {}),

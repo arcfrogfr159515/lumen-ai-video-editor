@@ -8,7 +8,21 @@ vi.mock('@/project/media-import', () => ({ analyzeAssets: async () => {} }))
 vi.mock('@/lib/platform', () => ({ platform: { isMac: false }, desktop: undefined }))
 
 const { language } = await import('@/lib/i18n')
-const { recordedSummary } = await import('./recorder')
+const { recordedClipName, recordedSummary } = await import('./recorder')
+
+describe('what a recording’s clips are called in the media library, in a window in Chinese', () => {
+  it('says which is the camera’s and which the microphone’s in Chinese', () => {
+    expect(language).toBe('zh-CN')
+    expect(recordedClipName('Demo', 'screen')).toBe('Demo')
+    expect(recordedClipName('Demo', 'webcam')).toBe('Demo 摄像头')
+    expect(recordedClipName('Demo', 'mic')).toBe('Demo 麦克风')
+  })
+
+  it('and which part, as it already did', () => {
+    expect(recordedClipName('Demo', 'screen', 2)).toBe('Demo 第 2 部分')
+    expect(recordedClipName('Demo', 'webcam', 2)).toBe('Demo 摄像头 第 2 部分')
+  })
+})
 
 describe('what the recorder says when a recording ends, in a window in Chinese', () => {
   it('says where the clips went', () => {
