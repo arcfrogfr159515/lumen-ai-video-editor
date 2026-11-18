@@ -195,6 +195,10 @@ export async function forgetRecent(path: string) {
 export async function recover() {
   const info = useSession.getState().recovery
   if (!info) return
+  // The offer stays on the start screen while another project is opened and worked on. That project's own unsaved
+  // changes are asked about first, as they are before a project is opened or made: taken without asking, the
+  // recovered project was loaded over them.
+  if (!(await settleChanges())) return
   try {
     load(JSON.parse(info.text) as Project, info.path)
   } catch (err) {

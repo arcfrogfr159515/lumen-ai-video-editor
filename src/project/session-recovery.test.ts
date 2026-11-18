@@ -10,6 +10,9 @@ const env = vi.hoisted(() => ({
   cleared: 0,
   autosaved: 0,
   discarded: 0,
+  /** What the user answers when asked about unsaved changes, and how often they were asked. */
+  choice: 'discard' as 'save' | 'discard' | 'cancel',
+  asked: 0,
 }))
 
 vi.mock('@/lib/platform', () => ({
@@ -21,7 +24,10 @@ vi.mock('@/lib/platform', () => ({
         return { path }
       },
       open: async (path: string) => ({ path, text: env.disk.get(path)!, missing: [] }),
-      confirmDiscard: async () => 'discard',
+      confirmDiscard: async () => {
+        env.asked++
+        return env.choice
+      },
       startupFile: async () => env.startup,
       recovery: async () => env.recovery,
       discardRecovery: async () => void env.discarded++,
@@ -69,6 +75,8 @@ beforeEach(() => {
   env.startup = null
   env.recovery = null
   env.cleared = env.autosaved = env.discarded = 0
+  env.choice = 'discard'
+  env.asked = 0
 })
 
 describe('what wasn’t saved when Lumen closed unexpectedly', () => {
@@ -147,5 +155,60 @@ describe('what wasn’t saved when Lumen closed unexpectedly', () => {
     // Given up after all (“Don’t save” is what the prompt answers here): it isn’t offered again.
     await openProject(OTHER)
     expect(env.cleared).toBe(1)
+  })
+})
+
+describe('taking back what wasn’t saved while another project is open', () => {
+  const labels = (text: string | undefined) => (JSON.parse(text ?? '{"markers":[]}') as { markers: { label: string }[] }).markers.map((m) => m.label)
+
+  it('asks first when that project has changes of its own that aren’t saved, and leaves everything be on Cancel', async () => {
+    const { recover, openProject, getProject, isDirty, useSession, mark } = await start()
+    await openProject(OTHER)
+    mark('in the other')
+    expect(isDirty()).toBe(true)
+    env.asked = 0
+    env.choice = 'cancel'
+    await recover()
+    // It was never asked: the recovered film was loaded over the other project, whose changes went without a word.
+    expect(env.asked).toBe(1)
+    expect(getProject().name).toBe('Other')
+    expect(getProject().markers.map((m) => m.label)).toEqual(['in the other'])
+    expect(isDirty()).toBe(true)
+    // The offer is still there to take later.
+    expect(useSession.getState().recovery?.name).toBe('Film')
+  })
+
+  it('saves that project first when the answer is Save', async () => {
+    const { recover, openProject, getProject, useSession, mark } = await start()
+    await openProject(OTHER)
+    mark('in the other')
+    env.choice = 'save'
+    await recover()
+    expect(labels(env.disk.get(OTHER))).toEqual(['in the other'])
+    expect(getProject().name).toBe('Film')
+    expect(getProject().markers.map((m) => m.label)).toEqual(['not saved yet'])
+    expect(useSession.getState().path).toBe(FILM)
+    expect(useSession.getState().recovery).toBeNull()
+  })
+
+  it('gives that project’s changes up when the answer is Don’t save', async () => {
+    const { recover, openProject, getProject, mark } = await start()
+    await openProject(OTHER)
+    mark('in the other')
+    env.asked = 0
+    env.choice = 'discard'
+    await recover()
+    expect(env.asked).toBe(1)
+    expect(labels(env.disk.get(OTHER))).toEqual([])
+    expect(getProject().markers.map((m) => m.label)).toEqual(['not saved yet'])
+  })
+
+  it('asks nothing when that project has no unsaved changes', async () => {
+    const { recover, openProject, getProject } = await start()
+    await openProject(OTHER)
+    env.asked = 0
+    await recover()
+    expect(env.asked).toBe(0)
+    expect(getProject().name).toBe('Film')
   })
 })
