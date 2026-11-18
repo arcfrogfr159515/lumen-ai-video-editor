@@ -2933,6 +2933,7 @@ const zhCN: Record<string, string> = {
   'Title': '标题',
   'Title — {0}': '标题——{0}',
   'Title — | breaks a line, *word* for emphasis': '标题——用 | 换行，用 *文字* 表示强调',
+  'Title “{0}”': '标题“{0}”',
   'Title card': '标题卡',
   'Title cards': '标题卡',
   'Title styles': '标题样式',

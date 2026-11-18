@@ -33,7 +33,8 @@ function titlesTrack(): string {
   const p = getProject()
   const existing = p.tracks.find((t) => t.role === 'titles' && !t.locked) ?? p.tracks.find((t) => t.kind === 'video' && t.role !== 'main' && t.role !== 'captions' && !t.locked)
   if (existing) return existing.id
-  const res = dispatch('track.add', { kind: 'video', name: 'Titles', index: 0, role: 'titles' }, ai)
+  // The track's name is for the user to read, in the timeline: in their language, like the Titles track a project comes with.
+  const res = dispatch('track.add', { kind: 'video', name: tt('Titles'), index: 0, role: 'titles' }, ai)
   if (!res.ok) throw new Error(res.error)
   return res.result as string
 }
@@ -144,7 +145,7 @@ export const CONTROL_TOOLS: AgentTool[] = [
         if (!res.ok) throw new Error(res.error)
         clipId = res.result as string
       }
-      useEditor.getState().transaction(`Title “${words.slice(0, 24)}”`, 'ai', () => {
+      useEditor.getState().transaction(tt('Title “{0}”', words.slice(0, 24)), 'ai', () => {
         const mark = savepoint()
         try {
           add()
