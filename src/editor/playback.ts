@@ -150,6 +150,9 @@ export const playback = {
     else playback.play()
   },
   seek(frame: number) {
+    // Not a time: the playhead stays. (Taken as one, it became "not a number" itself — the timecode read NaN, the
+    // viewer went black and nothing played, until the ruler was clicked.)
+    if (!Number.isFinite(frame)) return
     const f = Math.max(0, Math.round(frame))
     const { playing, rate } = usePlayback.getState()
     if (playing) anchor(f, rate)

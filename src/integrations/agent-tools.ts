@@ -248,7 +248,10 @@ const INTEGRATION_TOOLS: AgentTool[] = [
     description: 'Move the playhead (what the user sees in the viewer).',
     inputSchema: obj({ seconds: num('Time in seconds', { minimum: 0 }) }, ['seconds']),
     run: async (a) => {
-      playback.seek(Math.round(Number(a.seconds) * getProject().settings.fps))
+      // What a model sends isn't checked against the schema: a call without `seconds` is told so, not carried out.
+      const seconds = typeof a.seconds === 'number' ? a.seconds : typeof a.seconds === 'string' && a.seconds.trim() ? Number(a.seconds) : NaN
+      if (!Number.isFinite(seconds)) throw new Error('Give seconds: the time on the timeline to move the playhead to, as a number.')
+      playback.seek(Math.round(seconds * getProject().settings.fps))
       return { playhead_frame: usePlayback.getState().frame }
     },
   },
