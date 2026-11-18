@@ -46,6 +46,18 @@ const AT = num('Where to place it, in seconds from the start of the timeline (de
 /** Why the pauses of some speech are left in: said to the model, with the clips it is about. */
 const HELD_SPEECH = 'its track is locked or does not follow ripple edits (sync lock off, or ripple lock on), so nothing can be cut out of it'
 
+/**
+ * The words a tool makes something from: a prompt, a line to say, a script. What a model sends isn't checked against
+ * the schema, and `String(a.prompt)` of a call without one — or with it under another name — is the word
+ * “undefined”: a service was asked for that, and paid for it, and what it made went into the project. Such a call
+ * is told what is missing, and nothing is asked of anyone.
+ */
+function needed(a: Record<string, unknown>, key: string, what: string): string {
+  const value = a[key]
+  if (typeof value !== 'string' || !value.trim()) throw new Error(`Give ${key}: ${what}.`)
+  return value
+}
+
 // ─── Jobs ────────────────────────────────────────────────────────────────
 
 function waitForJob(jobId: string, seconds: number, ctx?: ToolContext): Promise<Job | undefined> {
@@ -286,19 +298,21 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       },
       ['text'],
     ),
-    run: (a, ctx) =>
-      runJob(
+    run: async (a, ctx) => {
+      const words = needed(a, 'text', 'the words of the title')
+      return runJob(
         () =>
           renderBlender({
             template: 'title3d',
-            params: { text: a.text, material: a.material ?? 'chrome', color: a.color, font: a.font ?? 'sans', motion: a.motion ?? 'spin', depth: a.depth ?? 0.35 },
+            params: { text: words, material: a.material ?? 'chrome', color: a.color, font: a.font ?? 'sans', motion: a.motion ?? 'spin', depth: a.depth ?? 0.35 },
             duration: Number(a.duration_seconds ?? 4),
             quality: (a.quality as 'draft') ?? 'standard',
-            prompt: String(a.text),
+            prompt: words,
           }),
         a,
         ctx,
-      ),
+      )
+    },
   },
   {
     name: 'render_3d_background',
@@ -345,19 +359,21 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       ['script', 'description'],
     ),
     run: async (a, ctx) => {
-      const ok = await requestApproval({ title: tt('Render an AI-written Blender scene?'), detail: String(a.description), code: String(a.script), requester: tt('An AI agent') })
+      const script = needed(a, 'script', 'the Python (bpy) source of the scene')
+      const description = needed(a, 'description', 'one line telling the user what the scene is')
+      const ok = await requestApproval({ title: tt('Render an AI-written Blender scene?'), detail: description, code: script, requester: tt('An AI agent') })
       if (!ok) throw new Error('The user declined to run this script.')
       return runJob(
         () =>
           renderBlender({
             template: 'script',
             params: {},
-            script: String(a.script),
-            name: String(a.description).slice(0, 60),
+            script,
+            name: description.slice(0, 60),
             duration: Number(a.duration_seconds ?? 4),
             quality: (a.quality as 'draft') ?? 'standard',
             transparent: a.transparent !== false,
-            prompt: String(a.description),
+            prompt: description,
           }),
         a,
         ctx,
@@ -370,9 +386,11 @@ const INTEGRATION_TOOLS: AgentTool[] = [
     inputSchema: obj({ code: str('Python (bpy) source'), description: str('One line telling the user what it does') }, ['code', 'description']),
     run: async (a) => {
       if (!api) throw new Error('Needs the desktop app.')
-      const ok = await requestApproval({ title: tt('Run code in your open Blender?'), detail: String(a.description), code: String(a.code), requester: tt('An AI agent') })
+      const code = needed(a, 'code', 'the Python (bpy) source to run')
+      const description = needed(a, 'description', 'one line telling the user what it does')
+      const ok = await requestApproval({ title: tt('Run code in your open Blender?'), detail: description, code, requester: tt('An AI agent') })
       if (!ok) throw new Error('The user declined to run this code.')
-      const res = await api.blender.runLive(String(a.code))
+      const res = await api.blender.runLive(code)
       if (!res.ok) throw new Error(res.error)
       return res.result ?? { ok: true }
     },
@@ -428,7 +446,11 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       },
       ['html', 'name'],
     ),
-    run: (a, ctx) => runJob(() => renderMotion({ template: 'custom', params: {}, html: String(a.html), name: String(a.name), duration: typeof a.duration_seconds === 'number' ? a.duration_seconds : undefined }), a, ctx),
+    run: async (a, ctx) => {
+      const html = needed(a, 'html', 'the complete HTML document of the composition')
+      const name = needed(a, 'name', 'what the clip is called')
+      return runJob(() => renderMotion({ template: 'custom', params: {}, html, name, duration: typeof a.duration_seconds === 'number' ? a.duration_seconds : undefined }), a, ctx)
+    },
   },
   {
     name: 'list_voices',
@@ -455,17 +477,21 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       ['text'],
     ),
     run: async (a, ctx) => {
+      const words = needed(a, 'text', 'what to say')
       const voices = useIntegrations.getState().voices
       const voice = voices.find((v) => v.id === a.voice_id) ?? voices[0]
       if (!voice && typeof a.voice_id !== 'string') throw new Error('No ElevenLabs voices — connect ElevenLabs in Lumen first.')
-      return runJob(() => elevenSpeak({ text: String(a.text), voiceId: String(a.voice_id ?? voice!.id), voiceName: voice?.name, modelId: typeof a.model === 'string' ? a.model : undefined }), a, ctx)
+      return runJob(() => elevenSpeak({ text: words, voiceId: String(a.voice_id ?? voice!.id), voiceName: voice?.name, modelId: typeof a.model === 'string' ? a.model : undefined }), a, ctx)
     },
   },
   {
     name: 'generate_sound_effect',
     description: 'Generate a sound effect with ElevenLabs from a description (up to 30 s) and add it to the project.',
     inputSchema: obj({ prompt: str('Describe the sound'), duration_seconds: num('0.5–30 (default: automatic)', { minimum: 0.5, maximum: 30 }), loop: bool('Seamless loop'), place: PLACE, at_seconds: AT, wait_seconds: WAIT }, ['prompt']),
-    run: (a, ctx) => runJob(() => elevenSfx({ prompt: String(a.prompt), durationSeconds: typeof a.duration_seconds === 'number' ? a.duration_seconds : undefined, loop: Boolean(a.loop) }), a, ctx),
+    run: async (a, ctx) => {
+      const prompt = needed(a, 'prompt', 'a description of the sound')
+      return runJob(() => elevenSfx({ prompt, durationSeconds: typeof a.duration_seconds === 'number' ? a.duration_seconds : undefined, loop: Boolean(a.loop) }), a, ctx)
+    },
   },
   {
     name: 'generate_music',
@@ -474,7 +500,10 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       { prompt: str('Genre, mood, instruments, structure'), length_seconds: num('3–600 (default 30)', { minimum: 3, maximum: 600 }), instrumental: bool('No vocals (default true)'), place: PLACE, at_seconds: AT, wait_seconds: WAIT },
       ['prompt'],
     ),
-    run: (a, ctx) => runJob(() => elevenMusic({ prompt: String(a.prompt), lengthSeconds: typeof a.length_seconds === 'number' ? a.length_seconds : 30, instrumental: a.instrumental !== false }), a, ctx),
+    run: async (a, ctx) => {
+      const prompt = needed(a, 'prompt', 'the music to compose — genre, mood, instruments')
+      return runJob(() => elevenMusic({ prompt, lengthSeconds: typeof a.length_seconds === 'number' ? a.length_seconds : 30, instrumental: a.instrumental !== false }), a, ctx)
+    },
   },
   {
     name: 'transcribe_media',
@@ -589,8 +618,9 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       ['prompt'],
     ),
     run: async (a, ctx) => {
+      const prompt = needed(a, 'prompt', 'what the image should show')
       const pick = await pickGenerator('image', a.provider, a.model)
-      return runJob(() => generateImage({ provider: pick.provider, model: pick.model, prompt: String(a.prompt), aspect: (typeof a.aspect === 'string' ? a.aspect : projectAspect()) as '16:9' | '9:16' | '1:1' }), a, ctx)
+      return runJob(() => generateImage({ provider: pick.provider, model: pick.model, prompt, aspect: (typeof a.aspect === 'string' ? a.aspect : projectAspect()) as '16:9' | '9:16' | '1:1' }), a, ctx)
     },
   },
   {
@@ -610,9 +640,10 @@ const INTEGRATION_TOOLS: AgentTool[] = [
       ['prompt'],
     ),
     run: async (a, ctx) => {
+      const prompt = needed(a, 'prompt', 'a description of the shot — subject, action, camera, light')
       const pick = await pickGenerator('video', a.provider, a.model)
       const aspect = typeof a.aspect === 'string' ? a.aspect : projectAspect() === '9:16' ? '9:16' : '16:9'
-      return runJob(() => generateVideo({ provider: pick.provider, model: pick.model, prompt: String(a.prompt), aspect: aspect as '16:9' | '9:16', seconds: typeof a.seconds === 'number' ? a.seconds : 8 }), { wait_seconds: 20, ...a }, ctx)
+      return runJob(() => generateVideo({ provider: pick.provider, model: pick.model, prompt, aspect: aspect as '16:9' | '9:16', seconds: typeof a.seconds === 'number' ? a.seconds : 8 }), { wait_seconds: 20, ...a }, ctx)
     },
   },
   {
