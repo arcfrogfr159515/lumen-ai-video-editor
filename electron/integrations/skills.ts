@@ -152,7 +152,10 @@ export async function importSkill(win: BrowserWindow | null): Promise<SkillInfo 
   const parsed = parseSkill(fs.readFileSync(path.join(src, 'SKILL.md'), 'utf8'))
   let slug = skillSlug(parsed.name ?? path.basename(src))
   for (let n = 2; fs.existsSync(path.join(userRoot(), slug)); n++) slug = `${skillSlug(parsed.name ?? path.basename(src))}-${n}`
-  fs.cpSync(src, path.join(userRoot(), slug), { recursive: true, filter: (p) => !path.basename(p).startsWith('.') && !p.includes(`${path.sep}node_modules`) })
+  // Hidden files and installed packages stay behind — judged by where a file is inside the skill. Judged by its whole
+  // path, a skill that itself sits under node_modules, or in a folder called ".titles", had nothing copied at all.
+  const left = (p: string) => path.relative(src, p).split(path.sep).some((part) => part.startsWith('.') || part === 'node_modules')
+  fs.cpSync(src, path.join(userRoot(), slug), { recursive: true, filter: (p) => !left(p) })
   const { body: _body, ...rest } = info('user', slug)!
   return rest
 }
