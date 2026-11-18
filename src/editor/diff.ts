@@ -36,9 +36,14 @@ export interface TimelineDiff {
 
 // ─── What plays ──────────────────────────────────────────────────────────
 
-/** Everything about a clip that decides how it looks and sounds, apart from where it is and which footage it shows. */
+/**
+ * Everything about a clip that decides how it looks and sounds over the whole of it, apart from where it is and
+ * which footage it shows. What acts on a few of its frames only — the animation it comes in or goes out with — is
+ * `actingAt`'s: a cut leaves the way in on the first piece and the way out on the second, so compared piece by
+ * piece a cut that changes nothing made each piece another clip.
+ */
 function lookOf(c: Clip): string {
-  const { transform, color, blend, crop, text, speed, reverse, freeze, angle, keyframes, animation } = c
+  const { transform, color, blend, crop, text, speed, reverse, freeze, angle, keyframes } = c
   return String(
     hashString(
       JSON.stringify({
@@ -63,10 +68,31 @@ function lookOf(c: Clip): string {
         detached: c.audio.detached,
         matte: c.matte,
         ramp: keyframes.speed,
-        animation,
       }),
     ),
   )
+}
+
+/** How many frames the animation a clip comes in with (or goes out with) plays over: none when it has none. */
+function animated(c: Clip, side: 'in' | 'out') {
+  const spec = c.animation?.[side]
+  return spec && spec.preset !== 'none' ? Math.min(c.duration, Math.max(0, spec.duration)) : 0
+}
+const comingIn = (c: Clip) => animated(c, 'in')
+const goingOut = (c: Clip) => animated(c, 'out')
+
+/** Which of the two is playing at a frame of the clip's own: '' for neither. */
+function acting(c: Clip, local: number) {
+  const coming = local < comingIn(c) ? `in:${c.animation.in.preset}/${c.animation.in.duration}` : ''
+  const going = local >= c.duration - goingOut(c) ? `out:${c.animation.out.preset}/${c.animation.out.duration}` : ''
+  return coming + going
+}
+
+/** The same, with how far into it the frame is: counted from the clip's start for the way in, from its end for the way out. */
+function actingAt(c: Clip, local: number) {
+  const coming = local < comingIn(c) ? `in:${c.animation.in.preset}/${c.animation.in.duration}@${local}` : ''
+  const going = local >= c.duration - goingOut(c) ? `out:${c.animation.out.preset}/${c.animation.out.duration}@${c.duration - local}` : ''
+  return coming + going
 }
 
 const looks = new WeakMap<Clip, string>()
@@ -75,8 +101,8 @@ const look = (c: Clip) => looks.get(c) ?? (looks.set(c, lookOf(c)), looks.get(c)
 /** What a clip plays, without where: its footage (or timeline, or words). */
 const mediaOf = (c: Clip) => c.assetId ?? (c.sequenceId ? `seq:${c.sequenceId}` : c.kind === 'text' ? `text:${hashString(c.text?.content ?? '')}` : c.kind)
 
-/** What a clip shows at a frame of its own: the footage, how far into it, and how it is dressed. */
-const showing = (c: Clip, local: number) => `${mediaOf(c)}@${Math.round(sourceFrameAt(c, local) * 10) / 10}x${Math.round(speedAt(c, local) * 1000) / 1000}~${look(c)}`
+/** What a clip shows at a frame of its own: the footage, how far into it, how it is dressed, and what is acting on it there. */
+const showing = (c: Clip, local: number) => `${mediaOf(c)}@${Math.round(sourceFrameAt(c, local) * 10) / 10}x${Math.round(speedAt(c, local) * 1000) / 1000}~${look(c)}~${actingAt(c, local)}`
 
 interface Lane {
   /** What lines this track up with one in the other version. */
@@ -163,6 +189,9 @@ function slices(ls: Lane[]): Slice[] {
     for (const c of lane.clips) {
       edges.add(c.start)
       edges.add(clipEnd(c))
+      // Where the animation it comes in with ends, and the one it goes out with begins.
+      if (comingIn(c)) edges.add(c.start + comingIn(c))
+      if (goingOut(c)) edges.add(clipEnd(c) - goingOut(c))
       end = Math.max(end, clipEnd(c))
     }
   const cuts = [...edges].filter((f) => f <= end).sort((x, y) => x - y)
@@ -178,7 +207,10 @@ function slices(ls: Lane[]): Slice[] {
         const before = clipAt(lane, start - 1)
         const after = clipAt(lane, start)
         if (!before || !after) return !before && !after
-        if (before === after) return true
+        // Within one clip, content is broken only where an animation stops or starts acting on it.
+        if (before === after) return acting(before, start - 1 - before.start) === acting(after, start - after.start)
+        // From one clip to the next: not when the first goes out with an animation, or the second comes in with one.
+        if (goingOut(before) || comingIn(after)) return false
         if (mediaOf(before) !== mediaOf(after) || look(before) !== look(after) || before.keyframes.speed || after.keyframes.speed) return false
         return Math.abs(sourceFrameAt(before, start - before.start) - sourceFrameAt(after, 0)) < 0.51
       })

@@ -56,6 +56,38 @@ describe('a branch', () => {
     expect(onTrack('Main')).toHaveLength(6)
     expect(hunks()).toEqual([])
   })
+
+  it('is not made different by a cut through a clip that comes in and goes out with an animation', () => {
+    // The title fades in and out — in this version and in a second branch made of it, which is the open one from here.
+    run('clip.update', { ids: [onTrack('Titles')[0].id], patch: { animation: { in: { preset: 'fade', duration: 8 }, out: { preset: 'fade', duration: 8 } } } })
+    run('sequence.branch', {})
+    const versions = () => diffTimelines(getProject().sequences![branch], openSequence(getProject())).hunks.map((h) => [h.kind, ...h.a, ...h.b])
+    expect(versions()).toEqual([])
+    // A cut leaves the fade in on the first piece and the fade out on the second: compared piece by piece, each
+    // piece was a clip animated otherwise than the whole one, and the cut was a change.
+    run('clip.split', { frame: 150 })
+    expect(onTrack('Titles')).toHaveLength(2)
+    expect(versions()).toEqual([])
+  })
+
+  it('finds an animation a clip comes in or goes out with, where it plays', () => {
+    run('clip.update', { ids: [onTrack('Titles')[0].id], patch: { animation: { in: { preset: 'fade', duration: 8 } } } })
+    expect(hunks()).toEqual([['changed', 120, 128, 120, 128]])
+    run('clip.update', { ids: [onTrack('Titles')[0].id], patch: { animation: { out: { preset: 'rise', duration: 6 } } } })
+    expect(hunks()).toEqual([
+      ['changed', 120, 128, 120, 128],
+      ['changed', 174, 180, 174, 180],
+    ])
+  })
+
+  it('finds a cut that stops an animation short', () => {
+    run('clip.update', { ids: [onTrack('Titles')[0].id], patch: { animation: { in: { preset: 'fade', duration: 8 } } } })
+    run('sequence.branch', {})
+    const versions = () => diffTimelines(getProject().sequences![branch], openSequence(getProject())).hunks.map((h) => [h.kind, ...h.a, ...h.b])
+    // Three frames into a fade of eight: the second piece doesn't fade, so the last five frames of it are gone.
+    run('clip.split', { frame: 123 })
+    expect(versions()).toEqual([['changed', 123, 128, 123, 128]])
+  })
 })
 
 describe('where two versions differ', () => {
