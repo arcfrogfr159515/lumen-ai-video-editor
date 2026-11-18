@@ -543,6 +543,9 @@ async function exportFrames(project: Project, settings: ExportSettings, range: [
     onProgress({ phase: 'finishing', done: 1, total: 1, speed: 0, eta: 0, message: tt('Finishing…') })
     return await api.export.finish(handle.id)
   } finally {
+    // A frame may still be on its way to disk when the export is stopped or fails. It is waited for, so that what
+    // clears the export away comes after it — a frame that landed later was left behind in the folder.
+    await pending.catch(() => {})
     feeder.dispose()
   }
 }

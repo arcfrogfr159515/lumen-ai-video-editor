@@ -177,8 +177,21 @@ export async function writeFrame(id: string, index: number, data: Uint8Array) {
   if (!(data instanceof Uint8Array)) throw new Error('Bad frame')
   const n = Math.max(0, Math.floor(Number(index) || 0))
   const name = `${e.base}_${String(n + 1).padStart(5, '0')}.png`
-  await fs.promises.writeFile(path.join(e.path, name), data)
-  if (!e.written.has(name)) e.written.add(name)
+  const file = path.join(e.path, name)
+  // Named before it is written: an export stopped while this frame is on its way to disk takes it away too.
+  e.written.add(name)
+  await fs.promises.writeFile(file, data)
+  if (open.get(String(id)) !== e) {
+    // Stopped meanwhile. The clearing up has been and gone, and this frame landed after it: it goes as well, and
+    // the folder with it if this export made it and nothing else is in it.
+    await fs.promises.rm(file, { force: true })
+    try {
+      if (e.created && !fs.readdirSync(e.path).length) fs.rmdirSync(e.path)
+    } catch {
+      /* already gone */
+    }
+    throw new Error(mt('That export is no longer open.'))
+  }
   e.size += data.byteLength
 }
 
@@ -265,7 +278,13 @@ export function abortExport(id: string) {
   open.delete(String(id))
   if (e.kind === 'folder') {
     // Only the frames this export wrote, then the folder if it made it and it's empty.
-    for (const name of e.written) fs.rmSync(path.join(e.path, name), { force: true })
+    for (const name of e.written) {
+      try {
+        fs.rmSync(path.join(e.path, name), { force: true })
+      } catch {
+        // Held because it is being written this moment: writeFrame takes it away when it lands.
+      }
+    }
     try {
       if (e.created && !fs.readdirSync(e.path).length) fs.rmdirSync(e.path)
     } catch {

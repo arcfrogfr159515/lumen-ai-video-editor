@@ -7,7 +7,7 @@ const env = vi.hoisted(() => ({ root: '' }))
 vi.mock('electron', () => ({ app: { getPath: (name: string) => `${env.root}/${name}` }, BrowserWindow: class {}, dialog: {} }))
 
 env.root = fs.mkdtempSync(path.join(os.tmpdir(), 'lumen-export-test-'))
-const { abortExport, beginFile, finishExport, writeExport, writeSidecar } = await import('./export')
+const { abortExport, beginFile, finishExport, openPicked, pickExport, writeExport, writeFrame, writeSidecar } = await import('./export')
 const out = path.join(env.root, 'out')
 const listed = () => fs.readdirSync(out).sort()
 const errno = (code: string) => Object.assign(new Error(`${code}: resource busy or locked`), { code })
@@ -41,6 +41,44 @@ beforeEach(() => {
   fs.mkdirSync(out, { recursive: true })
 })
 afterEach(() => vi.restoreAllMocks())
+
+describe('an image sequence that is stopped', () => {
+  const frame = new TextEncoder().encode('png')
+  /** A folder export, opened the way the editor opens one (a test run names the folder instead of a dialog). */
+  async function sequence(name: string) {
+    process.env.LUMEN_TEST_EXPORT_DIR = out
+    const target = await pickExport(null, { defaultName: name, extension: 'png', filterName: 'PNG', folder: true })
+    delete process.env.LUMEN_TEST_EXPORT_DIR
+    return openPicked(target!.token)
+  }
+
+  it('leaves no frame behind — not even one that was on its way to disk', async () => {
+    const handle = await sequence('Stopped')
+    await writeFrame(handle.id, 0, frame)
+    // The next frame is being written as the export is stopped.
+    const late = writeFrame(handle.id, 1, frame)
+    abortExport(handle.id)
+    await expect(late).rejects.toThrow()
+    expect(fs.existsSync(handle.path)).toBe(false)
+  })
+
+  it('keeps a folder it didn’t make, and what was in it', async () => {
+    fs.mkdirSync(path.join(out, 'Kept'), { recursive: true })
+    const handle = await sequence('Kept')
+    fs.writeFileSync(path.join(handle.path, 'notes.txt'), 'mine')
+    const late = writeFrame(handle.id, 0, frame)
+    abortExport(handle.id)
+    await expect(late).rejects.toThrow()
+    expect(fs.readdirSync(handle.path)).toEqual(['notes.txt'])
+  })
+
+  it('still writes every frame of one that isn’t', async () => {
+    const handle = await sequence('Whole')
+    await Promise.all([0, 1, 2].map((i) => writeFrame(handle.id, i, frame)))
+    expect(finishExport(handle.id)).toMatchObject({ path: handle.path, size: 9 })
+    expect(fs.readdirSync(handle.path)).toEqual(['Whole_00001.png', 'Whole_00002.png', 'Whole_00003.png'])
+  })
+})
 
 describe('finishing an export', () => {
   it('gives the file its name', async () => {
