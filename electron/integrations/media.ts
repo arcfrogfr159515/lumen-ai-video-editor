@@ -60,6 +60,8 @@ function fileAsset(abs: string, mime: string, name: string, provenance: Provenan
 
 /** Writes base64 media from a tool result to disk. */
 export function saveBase64(data: string, mime: string, name: string, provenance: Provenance): GeneratedAsset {
+  // Before anything is written: what isn't media was written all the same, and left in the library with no asset to show it.
+  if (!kindOf(mime)) throw new Error(`Unsupported media type: ${mime}`)
   const dir = ensureDir(path.join(mediaRoot(), 'mcp'))
   const abs = path.join(dir, `${randomUUID()}${EXT[mime] ?? ''}`)
   fs.writeFileSync(abs, Buffer.from(data, 'base64'))

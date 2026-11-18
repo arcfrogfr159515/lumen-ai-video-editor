@@ -219,7 +219,14 @@ export function register(paths: string[]): MediaFileInfo[] {
       continue
     }
     if (stat.isDirectory()) {
-      for (const name of fs.readdirSync(abs).sort()) {
+      let names: string[]
+      try {
+        names = fs.readdirSync(abs)
+      } catch {
+        // A folder that can't be read (no permission, a drive that went away) is left out; the rest still comes in.
+        continue
+      }
+      for (const name of names.sort()) {
         const child = path.join(abs, name)
         if (isMedia(child)) {
           const info = fileInfo(child)

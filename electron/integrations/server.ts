@@ -229,7 +229,12 @@ export async function stopBridge(persist = true): Promise<BridgeState> {
   const srv = server
   server = null
   sessionOnly = false
-  if (srv) await new Promise<void>((resolve) => srv.close(() => resolve()))
+  if (srv) {
+    // close() waits for every request to end, and a tool call may be answering for an hour: the switch would sit
+    // there, off but not answering. Whoever is connected is let go of now.
+    srv.closeAllConnections?.()
+    await new Promise<void>((resolve) => srv.close(() => resolve()))
+  }
   if (persist) writeJson(SETTINGS, { ...settings(), enabled: false })
   emit()
   return bridgeState()

@@ -98,9 +98,12 @@ export function readSkillFile(source: SkillSource, folder: string, rel: string):
   const abs = path.resolve(dir, rel)
   if (!abs.startsWith(dir + path.sep)) throw new Error('That file is outside the skill.')
   if (!TEXT_FILE.test(abs)) throw new Error('Only text files can be read.')
-  const stat = fs.statSync(abs)
+  // A link kept in the skill's folder may lead anywhere on this computer: where the file really is decides.
+  const real = fs.realpathSync(abs)
+  if (!real.startsWith(fs.realpathSync(dir) + path.sep)) throw new Error('That file is outside the skill.')
+  const stat = fs.statSync(real)
   if (stat.size > MAX_FILE) throw new Error('That file is too large to read here.')
-  return fs.readFileSync(abs, 'utf8')
+  return fs.readFileSync(real, 'utf8')
 }
 
 /** Creates or updates one of your skills; renaming moves its folder. */

@@ -39,7 +39,11 @@ let loaded = false
 function load() {
   if (loaded) return
   loaded = true
-  for (const config of readJson<McpServerConfig[]>(CONFIG, [])) {
+  // The file may have been edited by hand: a list is expected, of servers that have at least an id.
+  const stored = readJson<unknown>(CONFIG, [])
+  if (!Array.isArray(stored)) console.warn(`${CONFIG} isn’t a list of servers; none are loaded from it.`)
+  for (const config of Array.isArray(stored) ? (stored as (McpServerConfig | null)[]) : []) {
+    if (!config || typeof config !== 'object' || typeof config.id !== 'string' || !config.id) continue
     // Older configs kept headers in plain JSON: move them into the secret store.
     if (config.headers && Object.keys(config.headers).length) {
       setSecret(headerSecret(config.id), JSON.stringify(config.headers))
