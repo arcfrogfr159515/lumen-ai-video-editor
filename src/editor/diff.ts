@@ -69,6 +69,8 @@ function lookOf(c: Clip): string {
         detached: c.audio.detached,
         matte: c.matte,
         ramp: keyframes.speed,
+        // Measured along the footage, not along the clip: a cut leaves it on both pieces as it was.
+        steady: c.stabilize ?? null,
       }),
     ),
   )

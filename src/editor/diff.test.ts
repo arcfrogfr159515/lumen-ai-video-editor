@@ -130,6 +130,22 @@ describe('a branch', () => {
     expect(versions()).toEqual([])
   })
 
+  it('a shot made steady counts', () => {
+    // Whether a clip is stabilised, and how, wasn't among what was compared.
+    const steady = { start: 0, rate: 30, path: [0, 0, 0, 0.01, 0.002, 0.001, 0.02, 0.001, 0], smooth: 1, zoom: 1.08, rotation: false }
+    run('clip.update', { ids: [named('B').id], patch: { stabilize: steady } })
+    expect(hunks()).toEqual([['changed', 100, 200, 100, 200]])
+    // It is measured along the footage: a cut through the clip leaves it on both pieces, and changes nothing.
+    run('clip.split', { frame: 150 })
+    expect(hunks()).toEqual([['changed', 100, 200, 100, 200]])
+    // Steadier than before is another difference than steady at all.
+    run('sequence.branch', {})
+    const versions = () => diffTimelines(getProject().sequences![branch], openSequence(getProject())).hunks.map((h) => [h.kind, ...h.a, ...h.b])
+    expect(versions()).toEqual([])
+    run('clip.update', { ids: [onTrack('Main').find((c) => c.start === 100)!.id], patch: { stabilize: { smooth: 3 } } })
+    expect(versions()).toEqual([['changed', 100, 150, 100, 150]])
+  })
+
   it('finds a transition into a clip, on the frames it plays over', () => {
     // A transition wasn't among what was compared: with one, the two versions were said to play the same.
     run('clip.setTransition', { id: named('C').id, transition: { kind: 'dissolve', duration: 12 } })
