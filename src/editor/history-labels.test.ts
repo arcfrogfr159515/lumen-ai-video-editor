@@ -6,7 +6,7 @@ vi.stubGlobal('localStorage', { getItem: (key: string) => (key === 'lumen.langua
 const { language } = await import('@/lib/i18n')
 const { addAsset, freshProject, run } = await import('./test-helpers')
 const { getProject, useEditor } = await import('./store')
-const { ATTRIBUTES, attributeName, propName } = await import('./commands')
+const { ATTRIBUTES, attributeName, clipPatch, patchName, propName } = await import('./commands')
 const { ANIMATABLE } = await import('./keyframes')
 
 /** What the History — and Undo, in the title bar — calls the last edit. */
@@ -104,5 +104,20 @@ describe('what the History calls an edit, in a Chinese window', () => {
     expect(lastStep()).toBe('编辑压缩器 · 母版')
     run('mix.update', { target: 'master', patch: { limiter: { ceiling: -2 } } })
     expect(lastStep()).toBe('编辑限制器 · 母版')
+  })
+
+  it('says what was changed about a clip in Chinese', () => {
+    // "编辑 transform", "编辑 2 个片段的 properties": what was changed went in by the name the code gives it.
+    const [a, b] = [clip(0), clip(30)]
+    run('clip.update', { ids: [a], patch: { transform: { x: 40 } } })
+    expect(lastStep()).toBe('编辑 变换')
+    run('clip.update', { ids: [a], patch: { name: '开场' } })
+    expect(lastStep()).toBe('编辑 名称')
+    run('clip.update', { ids: [a, b], patch: { color: { exposure: 20 } } })
+    expect(lastStep()).toBe('编辑 2 个片段的 颜色')
+    run('clip.update', { ids: [a, b], patch: { transform: { x: 80 }, speaker: '小林' } })
+    expect(lastStep()).toBe('编辑 2 个片段的 属性')
+    // Everything a clip can be changed in has a word.
+    for (const key of Object.keys(clipPatch.shape)) expect(patchName(key), key).not.toMatch(/[A-Za-z]/)
   })
 })

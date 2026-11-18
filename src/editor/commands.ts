@@ -290,6 +290,9 @@ export const clipPatch = z
 
 export type ClipPatch = z.infer<typeof clipPatch>
 
+/** What the History calls one of the things a clip can be changed in — or all of them, `properties`. The dictionary has each by the name the code gives it. */
+export const patchName = (key: string) => ttc('clip property', key)
+
 const keyframe = z.object({ frame, value: z.number(), easing })
 
 const clipTake = z.object({
@@ -874,7 +877,7 @@ export const commands = {
     input: z.object({ ids: z.array(id).min(1), patch: clipPatch }),
     title: (i) => {
       const keys = Object.keys(i.patch)
-      const what = keys.length === 1 ? keys[0] : 'properties'
+      const what = patchName(keys.length === 1 ? keys[0] : 'properties')
       return i.ids.length > 1 ? tt('Edit {0} on {1} clips', what, i.ids.length) : tt('Edit {0}', what)
     },
     run(p, i) {
