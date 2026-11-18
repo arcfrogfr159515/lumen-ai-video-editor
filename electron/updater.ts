@@ -31,17 +31,27 @@ function set(patch: Partial<UpdateState>) {
 
 export const updateState = () => state
 
+const NAMED: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: '’', nbsp: ' ' }
+
+/**
+ * The escapes in a piece of HTML, each read once. They used to be read one kind after another, "&amp;" first: the
+ * text "&lt;" — written "&amp;lt;" — became "&lt;" and then "<". Escapes given by number, and a non-breaking space,
+ * were shown as they were written. An apostrophe comes out as the typographic one, however it is written.
+ */
+function unescaped(html: string) {
+  return html.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, body: string) => {
+    if (body[0] !== '#') return NAMED[body.toLowerCase()] ?? whole
+    const code = /^#x/i.test(body) ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10)
+    if (code === 39) return '’'
+    if (code === 160) return ' '
+    return code > 0 && code < 0x110000 && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : whole
+  })
+}
+
 /** GitHub release notes arrive as HTML; the editor shows them as text. */
 export function notesOf(info: Pick<UpdateInfo, 'releaseNotes'>) {
   const raw = Array.isArray(info.releaseNotes) ? info.releaseNotes.map((n) => n.note ?? '').join('\n\n') : (info.releaseNotes ?? '')
-  const text = raw
-    .replace(/<\/(p|li|h\d|div)>|<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, '’')
+  const text = unescaped(raw.replace(/<\/(p|li|h\d|div)>|<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''))
     .replace(/\n{3,}/g, '\n\n')
     .trim()
   return text ? text.slice(0, 4000) : undefined
