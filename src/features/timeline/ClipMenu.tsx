@@ -37,10 +37,15 @@ const STEMS = [tt('Vocals'), tt('Overall background'), tt('Drums'), tt('Guitar')
 const ai = <MenuBadge>AI</MenuBadge>
 
 /**
- * A row for something Lumen can't do yet. It keeps its place, greyed, so the menu reads the same on the day it
- * can; until then nothing here pretends to work.
+ * Whether rows for what Lumen can't do yet are shown. They were — greyed, to hold the layout for the day they
+ * work — and read as five things that are broken: a row that can never be chosen, with nothing to say why, is a
+ * dead end in a menu. They are left out until there is something behind them; each comes back by being built.
  */
+const SHOW_UNBUILT = false as boolean
+
+/** A row for something Lumen can't do yet: greyed where such rows are shown, and otherwise not there. */
 function Unbuilt({ badge, children }: { badge?: ReactNode; children: ReactNode }) {
+  if (!SHOW_UNBUILT) return null
   return (
     <ContextItem disabled badge={badge}>
       {children}
@@ -168,12 +173,14 @@ export function ClipMenu({ clip }: { clip: Clip }) {
       <ContextItem badge={ai} disabled={!canBeat || clip.freeze} onSelect={() => void actions.removePauses()}>
         {tt('Smart talking-head cut')}
       </ContextItem>
-      {/* Not built yet: the row stays, greyed, and doesn't open onto a list that does nothing. */}
-      <ContextSub label={tt('Sound separation')} badge={ai} disabled>
-        {STEMS.map((stem) => (
-          <Unbuilt key={stem}>{stem}</Unbuilt>
-        ))}
-      </ContextSub>
+      {/* Not built yet: where such rows are shown it is greyed, and doesn't open onto a list that does nothing. */}
+      {SHOW_UNBUILT && (
+        <ContextSub label={tt('Sound separation')} badge={ai} disabled>
+          {STEMS.map((stem) => (
+            <Unbuilt key={stem}>{stem}</Unbuilt>
+          ))}
+        </ContextSub>
+      )}
       {clip.kind === 'video' && clip.audio.detached ? (
         <ContextItem shortcut="mod+l" onSelect={actions.reattachAudio}>
           {tt('Reattach audio')}

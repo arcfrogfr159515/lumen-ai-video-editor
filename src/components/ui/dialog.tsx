@@ -2,6 +2,7 @@ import { X } from 'lucide-react'
 import { Dialog as RadixDialog } from 'radix-ui'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
+import { tt } from '@/lib/i18n'
 
 interface DialogProps {
   open: boolean
@@ -44,7 +45,7 @@ export function Dialog({ open, onOpenChange, title, description, children, class
                 <RadixDialog.Title className="text-lg font-semibold tracking-tight text-fg">{title}</RadixDialog.Title>
                 {description && <RadixDialog.Description className="mt-0.5 text-sm text-fg-3">{description}</RadixDialog.Description>}
               </div>
-              <RadixDialog.Close className="-mt-1 -mr-1 rounded-lg p-1.5 text-fg-3 outline-none transition-colors hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60">
+              <RadixDialog.Close aria-label={tt('Close')} title={tt('Close')} className="-mt-1 -mr-1 rounded-lg p-1.5 text-fg-3 outline-none transition-colors hover:bg-ink/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60">
                 <X className="size-4" />
               </RadixDialog.Close>
             </div>
