@@ -55,7 +55,7 @@ vi.stubGlobal('navigator', {
   },
 })
 
-const { useVoiceInput } = await import('./voice')
+const { abandonVoice, useVoiceInput } = await import('./voice')
 
 const settle = () => new Promise((r) => setTimeout(r, 20))
 /** The microphone button as a window has it before anything has been pressed. */
@@ -79,6 +79,7 @@ beforeEach(async () => {
   await settle()
   for (const r of lab.recorders) if (r.state === 'recording') r.stop()
   await settle()
+  abandonVoice()
   Object.assign(lab, { asked: [], streams: [], recorders: [], heard: [] })
 })
 
@@ -93,6 +94,32 @@ describe('speaking to the Copilot', () => {
     await settle()
     expect(lab.streams.map((s) => s.live)).toEqual([false])
     expect(lab.heard).toEqual(['cut the silences'])
+  })
+
+  it('lets go of the microphone when its button goes away while it records, and the next button works', async () => {
+    button().toggle()
+    microphone()
+    await settle()
+    expect(lab.streams.map((s) => s.live)).toEqual([true])
+    // The Copilot's panel is switched away (the Inspector opens): the button is taken down. Left as it was, the
+    // recording went on with the microphone open, and the button drawn when the panel came back did nothing.
+    abandonVoice()
+    await settle()
+    expect({ recording: lab.recorders.filter((r) => r.state === 'recording').length, microphonesLeftOpen: lab.streams.filter((s) => s.live).length }).toEqual({ recording: 0, microphonesLeftOpen: 0 })
+    // What was being said is let go with it: there is nobody left to hand the words to.
+    expect(lab.heard).toEqual([])
+    button().toggle()
+    microphone()
+    await settle()
+    expect(lab.recorders.map((r) => r.state)).toEqual(['inactive', 'recording'])
+  })
+
+  it('doesn’t start recording for a button that went away while the microphone was being asked for', async () => {
+    button().toggle()
+    abandonVoice()
+    microphone()
+    await settle()
+    expect({ recorders: lab.recorders.length, microphonesLeftOpen: lab.streams.filter((s) => s.live).length }).toEqual({ recorders: 0, microphonesLeftOpen: 0 })
   })
 
   it('records once when the button is pressed twice before the microphone has answered', async () => {
