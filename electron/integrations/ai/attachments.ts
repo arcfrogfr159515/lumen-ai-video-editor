@@ -93,6 +93,8 @@ export function docxText(file: Buffer): string {
       const text = para
         // What a field is told to do (HYPERLINK "…", PAGE, TOC \o "1-3") sits beside what it shows, and isn't text.
         .replace(/<w:instrText\b[^>]*>[\s\S]*?<\/w:instrText>/g, '')
+        // Where the paragraph's tab stops are is said in tags named like a tab that was typed.
+        .replace(/<w:tabs\b[^>]*>[\s\S]*?<\/w:tabs>/g, '')
         .replace(/<w:tab\b[^>]*\/>/g, '\t')
         .replace(/<w:(?:br|cr)\b[^>]*\/>/g, '\n')
         .replace(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>|<[^>]+>/g, (_tag, run: string | undefined) => run ?? '')

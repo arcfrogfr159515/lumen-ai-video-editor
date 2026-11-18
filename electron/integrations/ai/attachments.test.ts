@@ -82,6 +82,13 @@ describe('Word documents', () => {
     expect(docxText(docx(xml))).toBe('See the guide, page 4.\nThe end.')
   })
 
+  it('take a tab that was typed for a tab, and a tab stop for nothing', () => {
+    // A paragraph that sets its own tab stops lists them in its properties, under the same name as a tab that was typed.
+    const stops = '<w:pPr><w:tabs><w:tab w:val="left" w:pos="2880"/><w:tab w:val="right" w:pos="9000"/></w:tabs></w:pPr>'
+    const xml = document(para('Cast'), `<w:p>${stops}<w:r><w:t>Ann</w:t></w:r><w:r><w:tab/><w:t>Director</w:t></w:r></w:p>`, `<w:p>${stops}<w:r><w:t>Tom</w:t><w:tab/><w:t>Editor</w:t></w:r></w:p>`)
+    expect(docxText(docx(xml))).toBe('Cast\nAnn\tDirector\nTom\tEditor')
+  })
+
   it('read numbered characters, and leave a number that isn’t one as it is', () => {
     expect(docxText(docx(document(para('caf&#233; &#x1F3AC; &#xe9;'))))).toBe('café 🎬 é')
     // &#1114112; is past the last character there is: it used to end the read with "Invalid code point".
