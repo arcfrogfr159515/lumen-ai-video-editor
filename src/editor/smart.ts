@@ -428,8 +428,12 @@ export function reframe(width: number, height: number, source: 'user' | 'ai' = '
   const sx = width / W0
   const sy = height / H0
   const textScale = Math.sqrt(Math.min(sx, sy) * Math.max(Math.min(sx, sy), 0.5))
+  let refused = ''
   useEditor.getState().transaction(tt('Canvas {0}×{1}', width, height), source, () => {
-    dispatch('project.update', { settings: { width, height } }, how)
+    // A size the canvas can't have is refused — and that is the end of it. (The answer wasn't looked at: the titles
+    // and the footage were moved and resized for a canvas that hadn't changed, and the caller was told it had.)
+    const res = dispatch('project.update', { settings: { width, height } }, how)
+    if (!res.ok) return void (refused = res.error)
     for (const c of Object.values(getProject().clips)) {
       if (c.kind === 'text') {
         dispatch('clip.update', { ids: [c.id], patch: { transform: { x: Math.round(c.transform.x * sx), y: Math.round(c.transform.y * sy) }, text: { size: Math.round((c.text?.size ?? 96) * textScale) } } }, how)
@@ -446,6 +450,7 @@ export function reframe(width: number, height: number, source: 'user' | 'ai' = '
       }
     }
   })
+  if (refused) throw new Error(refused)
   return { changed: true }
 }
 
