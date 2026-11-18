@@ -3107,6 +3107,7 @@ const zhCN: Record<string, string> = {
   'Vibecoded with': '氛围编程，使用',
   'video': '视频',
   'Video': '视频',
+  'Video {0}': '视频 {0}',
   'Video models': '视频模型',
   'Video, audio and images': '视频、音频和图片',
   'video, image, audio, text or adjustment': 'video、image、audio、text 或 adjustment',

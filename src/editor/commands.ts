@@ -1308,7 +1308,7 @@ export const commands = {
       const count = p.tracks.filter((t) => t.kind === i.kind).length
       const track = createTrack(i.kind, {
         id: i.id ?? uid('track'),
-        name: i.name ?? `${i.kind === 'video' ? 'Video' : 'Audio'} ${count + 1}`,
+        name: i.name ?? (i.kind === 'video' ? tt('Video {0}', count + 1) : tt('Audio {0}', count + 1)),
         height: i.role === 'captions' || i.role === 'titles' ? TRACK_HEIGHTS.titles : i.kind === 'video' ? TRACK_HEIGHTS.video : TRACK_HEIGHTS.audio,
         role: i.role,
       })
