@@ -71,7 +71,7 @@ import {
   type ToolPart,
 } from './store'
 import { STARTERS } from './suggestions'
-import { duration, replyText, transcriptText, usageLine } from './transcript'
+import { duration, replyText, stepTime, transcriptText, usageLine } from './transcript'
 import { useVoiceInput } from './voice'
 import { tt } from '@/lib/i18n'
 import { ttx } from '@/lib/i18n-react'
@@ -512,8 +512,7 @@ function ToolStep({ part: p, undone, now }: { part: ToolPart; undone?: boolean; 
     error: <CircleX className="size-3.5 text-danger" />,
     stopped: <CircleSlash className="size-3.5 text-fg-4" />,
   }
-  const took = p.endedAt && p.startedAt ? p.endedAt - p.startedAt : 0
-  const side = busy ? duration(now - p.startedAt) : p.status === 'stopped' ? 'stopped' : took >= 1000 ? duration(took) : ''
+  const side = stepTime(p, now)
   const live = p.status === 'writing' ? tt('Writing the request{0}', p.chars ? (' ' + tt('— {0} characters so far', p.chars.toLocaleString())) : '…') : p.status === 'running' ? p.progress : undefined
   const details = Boolean(p.input || p.output)
   return (

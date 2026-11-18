@@ -2627,6 +2627,7 @@ const zhCN: Record<string, string> = {
   'Stop the reply': '停止回复',
   'Stopped': '已停止',
   'Stopped.': '已停止。',
+  'stopped': '已停止',
   'Stored in Lumen’s settings on this computer.': '保存在这台电脑上的 Lumen 设置中。',
   'Storyboard': '故事板',
   'Storyboard — the timeline as cards': '故事板——把时间线显示为卡片',

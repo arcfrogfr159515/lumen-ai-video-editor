@@ -362,3 +362,12 @@ export function duration(ms: number) {
   const s = Math.max(0, Math.round(ms / 1000))
   return s < 60 ? `${s} s` : `${Math.floor(s / 60)} m ${s % 60} s`
 }
+
+/** What a step says beside its name: how long it has been at work, that it was stopped, or how long it took (a second or more). */
+export function stepTime(step: Pick<ToolPart, 'status' | 'startedAt' | 'endedAt'>, now: number) {
+  if (step.status === 'running' || step.status === 'writing') return duration(now - step.startedAt)
+  // Looked up like everything else a step shows: written as it is, it stayed English in a window that isn't.
+  if (step.status === 'stopped') return tt('stopped')
+  const took = step.endedAt && step.startedAt ? step.endedAt - step.startedAt : 0
+  return took >= 1000 ? duration(took) : ''
+}
