@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { mergeSceneCuts } from '@/editor/guides'
 import { propAt } from '@/editor/keyframes'
 import { autoZoom, followOffset, stabilizeAt } from '@/editor/motion'
+import { stillOpen, whichTimeline } from '@/editor/open-timeline'
 import { clipEnd } from '@/editor/ops'
 import { usePlayback } from '@/editor/playback'
 import { dispatch, getProject, useEditor } from '@/editor/store'
@@ -127,17 +128,23 @@ export async function multicamFromAssets(assetIds: string[], opts: { name?: stri
   })
   // The recording with sound that runs longest is the reference.
   const order = [...assets].sort((x, y) => Number(y.hasAudio !== false) - Number(x.hasAudio !== false) || (y.duration ?? 0) - (x.duration ?? 0))
+  const where = whichTimeline()
   const synced = await syncByAudio(order, (done, total) => onProgress?.(done / total))
   const byId = new Map(order.map((a, i) => [a.id, synced[i]]))
   const angles = assets.map((a) => ({ assetId: a.id, offset: byId.get(a.id)!.offset }))
+  // Listening to a few long recordings takes a while. The clip is for the timeline that was open when it was asked
+  // for: with another one open by now it went there, at a frame counted on the first. The cameras are lined up all
+  // the same — their timeline is made, and can be placed where it is wanted.
+  const here = stillOpen(where)
   const res = dispatch(
     'multicam.create',
-    { name: opts.name, angles, audio: Math.min(assets.length - 1, opts.audio ?? assets.indexOf(order[0])), place: opts.place ?? true, start: opts.start ?? usePlayback.getState().frame },
+    { name: opts.name, angles, audio: Math.min(assets.length - 1, opts.audio ?? assets.indexOf(order[0])), place: here && (opts.place ?? true), start: opts.start ?? usePlayback.getState().frame },
     { source: opts.source ?? 'user' },
   )
   if (!res.ok) throw new Error(res.error)
   const out = res.result as { sequenceId: string; clipId: string | null }
-  return { ...out, sync: assets.map((a) => ({ assetId: a.id, name: a.name, ...(byId.get(a.id) as SyncResult) })) }
+  // `unplaced`: the clip was wanted on a timeline that isn't the open one any more.
+  return { ...out, unplaced: !here && (opts.place ?? true), sync: assets.map((a) => ({ assetId: a.id, name: a.name, ...(byId.get(a.id) as SyncResult) })) }
 }
 
 // ─── Stabilization ───────────────────────────────────────────────────────

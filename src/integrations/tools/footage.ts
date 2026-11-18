@@ -150,6 +150,7 @@ export const FOOTAGE_TOOLS: AgentTool[] = [
         clip_id: r.clipId,
         synced_by: 'sound',
         angles: r.sync.map((s, i) => ({ angle: i + 1, asset_id: s.assetId, name: s.name, offset_seconds: s.offset, confidence: Number.isFinite(s.confidence) ? s.confidence : 'reference' })),
+        ...(r.unplaced ? { note: 'Not placed: the timeline it was asked onto was no longer the open one when the cameras had been lined up. The multicam timeline is made — place it with clip_add (sequenceId: its timeline_id).' } : {}),
       }
     },
   },
