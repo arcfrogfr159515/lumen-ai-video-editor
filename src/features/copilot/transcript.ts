@@ -427,7 +427,9 @@ export function fromLegacy(m: { text?: string; reasoning?: string; thoughtMs?: n
 /** "1.2k", "34.5k", "1.1M": token counts as people read them. */
 export function compact(n: number) {
   if (n < 1000) return String(n)
-  if (n < 1_000_000) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0).replace(/\.0$/, '')}k`
+  const thousands = (n / 1000).toFixed(n < 10_000 ? 1 : 0)
+  // Rounded before it is called thousands: just under a million came to "1000k".
+  if (Number(thousands) < 1000) return `${thousands.replace(/\.0$/, '')}k`
   return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
 }
 
