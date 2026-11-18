@@ -170,7 +170,16 @@ async function onRequest(req: http.IncomingMessage, res: http.ServerResponse, po
   await transport.handleRequest(req, res, body)
 }
 
+/**
+ * A start that is taking its port. Nothing is listening until it has, so whoever looks meanwhile sees a server
+ * that is off: a second start would try the port the first has just taken (and leave “already in use” behind), a
+ * stop would find nothing to stop, and an agent asking for the address would take the user's server for its own.
+ * They wait for it instead.
+ */
+let starting: Promise<void> | null = null
+
 export async function startBridge(): Promise<BridgeState> {
+  while (starting) await starting
   if (server) {
     if (sessionOnly) {
       sessionOnly = false
@@ -179,6 +188,17 @@ export async function startBridge(): Promise<BridgeState> {
     }
     return bridgeState()
   }
+  let started = () => {}
+  starting = new Promise<void>((resolve) => (started = resolve))
+  try {
+    return await listen()
+  } finally {
+    starting = null
+    started()
+  }
+}
+
+async function listen(): Promise<BridgeState> {
   const s = settings()
   const port = s.port ?? DEFAULT_PORT
   const srv = http.createServer((req, res) => {
@@ -209,6 +229,7 @@ export async function startBridge(): Promise<BridgeState> {
  * Starts the server for this session if the user hasn't switched it on.
  */
 export async function bridgeEndpoint(): Promise<{ url: string; token: string }> {
+  while (starting) await starting
   const s = settings()
   const port = s.port ?? DEFAULT_PORT
   if (!server) {
@@ -226,6 +247,7 @@ export async function bridgeEndpoint(): Promise<{ url: string; token: string }> 
 }
 
 export async function stopBridge(persist = true): Promise<BridgeState> {
+  while (starting) await starting
   const srv = server
   server = null
   sessionOnly = false
