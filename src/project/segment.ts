@@ -189,6 +189,7 @@ export async function subjectMatte(clip: Clip, subject: Subject, opts: { onProgr
     const box = subjectBox(alpha, width, height) ?? undefined
     grayscale(ctx, alpha, width, height)
     const blob = await new Promise<Blob>((r, x) => canvas.toBlob((b) => (b ? r(b) : x(new Error(tt('Couldn’t save the matte')))), 'image/png'))
+    stillThere(asset)
     const info = await desktop.files.saveMedia('generated', `${name}.png`, new Uint8Array(await blob.arrayBuffer()))
     opts.onProgress?.({ done: 1, total: 1 })
     return { assetId: addMatte(asset, subject, name, info, { kind: 'image', width, height }, 0, 0, box), from: 0 }
@@ -247,8 +248,18 @@ export async function subjectMatte(clip: Clip, subject: Subject, opts: { onProgr
     await (output as Output | null)?.cancel().catch(() => {})
     throw err
   }
+  stillThere(asset)
   const info = await desktop.files.saveMedia('generated', `${name}.mp4`, new Uint8Array(target.buffer!))
   return { assetId: addMatte(asset, subject, name, info, { kind: 'video', width: size.width, height: size.height, fps: rate, duration: done / rate }, from, to, medianBox(boxes)), from }
+}
+
+/**
+ * The footage is still in the open project. A matte takes minutes to make, and the project is asked again when it
+ * is made: with another project opened meanwhile, or the footage removed, the matte went into whatever project was
+ * open by then — media of footage that isn't in it, added outside the history.
+ */
+function stillThere(asset: Asset) {
+  if (!getProject().assets[asset.id]) throw new Error(tt('The clip was removed while it was being analysed.'))
 }
 
 function addMatte(
@@ -261,6 +272,7 @@ function addMatte(
   to: number,
   box?: { x: number; y: number; w: number; h: number },
 ) {
+  stillThere(asset)
   const id = uid('asset')
   const matte: Asset = {
     id,
