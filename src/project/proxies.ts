@@ -70,8 +70,13 @@ async function pump() {
   try {
     while (queue.length) {
       const assetId = queue.shift()!
+      // Being made from here on — not only once its conversion exists. Between the two (the file's header is being
+      // read) it was neither queued nor cancellable: asked for again, it was made a second time, over the file the
+      // preview was playing; cancelled, it was made all the same. The media list changing asks again by itself.
+      let stopped = false
+      cancels.set(assetId, () => void (stopped = true))
       try {
-        await build(assetId)
+        await build(assetId, () => stopped)
       } catch (err) {
         failed.add(assetId)
         if (!(err instanceof Error && err.name === 'ConversionCanceledError'))
@@ -86,7 +91,10 @@ async function pump() {
   }
 }
 
-async function build(assetId: string) {
+/** What a conversion that was cancelled throws: said the same way for one stopped before it began. */
+const cancelled = () => Object.assign(new Error('The proxy was cancelled.'), { name: 'ConversionCanceledError' })
+
+async function build(assetId: string, stopped: () => boolean) {
   const asset = getProject().assets[assetId]
   if (!asset || asset.source.type !== 'file' || !desktop) return
   const api = desktop
@@ -94,6 +102,7 @@ async function build(assetId: string) {
   try {
     const track = await input.getPrimaryVideoTrack()
     if (!track) throw new Error(tt('It has no video to make a proxy of.'))
+    if (stopped()) throw cancelled()
     const height = Math.min(PROXY_HEIGHT, track.displayHeight) & ~1
     const width = Math.round((track.displayWidth * height) / track.displayHeight / 2) * 2
     // The file name carries the source's modification time, so a replaced file gets a fresh proxy.
@@ -113,6 +122,7 @@ async function build(assetId: string) {
       if (!conversion.isValid) throw new Error(tt('This video can’t be converted here.'))
       conversion.onProgress = (p) => setProgress(assetId, p)
       cancels.set(assetId, () => void conversion.cancel())
+      if (stopped()) throw cancelled()
       await conversion.execute()
       const done = await api.export.finish(handle.id)
       const info = await api.files.urlForPath(done.path)
