@@ -26,6 +26,23 @@ export function followOffset(path: TrackPath, local: number): [number, number] {
   return [p[0] - path.points[2 * r], p[1] - path.points[2 * r + 1]]
 }
 
+/**
+ * A path on a timeline with `ratio` times the frames a second: the same positions at the same moments, with a
+ * point for each of the new frames. A path has a point a frame — left as it was when the frame rate changed, it
+ * was read at another pace than the footage it was tracked in plays at.
+ */
+export function retimePath(path: TrackPath, ratio: number): TrackPath {
+  const n = Math.floor(path.points.length / 2)
+  if (n < 1 || !(ratio > 0) || ratio === 1) return path
+  const count = Math.max(1, Math.round((n - 1) * ratio) + 1)
+  const points: number[] = []
+  for (let j = 0; j < count; j++) {
+    const [x, y] = pathPoint(path, path.start + j / ratio)!
+    points.push(Math.round(x * 1e5) / 1e5, Math.round(y * 1e5) / 1e5)
+  }
+  return { start: Math.round(path.start * ratio), ref: Math.min(count - 1, Math.max(0, Math.round(path.ref * ratio))), points }
+}
+
 // ─── Stabilization ───────────────────────────────────────────────────────
 
 export interface Correction {

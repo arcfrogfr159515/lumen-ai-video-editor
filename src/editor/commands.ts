@@ -15,6 +15,7 @@ import { takeHunk } from './diff'
 import { closeGaps, FLASH_FRAMES } from './gaps'
 import { ANIMATABLE, evalKeyframes } from './keyframes'
 import { defaultMarkerLabel, markerKindInfo, markerKindOf } from './markers'
+import { retimePath } from './motion'
 import { MOTION_PRESETS, mergeKeyframes, presetKeyframes, PRESET_IDS } from './motion-presets'
 import { EFFECTS } from './presets'
 import {
@@ -2214,6 +2215,9 @@ export const commands = {
           c.animation.out.duration = Math.max(1, sc(c.animation.out.duration))
           if (c.transitionIn) c.transitionIn.duration = Math.max(2, sc(c.transitionIn.duration))
           for (const kfs of Object.values(c.keyframes)) kfs?.forEach((k) => (k.frame = sc(k.frame)))
+          // A tracked path has a point a frame: it gets the points of the new frames (`retimePath`).
+          if (c.follow) c.follow = retimePath(c.follow, r)
+          for (const m of c.masks ?? []) if (m.follow) m.follow = retimePath(m.follow, r)
           // Alternate takes are kept in frames too: where each starts in its footage, its ramp, the length of the place.
           for (const t of c.takes ?? []) {
             t.inPoint = sc(t.inPoint)

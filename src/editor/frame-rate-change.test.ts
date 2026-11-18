@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { followOffset } from './motion'
 import { getProject } from './store'
-import { add, addAsset, freshProject, run, spans } from './test-helpers'
+import { add, addAsset, clip, freshProject, run, spans } from './test-helpers'
 import { problems } from './test-invariants'
 
 beforeEach(() => {
@@ -40,5 +41,38 @@ describe('a timeline given another frame rate', () => {
     add('Overlay', 6, 5, { assetId: 'pictures' })
     run('project.update', { settings: { fps: 120 } })
     expect(spans('Overlay')).toEqual([[6, 12], [12, 22]])
+  })
+})
+
+describe('what follows a tracked point, on a timeline given another frame rate', () => {
+  /** A point that moves ten pixels to the right every sixtieth of a second, tracked for a second from `start`. */
+  const path = (start: number) => ({ start, ref: 0, points: Array.from({ length: 61 }, (_, i) => [i * 10, 0]).flat() })
+  /** How far the point has carried what follows it, at moments of the clip given in seconds. */
+  const carried = (follow: () => { start: number; ref: number; points: number[] }, seconds: number[]) => seconds.map((s) => Math.round(followOffset(follow(), s * getProject().settings.fps)[0]))
+
+  it('is where it was at each moment: a clip’s path is kept in time, not in frames', () => {
+    const id = add('Overlay', 0, 120, { assetId: 'pictures' })
+    run('clip.update', { ids: [id], patch: { follow: path(30) } })
+    const moments = [0, 0.5, 0.75, 1, 1.5, 2]
+    const before = carried(() => clip(id).follow!, moments)
+    expect(before).toEqual([0, 0, 150, 300, 600, 600])
+    // The path has a point for every frame. At half the frames a second it went on being read a point a frame:
+    // the clip moved at half the pace of what it follows, and started half a second late.
+    run('project.update', { settings: { fps: 30 } })
+    expect(carried(() => clip(id).follow!, moments)).toEqual(before)
+    // And back up again, at twice the rate.
+    run('project.update', { settings: { fps: 120 } })
+    expect(carried(() => clip(id).follow!, moments)).toEqual(before)
+  })
+
+  it('is where it was at each moment: a mask’s path, the same', () => {
+    const id = add('Overlay', 0, 120, { assetId: 'pictures' })
+    const maskId = run('mask.add', { clipId: id, mask: {} }) as string
+    run('mask.update', { clipId: id, maskId, patch: { follow: path(0) } })
+    const moments = [0, 0.25, 0.5, 1]
+    const before = carried(() => clip(id).masks![0].follow!, moments)
+    expect(before).toEqual([0, 150, 300, 600])
+    run('project.update', { settings: { fps: 30 } })
+    expect(carried(() => clip(id).masks![0].follow!, moments)).toEqual(before)
   })
 })
